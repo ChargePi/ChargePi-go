@@ -1,0 +1,258 @@
+package test
+
+import (
+	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
+	"github.com/xBlaz3kx/ChargePi-go/data"
+	"reflect"
+	"testing"
+	"time"
+)
+
+func TestSession_AddSampledValue(t *testing.T) {
+	type fields struct {
+		IsActive      bool
+		TransactionId string
+		TagId         string
+		Started       string
+		Consumption   []types.MeterValue
+	}
+	type args struct {
+		samples []types.SampledValue
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   []types.SampledValue
+	}{
+		{
+			name: "ValidSampling",
+			fields: fields{
+				IsActive:      true,
+				TransactionId: "123",
+				TagId:         "123",
+				Started:       time.Now().String(),
+				Consumption:   []types.MeterValue{},
+			},
+			args: args{
+				samples: []types.SampledValue{
+					{
+						Value:     "123.21",
+						Measurand: types.MeasurandCurrentExport,
+					}, {
+						Value:     "123.21",
+						Measurand: types.MeasurandVoltage,
+					}, {
+						Value:     "123.21",
+						Measurand: types.MeasurandPowerActiveExport,
+					},
+				},
+			},
+			want: []types.SampledValue{
+				{
+					Value:     "123.21",
+					Measurand: types.MeasurandCurrentExport,
+				}, {
+					Value:     "123.21",
+					Measurand: types.MeasurandVoltage,
+				}, {
+					Value:     "123.21",
+					Measurand: types.MeasurandPowerActiveExport,
+				},
+			},
+		}, {
+			name: "SessionNotActive",
+			fields: fields{
+				IsActive:      false,
+				TransactionId: "",
+				TagId:         "",
+				Started:       "",
+				Consumption:   []types.MeterValue{},
+			},
+			args: args{
+				samples: []types.SampledValue{
+					{
+						Value:     "123.21",
+						Measurand: types.MeasurandCurrentExport,
+					}, {
+						Value:     "123.21",
+						Measurand: types.MeasurandVoltage,
+					}, {
+						Value:     "123.21",
+						Measurand: types.MeasurandPowerActiveExport,
+					},
+				},
+			},
+			want: []types.SampledValue{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			session := &data.Session{
+				IsActive:      tt.fields.IsActive,
+				TransactionId: tt.fields.TransactionId,
+				TagId:         tt.fields.TagId,
+				Started:       tt.fields.Started,
+				Consumption:   tt.fields.Consumption,
+			}
+			session.AddSampledValue(tt.args.samples)
+			var expectedResult = []types.MeterValue{}
+			if tt.name == "ValidSampling" {
+				expectedResult = []types.MeterValue{{Timestamp: session.Consumption[0].Timestamp, SampledValue: tt.want}}
+			}
+			if !reflect.DeepEqual(session.Consumption, expectedResult) {
+				t.Errorf("Expected: %v, got %v", session.Consumption, tt.want)
+			}
+		})
+	}
+}
+
+func TestSession_EndSession(t *testing.T) {
+	type fields struct {
+		IsActive      bool
+		TransactionId string
+		TagId         string
+		Started       string
+		Consumption   []types.MeterValue
+	}
+	tests := []struct {
+		name   string
+		fields fields
+	}{
+		{
+			name: "StopSuccessful",
+			fields: fields{
+				TransactionId: "1234",
+				TagId:         "1234",
+			},
+		}, {
+			name: "Unsuccessful",
+			fields: fields{
+				TransactionId: "",
+				TagId:         "",
+				Started:       "",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			session := &data.Session{
+				IsActive:      false,
+				TransactionId: "",
+				TagId:         "",
+				Started:       "",
+				Consumption:   []types.MeterValue{},
+			}
+			switch tt.name {
+			case "StopSuccessful":
+				if !session.StartSession(tt.fields.TransactionId, tt.fields.TagId) {
+					t.Errorf("Could not start session")
+				}
+				session.EndSession()
+				if session.IsActive != false && session.TagId != "" && session.Started != "" && session.TransactionId != "" {
+					t.Errorf("Session not reset")
+				}
+				break
+			case "Unsuccessful":
+				session.EndSession()
+				if session.IsActive != false && session.TagId != "" && session.Started != "" && session.TransactionId != "" {
+					t.Errorf("Session not reset")
+				}
+				break
+			}
+		})
+	}
+}
+
+func TestSession_StartSession(t *testing.T) {
+	type fields struct {
+		IsActive      bool
+		TransactionId string
+		TagId         string
+		Started       string
+		Consumption   []types.MeterValue
+	}
+	type args struct {
+		transactionId string
+		tagId         string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   bool
+	}{
+		{
+			name: "StartSuccessful",
+			fields: fields{
+				IsActive:      false,
+				TransactionId: "",
+				TagId:         "",
+				Started:       "",
+				Consumption:   []types.MeterValue{},
+			},
+			args: args{
+				transactionId: "123",
+				tagId:         "1234",
+			},
+			want: true,
+		},
+		{
+			name: "MissingTransactionID",
+			fields: fields{
+				IsActive:      false,
+				TransactionId: "",
+				TagId:         "",
+				Started:       "",
+				Consumption:   []types.MeterValue{},
+			},
+			args: args{
+				transactionId: "",
+				tagId:         "1234",
+			},
+			want: false,
+		}, {
+			name: "MissingTagID",
+			fields: fields{
+				IsActive:      false,
+				TransactionId: "",
+				TagId:         "",
+				Started:       "",
+				Consumption:   []types.MeterValue{},
+			},
+			args: args{
+				transactionId: "1234",
+				tagId:         "",
+			},
+			want: false,
+		}, {
+			name: "TransactionAlreadyActive",
+			fields: fields{
+				IsActive:      true,
+				TransactionId: "1234",
+				TagId:         "1234",
+				Started:       time.Now().String(),
+				Consumption:   []types.MeterValue{},
+			},
+			args: args{
+				transactionId: "1234",
+				tagId:         "1234",
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			session := &data.Session{
+				IsActive:      tt.fields.IsActive,
+				TransactionId: tt.fields.TransactionId,
+				TagId:         tt.fields.TagId,
+				Started:       tt.fields.Started,
+				Consumption:   tt.fields.Consumption,
+			}
+			if got := session.StartSession(tt.args.transactionId, tt.args.tagId); got != tt.want {
+				t.Errorf("StartSession() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

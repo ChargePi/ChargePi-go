@@ -1,0 +1,26 @@
+{
+  "evseId": 1,
+  "connectorId": 2,
+  "type": "Schuko",
+  "status": "Available",
+  "session": {
+    "isActive": false,
+    "transactionId": "",
+    "tagId": "",
+    "started": "",
+    "consumption": []
+  },
+  "relay": {
+    "relayPin": 13,
+    "inverseLogic": false
+  },
+  "powerMeter": {
+    "enabled": false,
+    "spiBus": 0,
+    "powerMeterPin": 0.0,
+    "powerUnits": "kWh",
+    "consumption": 0,
+    "shuntOffset": 0.52,
+    "voltageDividerOffset": 0.01
+  }
+}
