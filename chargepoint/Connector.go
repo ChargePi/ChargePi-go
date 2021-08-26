@@ -64,11 +64,7 @@ func (connector *Connector) StartCharging(transactionId string, tagId string) er
 	if (connector.IsAvailable() || connector.IsPreparing()) && !connector.session.IsActive {
 		hasSessionStarted = connector.session.StartSession(transactionId, tagId)
 		if hasSessionStarted {
-			if connector.relay.InverseLogic {
-				connector.relay.Off()
-			} else {
-				connector.relay.On()
-			}
+			connector.relay.On()
 			return nil
 		}
 		return errors.New("transaction or tag ID invalid")
@@ -80,11 +76,7 @@ func (connector *Connector) StartCharging(transactionId string, tagId string) er
 func (connector *Connector) StopCharging() error {
 	if connector.IsCharging() || connector.IsPreparing() {
 		connector.session.EndSession()
-		if connector.relay.InverseLogic {
-			connector.relay.On()
-		} else {
-			connector.relay.Off()
-		}
+		connector.relay.Off()
 		return nil
 	}
 	return errors.New("connector not charging")
