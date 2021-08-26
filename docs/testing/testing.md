@@ -5,15 +5,12 @@
 To test the functionality of the client can be done manually, however, we can test some software components of the
 client with unit tests. Unit test will compare the actual output of a function to the desired output. We parse
 arguments/input to the function, and we expect a certain output/result. If the function does not produce a desired
-result, the test will fail and we know that we have a bug in our code (or test).
+result, the test will fail, and we know that we have a bug in our code (or test).
 
-1. Navigate to **test** folder:
+1Copy the files from config directory and create test certificates:
 
-   > cd test/
-
-2. Copy the files from config directory and create test certificates:
-
-   ```
+   ```bash
+   cd test/
    cp -r ../config/ .
    chmod +x create-test-certs.sh
    ./create-test-certs.sh
@@ -21,7 +18,9 @@ result, the test will fail and we know that we have a bug in our code (or test).
 
 3. Run the tests:
 
-   > go test -v
+    ```bash
+   go test -v
+   ```
 
 ### Writing unit tests in Go
 
@@ -29,7 +28,7 @@ More about testing in Golang [here](https://golang.org/doc/tutorial/add-a-test).
 
 An example of a function test in Golang:
 
-```
+```go
 func TestFunction(t *testing.T) {
 	type args struct {
 		testArgument string

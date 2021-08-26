@@ -67,8 +67,9 @@
     After=network.target modem-connection.service
 
     [Service]
-    Type=simple 
-    ExecStart=go build /<path_to_dir>/ChargePi-go/ && ./ChargePi-go
+    Type=simple
+    WorkingDirectory=/<path_to_dir>/ChargePi-go 
+    ExecStart=/usr/local/bin/go build main && ./main
     Restart=on-failure
     KillSignal=SIGTERM
 
