@@ -399,14 +399,14 @@ func (handler *ChargePointHandler) stopChargingConnector(connector *Connector, r
 				return
 			}
 			_, err = scheduler.Every(1).Seconds().LimitRunsTo(1).Do(handler.notifyConnectorStatus, connector, core.ChargePointStatusFinishing, core.NoError)
-			_, err = scheduler.Every(1).Seconds().LimitRunsTo(1).Do(handler.notifyConnectorStatus, connector, core.ChargePointStatusAvailable, core.NoError)
+			_, err = scheduler.Every(3).Seconds().LimitRunsTo(1).Do(handler.notifyConnectorStatus, connector, core.ChargePointStatusAvailable, core.NoError)
 			if err != nil {
 				fmt.Println(err)
 			}
 			_ = scheduler.RemoveByTag(fmt.Sprintf("connector%dSampling", connector.ConnectorId))
 			err = scheduler.RemoveByTag(fmt.Sprintf("connector%dTimer", connector.ConnectorId))
 			log.Printf("Stopped charging connector %d at %s", connector.ConnectorId, time.Now())
-			log.Printf("Transaction unauthorized at connector %d", connector.ConnectorId)
+			//log.Printf("Transaction unauthorized at connector %d", connector.ConnectorId)
 		}
 		return handler.chargePoint.SendRequestAsync(request, callback)
 	}
