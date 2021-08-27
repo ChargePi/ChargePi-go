@@ -16,53 +16,53 @@ Usage:
 
 ## Building libnfc for PN532
 
-Get and extract the libnfc:
+1. Get and extract the libnfc:
 
-```bash
- cd ~
- mkdir libnfc && cd libnfc/
- wget https://github.com/nfc-tools/libnfc/releases/download/libnfc-1.8.0/libnfc-1.8.0.tar.bz2
- tar -xvjf libnfc-1.8.0.tar.bz2
-```
+    ```bash
+     cd ~
+     mkdir libnfc && cd libnfc/
+     wget https://github.com/nfc-tools/libnfc/releases/download/libnfc-1.8.0/libnfc-1.8.0.tar.bz2
+     tar -xvjf libnfc-1.8.0.tar.bz2
+    ```
 
-**Next two steps may vary for your reader**
+**Next two steps may vary for your reader and communication protocol**
 
-Create PN532 configuration:
+2. Create PN532 configuration:
 
-```bash
- cd libnfc-1.8.0
- sudo mkdir /etc/nfc
- sudo mkdir /etc/nfc/devices.d
- sudo cp contrib/libnfc/pn532_uart_on_rpi.conf.sample /etc/nfc/devices.d/pn532_uart_on_rpi.conf 
- sudo nano /etc/nfc/devices.d/pn532_uart_on_rpi.conf
-```
+    ```bash
+     cd libnfc-1.8.0
+     sudo mkdir /etc/nfc
+     sudo mkdir /etc/nfc/devices.d
+     sudo cp contrib/libnfc/pn532_uart_on_rpi.conf.sample /etc/nfc/devices.d/pn532_uart_on_rpi.conf 
+     sudo nano /etc/nfc/devices.d/pn532_uart_on_rpi.conf
+    ```
 
-Add the line at the end of the file:
+3. Add the line at the end of the file:
 
-```text
-allow_intrusive_scan = true
-```
+    ```text
+    allow_intrusive_scan = true
+    ```
 
-Install dependencies and configure:
+4. Install dependencies and configure:
 
-```bash
- sudo apt-get install autoconf
- sudo apt-get install libtool
- sudo apt-get install libpcsclite-dev libusb-dev
- autoreconf -vis
- ./configure --with-drivers=pn532_uart --sysconfdir=/etc --prefix=/usr
-```
+    ```bash
+     sudo apt-get install autoconf
+     sudo apt-get install libtool
+     sudo apt-get install libpcsclite-dev libusb-dev
+     autoreconf -vis
+     ./configure --with-drivers=pn532_uart --sysconfdir=/etc --prefix=/usr
+    ```
 
-Build the library:
+5. Build the library:
 
-```bash
-sudo make clean
-sudo make install all
-```
+    ```bash
+    sudo make clean
+    sudo make install all
+    ```
 
 ## Installing rpi-ws281x library
 
-Follow the instructions on [maintainer's repository](https://github.com/jgarff/rpi_ws281x).
+Follow the instructions from the [maintainer's repository](https://github.com/jgarff/rpi_ws281x).
 
 **TLDR; Use the instructions here**
 

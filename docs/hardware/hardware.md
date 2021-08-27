@@ -9,7 +9,7 @@ This client supports following hardware:
 - LCD (optionally with PCF8574 I2C module)
 - WS281x LED strip
 
-Hardware must be configured in _settings.json_ and _connectors.json_ files.
+Hardware must be configured in [_settings file_](../../configs/settings.json) and [_connectors_](../../configs/connectors) files.
 
 ## RFID/NFC reader
 
@@ -29,13 +29,17 @@ LCD should be on I2C bus 1 with address 0x27. To find the I2C address, follow th
 
 1. Download i2c tools:
 
-   `sudo apt-get install -y i2c-tools`
+   ```bash
+   sudo apt-get install -y i2c-tools
+   ```
 
 2. If needed, reboot.
 
 3. Run the following command to get the I2C address:
 
-   `sudo i2cdetect -y 1`
+   ```bash
+   sudo i2cdetect -y 1 
+   ```
 
 | RPI PIN |   PCF8574 PIN    | 
 | :---:	| :---:	|

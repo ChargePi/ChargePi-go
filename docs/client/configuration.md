@@ -2,7 +2,7 @@
 
 ## Configuring connectivity and basic information of the Charging Point
 
-Settings can be found in the _settings_ file and feature basic Charge Point information such as:
+Settings can be found in the [_settings_](../../configs/settings.json) file and feature basic Charge Point information such as:
 
 - vendor and model,
 - unique registered charging point ID, server URI and logging server IP,
@@ -11,10 +11,10 @@ Settings can be found in the _settings_ file and feature basic Charge Point info
 - client current and target version for tracking updates,
 - display and input hardware settings for LCD, RFID/NFC reader and LEDs.
 
-The settings file can be in YAML or JSON format.
+The settings file is supported in YAML or JSON format.
 
 The table represents attributes, their values and descriptions that require more attention and might not be
-self-explanatory. Some examples can have multiple possible values, if any are empty, they will be treated as disabled or
+self-explanatory. Some attributes can have multiple possible values, if any are empty, they will be treated as disabled or
 might not work properly.
 
 | Attribute| Description |Possible values | 
@@ -102,7 +102,7 @@ or might not work properly.
 | powerMeter: shuntOffset | Value of the shunt resistor used in the build to measure power. | Default: 0.01 | 
 | powerMeter: voltageDividerOffset| Value of the voltage divider used in the build to measure power.| Default:1333 |
 
-Example:
+Example connector:
 
 ```json
 {

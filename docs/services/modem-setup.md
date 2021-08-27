@@ -48,6 +48,8 @@
 
 ## Running as service script:
 
+**Golang should be installed and the binary should be added to PATH variable.**
+
 1. Make two service files:
 
    ```bash
@@ -57,44 +59,40 @@
 
 2. Paste into modem-connection.service file:
 
-```bash
-    [Unit]
-    Description=Modem connection service
-
-    [Service]
-    Type=simple 
-    ExecStart=/usr/bin/modem3g/sakis3g --sudo connect 
-    Restart=on-failure 
-    RestartSec=5  
-    KillMode=process
-
-    [Install]
-    WantedBy=multi-user.target
-```
+   ```bash
+       [Unit]
+       Description=Modem connection service
+   
+       [Service]
+       Type=simple 
+       ExecStart=/usr/bin/modem3g/sakis3g --sudo connect 
+       Restart=on-failure 
+       RestartSec=5  
+       KillMode=process
+   
+       [Install]
+       WantedBy=multi-user.target
+   ```
 
 3. Paste into ChargePi.service file:
 
-```bash
-    [Unit]
-    Description=ChargePi client 
-    After=network.target modem-connection.service
+   ```bash
+       [Unit]
+       Description=ChargePi client 
+       After=network.target modem-connection.service
+   
+       [Service]
+       Type=simple
+       WorkingDirectory= /<path_to_dir>/ChargePi-go/
+       ExecStart=go build main.go && ./main
+       Restart=on-failure
+       KillSignal=SIGTERM
+   
+       [Install]
+       WantedBy=multi-user.target
+   ```
 
-    [Service]
-    Type=simple
-    WorkingDirectory= /<path_to_dir>/ChargePi-go/
-    ExecStart=go build main.go && ./main
-    Restart=on-failure
-    KillSignal=SIGTERM
-
-    [Install]
-    WantedBy=multi-user.target
-```
-
-**Golang should be installed and the binary should be added to PATH variable.**
-
-Repeat next steps for both files:
-
-4. Give permissions and add services to **systemd**:
+4. Give permissions and add services to **systemd** (repeat for both service files):
 
    ```bash
    sudo chmod 640 /etc/systemd/system/modem-connection.service
