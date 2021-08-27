@@ -43,9 +43,23 @@ func UpdateKey(key string, value string) (err error) {
 	configuration, err := GetConfiguration()
 	if err != nil {
 		log.Println(err)
-		return err
+		return
 	}
-	return configuration.UpdateKey(key, value)
+	err = configuration.UpdateKey(key, value)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	err = UpdateConfigurationFile()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	return
 }
 
 // GetConfigurationValue Get the value of specified configuration variable from the global configuration in String format.
