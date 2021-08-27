@@ -187,19 +187,18 @@ func (handler *ChargePointHandler) isTagAuthorized(tagId string) bool {
 		localPreAuthorize = "false"
 	}
 	if authCacheEnabled == "true" && localPreAuthorize == "true" {
+		//Check if the tag exists in cache and is valid.
 		log.Println("Authorizing tag ", tagId, " with cache")
 		if data.IsTagAuthorized(tagId) {
-			response = true
+			_, err2 := scheduler.Every(10).Seconds().LimitRunsTo(1).Do(handler.sendAuthorizeRequest, tagId)
+			if err2 != nil {
+				log.Println(err2)
+			}
+			return true
 		}
-		//If the card is in the authentication cache, the authorization can be delayed
-		_, err2 := scheduler.Every(10).Seconds().LimitRunsTo(1).Do(handler.sendAuthorizeRequest, tagId)
-		if err2 != nil {
-			return false
-		}
-		log.Println("Tag authorization result: ", response)
-		return response
 	}
-	log.Println("Authorizing tag: ", tagId)
+	//If the card is not in cache or is not authorized, (re)authorize it with the central system
+	log.Println("Authorizing tag with central system: ", tagId)
 	tagInfo, err := handler.sendAuthorizeRequest(tagId)
 	if tagInfo != nil && tagInfo.Status == types2.AuthorizationStatusAccepted {
 		response = true
@@ -732,6 +731,7 @@ func (handler *ChargePointHandler) CleanUp(reason core.Reason) {
 			log.Println("Stopping a transaction at connector: ", connector.ConnectorId)
 			err := handler.stopChargingConnector(connector, reason)
 			if err != nil {
+				log.Printf("error while stopping the transaction at cleanup: %v", err)
 			}
 		}
 	}
