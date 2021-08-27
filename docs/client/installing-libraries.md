@@ -2,8 +2,8 @@
 
 ## Read before continuing
 
-The process of installing the dependencies was automated by creating a script in the docs' folder for installing the
-necessary dependencies. The script has only one argument: weather or not you want to install Go on your
+The process of installing the dependencies was automated by creating a [script](../install-dependencies.sh) for
+installing the necessary dependencies. The script has only one argument: weather or not you want to install Go on your
 device. It is recommended you use this if you do not want to configure anything.
 
 Usage:

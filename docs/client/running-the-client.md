@@ -18,6 +18,27 @@ Compiling and executing the program:
    ./main
    ```
 
+### Client flags/options
+
+The client comes with flags for configurations' filepath, so you can specify where your configuration files are located.
+All the paths must be absolute. If no flags are provided, the client will default to the working directory.
+
+Example:
+
+ ```bash
+   go run main.go --help
+      -auth string
+           Path to the authorization persistence file (default "/home/pi/ChargePi-go/configs/auth.json")
+     -config-folder string
+           Path to the configuration folder (default "/home/pi/ChargePi-go/configs")
+     -connector-folder string
+           Path to the connector folder (default "/home/pi/ChargePi-go/configs/connectors")
+     -ocpp-config string
+           Path to the OCPP configuration file (default "/home/pi/ChargePi-go/configs/configuration.json")
+     -settings string
+           Path to the settings file (default "/home/pi/ChargePi-go/configs/settings.json")
+   ```
+
 ## Deploying on Docker
 
 1. Build the client image on Docker:
