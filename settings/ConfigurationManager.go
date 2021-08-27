@@ -2,11 +2,11 @@ package settings
 
 import (
 	"errors"
+	"fmt"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	goCache "github.com/patrickmn/go-cache"
 	"github.com/xBlaz3kx/ChargePi-go/cache"
 	"log"
-	"sync"
 )
 
 type OCPPConfig struct {
@@ -14,18 +14,19 @@ type OCPPConfig struct {
 	Keys    []core.ConfigurationKey
 }
 
-// init Read the OCPP configuration from the configuration.json file.
-func init() {
-	once := sync.Once{}
-	once.Do(func() {
-		var ocppConfig OCPPConfig
-		DecodeFile("configs/configuration.json", &ocppConfig)
-		err := cache.Cache.Add("OCPPConfiguration", &ocppConfig, goCache.NoExpiration)
-		if err != nil {
-			panic(err)
-		}
-		log.Println("Added OCPP configuration to cache")
-	})
+func InitConfiguration() {
+	var ocppConfig OCPPConfig
+	var configurationFilePath = ""
+	configurationPath, isFound := cache.Cache.Get("configurationFilePath")
+	if isFound {
+		configurationFilePath = configurationPath.(string)
+	}
+	DecodeFile(configurationFilePath, &ocppConfig)
+	err := cache.Cache.Add("OCPPConfiguration", &ocppConfig, goCache.NoExpiration)
+	if err != nil {
+		panic(err)
+	}
+	log.Println("Added OCPP configuration to cache")
 }
 
 // GetConfiguration Get the global configuration
@@ -63,7 +64,11 @@ func UpdateConfigurationFile() error {
 		log.Println(err)
 		return err
 	}
-	err = WriteToFile("configs/configuration.json", &configuration)
+	value, isFound := cache.Cache.Get("configurationFilePath")
+	if !isFound {
+		return fmt.Errorf("configuration file path not found in cache")
+	}
+	err = WriteToFile(value.(string), &configuration)
 	if err != nil {
 		log.Println(err)
 	}

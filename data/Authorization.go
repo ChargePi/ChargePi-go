@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	goCache "github.com/patrickmn/go-cache"
+	"github.com/xBlaz3kx/ChargePi-go/cache"
 	"github.com/xBlaz3kx/ChargePi-go/settings"
 	"log"
 	"sync"
@@ -20,22 +21,30 @@ var AuthCache *goCache.Cache
 
 //init Read the authorization persistence file.
 func init() {
-	var auth *AuthorizationModule
 	once := sync.Once{}
 	once.Do(func() {
 		AuthCache = goCache.New(time.Minute*10, time.Minute*10)
-		settings.DecodeFile("configs/auth.json", &auth)
-		AuthCache.Set("AuthCacheVersion", auth.Version, goCache.NoExpiration)
-		AuthCache.Set("AuthCacheMaxTags", 0, goCache.NoExpiration)
-		for _, tag := range auth.tags {
-			if tag.ExpiryDate != nil {
-				AuthCache.Set(fmt.Sprintf("AuthTag%s", tag.ParentIdTag), tag, tag.ExpiryDate.Sub(time.Now()))
-				continue
-			}
-			AuthCache.SetDefault(fmt.Sprintf("AuthTag%s", tag.ParentIdTag), tag)
-		}
-		log.Printf("Read auth file version %d with tags %s", auth.Version, auth.tags)
 	})
+}
+
+func GetAuthFile() {
+	var auth *AuthorizationModule
+	var authFilePath = ""
+	authPath, isFound := cache.Cache.Get("configurationFilePath")
+	if isFound {
+		authFilePath = authPath.(string)
+	}
+	settings.DecodeFile(authFilePath, &auth)
+	AuthCache.Set("AuthCacheVersion", auth.Version, goCache.NoExpiration)
+	AuthCache.Set("AuthCacheMaxTags", 0, goCache.NoExpiration)
+	for _, tag := range auth.tags {
+		if tag.ExpiryDate != nil {
+			AuthCache.Set(fmt.Sprintf("AuthTag%s", tag.ParentIdTag), tag, tag.ExpiryDate.Sub(time.Now()))
+			continue
+		}
+		AuthCache.SetDefault(fmt.Sprintf("AuthTag%s", tag.ParentIdTag), tag)
+	}
+	log.Printf("Read auth file version %d with tags %s", auth.Version, auth.tags)
 }
 
 // AddTag Add a tag to the global authorization cache.

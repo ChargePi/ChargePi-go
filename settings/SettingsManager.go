@@ -15,21 +15,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"sync"
 )
-
-func init() {
-	once := sync.Once{}
-	once.Do(func() {
-		var settings Settings
-		DecodeFile("configs/settings.json", &settings)
-		err := cache.Cache.Add("settings", settings, goCache.NoExpiration)
-		if err != nil {
-			panic(err)
-		}
-		log.Println("Added settings to cache")
-	})
-}
 
 type Settings struct {
 	ChargePoint struct {
@@ -111,10 +97,31 @@ type Session struct {
 	Consumption   []types.MeterValue
 }
 
+// GetSettings Read settings from the specified path
+func GetSettings() {
+	var settings Settings
+	var settingsPath = ""
+	cacheSettings, isFound := cache.Cache.Get("settingsFilePath")
+	if isFound {
+		settingsPath = cacheSettings.(string)
+	}
+	DecodeFile(settingsPath, &settings)
+	err := cache.Cache.Add("settings", settings, goCache.NoExpiration)
+	if err != nil {
+		panic(err)
+	}
+	log.Println("Added settings to cache")
+}
+
+// GetConnectors Scan the connectors folder and read all the connectors' settings.
 func GetConnectors() []*Connector {
 	var connectors []*Connector
-	root := "configs/connectors"
-	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+	var connectorsFolderPath = ""
+	connectorPath, isFound := cache.Cache.Get("connectorsFolderPath")
+	if isFound {
+		connectorsFolderPath = connectorPath.(string)
+	}
+	err := filepath.Walk(connectorsFolderPath, func(path string, info os.FileInfo, err error) error {
 		// Skip directories
 		if info.IsDir() {
 			return nil
