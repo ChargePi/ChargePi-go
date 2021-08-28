@@ -15,7 +15,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"strconv"
+	"strings"
 	"syscall"
 )
 
@@ -29,7 +29,7 @@ func initLogger(grayLogAddress string) {
 
 func main() {
 	var (
-		config     settings.Settings
+		config     *settings.Settings
 		tagReader  *hardware.TagReader
 		lcd        *hardware.LCD
 		ledStrip   *hardware.LEDStrip
@@ -39,11 +39,13 @@ func main() {
 	var workingDirectory, _ = os.Getwd()
 	var configurationPath = fmt.Sprintf("%s/configs", workingDirectory)
 	// Get the paths from arguments
+	configurationFileFormatFlag := flag.String("config-format", "json", "Format of the configuration files (YAML, JSON or TOML)")
+	configurationFileFormat := strings.ToLower(*configurationFileFormatFlag)
 	configurationFolderPath := flag.String("config-folder", configurationPath, "Path to the configuration folder")
 	connectorsFolderPath := flag.String("connector-folder", fmt.Sprintf("%s/%s", configurationPath, "connectors"), "Path to the connector folder")
-	configurationFilePath := flag.String("ocpp-config", fmt.Sprintf("%s/%s", configurationPath, "configuration.json"), "Path to the OCPP configuration file")
-	settingsFilePath := flag.String("settings", fmt.Sprintf("%s/%s", configurationPath, "settings.json"), "Path to the settings file")
-	authFilePath := flag.String("auth", fmt.Sprintf("%s/%s", configurationPath, "auth.json"), "Path to the authorization persistence file")
+	configurationFilePath := flag.String("ocpp-config", fmt.Sprintf("%s/%s.%s", configurationPath, "configuration", configurationFileFormat), "Path to the OCPP configuration file")
+	settingsFilePath := flag.String("settings", fmt.Sprintf("%s/%s.%s", configurationPath, "settings", configurationFileFormat), "Path to the settings file")
+	authFilePath := flag.String("auth", fmt.Sprintf("%s/%s.%s", configurationPath, "auth", configurationFileFormat), "Path to the authorization persistence file")
 	flag.Parse()
 	// Put the paths in the Cache
 	err := cache.Cache.Add("configurationFolderPath", *configurationFolderPath, cache2.NoExpiration)
@@ -63,7 +65,7 @@ func main() {
 	if !isFound {
 		panic("settings not found")
 	}
-	config = cacheSettings.(settings.Settings)
+	config = cacheSettings.(*settings.Settings)
 	initLogger(config.ChargePoint.Info.LogServer)
 	quitChannel := make(chan os.Signal, 1)
 	if config.ChargePoint.Hardware.TagReader.IsSupported && config.ChargePoint.Hardware.TagReader.ReaderModel == "PN532" {
@@ -88,15 +90,11 @@ func main() {
 	if config.ChargePoint.Hardware.LedIndicator.Enabled == true && config.ChargePoint.Hardware.LedIndicator.Type == "WS281x" {
 		// Add an LED strip if configured
 		log.Println("Preparing LED strip from config: ", config.ChargePoint.Hardware.LedIndicator.Type)
-		dataPin, err := strconv.Atoi(config.ChargePoint.Hardware.LedIndicator.DataPin)
-		if err != nil {
-			dataPin = 18
-		}
 		stripLength := len(connectors)
 		if config.ChargePoint.Hardware.LedIndicator.IndicateCardRead {
 			stripLength++
 		}
-		ledStrip, ledError = hardware.NewLEDStrip(stripLength, dataPin)
+		ledStrip, ledError = hardware.NewLEDStrip(stripLength, config.ChargePoint.Hardware.LedIndicator.DataPin)
 		if ledError != nil {
 			log.Println(ledError)
 		}

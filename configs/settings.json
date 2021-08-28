@@ -30,7 +30,7 @@
       },
       "ledIndicator": {
         "enabled": true,
-        "dataPin": "18",
+        "dataPin": 18,
         "indicateCardRead": true,
         "type": "WS281x",
         "invert": false

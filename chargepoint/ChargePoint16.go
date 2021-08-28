@@ -32,7 +32,7 @@ type ChargePointHandler struct {
 	chargePoint ocpp16.ChargePoint
 	IsAvailable bool
 	Connectors  []*Connector
-	Settings    settings.Settings
+	Settings    *settings.Settings
 	TagReader   *hardware.TagReader
 	LEDStrip    *hardware.LEDStrip
 	LCD         *hardware.LCD
@@ -160,7 +160,7 @@ func (handler *ChargePointHandler) startup() {
 				}
 				break
 			case core.ChargePointStatusCharging:
-				err = connector.ResumeCharging(cachedConnector.Session)
+				err = connector.ResumeCharging(data.Session(cachedConnector.Session))
 				if err != nil {
 					err = handler.stopChargingConnector(connector, core.ReasonOther)
 					if err != nil {

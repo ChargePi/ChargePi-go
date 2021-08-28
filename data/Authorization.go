@@ -2,19 +2,20 @@ package data
 
 import (
 	"fmt"
+	"github.com/kkyr/fig"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	goCache "github.com/patrickmn/go-cache"
 	"github.com/xBlaz3kx/ChargePi-go/cache"
-	"github.com/xBlaz3kx/ChargePi-go/settings"
 	"log"
+	"path/filepath"
 	"sync"
 	"time"
 )
 
 type AuthorizationModule struct {
-	Version       int
-	MaxCachedTags int
-	tags          []types.IdTagInfo
+	Version       int               `fig:"Version" validation:"required"`
+	MaxCachedTags int               `fig:"Version" validation:"required"`
+	tags          []types.IdTagInfo `fig:"Version"`
 }
 
 var AuthCache *goCache.Cache
@@ -28,13 +29,19 @@ func init() {
 }
 
 func GetAuthFile() {
-	var auth *AuthorizationModule
+	var auth AuthorizationModule
 	var authFilePath = ""
 	authPath, isFound := cache.Cache.Get("configurationFilePath")
 	if isFound {
 		authFilePath = authPath.(string)
 	}
-	settings.DecodeFile(authFilePath, &auth)
+	err := fig.Load(&auth,
+		fig.File(filepath.Base(authFilePath)),
+		fig.Dirs(filepath.Dir(authFilePath)),
+	)
+	if err != nil {
+		panic(err)
+	}
 	AuthCache.Set("AuthCacheVersion", auth.Version, goCache.NoExpiration)
 	AuthCache.Set("AuthCacheMaxTags", 0, goCache.NoExpiration)
 	for _, tag := range auth.tags {
