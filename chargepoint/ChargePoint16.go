@@ -78,6 +78,7 @@ func (handler *ChargePointHandler) displayLEDStatus(connectorIndex int, status c
 	}
 }
 
+// indicateCard Blinks the LED to indicate that the card was read.
 func (handler *ChargePointHandler) indicateCard(index int, color uint32) {
 	if !handler.Settings.ChargePoint.Hardware.LedIndicator.Enabled || handler.LEDStrip == nil {
 		return
@@ -139,8 +140,8 @@ func (handler *ChargePointHandler) FindConnectorWithReservationId(reservationId 
 	return nil
 }
 
-// startup After connecting to the central system, try to restore the previous state of each Connector and notify about its state.
-//If the ConnectorStatus was "Preparing" or "Charging",  try to resume or start charging. If it fails, notify the central system.
+// startup After connecting to the central system, try to restore the previous state of each Connector and notify the system about its state.
+//If the ConnectorStatus was "Preparing" or "Charging", try to resume or start charging. If the charging fails, change the connector status and notify the central system.
 func (handler *ChargePointHandler) startup() {
 	var err error
 	for _, connector := range handler.Connectors {
@@ -173,7 +174,7 @@ func (handler *ChargePointHandler) startup() {
 	}
 }
 
-// isTagAuthorized Check if the tag is authorized for charging. If the auth cache is enabled and if it can preauthorize from cache,
+// isTagAuthorized Check if the tag is authorized for charging. If the authentication cache is enabled and if it can preauthorize from cache,
 // the program will check the cache first and reauthorize with the sendAuthorizeRequest to the central system after 10 seconds.
 // If cache is not enabled, it will just execute sendAuthorizeRequest and retrieve the status from the request.
 func (handler *ChargePointHandler) isTagAuthorized(tagId string) bool {
@@ -207,8 +208,8 @@ func (handler *ChargePointHandler) isTagAuthorized(tagId string) bool {
 	return response
 }
 
-// sendAuthorizeRequest Send a AuthorizeRequest to the central system to get information on the tagId authorization status.
-// Adds the tag to the cache if it is enabled.
+// sendAuthorizeRequest Send a AuthorizeRequest to the central system to get information on the tagId status.
+// Adds the tag to the cache if it's enabled.
 func (handler *ChargePointHandler) sendAuthorizeRequest(tagId string) (*types2.IdTagInfo, error) {
 	var err error
 	response, err := handler.chargePoint.SendRequest(core.AuthorizeRequest{IdTag: tagId})
@@ -226,7 +227,7 @@ func (handler *ChargePointHandler) sendAuthorizeRequest(tagId string) (*types2.I
 	return authInfo.IdTagInfo, err
 }
 
-// notifyConnectorStatus Notified the central system about the connector's status and updates the LED indicator.
+// notifyConnectorStatus Notify the central system about the connector's status and updates the LED indicator.
 func (handler *ChargePointHandler) notifyConnectorStatus(connector *Connector, status core.ChargePointStatus, errorCode core.ChargePointErrorCode) {
 	if connector != nil {
 		request := core.StatusNotificationRequest{
@@ -279,7 +280,7 @@ func (handler *ChargePointHandler) startCharging(tagId string) error {
 }
 
 // startChargingConnector Start charging a connector with the specified ID. Send the request to the central system, turn on the Connector,
-// update the status of the Connector, start the timer and sample the PowerMeter if enabled.
+// update the status of the Connector, and start the maxChargingTime timer and sample the PowerMeter, if it's enabled.
 func (handler *ChargePointHandler) startChargingConnector(connector *Connector, tagId string) error {
 	if connector != nil && connector.IsAvailable() && handler.isTagAuthorized(tagId) {
 		handler.notifyConnectorStatus(connector, core.ChargePointStatusPreparing, core.NoError)
@@ -812,13 +813,9 @@ func (handler *ChargePointHandler) Run() {
 		handler.IsAvailable = true
 		handler.bootNotification()
 	}
-	/*	time.Sleep(time.Second * 10)
-		handler.HandleChargingRequest("F5ED1377")
-		time.Sleep(time.Second * 10)
-		handler.HandleChargingRequest("F5ED1377")*/
 }
 
-// listenForTag Listen for a RFID/NFC tag on a separate thread. If a tag is detected, call the HandleChargingRequest.
+// listenForTag Listen for an RFID/NFC tag on a separate thread. If a tag is detected, call the HandleChargingRequest.
 // Blink the LED if indication is enabled.
 func (handler *ChargePointHandler) listenForTag() {
 	if !handler.Settings.ChargePoint.Hardware.TagReader.IsSupported {

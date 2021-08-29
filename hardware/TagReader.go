@@ -16,7 +16,7 @@ type TagReader struct {
 	ResetPin         int
 }
 
-// init Initialize the NFC/RFID tag reader. Establish UART connection and setup the reader.
+// init Initialize the NFC/RFID tag reader. Establish the connection and set up the reader.
 func (reader *TagReader) init() {
 	dev, err := nfc.Open(reader.DeviceConnection)
 	if err != nil {

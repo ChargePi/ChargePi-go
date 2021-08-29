@@ -143,6 +143,7 @@ func GetConnectors() []*Connector {
 	return connectors
 }
 
+// UpdateConnectorStatus update the Connector's status in the connector configuration file
 func UpdateConnectorStatus(evseId int, connectorId int, status core.ChargePointStatus) {
 	log.Println("Updating status of the connector ", connectorId)
 	var cachePathKey = fmt.Sprintf("connectorEvse%dId%dFilePath", evseId, connectorId)
@@ -164,6 +165,7 @@ func UpdateConnectorStatus(evseId int, connectorId int, status core.ChargePointS
 	log.Println("Updated status ", connectorId)
 }
 
+// UpdateConnectorSessionInfo update the Connector's Session object in the connector configuration file
 func UpdateConnectorSessionInfo(evseId int, connectorId int, session *Session) {
 	log.Println("Updating session info for connector ", connectorId)
 	var cachePathKey = fmt.Sprintf("connectorEvse%dId%dFilePath", evseId, connectorId)
