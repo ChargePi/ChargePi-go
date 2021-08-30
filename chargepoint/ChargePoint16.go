@@ -587,9 +587,8 @@ func (handler *ChargePointHandler) OnTriggerMessage(request *remotetrigger.Trigg
 		}
 		status = remotetrigger.TriggerMessageStatusAccepted
 		break
-	case firmware.DiagnosticsStatusNotificationFeatureName:
-		break
-	case firmware.FirmwareStatusNotificationFeatureName:
+	case firmware.DiagnosticsStatusNotificationFeatureName, firmware.FirmwareStatusNotificationFeatureName:
+		status = remotetrigger.TriggerMessageStatusNotImplemented
 		break
 	case core.HeartbeatFeatureName:
 		_, err = scheduler.Every(5).Seconds().LimitRunsTo(1).Do(handler.sendHeartBeat)
@@ -597,7 +596,9 @@ func (handler *ChargePointHandler) OnTriggerMessage(request *remotetrigger.Trigg
 			return
 		}
 		status = remotetrigger.TriggerMessageStatusAccepted
+		break
 	case core.MeterValuesFeatureName:
+		status = remotetrigger.TriggerMessageStatusNotImplemented
 		break
 	case core.StatusNotificationFeatureName:
 		connectorID := *request.ConnectorId
