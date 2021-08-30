@@ -27,15 +27,7 @@ func initLogger(grayLogAddress string) {
 	log.SetOutput(io.MultiWriter(os.Stderr, gelfWriter))
 }
 
-func main() {
-	var (
-		config     *settings.Settings
-		tagReader  *hardware.TagReader
-		lcd        *hardware.LCD
-		ledStrip   *hardware.LEDStrip
-		connectors []*settings.Connector
-		ledError   error
-	)
+func getFlags() error {
 	var workingDirectory, _ = os.Getwd()
 	var configurationPath = fmt.Sprintf("%s/configs", workingDirectory)
 	// Get the paths from arguments
@@ -53,6 +45,20 @@ func main() {
 	err = cache.Cache.Add("configurationFilePath", *configurationFilePath, cache2.NoExpiration)
 	err = cache.Cache.Add("settingsFilePath", *settingsFilePath, cache2.NoExpiration)
 	err = cache.Cache.Add("authFilePath", *authFilePath, cache2.NoExpiration)
+	return err
+}
+
+func main() {
+	var (
+		config     *settings.Settings
+		tagReader  *hardware.TagReader
+		lcd        *hardware.LCD
+		ledStrip   *hardware.LEDStrip
+		connectors []*settings.Connector
+		ledError   error
+		handler    chargepoint.ChargePointHandler
+	)
+	err := getFlags()
 	if err != nil {
 		return
 	}
@@ -99,7 +105,6 @@ func main() {
 			log.Println(ledError)
 		}
 	}
-	var handler chargepoint.ChargePointHandler
 	if config.ChargePoint.Info.ProtocolVersion == "1.6" {
 		// 4. Instantiate ChargePoint struct with provided settings
 		handler := &chargepoint.ChargePointHandler{
