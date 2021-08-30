@@ -17,7 +17,7 @@ type Session struct {
 // StartSession Starts the Session, storing the transactionId and tagId of the user.
 // Checks if transaction and tagId are valid strings.
 func (session *Session) StartSession(transactionId string, tagId string) bool {
-	if !session.IsActive && strUtil.IsAlphanumeric(transactionId) && strUtil.IsAlphanumeric(tagId) {
+	if !session.IsActive && strUtil.IsAlphanumeric(transactionId) && strUtil.IsNotEmpty(tagId) {
 		session.TransactionId = transactionId
 		session.TagId = tagId
 		session.IsActive = true

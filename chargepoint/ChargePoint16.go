@@ -270,7 +270,7 @@ func (handler *ChargePointHandler) HandleChargingRequest(tagId string) {
 	}
 }
 
-// startCharging Start charging on the first available connector. If there is no available connector, reject the request.
+// startCharging Start charging on the first available Connector. If there is no available Connector, reject the request.
 func (handler *ChargePointHandler) startCharging(tagId string) error {
 	var connector = handler.FindAvailableConnector()
 	if connector != nil {
@@ -467,9 +467,12 @@ func (handler *ChargePointHandler) AddConnectors(connectors []*settings.Connecto
 }
 
 func (handler *ChargePointHandler) OnClearCache(request *core.ClearCacheRequest) (confirmation *core.ClearCacheConfirmation, err error) {
-	var response core.ClearCacheStatus = core.ClearCacheStatusRejected
+	var (
+		response         = core.ClearCacheStatusRejected
+		authCacheEnabled string
+	)
 	log.Printf("Requested clear cache")
-	authCacheEnabled, err := settings.GetConfigurationValue("AuthorizationCacheEnabled")
+	authCacheEnabled, err = settings.GetConfigurationValue("AuthorizationCacheEnabled")
 	if err != nil {
 		log.Printf("Error clearing cache: %s", err)
 	} else if authCacheEnabled == "true" {
@@ -480,19 +483,22 @@ func (handler *ChargePointHandler) OnClearCache(request *core.ClearCacheRequest)
 }
 
 func (handler *ChargePointHandler) OnDataTransfer(request *core.DataTransferRequest) (confirmation *core.DataTransferConfirmation, err error) {
-	var response core.DataTransferStatus = core.DataTransferStatusRejected
+	var response = core.DataTransferStatusRejected
 	return core.NewDataTransferConfirmation(response), errors.New("unsupported action")
 }
 
 func (handler *ChargePointHandler) OnGetConfiguration(request *core.GetConfigurationRequest) (confirmation *core.GetConfigurationConfirmation, err error) {
+	var (
+		unknownKeys   []string
+		configArray   []core.ConfigurationKey
+		configuration *settings.OCPPConfig
+	)
 	log.Printf("Requested configuration")
-	var unknownKeys []string
-	var configArray []core.ConfigurationKey
-	configuration, err := settings.GetConfiguration()
+	configuration, err = settings.GetConfiguration()
 	if err == nil && configuration != nil {
 		configArray = configuration.GetConfig()
 		for _, key := range request.Key {
-			_, err := settings.GetConfigurationValue(key)
+			_, err = settings.GetConfigurationValue(key)
 			if err != nil {
 				unknownKeys = append(unknownKeys, key)
 			}
@@ -502,12 +508,15 @@ func (handler *ChargePointHandler) OnGetConfiguration(request *core.GetConfigura
 }
 
 func (handler *ChargePointHandler) OnRemoteStartTransaction(request *core.RemoteStartTransactionRequest) (confirmation *core.RemoteStartTransactionConfirmation, err error) {
-	var response types2.RemoteStartStopStatus = types2.RemoteStartStopStatusRejected
-	log.Printf("Got remote stop request for connector %d with tag %s", request.ConnectorId, request.IdTag)
-	var connector = handler.FindConnectorWithId(*request.ConnectorId)
+	var (
+		connectorId = *request.ConnectorId
+		response    = types2.RemoteStartStopStatusRejected
+		connector   = handler.FindConnectorWithId(connectorId)
+	)
+	log.Printf("Got remote start request for connector %d with tag %s", connectorId, request.IdTag)
 	if connector != nil {
 		//Delay the charging by 3 seconds
-		_, err := scheduler.Every(3).Seconds().LimitRunsTo(1).Do(handler.startCharging, request.IdTag)
+		_, err = scheduler.Every(3).Seconds().LimitRunsTo(1).Do(handler.startCharging, request.IdTag)
 		if err != nil {
 			return core.NewRemoteStartTransactionConfirmation(response), err
 		}
@@ -517,13 +526,15 @@ func (handler *ChargePointHandler) OnRemoteStartTransaction(request *core.Remote
 }
 
 func (handler *ChargePointHandler) OnRemoteStopTransaction(request *core.RemoteStopTransactionRequest) (confirmation *core.RemoteStopTransactionConfirmation, err error) {
-	var response types2.RemoteStartStopStatus = types2.RemoteStartStopStatusRejected
-	var transactionId = string(rune(request.TransactionId))
-	var connector = handler.FindConnectorWithTransactionId(transactionId)
+	var (
+		response      = types2.RemoteStartStopStatusRejected
+		transactionId = fmt.Sprintf("%d", request.TransactionId)
+		connector     = handler.FindConnectorWithTransactionId(transactionId)
+	)
 	log.Printf("Got remote stop request for transaction %s", transactionId)
 	if connector != nil {
 		//Delay stopping the transaction by 3 seconds
-		_, err := scheduler.Every(3).Seconds().LimitRunsTo(1).Do(handler.stopChargingConnectorWithTransactionId, transactionId)
+		_, err = scheduler.Every(3).Seconds().LimitRunsTo(1).Do(handler.stopChargingConnectorWithTransactionId, transactionId)
 		if err != nil {
 			return core.NewRemoteStopTransactionConfirmation(response), err
 		}
@@ -536,7 +547,7 @@ func (handler *ChargePointHandler) OnReset(request *core.ResetRequest) (confirma
 	var response core.ResetStatus = core.ResetStatusRejected
 	log.Printf("Requested reset %s", request.Type)
 	if request.Type == core.ResetTypeHard {
-		handler.CleanUp(core.ReasonHardReset)
+		_, err = scheduler.Every(3).Seconds().LimitRunsTo(1).Do(handler.CleanUp, core.ReasonHardReset)
 		_, err = scheduler.Every(5).Seconds().LimitRunsTo(1).Do(exec.Command, "sudo reboot")
 		if err == nil {
 			response = core.ResetStatusAccepted
