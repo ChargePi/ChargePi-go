@@ -372,7 +372,7 @@ func (handler *ChargePointHandler) stopChargingConnector(connector *Connector, r
 		request := core.StopTransactionRequest{
 			TransactionId: transactionId,
 			IdTag:         "",
-			MeterStop:     0,
+			MeterStop:     int(connector.session.CalculateEnergyConsumptionWithAvgPower()),
 			Timestamp:     &types2.DateTime{Time: time.Now()},
 			Reason:        reason,
 		}
