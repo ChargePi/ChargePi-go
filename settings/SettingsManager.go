@@ -193,7 +193,7 @@ func UpdateConnectorSessionInfo(evseId int, connectorId int, session *Session) {
 	log.Println("Updating session info for connector ", connectorId)
 	var cachePathKey = fmt.Sprintf("connectorEvse%dId%dFilePath", evseId, connectorId)
 	var cacheConnectorKey = fmt.Sprintf("connectorEvse%dId%dConfiguration", evseId, connectorId)
-	var connectorSettings Connector
+	var connectorSettings *Connector
 	//Get the file path from cache
 	result, isFound := cache.Cache.Get(cachePathKey)
 	if !isFound {
@@ -204,7 +204,7 @@ func UpdateConnectorSessionInfo(evseId int, connectorId int, session *Session) {
 	//Try to find Connector settings in the cache, if fails, get them from the file
 	settings, isFound := cache.Cache.Get(cacheConnectorKey)
 	if isFound {
-		connectorSettings = settings.(Connector)
+		connectorSettings = settings.(*Connector)
 	} else {
 		err := fig.Load(&connectorSettings,
 			fig.File(filepath.Base(connectorFilePath)),
@@ -222,13 +222,12 @@ func UpdateConnectorSessionInfo(evseId int, connectorId int, session *Session) {
 		Started       string `fig:"Started" default:""`
 		Consumption   []types.MeterValue
 	}(*session)
-
 	err := WriteToFile(connectorFilePath, &connectorSettings)
 	if err != nil {
 		log.Println("Error updating session info: ", err)
 		return
 	}
-	log.Println("Updated session for ", connectorId)
+	log.Println("Updated session for connector ", connectorId)
 }
 
 func WriteToFile(filename string, structure interface{}) (err error) {
