@@ -16,14 +16,18 @@ type OCPPConfig struct {
 	Keys    []core.ConfigurationKey
 }
 
+// InitConfiguration load OCPP configuration from the persistence file.
 func InitConfiguration() {
-	var ocppConfig OCPPConfig
-	var configurationFilePath = ""
+	var (
+		ocppConfig            OCPPConfig
+		configurationFilePath = ""
+		err                   error
+	)
 	configurationPath, isFound := cache.Cache.Get("configurationFilePath")
 	if isFound {
 		configurationFilePath = configurationPath.(string)
 	}
-	err := fig.Load(&ocppConfig,
+	err = fig.Load(&ocppConfig,
 		fig.File(filepath.Base(configurationFilePath)),
 		fig.Dirs(filepath.Dir(configurationFilePath)),
 	)

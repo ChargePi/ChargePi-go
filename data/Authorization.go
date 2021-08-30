@@ -28,14 +28,18 @@ func init() {
 	})
 }
 
+// GetAuthFile read tags from the persistence cache.
 func GetAuthFile() {
-	var auth AuthorizationModule
-	var authFilePath = ""
+	var (
+		auth         AuthorizationModule
+		authFilePath = ""
+		err          error
+	)
 	authPath, isFound := cache.Cache.Get("configurationFilePath")
 	if isFound {
 		authFilePath = authPath.(string)
 	}
-	err := fig.Load(&auth,
+	err = fig.Load(&auth,
 		fig.File(filepath.Base(authFilePath)),
 		fig.Dirs(filepath.Dir(authFilePath)),
 	)

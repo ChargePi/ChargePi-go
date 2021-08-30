@@ -100,14 +100,17 @@ type Session struct {
 
 // GetSettings Read settings from the specified path
 func GetSettings() {
-	var settings Settings
-	var settingsPath = ""
+	var (
+		settings     Settings
+		settingsPath = ""
+		err          error
+	)
 	cacheSettings, isFound := cache.Cache.Get("settingsFilePath")
 	if !isFound {
 		panic("settings file path not found")
 	}
 	settingsPath = cacheSettings.(string)
-	err := fig.Load(&settings,
+	err = fig.Load(&settings,
 		fig.File(filepath.Base(settingsPath)),
 		fig.Dirs(filepath.Dir(settingsPath)),
 	)
