@@ -25,7 +25,7 @@ Usage:
      tar -xvjf libnfc-1.8.0.tar.bz2
     ```
 
-**Next two steps may vary for your reader and communication protocol**
+   **Next two steps may vary for your reader and communication protocol**
 
 2. Create PN532 configuration:
 

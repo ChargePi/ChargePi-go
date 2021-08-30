@@ -9,7 +9,7 @@ Settings can be found in the [_settings_](../../configs/settings.json) file and 
 - default max charging time,
 - OCPP protocol version,
 - client current and target version for tracking updates,
-- display and input hardware settings for LCD, RFID/NFC reader and LEDs.
+- hardware settings for LCD, RFID/NFC reader and LEDs.
 
 The settings file is supported in YAML or JSON format.
 
