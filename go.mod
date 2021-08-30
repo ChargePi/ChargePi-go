@@ -10,6 +10,7 @@ require (
 	github.com/d2r2/go-i2c v0.0.0-20191123181816-73a8a799d6bc
 	github.com/d2r2/go-logger v0.0.0-20210606094344-60e9d1233e22 // indirect
 	github.com/go-co-op/gocron v1.6.0
+	github.com/kkyr/fig v0.3.0
 	github.com/kr/pretty v0.1.0
 	github.com/lorenzodonini/ocpp-go v0.14.0
 	github.com/op/go-logging v0.0.0-20160315200505-970db520ece7 // indirect

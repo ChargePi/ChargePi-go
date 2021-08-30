@@ -3,10 +3,12 @@ package settings
 import (
 	"errors"
 	"fmt"
+	"github.com/kkyr/fig"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	goCache "github.com/patrickmn/go-cache"
 	"github.com/xBlaz3kx/ChargePi-go/cache"
 	"log"
+	"path/filepath"
 )
 
 type OCPPConfig struct {
@@ -14,15 +16,25 @@ type OCPPConfig struct {
 	Keys    []core.ConfigurationKey
 }
 
+// InitConfiguration load OCPP configuration from the persistence file.
 func InitConfiguration() {
-	var ocppConfig OCPPConfig
-	var configurationFilePath = ""
+	var (
+		ocppConfig            OCPPConfig
+		configurationFilePath = ""
+		err                   error
+	)
 	configurationPath, isFound := cache.Cache.Get("configurationFilePath")
 	if isFound {
 		configurationFilePath = configurationPath.(string)
 	}
-	DecodeFile(configurationFilePath, &ocppConfig)
-	err := cache.Cache.Add("OCPPConfiguration", &ocppConfig, goCache.NoExpiration)
+	err = fig.Load(&ocppConfig,
+		fig.File(filepath.Base(configurationFilePath)),
+		fig.Dirs(filepath.Dir(configurationFilePath)),
+	)
+	if err != nil {
+		panic(err)
+	}
+	err = cache.Cache.Add("OCPPConfiguration", &ocppConfig, goCache.NoExpiration)
 	if err != nil {
 		panic(err)
 	}

@@ -56,7 +56,6 @@ func TestDecodeFile(t *testing.T) {
 				if err != nil {
 					t.Errorf("cannot create file: %v", err)
 				}
-				settings.DecodeFile(tt.args.filename, &testFile)
 				break
 			case "FileDoesntExist":
 				/*exec.Command(fmt.Sprintf("rm %s", tt.args.filename))
@@ -124,7 +123,7 @@ func TestGetConfiguration(t *testing.T) {
 		return
 	}
 	var config = settings.OCPPConfig{}
-	settings.DecodeFile("test/configuration.json", &config)
+	//settings.DecodeFile("test/configuration.json", &config)
 	if cache2.Cache == nil {
 		cache2.Cache = cache.New(time.Minute*10, time.Minute*10)
 	}
