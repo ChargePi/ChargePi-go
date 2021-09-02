@@ -281,7 +281,7 @@ func (handler *ChargePointHandler) startCharging(tagId string) error {
 // startChargingConnector Start charging a connector with the specified ID. Send the request to the central system, turn on the Connector,
 // update the status of the Connector, and start the maxChargingTime timer and sample the PowerMeter, if it's enabled.
 func (handler *ChargePointHandler) startChargingConnector(connector *Connector, tagId string) error {
-	if connector != nil && connector.IsAvailable() && handler.isTagAuthorized(tagId) {
+	if connector != nil && connector.IsAvailable() && handler.isTagAuthorized(tagId) && handler.IsAvailable {
 		handler.notifyConnectorStatus(connector, core.ChargePointStatusPreparing, core.NoError)
 		request := core.StartTransactionRequest{
 			ConnectorId: connector.ConnectorId,
@@ -405,7 +405,6 @@ func (handler *ChargePointHandler) stopChargingConnector(connector *Connector, r
 			_ = scheduler.RemoveByTag(fmt.Sprintf("connector%dSampling", connector.ConnectorId))
 			err = scheduler.RemoveByTag(fmt.Sprintf("connector%dTimer", connector.ConnectorId))
 			log.Printf("Stopped charging connector %d at %s", connector.ConnectorId, time.Now())
-			//log.Printf("Transaction unauthorized at connector %d", connector.ConnectorId)
 		}
 		return handler.chargePoint.SendRequestAsync(request, callback)
 	}
@@ -564,9 +563,11 @@ func (handler *ChargePointHandler) OnReset(request *core.ResetRequest) (confirma
 func (handler *ChargePointHandler) OnUnlockConnector(request *core.UnlockConnectorRequest) (confirmation *core.UnlockConnectorConfirmation, err error) {
 	var response core.UnlockStatus = core.UnlockStatusNotSupported
 	connector := handler.FindConnectorWithId(request.ConnectorId)
-	_, err = scheduler.Every(1).Seconds().LimitRunsTo(1).Do(handler.stopChargingConnector, connector.ConnectorId)
-	if err == nil {
-		response = core.UnlockStatusUnlocked
+	if connector != nil {
+		_, err = scheduler.Every(1).Seconds().LimitRunsTo(1).Do(handler.stopChargingConnector, connector, core.ReasonUnlockCommand)
+		if err == nil {
+			response = core.UnlockStatusUnlocked
+		}
 	}
 	return core.NewUnlockConnectorConfirmation(response), err
 }
@@ -593,7 +594,7 @@ func (handler *ChargePointHandler) OnTriggerMessage(request *remotetrigger.Trigg
 	case core.BootNotificationFeatureName:
 		_, err = scheduler.Every(10).Seconds().LimitRunsTo(1).Do(handler.bootNotification)
 		if err != nil {
-			return
+			break
 		}
 		status = remotetrigger.TriggerMessageStatusAccepted
 		break
@@ -603,7 +604,7 @@ func (handler *ChargePointHandler) OnTriggerMessage(request *remotetrigger.Trigg
 	case core.HeartbeatFeatureName:
 		_, err = scheduler.Every(5).Seconds().LimitRunsTo(1).Do(handler.sendHeartBeat)
 		if err != nil {
-			return
+			break
 		}
 		status = remotetrigger.TriggerMessageStatusAccepted
 		break
@@ -614,7 +615,7 @@ func (handler *ChargePointHandler) OnTriggerMessage(request *remotetrigger.Trigg
 		connectorID := *request.ConnectorId
 		connector := handler.FindConnectorWithId(connectorID)
 		if connector != nil {
-			_, err = scheduler.Every(5).Seconds().LimitRunsTo(1).Do(handler.notifyConnectorStatus, connector.ConnectorId, connector.ConnectorStatus, core.NoError)
+			_, err = scheduler.Every(5).Seconds().LimitRunsTo(1).Do(handler.notifyConnectorStatus, connector, connector.ConnectorStatus, core.NoError)
 			if err != nil {
 				return nil, err
 			}
@@ -806,8 +807,8 @@ func (handler *ChargePointHandler) Run() {
 	handler.chargePoint.SetCoreHandler(handler)
 	handler.chargePoint.SetReservationHandler(handler)
 	handler.chargePoint.SetRemoteTriggerHandler(handler)
-	maCachedTagsString, err := settings.GetConfigurationValue("MaxCachedTags")
-	maxCachedTags, err := strconv.Atoi(maCachedTagsString)
+	maxCachedTagsString, err := settings.GetConfigurationValue("MaxCachedTags")
+	maxCachedTags, err := strconv.Atoi(maxCachedTagsString)
 	if err == nil {
 		data.SetMaxCachedTags(maxCachedTags)
 	}
