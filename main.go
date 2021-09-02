@@ -62,7 +62,7 @@ func main() {
 	if err != nil {
 		return
 	}
-	// 1. Read settings from files -> SettingsManager
+	// Read settings from files -> SettingsManager
 	settings.GetSettings()
 	go settings.InitConfiguration()
 	go data.GetAuthFile()
@@ -116,6 +116,8 @@ func main() {
 		handler.AddConnectors(connectors)
 		// Listen to incoming requests from the Central System
 		handler.Run()
+	} else {
+		log.Fatal("Protocol version not supported: ", config.ChargePoint.Info.ProtocolVersion)
 	}
 	signal.Notify(quitChannel, syscall.SIGINT, syscall.SIGTERM)
 	<-quitChannel

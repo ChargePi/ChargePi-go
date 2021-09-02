@@ -14,8 +14,8 @@ import (
 
 type AuthorizationModule struct {
 	Version       int               `fig:"Version" validation:"required"`
-	MaxCachedTags int               `fig:"Version" validation:"required"`
-	tags          []types.IdTagInfo `fig:"Version"`
+	MaxCachedTags int               `fig:"MaxCachedTags" validation:"required"`
+	tags          []types.IdTagInfo `fig:"tags"`
 }
 
 var AuthCache *goCache.Cache
@@ -35,14 +35,13 @@ func GetAuthFile() {
 		authFilePath = ""
 		err          error
 	)
-	authPath, isFound := cache.Cache.Get("configurationFilePath")
+	authPath, isFound := cache.Cache.Get("authFilePath")
 	if isFound {
 		authFilePath = authPath.(string)
 	}
 	err = fig.Load(&auth,
 		fig.File(filepath.Base(authFilePath)),
-		fig.Dirs(filepath.Dir(authFilePath)),
-	)
+		fig.Dirs(filepath.Dir(authFilePath)))
 	if err != nil {
 		panic(err)
 	}

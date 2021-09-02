@@ -39,7 +39,7 @@ type ChargePointHandler struct {
 }
 
 func (handler *ChargePointHandler) sendToLCD(message hardware.LCDMessage) {
-	if handler.LCD == nil {
+	if handler.LCD == nil || handler.LCD.LCDChannel == nil || !handler.Settings.ChargePoint.Hardware.Lcd.IsSupported {
 		return
 	}
 	handler.LCD.LCDChannel <- message
@@ -215,10 +215,9 @@ func (handler *ChargePointHandler) sendAuthorizeRequest(tagId string) (*types2.I
 	response, err := handler.chargePoint.SendRequest(core.AuthorizeRequest{IdTag: tagId})
 	authInfo := response.(*core.AuthorizeConfirmation)
 	switch authInfo.IdTagInfo.Status {
-	case types2.AuthorizationStatusBlocked:
-	case types2.AuthorizationStatusExpired:
-	case types2.AuthorizationStatusInvalid:
+	case types2.AuthorizationStatusBlocked, types2.AuthorizationStatusExpired, types2.AuthorizationStatusInvalid:
 		err = handler.stopChargingConnectorWithTagId(tagId, core.ReasonDeAuthorized)
+		break
 	}
 	value, err2 := settings.GetConfigurationValue("AuthorizationCacheEnabled")
 	if err2 == nil && value == "true" {

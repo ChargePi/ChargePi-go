@@ -127,8 +127,10 @@ func GetSettings() {
 
 // GetConnectors Scan the connectors folder and read all the connectors' settings.
 func GetConnectors() []*Connector {
-	var connectors []*Connector
-	var connectorsFolderPath = ""
+	var (
+		connectors           []*Connector
+		connectorsFolderPath = ""
+	)
 	connectorPath, isFound := cache.Cache.Get("connectorsFolderPath")
 	if isFound {
 		connectorsFolderPath = connectorPath.(string)
@@ -164,8 +166,11 @@ func GetConnectors() []*Connector {
 
 // UpdateConnectorStatus update the Connector's status in the connector configuration file
 func UpdateConnectorStatus(evseId int, connectorId int, status core.ChargePointStatus) {
-	var cachePathKey = fmt.Sprintf("connectorEvse%dId%dFilePath", evseId, connectorId)
-	var connectorSettings Connector
+	var (
+		cachePathKey      = fmt.Sprintf("connectorEvse%dId%dFilePath", evseId, connectorId)
+		connectorSettings Connector
+		err               error
+	)
 	//Get the file path from cache
 	result, isFound := cache.Cache.Get(cachePathKey)
 	if !isFound {
@@ -173,7 +178,7 @@ func UpdateConnectorStatus(evseId int, connectorId int, status core.ChargePointS
 		return
 	}
 	connectorFilePath := result.(string)
-	err := fig.Load(&connectorSettings,
+	err = fig.Load(&connectorSettings,
 		fig.File(filepath.Base(connectorFilePath)),
 		fig.Dirs(filepath.Dir(connectorFilePath)))
 	if err != nil {
@@ -192,10 +197,13 @@ func UpdateConnectorStatus(evseId int, connectorId int, status core.ChargePointS
 
 // UpdateConnectorSessionInfo update the Connector's Session object in the connector configuration file
 func UpdateConnectorSessionInfo(evseId int, connectorId int, session *Session) {
+	var (
+		cachePathKey      = fmt.Sprintf("connectorEvse%dId%dFilePath", evseId, connectorId)
+		cacheConnectorKey = fmt.Sprintf("connectorEvse%dId%dConfiguration", evseId, connectorId)
+		connectorSettings *Connector
+		err               error
+	)
 	log.Println("Updating session info for connector ", connectorId)
-	var cachePathKey = fmt.Sprintf("connectorEvse%dId%dFilePath", evseId, connectorId)
-	var cacheConnectorKey = fmt.Sprintf("connectorEvse%dId%dConfiguration", evseId, connectorId)
-	var connectorSettings *Connector
 	//Get the file path from cache
 	result, isFound := cache.Cache.Get(cachePathKey)
 	if !isFound {
@@ -224,7 +232,7 @@ func UpdateConnectorSessionInfo(evseId int, connectorId int, session *Session) {
 		Started       string `fig:"Started" default:""`
 		Consumption   []types.MeterValue
 	}(*session)
-	err := WriteToFile(connectorFilePath, &connectorSettings)
+	err = WriteToFile(connectorFilePath, &connectorSettings)
 	if err != nil {
 		log.Println("Error updating session info: ", err)
 		return
