@@ -15,6 +15,7 @@ import (
 	types2 "github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/lorenzodonini/ocpp-go/ws"
 	goCache "github.com/patrickmn/go-cache"
+	"github.com/reactivex/rxgo/v2"
 	"github.com/xBlaz3kx/ChargePi-go/cache"
 	"github.com/xBlaz3kx/ChargePi-go/data"
 	"github.com/xBlaz3kx/ChargePi-go/hardware"
@@ -29,13 +30,14 @@ import (
 )
 
 type ChargePointHandler struct {
-	chargePoint ocpp16.ChargePoint
-	IsAvailable bool
-	Connectors  []*Connector
-	Settings    *settings.Settings
-	TagReader   *hardware.TagReader
-	LEDStrip    *hardware.LEDStrip
-	LCD         *hardware.LCD
+	chargePoint      ocpp16.ChargePoint
+	IsAvailable      bool
+	Connectors       []*Connector
+	Settings         *settings.Settings
+	TagReader        *hardware.TagReader
+	LEDStrip         *hardware.LEDStrip
+	LCD              *hardware.LCD
+	connectorChannel chan rxgo.Item
 }
 
 func (handler *ChargePointHandler) sendToLCD(message hardware.LCDMessage) {
@@ -151,12 +153,12 @@ func (handler *ChargePointHandler) startup() {
 		}
 		cachedConnector := connectorSettings.(*settings.Connector)
 		if cachedConnector != nil {
-			handler.notifyConnectorStatus(connector, core.ChargePointStatus(cachedConnector.Status), core.NoError)
+			connector.SetStatus(core.ChargePointStatus(cachedConnector.Status), core.NoError)
 			switch core.ChargePointStatus(cachedConnector.Status) {
 			case core.ChargePointStatusPreparing:
 				err = handler.startCharging(cachedConnector.Session.TagId)
 				if err != nil {
-					handler.notifyConnectorStatus(connector, core.ChargePointStatusAvailable, core.InternalError)
+					connector.SetStatus(core.ChargePointStatusAvailable, core.InternalError)
 					continue
 				}
 				break
@@ -165,7 +167,7 @@ func (handler *ChargePointHandler) startup() {
 				if err != nil {
 					err = handler.stopChargingConnector(connector, core.ReasonOther)
 					if err != nil {
-						handler.notifyConnectorStatus(connector, core.ChargePointStatusFaulted, core.InternalError)
+						connector.SetStatus(core.ChargePointStatusFaulted, core.InternalError)
 					}
 				}
 				break
@@ -227,23 +229,20 @@ func (handler *ChargePointHandler) sendAuthorizeRequest(tagId string) (*types2.I
 }
 
 // notifyConnectorStatus Notify the central system about the connector's status and updates the LED indicator.
-func (handler *ChargePointHandler) notifyConnectorStatus(connector *Connector, status core.ChargePointStatus, errorCode core.ChargePointErrorCode) {
+func (handler *ChargePointHandler) notifyConnectorStatus(connector *Connector) {
 	if connector != nil {
 		request := core.StatusNotificationRequest{
 			ConnectorId: connector.ConnectorId,
-			Status:      status,
-			ErrorCode:   errorCode,
+			Status:      connector.ConnectorStatus,
+			ErrorCode:   connector.ErrorCode,
 			Timestamp:   &types2.DateTime{Time: time.Now()},
 		}
-		connector.SetStatus(status)
 		callback := func(confirmation ocpp.Response, protoError error) {
-			log.Printf("Changed status of the connector %d to %s", connector.ConnectorId, connector.ConnectorStatus)
-			connectorIndex := connector.ConnectorId - 1
-			handler.displayLEDStatus(connectorIndex, connector.ConnectorStatus)
+			log.Printf("Notified status of the connector %d: %s", connector.ConnectorId, connector.ConnectorStatus)
 		}
 		err := handler.chargePoint.SendRequestAsync(request, callback)
 		if err != nil {
-			log.Println("Cannot change status of connector: ", err)
+			log.Println("Cannot send status notification of connector: ", err)
 			return
 		}
 	}
@@ -282,7 +281,6 @@ func (handler *ChargePointHandler) startCharging(tagId string) error {
 // update the status of the Connector, and start the maxChargingTime timer and sample the PowerMeter, if it's enabled.
 func (handler *ChargePointHandler) startChargingConnector(connector *Connector, tagId string) error {
 	if connector != nil && connector.IsAvailable() && handler.isTagAuthorized(tagId) && handler.IsAvailable {
-		handler.notifyConnectorStatus(connector, core.ChargePointStatusPreparing, core.NoError)
 		request := core.StartTransactionRequest{
 			ConnectorId: connector.ConnectorId,
 			IdTag:       tagId,
@@ -293,22 +291,10 @@ func (handler *ChargePointHandler) startChargingConnector(connector *Connector, 
 			startTransactionConf := confirmation.(*core.StartTransactionConfirmation)
 			if startTransactionConf.TransactionId > 0 && startTransactionConf.IdTagInfo.Status == types2.AuthorizationStatusAccepted {
 				err := connector.StartCharging(strconv.Itoa(startTransactionConf.TransactionId), tagId)
-				settings.UpdateConnectorSessionInfo(
-					connector.EvseId,
-					connector.ConnectorId,
-					&settings.Session{
-						IsActive:      connector.session.IsActive,
-						TagId:         connector.session.TagId,
-						TransactionId: connector.session.TransactionId,
-						Started:       connector.session.Started,
-						Consumption:   connector.session.Consumption,
-					})
-				fmt.Println(connector.session)
 				if err != nil {
 					log.Printf("Unable to start charging connector %d: %s", connector.ConnectorId, err)
 					return
 				}
-				handler.notifyConnectorStatus(connector, core.ChargePointStatusCharging, core.NoError)
 				log.Printf("Started charging connector %d at %s", connector.ConnectorId, time.Now())
 				if connector.PowerMeterEnabled {
 					measurandsString, err := settings.GetConfigurationValue("MeterValuesSampledData")
@@ -348,20 +334,7 @@ func (handler *ChargePointHandler) stopChargingConnector(connector *Connector, r
 			return err
 		}
 		if stopTransactionOnEVDisconnect != "true" && reason == core.ReasonEVDisconnected {
-			handler.notifyConnectorStatus(connector, core.ChargePointStatusSuspendedEVSE, core.NoError)
-			err := connector.StopCharging()
-			handler.notifyConnectorStatus(connector, core.ChargePointStatusFinishing, core.NoError)
-			settings.UpdateConnectorSessionInfo(
-				connector.EvseId,
-				connector.ConnectorId,
-				&settings.Session{
-					IsActive:      connector.session.IsActive,
-					TagId:         connector.session.TagId,
-					TransactionId: connector.session.TransactionId,
-					Started:       connector.session.Started,
-					Consumption:   connector.session.Consumption,
-				})
-			handler.notifyConnectorStatus(connector, core.ChargePointStatusAvailable, core.NoError)
+			err := connector.StopCharging(reason)
 			return err
 		}
 		transactionId, err := strconv.Atoi(connector.session.TransactionId)
@@ -381,26 +354,10 @@ func (handler *ChargePointHandler) stopChargingConnector(connector *Connector, r
 				return
 			}
 			log.Println("Stopping transaction at ", connector.ConnectorId)
-			err := connector.StopCharging()
-			settings.UpdateConnectorSessionInfo(
-				connector.EvseId,
-				connector.ConnectorId,
-				&settings.Session{
-					IsActive:      connector.session.IsActive,
-					TagId:         connector.session.TagId,
-					TransactionId: connector.session.TransactionId,
-					Started:       connector.session.Started,
-					Consumption:   connector.session.Consumption,
-				})
+			err := connector.StopCharging(reason)
 			if err != nil {
 				log.Printf("Unable to stop charging connector %d: %s", connector.ConnectorId, err)
-				handler.notifyConnectorStatus(connector, core.ChargePointStatusFinishing, core.InternalError)
 				return
-			}
-			_, err = scheduler.Every(1).Seconds().LimitRunsTo(1).Do(handler.notifyConnectorStatus, connector, core.ChargePointStatusFinishing, core.NoError)
-			_, err = scheduler.Every(3).Seconds().LimitRunsTo(1).Do(handler.notifyConnectorStatus, connector, core.ChargePointStatusAvailable, core.NoError)
-			if err != nil {
-				fmt.Println(err)
 			}
 			_ = scheduler.RemoveByTag(fmt.Sprintf("connector%dSampling", connector.ConnectorId))
 			err = scheduler.RemoveByTag(fmt.Sprintf("connector%dTimer", connector.ConnectorId))
@@ -458,7 +415,7 @@ func (handler *ChargePointHandler) AddConnectors(connectors []*settings.Connecto
 		if err != nil {
 			continue
 		}
-		handler.Connectors = append(handler.Connectors, &connectorObj)
+		handler.Connectors = append(handler.Connectors, connectorObj)
 		fmt.Print("Added connector ")
 		pretty.Print(connectorObj)
 	}
@@ -748,9 +705,7 @@ func (handler *ChargePointHandler) CleanUp(reason core.Reason) {
 			}
 		}
 	}
-	log.Println("Clearing the scheduler...")
-	scheduler.Stop()
-	scheduler.Clear()
+	close(handler.connectorChannel)
 	log.Println("Disconnecting the client..")
 	handler.chargePoint.Stop()
 	if handler.TagReader != nil {
@@ -767,6 +722,9 @@ func (handler *ChargePointHandler) CleanUp(reason core.Reason) {
 		log.Println("Clearing LEDs")
 		handler.LEDStrip.Cleanup()
 	}
+	log.Println("Clearing the scheduler...")
+	scheduler.Stop()
+	scheduler.Clear()
 }
 
 func GetTLSClient(CACertificatePath string, ClientCertificatePath string, ClientKeyPath string) *ws.Client {
@@ -816,6 +774,7 @@ func (handler *ChargePointHandler) Run() {
 	log.Println("Trying to connect to the central system: ", serverUrl)
 	connectErr := handler.chargePoint.Start(serverUrl)
 	go handler.listenForTag()
+	handler.connectorChannel = make(chan rxgo.Item)
 	if connectErr != nil {
 		log.Printf("Error connecting to the central system: %s", connectErr)
 		handler.CleanUp(core.ReasonOther)
@@ -823,6 +782,7 @@ func (handler *ChargePointHandler) Run() {
 	} else {
 		log.Printf("connected to central server: %s \n with ID: %s", serverUrl, handler.Settings.ChargePoint.Info.Id)
 		handler.IsAvailable = true
+		go handler.listenForConnectorStatusChange(rxgo.FromChannel(handler.connectorChannel))
 		handler.bootNotification()
 	}
 }
@@ -843,6 +803,22 @@ func (handler *ChargePointHandler) listenForTag() {
 		default:
 			time.Sleep(time.Millisecond * 300)
 			continue
+		}
+	}
+}
+
+func (handler *ChargePointHandler) listenForConnectorStatusChange(observableConnectors rxgo.Observable) {
+	if observableConnectors != nil {
+		// Set the communication channel before listening
+		for _, connector := range handler.Connectors {
+			connector.connectorNotificationChannel = handler.connectorChannel
+		}
+		// Start observing the connector for changes in status
+		for item := range observableConnectors.Observe() {
+			connector := item.V.(*Connector)
+			connectorIndex := connector.ConnectorId - 1
+			handler.displayLEDStatus(connectorIndex, connector.ConnectorStatus)
+			handler.notifyConnectorStatus(connector)
 		}
 	}
 }

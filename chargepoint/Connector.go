@@ -3,42 +3,44 @@ package chargepoint
 import (
 	"errors"
 	"fmt"
-	"github.com/lorenzodonini/ocpp-go/ocpp"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
+	"github.com/reactivex/rxgo/v2"
 	"github.com/xBlaz3kx/ChargePi-go/data"
 	"github.com/xBlaz3kx/ChargePi-go/hardware"
 	"github.com/xBlaz3kx/ChargePi-go/settings"
 	"log"
+	"time"
 )
 
 type Connector struct {
-	EvseId            int
-	ConnectorId       int
-	ConnectorType     string
-	ConnectorStatus   core.ChargePointStatus
-	ErrorCode         ocpp.ErrorCode
-	relay             *hardware.Relay
-	powerMeter        *hardware.PowerMeter
-	PowerMeterEnabled bool
-	MaxChargingTime   int
-	reservationId     int
-	session           *data.Session
+	EvseId                       int
+	ConnectorId                  int
+	ConnectorType                string
+	ConnectorStatus              core.ChargePointStatus
+	ErrorCode                    core.ChargePointErrorCode
+	relay                        *hardware.Relay
+	powerMeter                   *hardware.PowerMeter
+	PowerMeterEnabled            bool
+	MaxChargingTime              int
+	reservationId                int
+	session                      *data.Session
+	connectorNotificationChannel chan rxgo.Item
 }
 
 // NewConnector Create a new connector object from the provided arguments. EvseId, connectorId and maxChargingTime must be greater than zero.
 // At creation, it makes an empty session and defaults the status to Available.
-func NewConnector(EvseId int, connectorId int, connectorType string, relay *hardware.Relay, powerMeter *hardware.PowerMeter, powerMeterEnabled bool, maxChargingTime int) (Connector, error) {
+func NewConnector(EvseId int, connectorId int, connectorType string, relay *hardware.Relay, powerMeter *hardware.PowerMeter, powerMeterEnabled bool, maxChargingTime int) (*Connector, error) {
 	if maxChargingTime <= 0 {
 		maxChargingTime = 180
 	}
 	if EvseId <= 0 || connectorId <= 0 {
-		return Connector{}, errors.New("invalid evse or connector id")
+		return nil, errors.New("invalid evse or connector id")
 	}
 	if relay == nil {
-		return Connector{}, fmt.Errorf("relay pointer cannot be nil")
+		return nil, fmt.Errorf("relay pointer cannot be nil")
 	}
-	return Connector{
+	return &Connector{
 		EvseId:            EvseId,
 		ConnectorId:       connectorId,
 		ConnectorType:     connectorType,
@@ -63,8 +65,20 @@ func (connector *Connector) StartCharging(transactionId string, tagId string) er
 	var hasSessionStarted = false
 	if (connector.IsAvailable() || connector.IsPreparing()) && !connector.session.IsActive {
 		hasSessionStarted = connector.session.StartSession(transactionId, tagId)
+		connector.SetStatus(core.ChargePointStatusPreparing, core.NoError)
 		if hasSessionStarted {
 			connector.relay.On()
+			connector.SetStatus(core.ChargePointStatusCharging, core.NoError)
+			settings.UpdateConnectorSessionInfo(
+				connector.EvseId,
+				connector.ConnectorId,
+				&settings.Session{
+					IsActive:      connector.session.IsActive,
+					TagId:         connector.session.TagId,
+					TransactionId: connector.session.TransactionId,
+					Started:       connector.session.Started,
+					Consumption:   connector.session.Consumption,
+				})
 			return nil
 		}
 		return errors.New("transaction or tag ID invalid")
@@ -73,10 +87,31 @@ func (connector *Connector) StartCharging(transactionId string, tagId string) er
 }
 
 // StopCharging Stops charging the connector by turning the relay off and ends the session.
-func (connector *Connector) StopCharging() error {
+func (connector *Connector) StopCharging(reason core.Reason) error {
 	if connector.IsCharging() || connector.IsPreparing() {
 		connector.session.EndSession()
 		connector.relay.Off()
+		switch reason {
+		case core.ReasonEVDisconnected:
+			connector.SetStatus(core.ChargePointStatusSuspendedEVSE, core.NoError)
+			break
+		case core.ReasonUnlockCommand:
+			connector.SetStatus(core.ChargePointStatusUnavailable, core.NoError)
+			break
+		default:
+			connector.SetStatus(core.ChargePointStatusFinishing, core.NoError)
+			connector.SetStatus(core.ChargePointStatusAvailable, core.NoError)
+		}
+		settings.UpdateConnectorSessionInfo(
+			connector.EvseId,
+			connector.ConnectorId,
+			&settings.Session{
+				IsActive:      connector.session.IsActive,
+				TagId:         connector.session.TagId,
+				TransactionId: connector.session.TransactionId,
+				Started:       connector.session.Started,
+				Consumption:   connector.session.Consumption,
+			})
 		return nil
 	}
 	return errors.New("connector not charging")
@@ -129,9 +164,12 @@ func (connector *Connector) IsUnavailable() bool {
 	return connector.ConnectorStatus == core.ChargePointStatusUnavailable
 }
 
-func (connector *Connector) SetStatus(status core.ChargePointStatus) {
+func (connector *Connector) SetStatus(status core.ChargePointStatus, errCode core.ChargePointErrorCode) {
 	connector.ConnectorStatus = status
+	connector.ErrorCode = errCode
 	settings.UpdateConnectorStatus(connector.EvseId, connector.ConnectorId, status)
+	time.Sleep(time.Millisecond * 200)
+	connector.connectorNotificationChannel <- rxgo.Of(connector)
 }
 
 func (connector *Connector) ReserveConnector(reservationId int) error {
@@ -142,7 +180,7 @@ func (connector *Connector) ReserveConnector(reservationId int) error {
 		return fmt.Errorf("connector status invalid")
 	}
 	connector.reservationId = reservationId
-	connector.SetStatus(core.ChargePointStatusReserved)
+	connector.SetStatus(core.ChargePointStatusReserved, core.NoError)
 	return nil
 }
 func (connector *Connector) RemoveReservation() error {
@@ -150,7 +188,7 @@ func (connector *Connector) RemoveReservation() error {
 		return fmt.Errorf("connector status invalid")
 	}
 	connector.reservationId = -1
-	connector.SetStatus(core.ChargePointStatusAvailable)
+	connector.SetStatus(core.ChargePointStatusAvailable, core.NoError)
 	return nil
 }
 

@@ -5,6 +5,7 @@ go 1.15
 require (
 	github.com/Graylog2/go-gelf v0.0.0-20170811154226-7ebf4f536d8f
 	github.com/agrison/go-commons-lang v0.0.0-20200208220349-58e9fcb95174
+	github.com/cenkalti/backoff/v4 v4.1.1 // indirect
 	github.com/clausecker/nfc/v2 v2.1.4
 	github.com/d2r2/go-hd44780 v0.0.0-20181002113701-74cc28c83a3e
 	github.com/d2r2/go-i2c v0.0.0-20191123181816-73a8a799d6bc
@@ -15,7 +16,10 @@ require (
 	github.com/lorenzodonini/ocpp-go v0.14.0
 	github.com/op/go-logging v0.0.0-20160315200505-970db520ece7 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible
+	github.com/reactivex/rxgo/v2 v2.5.0 // indirect
 	github.com/rpi-ws281x/rpi-ws281x-go v1.0.8
+	github.com/stretchr/objx v0.3.0 // indirect
+	github.com/teivah/onecontext v1.3.0 // indirect
 	github.com/warthog618/gpiod v0.6.0
 	gopkg.in/yaml.v2 v2.4.0
 )
