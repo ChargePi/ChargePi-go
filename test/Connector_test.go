@@ -89,10 +89,10 @@ func TestConnector_ResumeCharging(t *testing.T) {
 			}
 			switch tt.name {
 			case "ResumeSuccessful":
-				connector.SetStatus(core.ChargePointStatusCharging)
+				connector.SetStatus(core.ChargePointStatusCharging, core.NoError)
 				break
 			case "SessionNotActive":
-				connector.SetStatus(core.ChargePointStatusCharging)
+				connector.SetStatus(core.ChargePointStatusCharging, core.NoError)
 				break
 			}
 			if err = connector.ResumeCharging(tt.args.session); (err != nil) != tt.wantErr {
@@ -209,7 +209,7 @@ func TestConnector_StopCharging(t *testing.T) {
 			switch tt.name {
 			case "StopCharging":
 				err := connector.StartCharging("123", "123")
-				connector.SetStatus(core.ChargePointStatusCharging)
+				connector.SetStatus(core.ChargePointStatusCharging, core.NoError)
 				if err != nil {
 					t.Errorf("StopCharging() error while starting to charge = %v, wantErr %v", err, tt.wantErr)
 				}
@@ -217,7 +217,7 @@ func TestConnector_StopCharging(t *testing.T) {
 			case "StopChargingFailure":
 				break
 			}
-			if err := connector.StopCharging(); (err != nil) != tt.wantErr {
+			if err := connector.StopCharging(core.ReasonLocal); (err != nil) != tt.wantErr {
 				t.Errorf("StopCharging() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})

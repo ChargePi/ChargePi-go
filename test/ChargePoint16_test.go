@@ -39,6 +39,12 @@ func TestChargePointHandler_AddConnectors(t *testing.T) {
 					Type:        "",
 					Status:      "",
 					Session: struct {
+						IsActive      bool   `fig:"IsActive"`
+						TransactionId string `fig:"TransactionId" default:""`
+						TagId         string `fig:"TagId" default:""`
+						Started       string `fig:"Started" default:""`
+						Consumption   []types.MeterValue
+					}(struct {
 						IsActive      bool
 						TransactionId string
 						TagId         string
@@ -50,12 +56,23 @@ func TestChargePointHandler_AddConnectors(t *testing.T) {
 						TagId:         "",
 						Started:       "",
 						Consumption:   nil,
-					},
+					}),
 					Relay: struct {
+						RelayPin     int  `fig:"RelayPin" validate:"required"`
+						InverseLogic bool `fig:"InverseLogic"`
+					}(struct {
 						RelayPin     int
 						InverseLogic bool
-					}{},
+					}{}),
 					PowerMeter: struct {
+						Enabled              bool    `fig:"Enabled"`
+						PowerMeterPin        int     `fig:"PowerMeterPin"`
+						SpiBus               int     `fig:"SpiBus" default:"0"`
+						PowerUnits           string  `fig:"PowerUnits" `
+						Consumption          float64 `fig:"Consumption"`
+						ShuntOffset          float64 `fig:"ShuntOffset"`
+						VoltageDividerOffset float64 `fig:"VoltageDividerOffset"`
+					}(struct {
 						Enabled              bool
 						PowerMeterPin        int
 						SpiBus               int
@@ -63,7 +80,7 @@ func TestChargePointHandler_AddConnectors(t *testing.T) {
 						Consumption          float64
 						ShuntOffset          float64
 						VoltageDividerOffset float64
-					}{},
+					}{}),
 				},
 				},
 			},
@@ -184,7 +201,7 @@ func TestChargePointHandler_findAvailableConnector(t *testing.T) {
 					t.Errorf("error adding a connector for findAvailableConnector(); %v", err)
 					continue
 				}
-				handler.Connectors = append(handler.Connectors, &newConnector)
+				handler.Connectors = append(handler.Connectors, newConnector)
 				if i == tt.fields.chargingConnectorIndex {
 					connector2 := handler.FindConnectorWithId(connector.ConnectorId)
 					err = connector2.StartCharging("123", "123")
@@ -322,7 +339,7 @@ func TestChargePointHandler_findConnectorWithId(t *testing.T) {
 					t.Errorf("error adding a connector for findConnectorWithId(); %v", err)
 					continue
 				}
-				handler.Connectors = append(handler.Connectors, &newConnector)
+				handler.Connectors = append(handler.Connectors, newConnector)
 			}
 			got := handler.FindConnectorWithId(tt.args.connectorID)
 			if got == nil && tt.want.ConnectorId == 0 && tt.want.EvseId == 0 {
@@ -429,7 +446,7 @@ func TestChargePointHandler_findConnectorWithTagId(t *testing.T) {
 					t.Errorf("error adding a connector for findConnectorWithId(); %v", err)
 					continue
 				}
-				handler.Connectors = append(handler.Connectors, &newConnector)
+				handler.Connectors = append(handler.Connectors, newConnector)
 				if i == tt.args.chargingConnectorIndex {
 					connector2 := handler.FindConnectorWithId(newConnector.ConnectorId)
 					err = connector2.StartCharging("1234", tt.args.tagId)
@@ -510,7 +527,7 @@ func TestChargePointHandler_findConnectorWithTransactionId(t *testing.T) {
 					t.Errorf("error adding a connector for findConnectorWithId(); %v", err)
 					continue
 				}
-				handler.Connectors = append(handler.Connectors, &newConnector)
+				handler.Connectors = append(handler.Connectors, newConnector)
 				if i == tt.args.chargingConnectorIndex {
 					connector2 := handler.FindConnectorWithId(newConnector.ConnectorId)
 					err = connector2.StartCharging(tt.args.transactionId, "1234")
