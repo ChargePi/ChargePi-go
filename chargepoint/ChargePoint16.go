@@ -453,8 +453,8 @@ func (handler *ChargePointHandler) OnGetConfiguration(request *core.GetConfigura
 	if err == nil && configuration != nil {
 		configArray = configuration.GetConfig()
 		for _, key := range request.Key {
-			_, err = settings.GetConfigurationValue(key)
-			if err != nil {
+			_, keyErr := settings.GetConfigurationValue(key)
+			if keyErr != nil {
 				unknownKeys = append(unknownKeys, key)
 			}
 		}
