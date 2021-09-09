@@ -297,20 +297,10 @@ func (handler *ChargePointHandler) startChargingConnector(connector *Connector, 
 				}
 				log.Printf("Started charging connector %d at %s", connector.ConnectorId, time.Now())
 				if connector.PowerMeterEnabled {
-					measurandsString, err := settings.GetConfigurationValue("MeterValuesSampledData")
-					var measurands []types2.Measurand
+					err := preparePowerMeterAtConnector(connector)
 					if err != nil {
-						measurandsString = string(types2.MeasurandPowerActiveExport)
+						log.Printf("Cannot sample connector %d; %v \n", connector.ConnectorId, err)
 					}
-					for _, s := range strings.Split(measurandsString, ",") {
-						measurands = append(measurands, types2.Measurand(s))
-					}
-					sampleInterval, err := settings.GetConfigurationValue("MeterValueSampleInterval")
-					if err != nil {
-						sampleInterval = "10"
-					}
-					_, err = scheduler.Every(fmt.Sprintf("%ss", sampleInterval)).
-						Tag(fmt.Sprintf("connector%dSampling", connector.ConnectorId)).Do(connector.SamplePowerMeter, measurands)
 				}
 				_, err = scheduler.Every(connector.MaxChargingTime).Minutes().LimitRunsTo(1).
 					Tag(fmt.Sprintf("connector%dTimer", connector.ConnectorId)).Do(handler.stopChargingConnector, connector, core.ReasonOther)
@@ -324,6 +314,33 @@ func (handler *ChargePointHandler) startChargingConnector(connector *Connector, 
 		return handler.chargePoint.SendRequestAsync(request, callback)
 	}
 	return errors.New("connector unavailable or card unauthorized")
+}
+
+// preparePowerMeterAtConnector
+func preparePowerMeterAtConnector(connector *Connector) error {
+	var (
+		measurands []types2.Measurand
+		err        error
+	)
+	cache.Cache.Set(fmt.Sprintf("MeterValueLastIndex%d%d", connector.EvseId, connector.ConnectorId),
+		0, time.Duration(connector.MaxChargingTime)*time.Minute)
+	measurandsString, err := settings.GetConfigurationValue("MeterValuesSampledData")
+	if err != nil {
+		measurandsString = string(types2.MeasurandPowerActiveExport)
+	}
+	for _, s := range strings.Split(measurandsString, ",") {
+		measurands = append(measurands, types2.Measurand(s))
+	}
+	sampleInterval, err := settings.GetConfigurationValue("MeterValueSampleInterval")
+	if err != nil {
+		sampleInterval = "10"
+	}
+	_, err = scheduler.Every(fmt.Sprintf("%ss", sampleInterval)).
+		Tag(fmt.Sprintf("connector%dSampling", connector.ConnectorId)).Do(connector.SamplePowerMeter, measurands)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // stopChargingConnector Stop charging a connector with the specified ID. Update the status(es), turn off the Connector and calculate the energy consumed.
