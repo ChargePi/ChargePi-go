@@ -280,14 +280,20 @@ func (handler *ChargePointHandler) startCharging(tagId string) error {
 // startChargingConnector Start charging a connector with the specified ID. Send the request to the central system, turn on the Connector,
 // update the status of the Connector, and start the maxChargingTime timer and sample the PowerMeter, if it's enabled.
 func (handler *ChargePointHandler) startChargingConnector(connector *Connector, tagId string) error {
-	if connector != nil && connector.IsAvailable() && handler.isTagAuthorized(tagId) && handler.IsAvailable {
+	if connector == nil {
+		return fmt.Errorf("connector is nil")
+	}
+	if !connector.IsAvailable() || !handler.IsAvailable {
+		return errors.New("connector or cp unavailable")
+	}
+	if handler.isTagAuthorized(tagId) {
 		request := core.StartTransactionRequest{
 			ConnectorId: connector.ConnectorId,
 			IdTag:       tagId,
 			Timestamp:   &types2.DateTime{Time: time.Now()},
 			MeterStart:  0,
 		}
-		var callback = func(confirmation ocpp.Response, protoError error) {
+		callback := func(confirmation ocpp.Response, protoError error) {
 			startTransactionConf := confirmation.(*core.StartTransactionConfirmation)
 			if startTransactionConf.TransactionId > 0 && startTransactionConf.IdTagInfo.Status == types2.AuthorizationStatusAccepted {
 				err := connector.StartCharging(strconv.Itoa(startTransactionConf.TransactionId), tagId)
@@ -297,15 +303,16 @@ func (handler *ChargePointHandler) startChargingConnector(connector *Connector, 
 				}
 				log.Printf("Started charging connector %d at %s", connector.ConnectorId, time.Now())
 				if connector.PowerMeterEnabled {
-					err := preparePowerMeterAtConnector(connector)
-					if err != nil {
+					sampleError := preparePowerMeterAtConnector(connector)
+					if sampleError != nil {
 						log.Printf("Cannot sample connector %d; %v \n", connector.ConnectorId, err)
 					}
 				}
+				// schedule timer to stop the transaction at the time limit
 				_, err = scheduler.Every(connector.MaxChargingTime).Minutes().LimitRunsTo(1).
 					Tag(fmt.Sprintf("connector%dTimer", connector.ConnectorId)).Do(handler.stopChargingConnector, connector, core.ReasonOther)
 				if err != nil {
-					fmt.Println(err)
+					fmt.Println("cannot schedule stop charging:", err)
 				}
 			} else {
 				log.Printf("Transaction unauthorized at connector %d", connector.ConnectorId)
@@ -313,7 +320,7 @@ func (handler *ChargePointHandler) startChargingConnector(connector *Connector, 
 		}
 		return handler.chargePoint.SendRequestAsync(request, callback)
 	}
-	return errors.New("connector unavailable or card unauthorized")
+	return errors.New("card unauthorized")
 }
 
 // preparePowerMeterAtConnector
