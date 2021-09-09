@@ -656,10 +656,6 @@ func (handler *ChargePointHandler) bootNotification() {
 			}
 			handler.startup()
 		} else {
-			err := RetrySendingRequest("BootNotificationRetries", -1, bootConf.Interval, handler.bootNotification, nil)
-			if err == nil {
-				return
-			}
 			log.Printf("Denied by the central system.")
 			os.Exit(-1)
 		}
@@ -731,7 +727,6 @@ func (handler *ChargePointHandler) CleanUp(reason core.Reason) {
 			}
 		}
 	}
-	close(handler.connectorChannel)
 	log.Println("Disconnecting the client..")
 	handler.chargePoint.Stop()
 	if handler.TagReader != nil {
@@ -748,6 +743,7 @@ func (handler *ChargePointHandler) CleanUp(reason core.Reason) {
 		log.Println("Clearing LEDs")
 		handler.LEDStrip.Cleanup()
 	}
+	close(handler.connectorChannel)
 	log.Println("Clearing the scheduler...")
 	scheduler.Stop()
 	scheduler.Clear()
