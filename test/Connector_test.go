@@ -73,26 +73,28 @@ func TestConnector_ResumeCharging(t *testing.T) {
 			wantErr: true,
 		},
 	}
+	connector, err := chargepoint.NewConnector(
+		1,
+		1,
+		"Schuko",
+		hardware.NewRelay(15, false),
+		nil,
+		false,
+		5,
+	)
+	if err != nil {
+		t.Errorf("ResumeCharging() error = %v", err)
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			connector, err := chargepoint.NewConnector(
-				tt.fields.EvseId,
-				tt.fields.ConnectorId,
-				tt.fields.ConnectorType,
-				hardware.NewRelay(1, false),
-				nil,
-				false,
-				5,
-			)
-			if err != nil {
-				t.Errorf("ResumeCharging() error = %v", err)
-			}
 			switch tt.name {
 			case "ResumeSuccessful":
-				connector.SetStatus(core.ChargePointStatusCharging, core.NoError)
+				connector.ConnectorStatus = core.ChargePointStatusCharging
+				connector.ErrorCode = core.NoError
 				break
 			case "SessionNotActive":
-				connector.SetStatus(core.ChargePointStatusCharging, core.NoError)
+				connector.ConnectorStatus = core.ChargePointStatusCharging
+				connector.ErrorCode = core.NoError
 				break
 			}
 			if err = connector.ResumeCharging(tt.args.session); (err != nil) != tt.wantErr {
@@ -156,18 +158,22 @@ func TestConnector_StartCharging(t *testing.T) {
 			wantErr: true,
 		},
 	}
+	relay := hardware.NewRelay(1, false)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			connector, _ := chargepoint.NewConnector(
+			connector, err := chargepoint.NewConnector(
 				tt.fields.EvseId,
 				tt.fields.ConnectorId,
 				tt.fields.ConnectorType,
-				hardware.NewRelay(1, false),
+				relay,
 				nil,
 				false,
 				5,
 			)
-			if err := connector.StartCharging(tt.args.transactionId, tt.args.tagId); (err != nil) != tt.wantErr {
+			if err != nil {
+				t.Errorf("StartCharging() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if err = connector.StartCharging(tt.args.transactionId, tt.args.tagId); (err != nil) != tt.wantErr {
 				t.Errorf("StartCharging() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -203,13 +209,21 @@ func TestConnector_StopCharging(t *testing.T) {
 			wantErr: true,
 		},
 	}
+	relay := hardware.NewRelay(1, false)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			connector, _ := chargepoint.NewConnector(tt.fields.EvseId, tt.fields.ConnectorId, tt.fields.ConnectorType, hardware.NewRelay(1, false), nil, false, 5)
+			connector, _ := chargepoint.NewConnector(
+				tt.fields.EvseId,
+				tt.fields.ConnectorId,
+				tt.fields.ConnectorType,
+				relay,
+				nil,
+				false,
+				5,
+			)
 			switch tt.name {
 			case "StopCharging":
 				err := connector.StartCharging("123", "123")
-				connector.SetStatus(core.ChargePointStatusCharging, core.NoError)
 				if err != nil {
 					t.Errorf("StopCharging() error while starting to charge = %v, wantErr %v", err, tt.wantErr)
 				}
@@ -304,7 +318,15 @@ func TestNewConnector(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := chargepoint.NewConnector(tt.args.EvseId, tt.args.connectorId, tt.args.connectorType, tt.args.relay, tt.args.powerMeter, tt.args.powerMeterEnabled, tt.args.maxChargingTime)
+			got, err := chargepoint.NewConnector(
+				tt.args.EvseId,
+				tt.args.connectorId,
+				tt.args.connectorType,
+				tt.args.relay,
+				tt.args.powerMeter,
+				tt.args.powerMeterEnabled,
+				tt.args.maxChargingTime,
+			)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewConnector() error = %v, wantErr %v", err, tt.wantErr)
 				return

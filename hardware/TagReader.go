@@ -113,7 +113,7 @@ func (reader *TagReader) Reset() {
 	log.Println("Resetting the reader..")
 	//refer to gpiod docs
 	c, err := gpiod.NewChip("gpiochip0")
-	pin, err := c.RequestLine(reader.ResetPin, gpiod.AsOutput(0))
+	pin, err := c.RequestLine(reader.ResetPin, gpiod.AsOutput(1))
 	if err != nil {
 		log.Println(err)
 		return

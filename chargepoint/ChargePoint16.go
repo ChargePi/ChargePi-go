@@ -1,8 +1,6 @@
 package chargepoint
 
 import (
-	"crypto/tls"
-	"crypto/x509"
 	"errors"
 	"fmt"
 	"github.com/kr/pretty"
@@ -14,18 +12,14 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
 	types2 "github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/lorenzodonini/ocpp-go/ws"
-	goCache "github.com/patrickmn/go-cache"
 	"github.com/reactivex/rxgo/v2"
-	"github.com/xBlaz3kx/ChargePi-go/cache"
 	"github.com/xBlaz3kx/ChargePi-go/data"
 	"github.com/xBlaz3kx/ChargePi-go/hardware"
 	"github.com/xBlaz3kx/ChargePi-go/settings"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -38,58 +32,6 @@ type ChargePointHandler struct {
 	LEDStrip         *hardware.LEDStrip
 	LCD              *hardware.LCD
 	connectorChannel chan rxgo.Item
-}
-
-func (handler *ChargePointHandler) sendToLCD(message hardware.LCDMessage) {
-	if handler.LCD == nil || handler.LCD.LCDChannel == nil || !handler.Settings.ChargePoint.Hardware.Lcd.IsSupported {
-		return
-	}
-	handler.LCD.LCDChannel <- message
-}
-
-func (handler *ChargePointHandler) displayLEDStatus(connectorIndex int, status core.ChargePointStatus) {
-	if !handler.Settings.ChargePoint.Hardware.LedIndicator.Enabled || handler.LEDStrip == nil {
-		return
-	}
-	var color = 0x00
-	switch status {
-	case core.ChargePointStatusFaulted:
-		color = hardware.RED
-		break
-	case core.ChargePointStatusCharging:
-		color = hardware.BLUE
-		break
-	case core.ChargePointStatusReserved:
-		color = hardware.YELLOW
-		break
-	case core.ChargePointStatusFinishing:
-		color = hardware.BLUE
-		break
-	case core.ChargePointStatusAvailable:
-		color = hardware.GREEN
-		break
-	case core.ChargePointStatusUnavailable:
-		color = hardware.ORANGE
-		break
-	}
-	if color != 0x00 {
-		_, err := scheduler.Every(1).Milliseconds().LimitRunsTo(1).Do(handler.LEDStrip.DisplayColor, connectorIndex, uint32(color))
-		if err != nil {
-			log.Printf("Error display LED status: %v \n", err)
-		}
-	}
-}
-
-// indicateCard Blinks the LED to indicate that the card was read.
-func (handler *ChargePointHandler) indicateCard(index int, color uint32) {
-	if !handler.Settings.ChargePoint.Hardware.LedIndicator.Enabled || handler.LEDStrip == nil {
-		return
-	}
-	_, err := scheduler.Every(1).Milliseconds().LimitRunsTo(1).Do(handler.LEDStrip.Blink, index, 3, color)
-	if err != nil {
-		log.Printf("Error indicating card: %v", err)
-		return
-	}
 }
 
 // FindAvailableConnector Find first Connector with the status "Available" from the handler.
@@ -140,112 +82,6 @@ func (handler *ChargePointHandler) FindConnectorWithReservationId(reservationId 
 		}
 	}
 	return nil
-}
-
-// startup After connecting to the central system, try to restore the previous state of each Connector and notify the system about its state.
-//If the ConnectorStatus was "Preparing" or "Charging", try to resume or start charging. If the charging fails, change the connector status and notify the central system.
-func (handler *ChargePointHandler) startup() {
-	var err error
-	for _, connector := range handler.Connectors {
-		connectorSettings, isFound := cache.Cache.Get(fmt.Sprintf("connectorEvse%dId%dConfiguration", connector.EvseId, connector.ConnectorId))
-		if !isFound {
-			continue
-		}
-		cachedConnector := connectorSettings.(*settings.Connector)
-		if cachedConnector != nil {
-			connector.SetStatus(core.ChargePointStatus(cachedConnector.Status), core.NoError)
-			switch core.ChargePointStatus(cachedConnector.Status) {
-			case core.ChargePointStatusPreparing:
-				err = handler.startCharging(cachedConnector.Session.TagId)
-				if err != nil {
-					connector.SetStatus(core.ChargePointStatusAvailable, core.InternalError)
-					continue
-				}
-				break
-			case core.ChargePointStatusCharging:
-				err = connector.ResumeCharging(data.Session(cachedConnector.Session))
-				if err != nil {
-					err = handler.stopChargingConnector(connector, core.ReasonOther)
-					if err != nil {
-						connector.SetStatus(core.ChargePointStatusFaulted, core.InternalError)
-					}
-				}
-				break
-			}
-		}
-	}
-}
-
-// isTagAuthorized Check if the tag is authorized for charging. If the authentication cache is enabled and if it can preauthorize from cache,
-// the program will check the cache first and reauthorize with the sendAuthorizeRequest to the central system after 10 seconds.
-// If cache is not enabled, it will just execute sendAuthorizeRequest and retrieve the status from the request.
-func (handler *ChargePointHandler) isTagAuthorized(tagId string) bool {
-	response := false
-	authCacheEnabled, err := settings.GetConfigurationValue("AuthorizationCacheEnabled")
-	if err != nil {
-		authCacheEnabled = "false"
-	}
-	localPreAuthorize, err := settings.GetConfigurationValue("LocalPreAuthorize")
-	if err != nil {
-		localPreAuthorize = "false"
-	}
-	if authCacheEnabled == "true" && localPreAuthorize == "true" {
-		//Check if the tag exists in cache and is valid.
-		log.Println("Authorizing tag ", tagId, " with cache")
-		if data.IsTagAuthorized(tagId) {
-			_, err2 := scheduler.Every(10).Seconds().LimitRunsTo(1).Do(handler.sendAuthorizeRequest, tagId)
-			if err2 != nil {
-				log.Println(err2)
-			}
-			return true
-		}
-	}
-	//If the card is not in cache or is not authorized, (re)authorize it with the central system
-	log.Println("Authorizing tag with central system: ", tagId)
-	tagInfo, err := handler.sendAuthorizeRequest(tagId)
-	if tagInfo != nil && tagInfo.Status == types2.AuthorizationStatusAccepted {
-		response = true
-	}
-	log.Println("Tag authorization result: ", response)
-	return response
-}
-
-// sendAuthorizeRequest Send a AuthorizeRequest to the central system to get information on the tagId status.
-// Adds the tag to the cache if it's enabled.
-func (handler *ChargePointHandler) sendAuthorizeRequest(tagId string) (*types2.IdTagInfo, error) {
-	var err error
-	response, err := handler.chargePoint.SendRequest(core.AuthorizeRequest{IdTag: tagId})
-	authInfo := response.(*core.AuthorizeConfirmation)
-	switch authInfo.IdTagInfo.Status {
-	case types2.AuthorizationStatusBlocked, types2.AuthorizationStatusExpired, types2.AuthorizationStatusInvalid:
-		err = handler.stopChargingConnectorWithTagId(tagId, core.ReasonDeAuthorized)
-		break
-	}
-	value, err2 := settings.GetConfigurationValue("AuthorizationCacheEnabled")
-	if err2 == nil && value == "true" {
-		data.AddTag(tagId, authInfo.IdTagInfo)
-	}
-	return authInfo.IdTagInfo, err
-}
-
-// notifyConnectorStatus Notify the central system about the connector's status and updates the LED indicator.
-func (handler *ChargePointHandler) notifyConnectorStatus(connector *Connector) {
-	if connector != nil {
-		request := core.StatusNotificationRequest{
-			ConnectorId: connector.ConnectorId,
-			Status:      connector.ConnectorStatus,
-			ErrorCode:   connector.ErrorCode,
-			Timestamp:   &types2.DateTime{Time: time.Now()},
-		}
-		callback := func(confirmation ocpp.Response, protoError error) {
-			log.Printf("Notified status of the connector %d: %s", connector.ConnectorId, connector.ConnectorStatus)
-		}
-		err := handler.chargePoint.SendRequestAsync(request, callback)
-		if err != nil {
-			log.Println("Cannot send status notification of connector: ", err)
-			return
-		}
-	}
 }
 
 // HandleChargingRequest Entry point for determining if the request is to start or stop charging. Trying to find a connector that has the tag stored in the Session; if such a connector exists,
@@ -323,36 +159,12 @@ func (handler *ChargePointHandler) startChargingConnector(connector *Connector, 
 	return errors.New("card unauthorized")
 }
 
-// preparePowerMeterAtConnector
-func preparePowerMeterAtConnector(connector *Connector) error {
-	var (
-		measurands []types2.Measurand
-		err        error
-	)
-	cache.Cache.Set(fmt.Sprintf("MeterValueLastIndex%d%d", connector.EvseId, connector.ConnectorId),
-		0, time.Duration(connector.MaxChargingTime)*time.Minute)
-	measurandsString, err := settings.GetConfigurationValue("MeterValuesSampledData")
-	if err != nil {
-		measurandsString = string(types2.MeasurandPowerActiveExport)
-	}
-	for _, s := range strings.Split(measurandsString, ",") {
-		measurands = append(measurands, types2.Measurand(s))
-	}
-	sampleInterval, err := settings.GetConfigurationValue("MeterValueSampleInterval")
-	if err != nil {
-		sampleInterval = "10"
-	}
-	_, err = scheduler.Every(fmt.Sprintf("%ss", sampleInterval)).
-		Tag(fmt.Sprintf("connector%dSampling", connector.ConnectorId)).Do(connector.SamplePowerMeter, measurands)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // stopChargingConnector Stop charging a connector with the specified ID. Update the status(es), turn off the Connector and calculate the energy consumed.
 func (handler *ChargePointHandler) stopChargingConnector(connector *Connector, reason core.Reason) error {
-	if connector != nil && (connector.IsCharging() || connector.IsPreparing()) {
+	if connector == nil {
+		return fmt.Errorf("connector pointer is nil")
+	}
+	if connector.IsCharging() || connector.IsPreparing() {
 		stopTransactionOnEVDisconnect, err := settings.GetConfigurationValue("StopTransactionOnEVSideDisconnect")
 		if err != nil {
 			return err
@@ -575,7 +387,7 @@ func (handler *ChargePointHandler) OnTriggerMessage(request *remotetrigger.Trigg
 	status := remotetrigger.TriggerMessageStatusRejected
 	switch request.RequestedMessage {
 	case core.BootNotificationFeatureName:
-		_, err = scheduler.Every(10).Seconds().LimitRunsTo(1).Do(handler.bootNotification)
+		_, err = scheduler.Every(5).Seconds().LimitRunsTo(1).Do(handler.bootNotification)
 		if err != nil {
 			break
 		}
@@ -595,10 +407,24 @@ func (handler *ChargePointHandler) OnTriggerMessage(request *remotetrigger.Trigg
 		status = remotetrigger.TriggerMessageStatusNotImplemented
 		break
 	case core.StatusNotificationFeatureName:
+		if request.ConnectorId == nil {
+			// send the status of all connectors after the response
+			defer func() {
+				for _, connector := range handler.Connectors {
+					if connector.connectorNotificationChannel != nil {
+						connector.connectorNotificationChannel <- rxgo.Of(connector)
+					}
+				}
+			}()
+			status = remotetrigger.TriggerMessageStatusAccepted
+			return remotetrigger.NewTriggerMessageConfirmation(status), nil
+		}
 		connectorID := *request.ConnectorId
 		connector := handler.FindConnectorWithId(connectorID)
 		if connector != nil {
-			_, err = scheduler.Every(5).Seconds().LimitRunsTo(1).Do(handler.notifyConnectorStatus, connector, connector.ConnectorStatus, core.NoError)
+			defer func() {
+				handler.notifyConnectorStatus(connector)
+			}()
 			if err != nil {
 				return nil, err
 			}
@@ -638,7 +464,7 @@ func (handler *ChargePointHandler) OnCancelReservation(request *reservation.Canc
 	return reservation.NewCancelReservationConfirmation(reservation.CancelReservationStatusRejected), nil
 }
 
-// bootNotification Notify the central system that the charging point is online. Set the heartbeat interval and call startup.
+// bootNotification Notify the central system that the charging point is online. Set the heartbeat interval and call restoreState.
 // If the central system does not accept the charge point, exit the client.
 func (handler *ChargePointHandler) bootNotification() {
 	callback := func(confirmation ocpp.Response, protoError error) {
@@ -654,7 +480,7 @@ func (handler *ChargePointHandler) bootNotification() {
 			if err != nil {
 				fmt.Println(err)
 			}
-			handler.startup()
+			handler.restoreState()
 		} else {
 			log.Printf("Denied by the central system.")
 			os.Exit(-1)
@@ -668,42 +494,6 @@ func (handler *ChargePointHandler) bootNotification() {
 	if err != nil {
 		return
 	}
-}
-
-func RetrySendingRequest(cacheRetryKey string, maxRetries int, interval int, function interface{}, functionParams ...interface{}) (err error) {
-	var maxMessageAttempts string
-	var retryInterval interface{}
-	retries, isFound := cache.Cache.Get(cacheRetryKey)
-	if !isFound {
-		cache.Cache.Set(cacheRetryKey, 0, goCache.DefaultExpiration)
-	}
-	err = cache.Cache.Increment(cacheRetryKey, 1)
-	if err != nil {
-		return err
-	}
-	if maxRetries < 0 {
-		maxMessageAttempts, err = settings.GetConfigurationValue("TransactionMessageAttempts")
-		maxRetries, err = strconv.Atoi(maxMessageAttempts)
-		if err != nil {
-			maxRetries = 5
-		}
-	}
-	if retries.(int) < maxRetries {
-		retryInterval, err = settings.GetConfigurationValue("TransactionMessageRetryInterval")
-		if err != nil {
-			retryInterval = "30"
-		}
-		if interval > 0 {
-			retryInterval = fmt.Sprintf("%d", interval)
-		}
-		retryInterval = fmt.Sprintf("%ss", retryInterval)
-		_, err = scheduler.Every(retryInterval).LimitRunsTo(1).Tag(fmt.Sprintf("%s-#%d", cacheRetryKey, retries)).Do(function, functionParams)
-		if err != nil {
-			return err
-		}
-		return nil
-	}
-	return fmt.Errorf("max retries reached")
 }
 
 // sendHeartBeat Send a heartbeat to the central system.
@@ -749,54 +539,16 @@ func (handler *ChargePointHandler) CleanUp(reason core.Reason) {
 	scheduler.Clear()
 }
 
-func GetTLSClient(CACertificatePath string, ClientCertificatePath string, ClientKeyPath string) *ws.Client {
-	certPool, err := x509.SystemCertPool()
-	if err != nil {
-		log.Fatal(err)
-	}
-	// Load CA cert
-	caCert, err := ioutil.ReadFile(CACertificatePath)
-	if err != nil {
-		log.Println(err)
-		return nil
-	} else if !certPool.AppendCertsFromPEM(caCert) {
-		log.Println("no ca.cert file found, will use system CA certificates")
-		return nil
-	}
-	// Load client certificate
-	certificate, err := tls.LoadX509KeyPair(ClientCertificatePath, ClientKeyPath)
-	if err != nil {
-		log.Printf("couldn't load client TLS certificate: %v \n", err)
-		return nil
-	}
-	// Create client with TLS config
-	return ws.NewTLSClient(&tls.Config{
-		RootCAs:      certPool,
-		Certificates: []tls.Certificate{certificate},
-	})
-}
-
-func (handler *ChargePointHandler) Run() {
-	var client ws.WsClient = nil
-	if handler.Settings.ChargePoint.Info.TLS.IsEnabled {
-		client = GetTLSClient(handler.Settings.ChargePoint.Info.TLS.CACertificatePath, handler.Settings.ChargePoint.Info.TLS.ClientCertificatePath, handler.Settings.ChargePoint.Info.TLS.ClientKeyPath)
-		handler.chargePoint = ocpp16.NewChargePoint(handler.Settings.ChargePoint.Info.Id, nil, client)
-	} else {
-		handler.chargePoint = ocpp16.NewChargePoint(handler.Settings.ChargePoint.Info.Id, nil, nil)
-	}
-	handler.chargePoint.SetCoreHandler(handler)
-	handler.chargePoint.SetReservationHandler(handler)
-	handler.chargePoint.SetRemoteTriggerHandler(handler)
-	maxCachedTagsString, err := settings.GetConfigurationValue("MaxCachedTags")
-	maxCachedTags, err := strconv.Atoi(maxCachedTagsString)
-	if err == nil {
-		data.SetMaxCachedTags(maxCachedTags)
-	}
+// connect to the central system and attempt to boot
+func (handler *ChargePointHandler) connect() {
 	serverUrl := fmt.Sprintf("ws://%s/%s", handler.Settings.ChargePoint.Info.ServerUri, handler.Settings.ChargePoint.Info.Id)
 	log.Println("Trying to connect to the central system: ", serverUrl)
 	connectErr := handler.chargePoint.Start(serverUrl)
+
 	go handler.listenForTag()
 	handler.connectorChannel = make(chan rxgo.Item)
+
+	// Check if the connection was successful
 	if connectErr != nil {
 		log.Printf("Error connecting to the central system: %s", connectErr)
 		handler.CleanUp(core.ReasonOther)
@@ -809,38 +561,20 @@ func (handler *ChargePointHandler) Run() {
 	}
 }
 
-// listenForTag Listen for an RFID/NFC tag on a separate thread. If a tag is detected, call the HandleChargingRequest.
-// Blink the LED if indication is enabled.
-func (handler *ChargePointHandler) listenForTag() {
-	if !handler.Settings.ChargePoint.Hardware.TagReader.IsSupported {
-		return
+func (handler *ChargePointHandler) Run() {
+	// Check if the client has TLS
+	var client ws.WsClient = nil
+	if handler.Settings.ChargePoint.Info.TLS.IsEnabled {
+		client = GetTLSClient(handler.Settings.ChargePoint.Info.TLS.CACertificatePath, handler.Settings.ChargePoint.Info.TLS.ClientCertificatePath, handler.Settings.ChargePoint.Info.TLS.ClientKeyPath)
+		handler.chargePoint = ocpp16.NewChargePoint(handler.Settings.ChargePoint.Info.Id, nil, client)
+	} else {
+		handler.chargePoint = ocpp16.NewChargePoint(handler.Settings.ChargePoint.Info.Id, nil, nil)
 	}
-	for {
-		fmt.Printf("%s: Waiting for a tag \n", time.Now().String())
-		select {
-		case tagId := <-handler.TagReader.TagChannel:
-			handler.indicateCard(len(handler.Connectors), hardware.WHITE)
-			handler.HandleChargingRequest(strings.ToUpper(tagId))
-			continue
-		default:
-			time.Sleep(time.Millisecond * 300)
-			continue
-		}
-	}
-}
+	// Set handlers for Core, Reservation and RemoteTrigger
+	handler.chargePoint.SetCoreHandler(handler)
+	handler.chargePoint.SetReservationHandler(handler)
+	handler.chargePoint.SetRemoteTriggerHandler(handler)
 
-func (handler *ChargePointHandler) listenForConnectorStatusChange(observableConnectors rxgo.Observable) {
-	if observableConnectors != nil {
-		// Set the communication channel before listening
-		for _, connector := range handler.Connectors {
-			connector.connectorNotificationChannel = handler.connectorChannel
-		}
-		// Start observing the connector for changes in status
-		for item := range observableConnectors.Observe() {
-			connector := item.V.(*Connector)
-			connectorIndex := connector.ConnectorId - 1
-			handler.displayLEDStatus(connectorIndex, connector.ConnectorStatus)
-			handler.notifyConnectorStatus(connector)
-		}
-	}
+	handler.setMaxCachedTags()
+	handler.connect()
 }
