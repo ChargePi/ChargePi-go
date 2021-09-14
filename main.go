@@ -14,9 +14,7 @@ import (
 	"io"
 	"log"
 	"os"
-	"os/signal"
 	"strings"
-	"syscall"
 )
 
 func initLogger(grayLogAddress string) {
@@ -73,7 +71,6 @@ func main() {
 	}
 	config = cacheSettings.(*settings.Settings)
 	initLogger(config.ChargePoint.Info.LogServer)
-	quitChannel := make(chan os.Signal, 1)
 	if config.ChargePoint.Hardware.TagReader.IsSupported && config.ChargePoint.Hardware.TagReader.ReaderModel == "PN532" {
 		// Make a TagReader object if configured
 		log.Println("Preparing tag reader from config:", config.ChargePoint.Hardware.TagReader.ReaderModel)
@@ -119,10 +116,6 @@ func main() {
 	} else {
 		log.Fatal("Protocol version not supported: ", config.ChargePoint.Info.ProtocolVersion)
 	}
-	signal.Notify(quitChannel, syscall.SIGINT, syscall.SIGTERM)
-	<-quitChannel
-	fmt.Println("Received a signal to terminate..")
-	close(quitChannel)
 	handler.CleanUp(core.ReasonPowerLoss)
-	fmt.Println("Exiting...")
+	os.Exit(1)
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/reactivex/rxgo/v2"
+	"github.com/xBlaz3kx/ChargePi-go/cache"
 	"github.com/xBlaz3kx/ChargePi-go/data"
 	"github.com/xBlaz3kx/ChargePi-go/hardware"
 	"github.com/xBlaz3kx/ChargePi-go/settings"
@@ -91,6 +92,16 @@ func (connector *Connector) StopCharging(reason core.Reason) error {
 	if connector.IsCharging() || connector.IsPreparing() {
 		connector.session.EndSession()
 		connector.relay.Off()
+		settings.UpdateConnectorSessionInfo(
+			connector.EvseId,
+			connector.ConnectorId,
+			&settings.Session{
+				IsActive:      connector.session.IsActive,
+				TagId:         connector.session.TagId,
+				TransactionId: connector.session.TransactionId,
+				Started:       connector.session.Started,
+				Consumption:   connector.session.Consumption,
+			})
 		switch reason {
 		case core.ReasonEVDisconnected:
 			connector.SetStatus(core.ChargePointStatusSuspendedEVSE, core.NoError)
@@ -102,16 +113,6 @@ func (connector *Connector) StopCharging(reason core.Reason) error {
 			connector.SetStatus(core.ChargePointStatusFinishing, core.NoError)
 			connector.SetStatus(core.ChargePointStatusAvailable, core.NoError)
 		}
-		settings.UpdateConnectorSessionInfo(
-			connector.EvseId,
-			connector.ConnectorId,
-			&settings.Session{
-				IsActive:      connector.session.IsActive,
-				TagId:         connector.session.TagId,
-				TransactionId: connector.session.TransactionId,
-				Started:       connector.session.Started,
-				Consumption:   connector.session.Consumption,
-			})
 		return nil
 	}
 	return errors.New("connector not charging")
@@ -148,6 +149,29 @@ func (connector *Connector) SamplePowerMeter(measurands []types.Measurand) {
 	connector.session.AddSampledValue(samples)
 }
 
+// preparePowerMeterAtConnector
+func (connector *Connector) preparePowerMeterAtConnector() error {
+	var (
+		measurands []types.Measurand
+		err        error
+	)
+	cache.Cache.Set(fmt.Sprintf("MeterValueLastIndex%d%d", connector.EvseId, connector.ConnectorId),
+		0, time.Duration(connector.MaxChargingTime)*time.Minute)
+	measurands = getTypesToSample()
+	// Get the sample interval
+	sampleInterval, err := settings.GetConfigurationValue("MeterValueSampleInterval")
+	if err != nil {
+		sampleInterval = "10"
+	}
+	// schedule the sampling
+	_, err = scheduler.Every(fmt.Sprintf("%ss", sampleInterval)).
+		Tag(fmt.Sprintf("connector%dSampling", connector.ConnectorId)).Do(connector.SamplePowerMeter, measurands)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (connector *Connector) IsAvailable() bool {
 	return connector.ConnectorStatus == core.ChargePointStatusAvailable
 }
@@ -165,11 +189,14 @@ func (connector *Connector) IsUnavailable() bool {
 }
 
 func (connector *Connector) SetStatus(status core.ChargePointStatus, errCode core.ChargePointErrorCode) {
+	time.Sleep(time.Millisecond * 100)
 	connector.ConnectorStatus = status
 	connector.ErrorCode = errCode
 	settings.UpdateConnectorStatus(connector.EvseId, connector.ConnectorId, status)
-	time.Sleep(time.Millisecond * 200)
-	connector.connectorNotificationChannel <- rxgo.Of(connector)
+	time.Sleep(time.Millisecond * 100)
+	if connector.connectorNotificationChannel != nil {
+		connector.connectorNotificationChannel <- rxgo.Of(connector)
+	}
 }
 
 func (connector *Connector) ReserveConnector(reservationId int) error {
