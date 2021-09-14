@@ -5,6 +5,7 @@ go 1.15
 require (
 	github.com/Graylog2/go-gelf v0.0.0-20170811154226-7ebf4f536d8f
 	github.com/agrison/go-commons-lang v0.0.0-20200208220349-58e9fcb95174
+	github.com/avast/retry-go v3.0.0+incompatible // indirect
 	github.com/cenkalti/backoff/v4 v4.1.1 // indirect
 	github.com/clausecker/nfc/v2 v2.1.4
 	github.com/d2r2/go-hd44780 v0.0.0-20181002113701-74cc28c83a3e

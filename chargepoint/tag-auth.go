@@ -48,7 +48,9 @@ func (handler *ChargePointHandler) isTagAuthorized(tagId string) bool {
 // Adds the tag to the cache if it's enabled.
 func (handler *ChargePointHandler) sendAuthorizeRequest(tagId string) (*types2.IdTagInfo, error) {
 	var err error
+	handler.mu.Lock()
 	response, err := handler.chargePoint.SendRequest(core.AuthorizeRequest{IdTag: tagId})
+	handler.mu.Unlock()
 	authInfo := response.(*core.AuthorizeConfirmation)
 	switch authInfo.IdTagInfo.Status {
 	case types2.AuthorizationStatusBlocked, types2.AuthorizationStatusExpired, types2.AuthorizationStatusInvalid:

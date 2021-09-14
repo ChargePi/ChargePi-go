@@ -2,16 +2,55 @@ package chargepoint
 
 import (
 	"fmt"
+	"github.com/kr/pretty"
 	"github.com/lorenzodonini/ocpp-go/ocpp"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	types2 "github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/reactivex/rxgo/v2"
 	"github.com/xBlaz3kx/ChargePi-go/cache"
 	"github.com/xBlaz3kx/ChargePi-go/data"
+	"github.com/xBlaz3kx/ChargePi-go/hardware"
 	"github.com/xBlaz3kx/ChargePi-go/settings"
 	"log"
 	"time"
 )
+
+// AddConnectors Add the Connectors from the connectors.json file to the handler. Create and add all their components and initialize the struct.
+func (handler *ChargePointHandler) AddConnectors(connectors []*settings.Connector) {
+	log.Println("Adding connectors")
+	handler.Connectors = []*Connector{}
+	for _, connector := range connectors {
+		var powerMeter *hardware.PowerMeter
+		powerMeterInstance, err := hardware.NewPowerMeter(
+			connector.PowerMeter.PowerMeterPin,
+			connector.PowerMeter.SpiBus,
+			connector.PowerMeter.ShuntOffset,
+			connector.PowerMeter.VoltageDividerOffset,
+		)
+		if err != nil {
+			log.Printf("Cannot instantiate power meter: %s", err)
+		} else {
+			powerMeter = powerMeterInstance
+		}
+		connectorObj, err := NewConnector(
+			connector.EvseId,
+			connector.ConnectorId,
+			connector.Type,
+			hardware.NewRelay(connector.Relay.RelayPin, connector.Relay.InverseLogic),
+			powerMeter,
+			connector.PowerMeter.Enabled,
+			handler.Settings.ChargePoint.Info.MaxChargingTime,
+		)
+		if err != nil {
+			continue
+		}
+		handler.Connectors = append(handler.Connectors, connectorObj)
+		fmt.Print("Added connector ")
+		pretty.Print(connectorObj)
+		// turn off the relay at boot
+		connectorObj.relay.Off()
+	}
+}
 
 // restoreState After connecting to the central system, try to restore the previous state of each Connector and notify the system about its state.
 //If the ConnectorStatus was "Preparing" or "Charging", try to resume or start charging. If the charging fails, change the connector status and notify the central system.
@@ -84,6 +123,8 @@ func (handler *ChargePointHandler) attemptToResumeChargingAtConnector(connector 
 // notifyConnectorStatus Notify the central system about the connector's status and updates the LED indicator.
 func (handler *ChargePointHandler) notifyConnectorStatus(connector *Connector) {
 	if connector != nil {
+		handler.mu.Lock()
+		defer handler.mu.Unlock()
 		request := core.StatusNotificationRequest{
 			ConnectorId: connector.ConnectorId,
 			Status:      connector.ConnectorStatus,

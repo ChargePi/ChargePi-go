@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	types2 "github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
-	"github.com/xBlaz3kx/ChargePi-go/cache"
 	"github.com/xBlaz3kx/ChargePi-go/hardware"
 	"github.com/xBlaz3kx/ChargePi-go/settings"
 	"log"
@@ -85,29 +84,6 @@ func (handler *ChargePointHandler) listenForTag() {
 			continue
 		}
 	}
-}
-
-// preparePowerMeterAtConnector
-func preparePowerMeterAtConnector(connector *Connector) error {
-	var (
-		measurands []types2.Measurand
-		err        error
-	)
-	cache.Cache.Set(fmt.Sprintf("MeterValueLastIndex%d%d", connector.EvseId, connector.ConnectorId),
-		0, time.Duration(connector.MaxChargingTime)*time.Minute)
-	measurands = getTypesToSample()
-	// Get the sample interval
-	sampleInterval, err := settings.GetConfigurationValue("MeterValueSampleInterval")
-	if err != nil {
-		sampleInterval = "10"
-	}
-	// schedule the sampling
-	_, err = scheduler.Every(fmt.Sprintf("%ss", sampleInterval)).
-		Tag(fmt.Sprintf("connector%dSampling", connector.ConnectorId)).Do(connector.SamplePowerMeter, measurands)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func getTypesToSample() []types2.Measurand {
