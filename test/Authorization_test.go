@@ -205,7 +205,7 @@ func TestSetMaxCachedTags(t *testing.T) {
 				if maxTags != tt.args.number {
 					t.Errorf("Variable not set to cache")
 				}
-			} else {
+			} else if tt.name != "NoTagCached" {
 				t.Errorf("Did not find the variable in cache")
 			}
 		})

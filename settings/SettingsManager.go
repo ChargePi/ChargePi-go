@@ -107,7 +107,7 @@ func GetSettings() {
 	)
 	cacheSettings, isFound := cache.Cache.Get("settingsFilePath")
 	if !isFound {
-		panic("settings file path not found")
+		log.Fatal("settings file path not found")
 	}
 	settingsPath = cacheSettings.(string)
 	err = fig.Load(&settings,
@@ -115,7 +115,7 @@ func GetSettings() {
 		fig.Dirs(filepath.Dir(settingsPath)),
 	)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	err = cache.Cache.Add("settings", &settings, goCache.NoExpiration)
 	if err != nil {

@@ -53,7 +53,7 @@ func (handler *ChargePointHandler) AddConnectors(connectors []*settings.Connecto
 }
 
 // restoreState After connecting to the central system, try to restore the previous state of each Connector and notify the system about its state.
-//If the ConnectorStatus was "Preparing" or "Charging", try to resume or start charging. If the charging fails, change the connector status and notify the central system.
+// If the ConnectorStatus was "Preparing" or "Charging", try to resume or start charging. If the charging fails, change the connector status and notify the central system.
 func (handler *ChargePointHandler) restoreState() {
 	var err error
 	for _, connector := range handler.Connectors {
@@ -97,6 +97,7 @@ func (handler *ChargePointHandler) restoreState() {
 	}
 }
 
+// attemptToResumeChargingAtConnector try to resume or stop charging at a connector based on the status in the connector persistence file.
 func (handler *ChargePointHandler) attemptToResumeChargingAtConnector(connector *Connector, session data.Session) error {
 	log.Println("Attempt to resume charging at charging at", connector.ConnectorId)
 	parse, err := time.Parse(time.RFC3339, session.Started)
@@ -123,8 +124,8 @@ func (handler *ChargePointHandler) attemptToResumeChargingAtConnector(connector 
 // notifyConnectorStatus Notify the central system about the connector's status and updates the LED indicator.
 func (handler *ChargePointHandler) notifyConnectorStatus(connector *Connector) {
 	if connector != nil {
-		handler.mu.Lock()
-		defer handler.mu.Unlock()
+		//handler.mu.Lock()
+		//defer handler.mu.Unlock()
 		request := core.StatusNotificationRequest{
 			ConnectorId: connector.ConnectorId,
 			Status:      connector.ConnectorStatus,
@@ -134,7 +135,7 @@ func (handler *ChargePointHandler) notifyConnectorStatus(connector *Connector) {
 		callback := func(confirmation ocpp.Response, protoError error) {
 			log.Printf("Notified status of the connector %d: %s", connector.ConnectorId, connector.ConnectorStatus)
 		}
-		err := handler.chargePoint.SendRequestAsync(request, callback)
+		err := handler.SendRequest(request, callback)
 		if err != nil {
 			log.Println("Cannot send status notification of connector: ", err)
 			return
@@ -143,7 +144,10 @@ func (handler *ChargePointHandler) notifyConnectorStatus(connector *Connector) {
 }
 
 // listenForConnectorStatusChange listen for change in connector and notify the central system about the state
-func (handler *ChargePointHandler) listenForConnectorStatusChange(observableConnectors rxgo.Observable) {
+func (handler *ChargePointHandler) listenForConnectorStatusChange() {
+	handler.connectorChannel = make(chan rxgo.Item)
+	observableConnectors := rxgo.FromChannel(handler.connectorChannel)
+
 	if observableConnectors != nil {
 		// Set the communication channel before listening
 		for _, connector := range handler.Connectors {

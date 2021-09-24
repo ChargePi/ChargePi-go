@@ -6,6 +6,7 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/chargepoint"
 	"github.com/xBlaz3kx/ChargePi-go/data"
 	"github.com/xBlaz3kx/ChargePi-go/hardware"
+	"math/rand"
 	"reflect"
 	"testing"
 	"time"
@@ -77,7 +78,7 @@ func TestConnector_ResumeCharging(t *testing.T) {
 		1,
 		1,
 		"Schuko",
-		hardware.NewRelay(15, false),
+		hardware.NewRelay(rand.Intn(20)+10, false),
 		nil,
 		false,
 		5,
@@ -158,14 +159,13 @@ func TestConnector_StartCharging(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	relay := hardware.NewRelay(1, false)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			connector, err := chargepoint.NewConnector(
 				tt.fields.EvseId,
 				tt.fields.ConnectorId,
 				tt.fields.ConnectorType,
-				relay,
+				hardware.NewRelay(rand.Intn(20)+10, false),
 				nil,
 				false,
 				5,

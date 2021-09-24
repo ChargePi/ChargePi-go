@@ -1,18 +1,17 @@
 package test
 
 import (
+	"math/rand"
 	"os/exec"
+	"time"
 
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/lorenzodonini/ocpp-go/ws"
-	goCache "github.com/patrickmn/go-cache"
-	"github.com/xBlaz3kx/ChargePi-go/cache"
 	"github.com/xBlaz3kx/ChargePi-go/chargepoint"
 	"github.com/xBlaz3kx/ChargePi-go/hardware"
 	"github.com/xBlaz3kx/ChargePi-go/settings"
 	"reflect"
 	"testing"
-	"time"
 )
 
 func TestChargePointHandler_AddConnectors(t *testing.T) {
@@ -192,7 +191,7 @@ func TestChargePointHandler_findAvailableConnector(t *testing.T) {
 					connector.ConnectorId,
 					connector.ConnectorId,
 					connector.ConnectorType,
-					hardware.NewRelay(1, false),
+					hardware.NewRelay(i+10, false),
 					nil,
 					false,
 					connector.MaxChargingTime,
@@ -325,12 +324,12 @@ func TestChargePointHandler_findConnectorWithId(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			handler := &chargepoint.ChargePointHandler{}
-			for _, connector := range tt.fields.connectors {
+			for i, connector := range tt.fields.connectors {
 				newConnector, err := chargepoint.NewConnector(
 					connector.EvseId,
 					connector.ConnectorId,
 					connector.ConnectorType,
-					hardware.NewRelay(1, false),
+					hardware.NewRelay(i, false),
 					nil,
 					false,
 					connector.MaxChargingTime,
@@ -433,11 +432,12 @@ func TestChargePointHandler_findConnectorWithTagId(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			handler := &chargepoint.ChargePointHandler{}
 			for i, connector := range tt.fields.connectors {
+				rand.Seed(time.Now().UnixNano())
 				newConnector, err := chargepoint.NewConnector(
 					connector.ConnectorId,
 					connector.ConnectorId,
 					connector.ConnectorType,
-					hardware.NewRelay(1, false),
+					hardware.NewRelay(i+10, false),
 					nil,
 					false,
 					connector.MaxChargingTime,
@@ -513,12 +513,12 @@ func TestChargePointHandler_findConnectorWithTransactionId(t *testing.T) {
 	for i, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			handler := &chargepoint.ChargePointHandler{}
-			for _, connector := range tt.fields.connectors {
+			for i2, connector := range tt.fields.connectors {
 				newConnector, err := chargepoint.NewConnector(
 					connector.ConnectorId,
 					connector.ConnectorId,
 					connector.ConnectorType,
-					hardware.NewRelay(1, false),
+					hardware.NewRelay(i2+10, false),
 					nil,
 					false,
 					connector.MaxChargingTime,
@@ -618,64 +618,6 @@ func Test_getTLSClient(t *testing.T) {
 				}
 				t.Errorf("getTLSClient() = %v, want %v", got, tt.want)
 			}
-		})
-	}
-}
-
-func Test_retrySendingRequest(t *testing.T) {
-	type args struct {
-		cacheRetryKey string
-		maxRetries    int
-		interval      int
-	}
-	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
-	}{
-		{
-			name: "RetryTwice",
-			args: args{
-				cacheRetryKey: "RetryTwice",
-				maxRetries:    2,
-				interval:      5,
-			},
-			wantErr: false,
-		}, {
-			name: "ZeroRetries",
-			args: args{
-				cacheRetryKey: "ZeroRetries",
-				maxRetries:    0,
-				interval:      10,
-			},
-			wantErr: false,
-		},
-		{
-			name: "ZeroRetries2",
-			args: args{
-				cacheRetryKey: "ZeroRetries2",
-				maxRetries:    -1,
-				interval:      10,
-			},
-			wantErr: false,
-		}, {
-			name: "FiveBackToBackRetries",
-			args: args{
-				cacheRetryKey: "FiveBackToBackRetries",
-				maxRetries:    5,
-				interval:      0,
-			},
-			wantErr: false,
-		},
-	}
-	cache.Cache = goCache.New(time.Minute*10, time.Minute*10)
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			/*if err := chargepoint.RetrySendingRequest(tt.args.cacheRetryKey, tt.args.maxRetries, tt.args.interval, fmt.Println, "Job executed"); (err != nil) != tt.wantErr {
-				t.Errorf("retrySendingRequest() error = %v, wantErr %v", err, tt.wantErr)
-			}*/
-			time.Sleep(time.Duration(tt.args.maxRetries*tt.args.interval+5) * time.Second)
-
 		})
 	}
 }

@@ -1,5 +1,3 @@
-#!/bin/bash
-
 #Copied from https://github.com/lorenzodonini/ocpp-go/blob/master/example/1.6/create-test-certificates.sh
 mkdir -p certs/cp
 cd certs

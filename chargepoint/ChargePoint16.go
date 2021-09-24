@@ -25,14 +25,20 @@ type ChargePointHandler struct {
 }
 
 func (handler *ChargePointHandler) Run() {
+	var (
+		client ws.WsClient = nil
+		info               = handler.Settings.ChargePoint.Info
+		tls                = info.TLS
+	)
+
 	// Check if the client has TLS
-	var client ws.WsClient = nil
-	if handler.Settings.ChargePoint.Info.TLS.IsEnabled {
-		client = GetTLSClient(handler.Settings.ChargePoint.Info.TLS.CACertificatePath, handler.Settings.ChargePoint.Info.TLS.ClientCertificatePath, handler.Settings.ChargePoint.Info.TLS.ClientKeyPath)
-		handler.chargePoint = ocpp16.NewChargePoint(handler.Settings.ChargePoint.Info.Id, nil, client)
+	if tls.IsEnabled {
+		client = GetTLSClient(tls.CACertificatePath, tls.ClientCertificatePath, tls.ClientKeyPath)
+		handler.chargePoint = ocpp16.NewChargePoint(info.Id, nil, client)
 	} else {
-		handler.chargePoint = ocpp16.NewChargePoint(handler.Settings.ChargePoint.Info.Id, nil, nil)
+		handler.chargePoint = ocpp16.NewChargePoint(info.Id, nil, nil)
 	}
+
 	// Set handlers for Core, Reservation and RemoteTrigger
 	handler.chargePoint.SetCoreHandler(handler)
 	handler.chargePoint.SetReservationHandler(handler)
@@ -44,12 +50,15 @@ func (handler *ChargePointHandler) Run() {
 
 // connect to the central system and attempt to boot
 func (handler *ChargePointHandler) connect() {
-	serverUrl := fmt.Sprintf("ws://%s/%s", handler.Settings.ChargePoint.Info.ServerUri, handler.Settings.ChargePoint.Info.Id)
+	var (
+		info = handler.Settings.ChargePoint.Info
+	)
+
+	serverUrl := fmt.Sprintf("ws://%s/%s", info.ServerUri, info.Id)
 	log.Println("Trying to connect to the central system: ", serverUrl)
 	connectErr := handler.chargePoint.Start(serverUrl)
 
 	go handler.listenForTag()
-	handler.connectorChannel = make(chan rxgo.Item)
 
 	// Check if the connection was successful
 	if connectErr != nil {
@@ -57,9 +66,10 @@ func (handler *ChargePointHandler) connect() {
 		handler.CleanUp(core.ReasonOther)
 		handler.chargePoint.Stop()
 	} else {
-		log.Printf("connected to central server: %s \n with ID: %s", serverUrl, handler.Settings.ChargePoint.Info.Id)
+		log.Printf("connected to central server: %s with ID: %s", serverUrl, info.Id)
 		handler.IsAvailable = true
-		go handler.listenForConnectorStatusChange(rxgo.FromChannel(handler.connectorChannel))
+
+		go handler.listenForConnectorStatusChange()
 		handler.bootNotification()
 	}
 }
@@ -166,5 +176,4 @@ func (handler *ChargePointHandler) CleanUp(reason core.Reason) {
 	log.Println("Clearing the scheduler...")
 	scheduler.Stop()
 	scheduler.Clear()
-
 }

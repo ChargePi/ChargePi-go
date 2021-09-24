@@ -32,11 +32,11 @@ func InitConfiguration() {
 		fig.Dirs(filepath.Dir(configurationFilePath)),
 	)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	err = cache.Cache.Add("OCPPConfiguration", &ocppConfig, goCache.NoExpiration)
 	if err != nil {
-		panic(err)
+		log.Println(err)
 	}
 	log.Println("Added OCPP configuration to cache")
 }

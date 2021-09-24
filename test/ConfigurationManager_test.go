@@ -1,80 +1,14 @@
 package test
 
 import (
-	"fmt"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/patrickmn/go-cache"
 	cache2 "github.com/xBlaz3kx/ChargePi-go/cache"
 	"github.com/xBlaz3kx/ChargePi-go/settings"
-	"io/ioutil"
-	"os/exec"
 	"reflect"
 	"testing"
 	"time"
 )
-
-func TestDecodeFile(t *testing.T) {
-	type args struct {
-		filename string
-	}
-	tests := []struct {
-		name       string
-		args       args
-		shouldFail bool
-	}{
-		{
-			name: "FileExists",
-			args: args{
-				filename: "testfile1.json",
-			},
-			shouldFail: false,
-		}, {
-			name: "FileDoesntExist",
-			args: args{
-				filename: "testfile2.json",
-			},
-			shouldFail: true,
-		}, {
-			name: "UnsupportedFileFormat",
-			args: args{
-				filename: "testfile2.bat",
-			},
-			shouldFail: true,
-		},
-	}
-	type TestFile struct {
-		TestString string
-		TestInt    int
-		TestArray  []int
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var testFile = TestFile{}
-			switch tt.name {
-			case "FileExists":
-				err := settings.WriteToFile(tt.args.filename, TestFile{TestString: "ABCD", TestInt: 1, TestArray: []int{1, 2, 3}})
-				if err != nil {
-					t.Errorf("cannot create file: %v", err)
-				}
-				break
-			case "FileDoesntExist":
-				/*exec.Command(fmt.Sprintf("rm %s", tt.args.filename))
-				settings.DecodeFile(tt.args.filename, &testFile)*/
-				break
-			case "UnsupportedFileFormat":
-				err := ioutil.WriteFile(tt.args.filename, []byte("hello\ngo\n"), 0644)
-				if err != nil {
-					t.Errorf("cannot create file: %v", err)
-				}
-				break
-			}
-			if (testFile.TestString != "ABCD" || testFile.TestInt != 1 || len(testFile.TestArray) <= 0) && !tt.shouldFail {
-				t.Errorf("Failed creating file")
-			}
-			exec.Command(fmt.Sprintf("rm %s", tt.args.filename))
-		})
-	}
-}
 
 func TestGetConfiguration(t *testing.T) {
 	tests := []struct {

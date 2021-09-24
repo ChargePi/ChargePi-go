@@ -43,7 +43,7 @@ func GetAuthFile() {
 		fig.File(filepath.Base(authFilePath)),
 		fig.Dirs(filepath.Dir(authFilePath)))
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	AuthCache.Set("AuthCacheVersion", auth.Version, goCache.NoExpiration)
 	AuthCache.Set("AuthCacheMaxTags", 0, goCache.NoExpiration)

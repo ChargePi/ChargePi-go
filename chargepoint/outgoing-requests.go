@@ -29,7 +29,7 @@ func (handler *ChargePointHandler) bootNotification() {
 			handler.restoreState()
 		} else {
 			log.Printf("Denied by the central system.")
-			os.Exit(-1)
+			os.Exit(1)
 		}
 	}
 	handler.SendRequest(request, callback)
@@ -41,7 +41,7 @@ func (handler *ChargePointHandler) setHeartbeat(interval int) {
 		heartBeatInterval = fmt.Sprintf("%d", interval)
 	}
 	heartBeatInterval = fmt.Sprintf("%ss", heartBeatInterval)
-	_, err := scheduler.Every(heartBeatInterval).Tag("Heartbeat").Do(handler.sendHeartBeat)
+	_, err := scheduler.Every(heartBeatInterval).Tag("heartbeat").Do(handler.sendHeartBeat)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -73,8 +73,6 @@ func (handler *ChargePointHandler) SendRequest(request ocpp.Request, callback fu
 
 	err := retry.Do(
 		func() error {
-			handler.mu.Lock()
-			defer handler.mu.Unlock()
 			return handler.chargePoint.SendRequestAsync(
 				request,
 				callback,
@@ -94,7 +92,7 @@ func (handler *ChargePointHandler) sendHeartBeat() error {
 	return handler.SendRequest(
 		core.HeartbeatRequest{},
 		func(confirmation ocpp.Response, protoError error) {
-			log.Printf("Sent setHeartbeat")
+			log.Printf("Sent heartbeat")
 		})
 }
 

@@ -63,7 +63,7 @@ func (handler *ChargePointHandler) OnRemoteStartTransaction(request *core.Remote
 		connector   = handler.FindConnectorWithId(connectorId)
 	)
 	log.Printf("Got remote start request for connector %d with tag %s", connectorId, request.IdTag)
-	if connector != nil {
+	if connector != nil && connector.IsAvailable() {
 		//Delay the charging by 3 seconds
 		_, err = scheduler.Every(3).Seconds().LimitRunsTo(1).Do(handler.startCharging, request.IdTag)
 		if err != nil {
@@ -81,7 +81,7 @@ func (handler *ChargePointHandler) OnRemoteStopTransaction(request *core.RemoteS
 		connector     = handler.FindConnectorWithTransactionId(transactionId)
 	)
 	log.Printf("Got remote stop request for transaction %s", transactionId)
-	if connector != nil {
+	if connector != nil && connector.IsCharging() {
 		//Delay stopping the transaction by 3 seconds
 		_, err = scheduler.Every(3).Seconds().LimitRunsTo(1).Do(handler.stopChargingConnectorWithTransactionId, transactionId)
 		if err != nil {
@@ -103,6 +103,7 @@ func (handler *ChargePointHandler) OnReset(request *core.ResetRequest) (confirma
 		}
 	} else if request.Type == core.ResetTypeSoft {
 		handler.CleanUp(core.ReasonSoftReset)
+		//todo restart ChargePi only
 		_, err = scheduler.Every(5).Seconds().LimitRunsTo(1).Do(exec.Command, "sudo reboot")
 		if err == nil {
 			response = core.ResetStatusAccepted

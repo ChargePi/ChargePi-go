@@ -14,7 +14,9 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 )
 
 func initLogger(grayLogAddress string) {
@@ -56,6 +58,7 @@ func main() {
 		ledError   error
 		handler    chargepoint.ChargePointHandler
 	)
+	quitChannel := make(chan os.Signal, 1)
 	err := getFlags()
 	if err != nil {
 		return
@@ -116,6 +119,11 @@ func main() {
 	} else {
 		log.Fatal("Protocol version not supported: ", config.ChargePoint.Info.ProtocolVersion)
 	}
+
+	//capture terminate signal
+	signal.Notify(quitChannel, syscall.SIGINT, syscall.SIGTERM)
+	<-quitChannel
+	fmt.Println("Received a signal to terminate..")
 	handler.CleanUp(core.ReasonPowerLoss)
-	os.Exit(1)
+	fmt.Println("Exiting...")
 }

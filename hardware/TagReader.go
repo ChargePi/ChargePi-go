@@ -118,12 +118,13 @@ func (reader *TagReader) Reset() {
 		log.Println(err)
 		return
 	}
+	time.Sleep(time.Millisecond * 300)
 	err = pin.SetValue(0)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	time.Sleep(time.Millisecond * 100)
+	time.Sleep(time.Millisecond * 300)
 	err = pin.SetValue(1)
 	if err != nil {
 		log.Println(err)
