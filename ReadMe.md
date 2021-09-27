@@ -8,7 +8,7 @@ ChargePi client can be deployed/run in multiple ways:
 
 - standalone
 - Docker by building the image and running the container
-- Docker-compose to be deployed with SteVe Central System and Watchtower (**recommended for testing only**)
+- Docker-compose to be deployed with SteVe Central System and Watchtower (**recommended for dev/testing only**)
 - Docker-compose by running the client
 
 ### Charging station specifications
@@ -26,9 +26,8 @@ settings which require minimal configuration.
 ### Logging
 
 ChargePi uses [Graylog](https://www.graylog.org/) logging server for remote logging, so a server should be up and
-running if you want the logs to be stored (check setup [instructions](/docs/services/graylog.md)). Logs are in GELF
-format and are sent through UDP protocol. The library used for sending logs
-is [go-gelf](https://github.com/Graylog2/go-gelf).
+running if you want the logs to be stored (check setup [instructions](/docs/services/graylog.md)). Logs are sent through
+UDP protocol in GELF format. The library used for sending logs is [go-gelf](https://github.com/Graylog2/go-gelf).
 
 Configure the **"logServer"** property in the [settings](/configs/settings.json) file with your server IP/domain name
 with the port.
@@ -47,13 +46,13 @@ with the port.
 
 2. Wire your hardware according to the provided [schematics](/docs/hardware/hardware.md).
 
-3. Install [libraries](/docs/client/installing-libraries.md)
+3. Install the [libraries](/docs/client/installing-libraries.md) (if needed).
 
 4. Configure the settings files according to the hardware and desired functionality:
     - [client configuration](/docs/client/configuration.md)
     - [OCPP configuration](/docs/ocpp/ocpp-16.md)
 
-5. Run the client
+5. Run the client.
 
 ## Running standalone
 

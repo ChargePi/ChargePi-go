@@ -47,8 +47,6 @@ func (handler *ChargePointHandler) AddConnectors(connectors []*settings.Connecto
 		handler.Connectors = append(handler.Connectors, connectorObj)
 		fmt.Print("Added connector ")
 		pretty.Print(connectorObj)
-		// turn off the relay at boot
-		connectorObj.relay.Off()
 	}
 }
 

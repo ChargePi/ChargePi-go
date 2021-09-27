@@ -30,7 +30,7 @@ type Connector struct {
 }
 
 // NewConnector Create a new connector object from the provided arguments. EvseId, connectorId and maxChargingTime must be greater than zero.
-// At creation, it makes an empty session and defaults the status to Available.
+// When created, it makes an empty session, turns off the relay and defaults the status to Available.
 func NewConnector(EvseId int, connectorId int, connectorType string, relay *hardware.Relay, powerMeter *hardware.PowerMeter, powerMeterEnabled bool, maxChargingTime int) (*Connector, error) {
 	if maxChargingTime <= 0 {
 		maxChargingTime = 180
@@ -41,6 +41,7 @@ func NewConnector(EvseId int, connectorId int, connectorType string, relay *hard
 	if relay == nil {
 		return nil, fmt.Errorf("relay pointer cannot be nil")
 	}
+	relay.Off()
 	return &Connector{
 		EvseId:            EvseId,
 		ConnectorId:       connectorId,
@@ -87,7 +88,7 @@ func (connector *Connector) StartCharging(transactionId string, tagId string) er
 	return errors.New("invalid connector status or session already active")
 }
 
-// StopCharging Stops charging the connector by turning the relay off and ends the session.
+// StopCharging Stops charging the connector by turning the relay off and ending the session.
 func (connector *Connector) StopCharging(reason core.Reason) error {
 	if connector.IsCharging() || connector.IsPreparing() {
 		connector.session.EndSession()
