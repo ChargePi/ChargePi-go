@@ -117,11 +117,7 @@ func GetSettings() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = cache.Cache.Add("settings", &settings, goCache.NoExpiration)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	cache.Cache.Set("settings", &settings, goCache.NoExpiration)
 	log.Println("Read settings from ", settingsPath)
 }
 
