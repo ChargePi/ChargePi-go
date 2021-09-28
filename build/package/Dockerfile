@@ -16,17 +16,21 @@ WORKDIR /ChargePi/src
 RUN cd ~
 RUN go build -o chargepi .
 
-
 FROM base as dev
-RUN cd ~
 ENTRYPOINT ["go","run","."]
 
-FROM base as chargepi
-RUN cd ~
+FROM alpine as chargepi
+
+COPY --from=base /ChargePi/src/configs /etc/ChargePi/configs
+COPY --from=base /ChargePi/src/chargepi /etc/ChargePi/chargepi
+RUN cd /etc/ChargePi
+
 ENTRYPOINT ["./chargepi"]
 
 # Test the client
 FROM base as test
-RUN cp -r configs/ test/ && cd test/ && chmod +x create-test-certs.sh
-&& ./create-test-certs.sh
+RUN cp -r configs/ test/  \
+    && cd test/  \
+    && chmod +x create-test-certs.sh
+    && ./create-test-certs.sh \
 CMD ["go", "test","-v"]

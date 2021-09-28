@@ -1,4 +1,4 @@
-package hardware
+package reader
 
 import (
 	"encoding/hex"
@@ -36,15 +36,15 @@ func (reader *TagReader) init() {
 // hardware Reset the device.
 func (reader *TagReader) ListenForTags() {
 	reader.init()
-	var modulations = []nfc.Modulation{
-		{Type: nfc.ISO14443a, BaudRate: nfc.Nbr106},
-		{Type: nfc.ISO14443b, BaudRate: nfc.Nbr106},
-		{Type: nfc.Felica, BaudRate: nfc.Nbr212},
-		{Type: nfc.Felica, BaudRate: nfc.Nbr424},
-		{Type: nfc.Jewel, BaudRate: nfc.Nbr106},
-		{Type: nfc.ISO14443biClass, BaudRate: nfc.Nbr106},
-	}
 	var (
+		modulations = []nfc.Modulation{
+			{Type: nfc.ISO14443a, BaudRate: nfc.Nbr106},
+			{Type: nfc.ISO14443b, BaudRate: nfc.Nbr106},
+			{Type: nfc.Felica, BaudRate: nfc.Nbr212},
+			{Type: nfc.Felica, BaudRate: nfc.Nbr424},
+			{Type: nfc.Jewel, BaudRate: nfc.Nbr106},
+			{Type: nfc.ISO14443biClass, BaudRate: nfc.Nbr106},
+		}
 		err    error
 		count  int
 		target nfc.Target
@@ -103,8 +103,13 @@ func (reader *TagReader) ListenForTags() {
 	}
 }
 
+func (reader TagReader) GetTagChannel() chan string {
+	return reader.TagChannel
+}
+
 // Cleanup Close the reader device connection.
 func (reader *TagReader) Cleanup() {
+	close(reader.TagChannel)
 	reader.reader.Close()
 }
 

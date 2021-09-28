@@ -6,7 +6,10 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ws"
 	"github.com/reactivex/rxgo/v2"
-	"github.com/xBlaz3kx/ChargePi-go/hardware"
+	"github.com/xBlaz3kx/ChargePi-go/chargepoint/scheduler"
+	"github.com/xBlaz3kx/ChargePi-go/hardware/display"
+	"github.com/xBlaz3kx/ChargePi-go/hardware/indicator"
+	"github.com/xBlaz3kx/ChargePi-go/hardware/reader"
 	"github.com/xBlaz3kx/ChargePi-go/settings"
 	"log"
 	"sync"
@@ -18,9 +21,9 @@ type ChargePointHandler struct {
 	IsAvailable      bool
 	Connectors       []*Connector
 	Settings         *settings.Settings
-	TagReader        *hardware.TagReader
-	LEDStrip         *hardware.LEDStrip
-	LCD              *hardware.LCD
+	TagReader        reader.Reader
+	Indicator        indicator.Indicator
+	LCD              display.LCD
 	connectorChannel chan rxgo.Item
 }
 
@@ -97,7 +100,7 @@ func (handler *ChargePointHandler) FindConnectorWithId(connectorID int) *Connect
 // FindConnectorWithTagId Find the Connector that has the same tagId as the session of the connector.
 func (handler *ChargePointHandler) FindConnectorWithTagId(tagId string) *Connector {
 	for _, connector := range handler.Connectors {
-		if connector.session.TagId == tagId {
+		if connector.GetTagId() == tagId {
 			return connector
 		}
 	}
@@ -107,7 +110,7 @@ func (handler *ChargePointHandler) FindConnectorWithTagId(tagId string) *Connect
 // FindConnectorWithTransactionId Find the Connector that contains the transactionId in the session of the connector.
 func (handler *ChargePointHandler) FindConnectorWithTransactionId(transactionId string) *Connector {
 	for _, connector := range handler.Connectors {
-		if connector.session.TransactionId == transactionId {
+		if connector.GetTransactionId() == transactionId {
 			return connector
 		}
 	}
@@ -156,24 +159,27 @@ func (handler *ChargePointHandler) CleanUp(reason core.Reason) {
 			}
 		}
 	}
+
 	log.Println("Disconnecting the client..")
 	handler.chargePoint.Stop()
+
 	if handler.TagReader != nil {
 		log.Println("Cleaning up Tag Reader")
-		close(handler.TagReader.TagChannel)
 		handler.TagReader.Cleanup()
 	}
+
 	if handler.LCD != nil {
-		log.Println("Clearing LCD")
-		close(handler.LCD.LCDChannel)
+		log.Println("Cleaning up LCD")
 		handler.LCD.Cleanup()
 	}
-	if handler.LEDStrip != nil {
-		log.Println("Clearing LEDs")
-		handler.LEDStrip.Cleanup()
+
+	if handler.Indicator != nil {
+		log.Println("Cleaning up Indicator")
+		handler.Indicator.Cleanup()
 	}
+
 	close(handler.connectorChannel)
 	log.Println("Clearing the scheduler...")
-	scheduler.Stop()
-	scheduler.Clear()
+	scheduler.GetScheduler().Stop()
+	scheduler.GetScheduler().Clear()
 }

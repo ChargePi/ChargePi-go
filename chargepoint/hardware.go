@@ -4,48 +4,54 @@ import (
 	"fmt"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	types2 "github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
-	"github.com/xBlaz3kx/ChargePi-go/hardware"
+	"github.com/xBlaz3kx/ChargePi-go/chargepoint/scheduler"
+	"github.com/xBlaz3kx/ChargePi-go/hardware/display"
+	"github.com/xBlaz3kx/ChargePi-go/hardware/indicator"
 	"github.com/xBlaz3kx/ChargePi-go/settings"
 	"log"
 	"strings"
 	"time"
 )
 
-func (handler *ChargePointHandler) sendToLCD(message hardware.LCDMessage) {
-	if handler.LCD == nil || handler.LCD.LCDChannel == nil || !handler.Settings.ChargePoint.Hardware.Lcd.IsSupported {
+func (handler *ChargePointHandler) sendToLCD(messages ...string) {
+	if handler.LCD == nil || handler.LCD.GetLcdChannel() == nil || !handler.Settings.ChargePoint.Hardware.Lcd.IsSupported {
 		return
 	}
-	handler.LCD.LCDChannel <- message
+
+	log.Println("Sending messages to LCD", messages)
+	handler.LCD.GetLcdChannel() <- display.NewMessage(time.Second*5, messages)
 }
 
 func (handler *ChargePointHandler) displayLEDStatus(connectorIndex int, status core.ChargePointStatus) {
-	if !handler.Settings.ChargePoint.Hardware.LedIndicator.Enabled || handler.LEDStrip == nil {
+	if !handler.Settings.ChargePoint.Hardware.LedIndicator.Enabled || handler.Indicator == nil {
 		return
 	}
+
 	var color = 0x00
 	switch status {
 	case core.ChargePointStatusFaulted:
-		color = hardware.RED
+		color = indicator.Red
 		break
 	case core.ChargePointStatusCharging:
-		color = hardware.BLUE
+		color = indicator.Blue
 		break
 	case core.ChargePointStatusReserved:
-		color = hardware.YELLOW
+		color = indicator.Yellow
 		break
 	case core.ChargePointStatusFinishing:
-		color = hardware.BLUE
+		color = indicator.Blue
 		break
 	case core.ChargePointStatusAvailable:
-		color = hardware.GREEN
+		color = indicator.Green
 		break
 	case core.ChargePointStatusUnavailable:
-		color = hardware.ORANGE
+		color = indicator.Orange
 		break
 	}
+
 	if color != 0x00 {
 		go func() {
-			err := handler.LEDStrip.DisplayColor(connectorIndex, uint32(color))
+			err := handler.Indicator.DisplayColor(connectorIndex, uint32(color))
 			if err != nil {
 				log.Println(err)
 				return
@@ -56,10 +62,10 @@ func (handler *ChargePointHandler) displayLEDStatus(connectorIndex int, status c
 
 // indicateCard Blinks the LED to indicate that the card was read.
 func (handler *ChargePointHandler) indicateCard(index int, color uint32) {
-	if !handler.Settings.ChargePoint.Hardware.LedIndicator.Enabled || handler.LEDStrip == nil {
+	if !handler.Settings.ChargePoint.Hardware.LedIndicator.Enabled || handler.Indicator == nil {
 		return
 	}
-	_, err := scheduler.Every(1).Milliseconds().LimitRunsTo(1).Do(handler.LEDStrip.Blink, index, 3, color)
+	_, err := scheduler.GetScheduler().Every(1).Milliseconds().LimitRunsTo(1).Do(handler.Indicator.Blink, index, 3, color)
 	if err != nil {
 		log.Printf("Error indicating card: %v", err)
 		return
@@ -75,8 +81,9 @@ func (handler *ChargePointHandler) listenForTag() {
 	for {
 		fmt.Printf("%s: Waiting for a tag \n", time.Now().String())
 		select {
-		case tagId := <-handler.TagReader.TagChannel:
-			handler.indicateCard(len(handler.Connectors), hardware.WHITE)
+		case tagId := <-handler.TagReader.GetTagChannel():
+			handler.indicateCard(len(handler.Connectors), indicator.White)
+			handler.sendToLCD("Read tag:", tagId)
 			handler.HandleChargingRequest(strings.ToUpper(tagId))
 			continue
 		default:

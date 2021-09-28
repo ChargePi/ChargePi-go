@@ -6,6 +6,7 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/chargepoint"
 	"github.com/xBlaz3kx/ChargePi-go/data"
 	"github.com/xBlaz3kx/ChargePi-go/hardware"
+	"github.com/xBlaz3kx/ChargePi-go/hardware/power-meter"
 	"math/rand"
 	"reflect"
 	"testing"
@@ -245,7 +246,7 @@ func TestNewConnector(t *testing.T) {
 		connectorId       int
 		connectorType     string
 		relay             *hardware.Relay
-		powerMeter        *hardware.PowerMeter
+		powerMeter        *power_meter.C5460A
 		powerMeterEnabled bool
 		maxChargingTime   int
 	}

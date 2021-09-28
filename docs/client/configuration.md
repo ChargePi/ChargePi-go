@@ -42,11 +42,18 @@ Example settings:
       "targetClientVersion": "1.0",
       "serverUri": "yourCSMSURL/",
       "logServer": "yourLoggingServer:12201",
-      "maxChargingTime": 180
+      "maxChargingTime": 180,
+      "tls": {
+        "isEnabled": false,
+        "CACertificatePath": "/usr/share/certs/rootCA.crt",
+        "clientCertificatePath": "/usr/share/certs/charge-point.crt",
+        "clientKeyPath": "/usr/share/certs/charge-point.key"
+      }
     },
     "hardware": {
       "lcd": {
         "isSupported": true,
+        "driver": "hd44780",
         "i2cAddress": "0x27"
       },
       "tagReader": {
@@ -57,9 +64,9 @@ Example settings:
       },
       "ledIndicator": {
         "enabled": true,
-        "dataPin": "18",
-        "indicateCardRead": true,
         "type": "WS281x",
+        "dataPin": 18,
+        "indicateCardRead": true,
         "invert": false
       },
       "powerMeters": {
@@ -123,6 +130,7 @@ Example connector:
   },
   "powerMeter": {
     "enabled": false,
+    "type": "CS5460A",
     "powerMeterPin": 25,
     "spiBus": 0,
     "powerUnits": "kWh",

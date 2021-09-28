@@ -1,11 +1,11 @@
 package test
 
 import (
+	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"math/rand"
 	"os/exec"
 	"time"
 
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/lorenzodonini/ocpp-go/ws"
 	"github.com/xBlaz3kx/ChargePi-go/chargepoint"
 	"github.com/xBlaz3kx/ChargePi-go/hardware"
@@ -32,55 +32,34 @@ func TestChargePointHandler_AddConnectors(t *testing.T) {
 				connectors: nil,
 			},
 			args: args{
-				connectors: []settings.Connector{{
-					EvseId:      0,
-					ConnectorId: 0,
-					Type:        "",
-					Status:      "",
-					Session: struct {
-						IsActive      bool   `fig:"IsActive"`
-						TransactionId string `fig:"TransactionId" default:""`
-						TagId         string `fig:"TagId" default:""`
-						Started       string `fig:"Started" default:""`
-						Consumption   []types.MeterValue
-					}(struct {
-						IsActive      bool
-						TransactionId string
-						TagId         string
-						Started       string
-						Consumption   []types.MeterValue
-					}{
-						IsActive:      false,
-						TransactionId: "",
-						TagId:         "",
-						Started:       "",
-						Consumption:   nil,
-					}),
-					Relay: struct {
-						RelayPin     int  `fig:"RelayPin" validate:"required"`
-						InverseLogic bool `fig:"InverseLogic"`
-					}(struct {
-						RelayPin     int
-						InverseLogic bool
-					}{}),
-					PowerMeter: struct {
-						Enabled              bool    `fig:"Enabled"`
-						PowerMeterPin        int     `fig:"PowerMeterPin"`
-						SpiBus               int     `fig:"SpiBus" default:"0"`
-						PowerUnits           string  `fig:"PowerUnits" `
-						Consumption          float64 `fig:"Consumption"`
-						ShuntOffset          float64 `fig:"ShuntOffset"`
-						VoltageDividerOffset float64 `fig:"VoltageDividerOffset"`
-					}(struct {
-						Enabled              bool
-						PowerMeterPin        int
-						SpiBus               int
-						PowerUnits           string
-						Consumption          float64
-						ShuntOffset          float64
-						VoltageDividerOffset float64
-					}{}),
-				},
+				connectors: []settings.Connector{
+					{
+						EvseId:      0,
+						ConnectorId: 0,
+						Type:        "",
+						Status:      "",
+						Session: struct {
+							IsActive      bool   `fig:"IsActive"`
+							TransactionId string `fig:"TransactionId" default:""`
+							TagId         string `fig:"TagId" default:""`
+							Started       string `fig:"Started" default:""`
+							Consumption   []types.MeterValue
+						}{},
+						Relay: struct {
+							RelayPin     int  `fig:"RelayPin" validate:"required"`
+							InverseLogic bool `fig:"InverseLogic"`
+						}{},
+						PowerMeter: struct {
+							Enabled              bool    `fig:"Enabled"`
+							Type                 string  `fig:"Type"`
+							PowerMeterPin        int     `fig:"PowerMeterPin"`
+							SpiBus               int     `fig:"SpiBus" default:"0"`
+							PowerUnits           string  `fig:"PowerUnits"`
+							Consumption          float64 `fig:"Consumption"`
+							ShuntOffset          float64 `fig:"ShuntOffset"`
+							VoltageDividerOffset float64 `fig:"VoltageDividerOffset"`
+						}{},
+					},
 				},
 			},
 		},
@@ -88,7 +67,7 @@ func TestChargePointHandler_AddConnectors(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			handler := &chargepoint.ChargePointHandler{}
-			handler.AddConnectors(nil)
+			handler.AddConnectors()
 		})
 	}
 }

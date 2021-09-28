@@ -16,6 +16,7 @@
   },
   "powerMeter": {
     "enabled": false,
+    "type": "CS5460A",
     "powerMeterPin": 25,
     "spiBus": 0,
     "powerUnits": "kWh",

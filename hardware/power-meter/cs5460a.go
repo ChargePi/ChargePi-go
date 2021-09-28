@@ -1,4 +1,4 @@
-package hardware
+package power_meter
 
 import (
 	"errors"
@@ -50,7 +50,7 @@ const (
 	ConversionReady                 = 0x01 << 20
 )
 
-type PowerMeter struct {
+type C5460A struct {
 	EnablePin            int
 	chipSelect           *gpiod.Line
 	SpiBus               int
@@ -61,18 +61,21 @@ type PowerMeter struct {
 	PowerMultiplier      float64
 }
 
-func NewPowerMeter(enablePin int, spiBus int, voltageDividerOffset float64, shuntOffset float64) (*PowerMeter, error) {
-	if enablePin < 0 {
+func NewCS5460PowerMeter(enablePin int, spiBus int, voltageDividerOffset float64, shuntOffset float64) (*C5460A, error) {
+	if enablePin <= 0 {
 		return nil, errors.New("pin cannot be negative")
 	}
+
 	if spiBus < 0 {
 		return nil, errors.New("spi bus cannot be negative")
 	}
-	var powerMeter = PowerMeter{EnablePin: enablePin, SpiBus: spiBus, VoltageDividerOffset: voltageDividerOffset, ShuntOffset: shuntOffset}
+
+	var powerMeter = C5460A{EnablePin: enablePin, SpiBus: spiBus, VoltageDividerOffset: voltageDividerOffset, ShuntOffset: shuntOffset}
 	err := powerMeter.init()
 	if err != nil {
 		return nil, err
 	}
+
 	/*var spiDev rpio.SpiDev
 	if spiDev = rpio.Spi0; powerMeter.SpiBus == 0 {
 		spiDev = rpio.Spi1
@@ -86,7 +89,7 @@ func NewPowerMeter(enablePin int, spiBus int, voltageDividerOffset float64, shun
 	return &powerMeter, nil
 }
 
-func (receiver *PowerMeter) init() error {
+func (receiver *C5460A) init() error {
 	receiver.VoltageMultiplier = VoltageRange * receiver.VoltageDividerOffset
 	receiver.CurrentMultiplier = CurrentRange * receiver.ShuntOffset
 	receiver.PowerMultiplier = receiver.VoltageDividerOffset * receiver.ShuntOffset
@@ -99,24 +102,24 @@ func (receiver *PowerMeter) init() error {
 	return err
 }
 
-func (receiver *PowerMeter) sendBytes(payload []byte) {
+func (receiver *C5460A) sendBytes(payload []byte) {
 	receiver.chipSelect.SetValue(0)
 	//rpio.SpiTransmit(payload...)
 	receiver.chipSelect.SetValue(1)
 }
 
-func (receiver *PowerMeter) sendSync() {
+func (receiver *C5460A) sendSync() {
 	receiver.sendBytes([]byte{SYNC1, SYNC1, SYNC1, SYNC0})
 }
 
-func (receiver *PowerMeter) sendToRegister(register byte, data int32) {
+func (receiver *C5460A) sendToRegister(register byte, data int32) {
 	receiver.chipSelect.SetValue(0)
 	//rpio.SpiTransmit(byte(int32(register) | WriteRegister))
 	//rpio.SpiTransmit([]byte{byte(data & 0xFF0000 >> 16), byte(data & 0xFF00 >> 8), byte(data & 0xFF)}...)
 	receiver.chipSelect.SetValue(1)
 }
 
-func (receiver *PowerMeter) readFromRegister(register int32) int32 {
+func (receiver *C5460A) readFromRegister(register int32) int32 {
 	receiver.chipSelect.SetValue(0)
 	//rpio.SpiTransmit(byte((ReadRegister) | register))
 	var received = []byte{0x0} //rpio.SpiReceive(3)
@@ -129,15 +132,15 @@ func (receiver *PowerMeter) readFromRegister(register int32) int32 {
 	return value
 }
 
-func (receiver *PowerMeter) getStatus() int32 {
+func (receiver *C5460A) getStatus() int32 {
 	return receiver.readFromRegister(StatusRegister)
 }
 
-func (receiver *PowerMeter) clearStatus(status int32) {
+func (receiver *C5460A) clearStatus(status int32) {
 	receiver.sendToRegister(StatusRegister, status)
 }
 
-func (receiver *PowerMeter) startConverting() {
+func (receiver *C5460A) startConverting() {
 	receiver.clearStatus(ConversionReady)
 	receiver.sendBytes([]byte{StartMultiConvert})
 	for {
@@ -147,16 +150,16 @@ func (receiver *PowerMeter) startConverting() {
 	}
 }
 
-func (receiver *PowerMeter) stopConverting() {
+func (receiver *C5460A) stopConverting() {
 	receiver.sendBytes([]byte{PowerUpHaltControl})
 }
 
-func (receiver *PowerMeter) Reset() {
+func (receiver *C5460A) Reset() {
 	receiver.sendToRegister(ConfigRegister, ChipReset)
 	receiver.sendSync()
 }
 
-func (receiver *PowerMeter) calibrate(command byte) {
+func (receiver *C5460A) calibrate(command byte) {
 	receiver.stopConverting()
 	receiver.clearStatus(DataReady)
 	receiver.sendBytes([]byte{CalibrateControl | (command & CalibrateAll)})
@@ -169,43 +172,43 @@ func (receiver *PowerMeter) calibrate(command byte) {
 	receiver.startConverting()
 }
 
-func (receiver *PowerMeter) calibrateVoltage() int32 {
+func (receiver *C5460A) calibrateVoltage() int32 {
 	receiver.calibrate(CalibrateVoltage | CalibrateOffset)
 	return receiver.readFromRegister(VoltageOffsetRegister)
 }
 
-func (receiver *PowerMeter) setVoltageOffset(value int32) {
+func (receiver *C5460A) setVoltageOffset(value int32) {
 	receiver.stopConverting()
 	receiver.sendToRegister(VoltageOffsetRegister, value)
 	receiver.startConverting()
 }
 
-func (receiver *PowerMeter) calibrateCurrentOffset() int32 {
+func (receiver *C5460A) calibrateCurrentOffset() int32 {
 	receiver.calibrate(CalibrateCurrent | CalibrateOffset)
 	return receiver.readFromRegister(CurrentOffsetRegister)
 }
 
-func (receiver *PowerMeter) setCurrentOffset(value int32) {
+func (receiver *C5460A) setCurrentOffset(value int32) {
 	receiver.stopConverting()
 	receiver.sendToRegister(CurrentOffsetRegister, value)
 	receiver.startConverting()
 }
 
-func (receiver *PowerMeter) GetEnergy() float64 {
+func (receiver *C5460A) GetEnergy() float64 {
 	return float64(receiver.readFromRegister(TotalEnergyRegister) << 16)
 }
-func (receiver *PowerMeter) GetPower() float64 {
+func (receiver *C5460A) GetPower() float64 {
 	return float64(receiver.readFromRegister(LastPowerRegister)) * receiver.PowerMultiplier
 }
-func (receiver *PowerMeter) GetCurrent() float64 {
+func (receiver *C5460A) GetCurrent() float64 {
 	return float64(receiver.readFromRegister(LastCurrentRegister)) * receiver.CurrentMultiplier
 }
-func (receiver *PowerMeter) GetVoltage() float64 {
+func (receiver *C5460A) GetVoltage() float64 {
 	return float64(receiver.readFromRegister(LastVoltageRegister)) * receiver.VoltageMultiplier
 }
-func (receiver *PowerMeter) GetRMSCurrent() float64 {
+func (receiver *C5460A) GetRMSCurrent() float64 {
 	return float64(receiver.readFromRegister(RmsCurrentRegister)) * receiver.CurrentMultiplier
 }
-func (receiver *PowerMeter) GetRMSVoltage() float64 {
+func (receiver *C5460A) GetRMSVoltage() float64 {
 	return float64(receiver.readFromRegister(RmsVoltageRegister)) * receiver.VoltageMultiplier
 }

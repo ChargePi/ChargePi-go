@@ -9,6 +9,7 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
 	types2 "github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/reactivex/rxgo/v2"
+	"github.com/xBlaz3kx/ChargePi-go/chargepoint/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/data"
 	"github.com/xBlaz3kx/ChargePi-go/settings"
 	"log"
@@ -65,7 +66,7 @@ func (handler *ChargePointHandler) OnRemoteStartTransaction(request *core.Remote
 	log.Printf("Got remote start request for connector %d with tag %s", connectorId, request.IdTag)
 	if connector != nil && connector.IsAvailable() {
 		//Delay the charging by 3 seconds
-		_, err = scheduler.Every(3).Seconds().LimitRunsTo(1).Do(handler.startCharging, request.IdTag)
+		_, err = scheduler.GetScheduler().Every(3).Seconds().LimitRunsTo(1).Do(handler.startCharging, request.IdTag)
 		if err != nil {
 			return core.NewRemoteStartTransactionConfirmation(response), err
 		}
@@ -83,7 +84,7 @@ func (handler *ChargePointHandler) OnRemoteStopTransaction(request *core.RemoteS
 	log.Printf("Got remote stop request for transaction %s", transactionId)
 	if connector != nil && connector.IsCharging() {
 		//Delay stopping the transaction by 3 seconds
-		_, err = scheduler.Every(3).Seconds().LimitRunsTo(1).Do(handler.stopChargingConnectorWithTransactionId, transactionId)
+		_, err = scheduler.GetScheduler().Every(3).Seconds().LimitRunsTo(1).Do(handler.stopChargingConnectorWithTransactionId, transactionId)
 		if err != nil {
 			return core.NewRemoteStopTransactionConfirmation(response), err
 		}
@@ -96,15 +97,15 @@ func (handler *ChargePointHandler) OnReset(request *core.ResetRequest) (confirma
 	var response core.ResetStatus = core.ResetStatusRejected
 	log.Printf("Requested reset %s", request.Type)
 	if request.Type == core.ResetTypeHard {
-		_, err = scheduler.Every(3).Seconds().LimitRunsTo(1).Do(handler.CleanUp, core.ReasonHardReset)
-		_, err = scheduler.Every(5).Seconds().LimitRunsTo(1).Do(exec.Command, "sudo reboot")
+		_, err = scheduler.GetScheduler().Every(3).Seconds().LimitRunsTo(1).Do(handler.CleanUp, core.ReasonHardReset)
+		_, err = scheduler.GetScheduler().Every(5).Seconds().LimitRunsTo(1).Do(exec.Command, "sudo reboot")
 		if err == nil {
 			response = core.ResetStatusAccepted
 		}
 	} else if request.Type == core.ResetTypeSoft {
 		handler.CleanUp(core.ReasonSoftReset)
 		//todo restart ChargePi only
-		_, err = scheduler.Every(5).Seconds().LimitRunsTo(1).Do(exec.Command, "sudo reboot")
+		_, err = scheduler.GetScheduler().Every(5).Seconds().LimitRunsTo(1).Do(exec.Command, "sudo reboot")
 		if err == nil {
 			response = core.ResetStatusAccepted
 		}
@@ -116,7 +117,7 @@ func (handler *ChargePointHandler) OnUnlockConnector(request *core.UnlockConnect
 	var response core.UnlockStatus = core.UnlockStatusNotSupported
 	connector := handler.FindConnectorWithId(request.ConnectorId)
 	if connector != nil {
-		_, err = scheduler.Every(1).Seconds().LimitRunsTo(1).Do(handler.stopChargingConnector, connector, core.ReasonUnlockCommand)
+		_, err = scheduler.GetScheduler().Every(1).Seconds().LimitRunsTo(1).Do(handler.stopChargingConnector, connector, core.ReasonUnlockCommand)
 		if err == nil {
 			response = core.UnlockStatusUnlocked
 		}
@@ -144,7 +145,7 @@ func (handler *ChargePointHandler) OnTriggerMessage(request *remotetrigger.Trigg
 	status := remotetrigger.TriggerMessageStatusRejected
 	switch request.RequestedMessage {
 	case core.BootNotificationFeatureName:
-		_, err = scheduler.Every(5).Seconds().LimitRunsTo(1).Do(handler.bootNotification)
+		_, err = scheduler.GetScheduler().Every(5).Seconds().LimitRunsTo(1).Do(handler.bootNotification)
 		if err != nil {
 			break
 		}
@@ -154,7 +155,7 @@ func (handler *ChargePointHandler) OnTriggerMessage(request *remotetrigger.Trigg
 		status = remotetrigger.TriggerMessageStatusNotImplemented
 		break
 	case core.HeartbeatFeatureName:
-		_, err = scheduler.Every(5).Seconds().LimitRunsTo(1).Do(handler.sendHeartBeat)
+		_, err = scheduler.GetScheduler().Every(5).Seconds().LimitRunsTo(1).Do(handler.sendHeartBeat)
 		if err != nil {
 			break
 		}
@@ -205,7 +206,7 @@ func (handler *ChargePointHandler) OnReserveNow(request *reservation.ReserveNowR
 	if err != nil {
 		return reservation.NewReserveNowConfirmation(reservation.ReservationStatusRejected), err
 	}
-	_, err = scheduler.At(request.ExpiryDate.Format("HH:MM")).Do(connector.RemoveReservation)
+	_, err = scheduler.GetScheduler().At(request.ExpiryDate.Format("HH:MM")).Do(connector.RemoveReservation)
 	return reservation.NewReserveNowConfirmation(reservation.ReservationStatusAccepted), err
 }
 

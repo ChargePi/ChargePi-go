@@ -7,6 +7,7 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	types2 "github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
+	"github.com/xBlaz3kx/ChargePi-go/chargepoint/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/settings"
 	"log"
 	"os"
@@ -41,7 +42,7 @@ func (handler *ChargePointHandler) setHeartbeat(interval int) {
 		heartBeatInterval = fmt.Sprintf("%d", interval)
 	}
 	heartBeatInterval = fmt.Sprintf("%ss", heartBeatInterval)
-	_, err := scheduler.Every(heartBeatInterval).Tag("heartbeat").Do(handler.sendHeartBeat)
+	_, err := scheduler.GetScheduler().Every(heartBeatInterval).Tag("heartbeat").Do(handler.sendHeartBeat)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -108,13 +109,13 @@ func (handler *ChargePointHandler) startCharging(tagId string) error {
 // startChargingConnector Start charging a connector with the specified ID. Send the request to the central system, turn on the Connector,
 // update the status of the Connector, and start the maxChargingTime timer and sample the PowerMeter, if it's enabled.
 func (handler *ChargePointHandler) startChargingConnector(connector *Connector, tagId string) error {
-
 	if connector == nil {
 		return fmt.Errorf("connector is nil")
 	}
 	if !connector.IsAvailable() || !handler.IsAvailable {
 		return errors.New("connector or cp unavailable")
 	}
+
 	if handler.isTagAuthorized(tagId) {
 		request := core.StartTransactionRequest{
 			ConnectorId: connector.ConnectorId,
@@ -130,6 +131,7 @@ func (handler *ChargePointHandler) startChargingConnector(connector *Connector, 
 					log.Printf("Unable to start charging connector %d: %s", connector.ConnectorId, err)
 					return
 				}
+
 				log.Printf("Started charging connector %d at %s", connector.ConnectorId, time.Now())
 				if connector.PowerMeterEnabled {
 					sampleError := connector.preparePowerMeterAtConnector()
@@ -137,8 +139,9 @@ func (handler *ChargePointHandler) startChargingConnector(connector *Connector, 
 						log.Printf("Cannot sample connector %d; %v \n", connector.ConnectorId, err)
 					}
 				}
+
 				// schedule timer to stop the transaction at the time limit
-				_, err = scheduler.Every(connector.MaxChargingTime).Minutes().LimitRunsTo(1).
+				_, err = scheduler.GetScheduler().Every(connector.MaxChargingTime).Minutes().LimitRunsTo(1).
 					Tag(fmt.Sprintf("connector%dTimer", connector.ConnectorId)).Do(handler.stopChargingConnector, connector, core.ReasonOther)
 				if err != nil {
 					fmt.Println("cannot schedule stop charging:", err)
@@ -157,19 +160,23 @@ func (handler *ChargePointHandler) stopChargingConnector(connector *Connector, r
 	if connector == nil {
 		return fmt.Errorf("connector pointer is nil")
 	}
+
 	if connector.IsCharging() || connector.IsPreparing() {
 		stopTransactionOnEVDisconnect, err := settings.GetConfigurationValue("StopTransactionOnEVSideDisconnect")
 		if err != nil {
 			return err
 		}
+
 		if stopTransactionOnEVDisconnect != "true" && reason == core.ReasonEVDisconnected {
 			err := connector.StopCharging(reason)
 			return err
 		}
+
 		transactionId, err := strconv.Atoi(connector.session.TransactionId)
 		if err != nil {
 			return err
 		}
+
 		request := core.StopTransactionRequest{
 			TransactionId: transactionId,
 			IdTag:         "",
@@ -182,14 +189,16 @@ func (handler *ChargePointHandler) stopChargingConnector(connector *Connector, r
 				log.Printf("Server responded with error for stopping a transaction at %d: %s", connector.ConnectorId, err)
 				return
 			}
+
 			log.Println("Stopping transaction at ", connector.ConnectorId)
 			err := connector.StopCharging(reason)
 			if err != nil {
 				log.Printf("Unable to stop charging connector %d: %s", connector.ConnectorId, err)
 				return
 			}
-			_ = scheduler.RemoveByTag(fmt.Sprintf("connector%dSampling", connector.ConnectorId))
-			err = scheduler.RemoveByTag(fmt.Sprintf("connector%dTimer", connector.ConnectorId))
+
+			_ = scheduler.GetScheduler().RemoveByTag(fmt.Sprintf("connector%dSampling", connector.ConnectorId))
+			err = scheduler.GetScheduler().RemoveByTag(fmt.Sprintf("connector%dTimer", connector.ConnectorId))
 			log.Printf("Stopped charging connector %d at %s", connector.ConnectorId, time.Now())
 		}
 		return handler.SendRequest(request, callback)

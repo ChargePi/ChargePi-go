@@ -3,6 +3,7 @@ package chargepoint
 import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	types2 "github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
+	"github.com/xBlaz3kx/ChargePi-go/chargepoint/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/data"
 	"github.com/xBlaz3kx/ChargePi-go/settings"
 	"log"
@@ -18,16 +19,18 @@ func (handler *ChargePointHandler) isTagAuthorized(tagId string) bool {
 	if err != nil {
 		authCacheEnabled = "false"
 	}
+
 	localPreAuthorize, err := settings.GetConfigurationValue("LocalPreAuthorize")
 	if err != nil {
 		localPreAuthorize = "false"
 	}
+
 	if authCacheEnabled == "true" && localPreAuthorize == "true" {
 		// Check if the tag exists in cache and is valid.
 		log.Println("Authorizing tag ", tagId, " with cache")
 		if data.IsTagAuthorized(tagId) {
 			// Reauthorize in 10 seconds
-			_, err2 := scheduler.Every(10).Seconds().LimitRunsTo(1).Do(handler.sendAuthorizeRequest, tagId)
+			_, err2 := scheduler.GetScheduler().Every(10).Seconds().LimitRunsTo(1).Do(handler.sendAuthorizeRequest, tagId)
 			if err2 != nil {
 				log.Println(err2)
 			}
@@ -52,11 +55,13 @@ func (handler *ChargePointHandler) sendAuthorizeRequest(tagId string) (*types2.I
 	response, err := handler.chargePoint.SendRequest(core.AuthorizeRequest{IdTag: tagId})
 	handler.mu.Unlock()
 	authInfo := response.(*core.AuthorizeConfirmation)
+
 	switch authInfo.IdTagInfo.Status {
 	case types2.AuthorizationStatusBlocked, types2.AuthorizationStatusExpired, types2.AuthorizationStatusInvalid:
 		err = handler.stopChargingConnectorWithTagId(tagId, core.ReasonDeAuthorized)
 		break
 	}
+
 	value, err2 := settings.GetConfigurationValue("AuthorizationCacheEnabled")
 	if err2 == nil && value == "true" {
 		data.AddTag(tagId, authInfo.IdTagInfo)

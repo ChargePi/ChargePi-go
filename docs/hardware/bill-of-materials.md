@@ -1,5 +1,10 @@
 # Bill of materials
 
+## Note:
+
+The bill of materials can vary, depending on your preferences, part availability and price. The aim of the project is to
+make a charging point out of off-the-shelf hardware that is widely available. Also, the list is not in any way perfect.
+
 ## Enclosure and wiring
 
 | Item| # | 
@@ -19,7 +24,7 @@
 | Raspberry Pi 4 2GB | 1 | 
 | 4-Relay module 230V 10A | 1 | 
 | Huawei LTE modem | 1 | 
-| CS5460 power meter | 4x (for each outlet) | 
+| CS5460A power meter | 4x (for each outlet) | 
 | PN532 NFC/RFID reader | 1 | 
 | WS281x LED strip | a few meters | 
 

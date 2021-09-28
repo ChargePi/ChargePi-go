@@ -8,46 +8,52 @@ import (
 	types2 "github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/reactivex/rxgo/v2"
 	"github.com/xBlaz3kx/ChargePi-go/cache"
+	"github.com/xBlaz3kx/ChargePi-go/chargepoint/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/data"
 	"github.com/xBlaz3kx/ChargePi-go/hardware"
+	"github.com/xBlaz3kx/ChargePi-go/hardware/indicator"
+	"github.com/xBlaz3kx/ChargePi-go/hardware/power-meter"
 	"github.com/xBlaz3kx/ChargePi-go/settings"
 	"log"
 	"time"
 )
 
 // AddConnectors Add the Connectors from the connectors.json file to the handler. Create and add all their components and initialize the struct.
-func (handler *ChargePointHandler) AddConnectors(connectors []*settings.Connector) {
+func (handler *ChargePointHandler) AddConnectors() {
+	connectors := settings.GetConnectors()
 	log.Println("Adding connectors")
 	handler.Connectors = []*Connector{}
 	for _, connector := range connectors {
-		var powerMeter *hardware.PowerMeter
-		powerMeterInstance, err := hardware.NewPowerMeter(
-			connector.PowerMeter.PowerMeterPin,
-			connector.PowerMeter.SpiBus,
-			connector.PowerMeter.ShuntOffset,
-			connector.PowerMeter.VoltageDividerOffset,
-		)
+
+		// Create a power meter from settings
+		powerMeter, err := power_meter.NewPowerMeter(connector)
 		if err != nil {
 			log.Printf("Cannot instantiate power meter: %s", err)
-		} else {
-			powerMeter = powerMeterInstance
 		}
+
+		// Create a connector object
 		connectorObj, err := NewConnector(
 			connector.EvseId,
 			connector.ConnectorId,
 			connector.Type,
-			hardware.NewRelay(connector.Relay.RelayPin, connector.Relay.InverseLogic),
+			hardware.NewRelay(
+				connector.Relay.RelayPin,
+				connector.Relay.InverseLogic,
+			),
 			powerMeter,
 			connector.PowerMeter.Enabled,
 			handler.Settings.ChargePoint.Info.MaxChargingTime,
 		)
 		if err != nil {
+			log.Println("Error while creating a connector:", err)
 			continue
 		}
+
 		handler.Connectors = append(handler.Connectors, connectorObj)
-		fmt.Print("Added connector ")
-		pretty.Print(connectorObj)
+		pretty.Print("Added a connector", connectorObj)
 	}
+	// Add an indicator with the length of valid connectors
+	handler.Indicator = indicator.NewIndicator(len(handler.Connectors))
 }
 
 // restoreState After connecting to the central system, try to restore the previous state of each Connector and notify the system about its state.
@@ -55,12 +61,13 @@ func (handler *ChargePointHandler) AddConnectors(connectors []*settings.Connecto
 func (handler *ChargePointHandler) restoreState() {
 	var err error
 	for _, connector := range handler.Connectors {
-		// load configuration from cache
+		// load connector configuration from cache
 		connectorSettings, isFound := cache.Cache.Get(fmt.Sprintf("connectorEvse%dId%dConfiguration", connector.EvseId, connector.ConnectorId))
 		if !isFound {
 			continue
 		}
 		cachedConnector := connectorSettings.(*settings.Connector)
+
 		if cachedConnector != nil {
 			//set the previous status to determine what action to do
 			connector.SetStatus(core.ChargePointStatus(cachedConnector.Status), core.NoError)
@@ -110,11 +117,9 @@ func (handler *ChargePointHandler) attemptToResumeChargingAtConnector(connector 
 	}
 	err = connector.ResumeCharging(session)
 	if err != nil {
-		//set the transaction id so connector is able to stop the transaction
-		connector.session.TransactionId = session.TransactionId
 		return fmt.Errorf("charging session is unable to be resumed")
 	}
-	_, err = scheduler.Every(connector.MaxChargingTime-chargingTimeElapsed).Minutes().LimitRunsTo(1).
+	_, err = scheduler.GetScheduler().Every(connector.MaxChargingTime-chargingTimeElapsed).Minutes().LimitRunsTo(1).
 		Tag(fmt.Sprintf("connector%dTimer", connector.ConnectorId)).Do(handler.stopChargingConnector, connector, core.ReasonLocal)
 	return nil
 }
@@ -122,8 +127,6 @@ func (handler *ChargePointHandler) attemptToResumeChargingAtConnector(connector 
 // notifyConnectorStatus Notify the central system about the connector's status and updates the LED indicator.
 func (handler *ChargePointHandler) notifyConnectorStatus(connector *Connector) {
 	if connector != nil {
-		//handler.mu.Lock()
-		//defer handler.mu.Unlock()
 		request := core.StatusNotificationRequest{
 			ConnectorId: connector.ConnectorId,
 			Status:      connector.ConnectorStatus,
@@ -156,7 +159,25 @@ func (handler *ChargePointHandler) listenForConnectorStatusChange() {
 			connector := item.V.(*Connector)
 			connectorIndex := connector.ConnectorId - 1
 			handler.displayLEDStatus(connectorIndex, connector.ConnectorStatus)
+			handler.displayConnectorStatus(connector.ConnectorId, connector.ConnectorStatus)
 			handler.notifyConnectorStatus(connector)
 		}
+	}
+}
+
+func (handler *ChargePointHandler) displayConnectorStatus(connectorId int, status core.ChargePointStatus) {
+	switch status {
+	case core.ChargePointStatusAvailable:
+		handler.sendToLCD(fmt.Sprintf("Connector %d", connectorId), "available")
+		break
+	case core.ChargePointStatusFinishing:
+		handler.sendToLCD("Stopped charging", fmt.Sprintf("at %d", connectorId))
+		break
+	case core.ChargePointStatusCharging:
+		handler.sendToLCD("Started charging", fmt.Sprintf("at %d", connectorId))
+		break
+	case core.ChargePointStatusFaulted:
+		handler.sendToLCD(fmt.Sprintf("Connector %d", connectorId), "faulted")
+		break
 	}
 }

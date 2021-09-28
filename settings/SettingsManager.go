@@ -18,86 +18,6 @@ import (
 	"strings"
 )
 
-type Settings struct {
-	ChargePoint struct {
-		Info struct {
-			Vendor               string `fig:"Vendor" default:"UL FE"`
-			Model                string `fig:"Model" default:"ChargePi"`
-			Id                   string `fig:"Id" validate:"required"`
-			ProtocolVersion      string `fig:"ProtocolVersion" default:"1.6"`
-			CurrentClientVersion string `fig:"CurrentClientVersion" default:"1.0"`
-			TargetClientVersion  string `fig:"TargetClientVersion" default:"1.0"`
-			ServerUri            string `fig:"ServerUri" validate:"required"`
-			LogServer            string `fig:"LogServer" validate:"required"`
-			MaxChargingTime      int    `fig:"MaxChargingTime" default:"180"`
-			TLS                  struct {
-				IsEnabled             bool   `fig:"isEnabled"`
-				CACertificatePath     string `fig:"CACertificatePath"`
-				ClientCertificatePath string `fig:"ClientCertificatePath"`
-				ClientKeyPath         string `fig:"ClientKeyPath"`
-			}
-		}
-		Hardware struct {
-			Lcd struct {
-				IsSupported bool   `fig:"IsSupported"`
-				I2CAddress  string `fig:"I2CAddress"`
-			}
-			TagReader struct {
-				IsSupported bool   `fig:"IsSupported"`
-				ReaderModel string `fig:"ReaderModel"`
-				Device      string `fig:"Device"`
-				ResetPin    int    `fig:"ResetPin"`
-			}
-			LedIndicator struct {
-				Enabled          bool   `fig:"Enabled"`
-				DataPin          int    `fig:"DataPin"`
-				IndicateCardRead bool   `fig:"IndicateCardRead"`
-				Type             string `fig:"Type"`
-				Invert           bool   `fig:"Invert"`
-			}
-			PowerMeters struct {
-				MinPower int `fig:"MinPower" default:"20"`
-				Retries  int `fig:"Retries" default:"3"`
-			}
-		}
-	}
-}
-
-type Connector struct {
-	EvseId      int    `fig:"EvseId" validate:"required"`
-	ConnectorId int    `fig:"ConnectorId" validate:"required"`
-	Type        string `fig:"Type" validate:"required"`
-	Status      string `fig:"Status" validation:"required"`
-	Session     struct {
-		IsActive      bool   `fig:"IsActive"`
-		TransactionId string `fig:"TransactionId" default:""`
-		TagId         string `fig:"TagId" default:""`
-		Started       string `fig:"Started" default:""`
-		Consumption   []types.MeterValue
-	} `fig:"Session"`
-	Relay struct {
-		RelayPin     int  `fig:"RelayPin" validate:"required"`
-		InverseLogic bool `fig:"InverseLogic"`
-	} `fig:"Relay"`
-	PowerMeter struct {
-		Enabled              bool    `fig:"Enabled"`
-		PowerMeterPin        int     `fig:"PowerMeterPin"`
-		SpiBus               int     `fig:"SpiBus" default:"0"`
-		PowerUnits           string  `fig:"PowerUnits" `
-		Consumption          float64 `fig:"Consumption"`
-		ShuntOffset          float64 `fig:"ShuntOffset"`
-		VoltageDividerOffset float64 `fig:"VoltageDividerOffset"`
-	} `fig:"PowerMeter"`
-}
-
-type Session struct {
-	IsActive      bool
-	TransactionId string
-	TagId         string
-	Started       string
-	Consumption   []types.MeterValue
-}
-
 // GetSettings Read settings from the specified path
 func GetSettings() {
 	var (
@@ -127,15 +47,18 @@ func GetConnectors() []*Connector {
 		connectors           []*Connector
 		connectorsFolderPath = ""
 	)
+
 	connectorPath, isFound := cache.Cache.Get("connectorsFolderPath")
 	if isFound {
 		connectorsFolderPath = connectorPath.(string)
 	}
+
 	err := filepath.Walk(connectorsFolderPath, func(path string, info os.FileInfo, err error) error {
 		// Skip directories
 		if info.IsDir() {
 			return nil
 		}
+		// Read the connector settings from the file in the directory
 		var connector Connector
 		err = fig.Load(&connector,
 			fig.File(info.Name()),
@@ -145,8 +68,10 @@ func GetConnectors() []*Connector {
 			fmt.Println(err)
 			return err
 		}
+		// Append the configuration to the array
 		connectors = append(connectors, &connector)
 		log.Println("Read connector from ", path)
+		// Add the Connector configuration to the cache
 		err = cache.Cache.Add(fmt.Sprintf("connectorEvse%dId%dFilePath", connector.EvseId, connector.ConnectorId), path, goCache.NoExpiration)
 		err = cache.Cache.Add(fmt.Sprintf("connectorEvse%dId%dConfiguration", connector.EvseId, connector.ConnectorId), &connector, goCache.NoExpiration)
 		if err != nil {
@@ -154,6 +79,7 @@ func GetConnectors() []*Connector {
 		}
 		return nil
 	})
+
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -173,6 +99,7 @@ func UpdateConnectorStatus(evseId int, connectorId int, status core.ChargePointS
 		fmt.Println("Path of the file not found in cache")
 		return
 	}
+
 	connectorFilePath := result.(string)
 	err = fig.Load(&connectorSettings,
 		fig.File(filepath.Base(connectorFilePath)),
@@ -181,7 +108,8 @@ func UpdateConnectorStatus(evseId int, connectorId int, status core.ChargePointS
 		log.Println("Error updating connector status: ", err)
 		return
 	}
-	//Replace the session values
+
+	//Replace the connector status
 	connectorSettings.Status = string(status)
 	err = WriteToFile(connectorFilePath, &connectorSettings)
 	if err != nil {
@@ -199,6 +127,7 @@ func UpdateConnectorSessionInfo(evseId int, connectorId int, session *Session) {
 		connectorSettings *Connector
 		err               error
 	)
+
 	log.Println("Updating session info for connector ", connectorId)
 	//Get the file path from cache
 	result, isFound := cache.Cache.Get(cachePathKey)
@@ -207,7 +136,8 @@ func UpdateConnectorSessionInfo(evseId int, connectorId int, session *Session) {
 		return
 	}
 	var connectorFilePath = result.(string)
-	//Try to find Connector settings in the cache, if fails, get them from the file
+
+	// Try to find the connector's settings in the cache, if it fails, get settings from the file
 	settings, isFound := cache.Cache.Get(cacheConnectorKey)
 	if isFound {
 		connectorSettings = settings.(*Connector)
@@ -220,6 +150,7 @@ func UpdateConnectorSessionInfo(evseId int, connectorId int, session *Session) {
 			return
 		}
 	}
+
 	//Replace the session values
 	connectorSettings.Session = struct {
 		IsActive      bool   `fig:"IsActive"`
@@ -228,6 +159,7 @@ func UpdateConnectorSessionInfo(evseId int, connectorId int, session *Session) {
 		Started       string `fig:"Started" default:""`
 		Consumption   []types.MeterValue
 	}(*session)
+
 	err = WriteToFile(connectorFilePath, &connectorSettings)
 	if err != nil {
 		log.Println("Error updating session info: ", err)
@@ -241,13 +173,15 @@ func WriteToFile(filename string, structure interface{}) (err error) {
 		encodingType string
 		marshal      []byte
 	)
+	// Check if the file format is supported
 	splitFile := strings.Split(filename, ".")
 	isValidFile, err := regexp.MatchString("^.*\\.(json|yaml|yml)$", filename)
 	if len(splitFile) > 0 && isValidFile {
 		encodingType = splitFile[len(splitFile)-1]
 	}
+
 	switch encodingType {
-	case "yaml":
+	case "yaml", "yml":
 		marshal, err = yaml.Marshal(&structure)
 		break
 	case "json":
@@ -256,6 +190,7 @@ func WriteToFile(filename string, structure interface{}) (err error) {
 	default:
 		return errors.New("unsupported file format")
 	}
+
 	err = ioutil.WriteFile(filename, marshal, 0644)
 	if err != nil {
 		log.Println(err)

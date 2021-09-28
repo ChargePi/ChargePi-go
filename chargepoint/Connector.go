@@ -7,8 +7,10 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/reactivex/rxgo/v2"
 	"github.com/xBlaz3kx/ChargePi-go/cache"
+	"github.com/xBlaz3kx/ChargePi-go/chargepoint/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/data"
 	"github.com/xBlaz3kx/ChargePi-go/hardware"
+	power_meter "github.com/xBlaz3kx/ChargePi-go/hardware/power-meter"
 	"github.com/xBlaz3kx/ChargePi-go/settings"
 	"log"
 	"time"
@@ -21,7 +23,7 @@ type Connector struct {
 	ConnectorStatus              core.ChargePointStatus
 	ErrorCode                    core.ChargePointErrorCode
 	relay                        *hardware.Relay
-	powerMeter                   *hardware.PowerMeter
+	powerMeter                   power_meter.PowerMeter
 	PowerMeterEnabled            bool
 	MaxChargingTime              int
 	reservationId                int
@@ -31,16 +33,31 @@ type Connector struct {
 
 // NewConnector Create a new connector object from the provided arguments. EvseId, connectorId and maxChargingTime must be greater than zero.
 // When created, it makes an empty session, turns off the relay and defaults the status to Available.
-func NewConnector(EvseId int, connectorId int, connectorType string, relay *hardware.Relay, powerMeter *hardware.PowerMeter, powerMeterEnabled bool, maxChargingTime int) (*Connector, error) {
+func NewConnector(
+	EvseId int,
+	connectorId int,
+	connectorType string,
+	relay *hardware.Relay,
+	powerMeter power_meter.PowerMeter,
+	powerMeterEnabled bool,
+	maxChargingTime int,
+) (*Connector, error) {
 	if maxChargingTime <= 0 {
 		maxChargingTime = 180
 	}
-	if EvseId <= 0 || connectorId <= 0 {
-		return nil, errors.New("invalid evse or connector id")
+
+	if EvseId <= 0 {
+		return nil, errors.New("invalid evse id")
 	}
+
+	if connectorId <= 0 {
+		return nil, errors.New("invalid connector id")
+	}
+
 	if relay == nil {
 		return nil, fmt.Errorf("relay pointer cannot be nil")
 	}
+
 	relay.Off()
 	return &Connector{
 		EvseId:            EvseId,
@@ -88,6 +105,23 @@ func (connector *Connector) StartCharging(transactionId string, tagId string) er
 	return errors.New("invalid connector status or session already active")
 }
 
+// ResumeCharging Resumes or restores the charging state after boot if a charging session was active.
+func (connector *Connector) ResumeCharging(session data.Session) error {
+	//set the transaction id so connector is able to stop the transaction if charging fails
+	connector.session.TransactionId = session.TransactionId
+	if connector.IsCharging() || connector.IsPreparing() {
+		hasSessionStarted := connector.session.StartSession(session.TransactionId, session.TagId)
+		if hasSessionStarted {
+			connector.relay.On()
+			connector.session.Started = session.Started
+			connector.session.Consumption = append(connector.session.Consumption, session.Consumption...)
+			return nil
+		}
+		return errors.New("cannot resume session: unable to start session")
+	}
+	return errors.New("cannot resume session: invalid connector status")
+}
+
 // StopCharging Stops charging the connector by turning the relay off and ending the session.
 func (connector *Connector) StopCharging(reason core.Reason) error {
 	if connector.IsCharging() || connector.IsPreparing() {
@@ -122,7 +156,7 @@ func (connector *Connector) StopCharging(reason core.Reason) error {
 // SamplePowerMeter Get a sample from the power meter. The measurands argument takes the list of all the types of the measurands to sample.
 // It will add all the samples to the connector's Session if it is active.
 func (connector *Connector) SamplePowerMeter(measurands []types.Measurand) {
-	if !connector.PowerMeterEnabled || connector.powerMeter != nil {
+	if !connector.PowerMeterEnabled || connector.powerMeter == nil {
 		return
 	}
 	log.Println("Sampling connector", connector.ConnectorId)
@@ -165,7 +199,7 @@ func (connector *Connector) preparePowerMeterAtConnector() error {
 		sampleInterval = "10"
 	}
 	// schedule the sampling
-	_, err = scheduler.Every(fmt.Sprintf("%ss", sampleInterval)).
+	_, err = scheduler.GetScheduler().Every(fmt.Sprintf("%ss", sampleInterval)).
 		Tag(fmt.Sprintf("connector%dSampling", connector.ConnectorId)).Do(connector.SamplePowerMeter, measurands)
 	if err != nil {
 		return err
@@ -200,6 +234,13 @@ func (connector *Connector) SetStatus(status core.ChargePointStatus, errCode cor
 	}
 }
 
+func (connector *Connector) GetTransactionId() string {
+	return connector.session.TransactionId
+}
+func (connector *Connector) GetTagId() string {
+	return connector.session.TagId
+}
+
 func (connector *Connector) ReserveConnector(reservationId int) error {
 	if reservationId <= 0 {
 		return fmt.Errorf("reservation id is invalid")
@@ -222,19 +263,4 @@ func (connector *Connector) RemoveReservation() error {
 
 func (connector *Connector) GetReservationId() int {
 	return connector.reservationId
-}
-
-// ResumeCharging Resumes or restores the charging state after boot if a charging session was active.
-func (connector *Connector) ResumeCharging(session data.Session) error {
-	if connector.IsCharging() || connector.IsPreparing() {
-		hasSessionStarted := connector.session.StartSession(session.TransactionId, session.TagId)
-		if hasSessionStarted {
-			connector.relay.On()
-			connector.session.Started = session.Started
-			connector.session.Consumption = append(connector.session.Consumption, session.Consumption...)
-			return nil
-		}
-		return errors.New("cannot resume session: unable to start session")
-	}
-	return errors.New("cannot resume session: invalid connector status")
 }
