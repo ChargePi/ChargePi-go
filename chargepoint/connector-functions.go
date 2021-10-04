@@ -23,6 +23,10 @@ func (handler *ChargePointHandler) AddConnectors() {
 	connectors := settings.GetConnectors()
 	log.Println("Adding connectors")
 	handler.Connectors = []*Connector{}
+	if connectors == nil {
+		panic("connector array is nil")
+		return
+	}
 	for _, connector := range connectors {
 
 		// Create a power meter from settings

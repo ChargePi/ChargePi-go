@@ -2,12 +2,12 @@
 
 ## Running unit tests on software components
 
-To test the functionality of the client can be done manually, however, we can test some software components of the
+Testing the functionality of the client can be done manually, however, we can test some software components of the
 client with unit tests. Unit test will compare the actual output of a function to the desired output. We parse
 arguments/input to the function, and we expect a certain output/result. If the function does not produce a desired
 result, the test will fail, and we know that we have a bug in our code (or test).
 
-1Copy the files from config directory and create test certificates:
+1. Copy the files from config directory and create test certificates:
 
    ```bash
    cd test/
@@ -16,7 +16,7 @@ result, the test will fail, and we know that we have a bug in our code (or test)
    ./create-test-certs.sh
    ```
 
-3. Run the tests:
+2. Run the tests:
 
     ```bash
    go test -v
@@ -28,7 +28,11 @@ More about testing in Golang [here](https://golang.org/doc/tutorial/add-a-test).
 
 An example of a function test in Golang:
 
-```go
+```golang
+package test
+
+import "testing"
+
 func TestFunction(t *testing.T) {
 	type args struct {
 		testArgument string
@@ -40,14 +44,14 @@ func TestFunction(t *testing.T) {
 	}{
 		{
 			name: "PositiveTestCase",
-			testArgument : args{
-				testArgument : "123",
+			args: args{
+				testArgument: "123",
 			},
 			want: true,
 		}, {
 			name: "NegativeTestCase",
 			args: args{
-				testArgument : "1234",
+				testArgument: "1234",
 			},
 			want: false,
 		},
@@ -66,5 +70,5 @@ func TestFunction(t *testing.T) {
 
 As of now, we can only test certain segments of the client: AuthCache, Sessions, Connector and Settings. Hardware
 testing must be done manually. If we wanted to test the client as a whole, it would be necessary to mock the central
-system's responses and connectivity (
-todo, [example](https://github.com/lorenzodonini/ocpp-go/tree/master/ocpp1.6_test) ). 
+system's responses and connectivity (todo, [example](https://github.com/lorenzodonini/ocpp-go/tree/master/ocpp1.6_test))
+. 

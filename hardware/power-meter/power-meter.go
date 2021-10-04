@@ -10,7 +10,7 @@ const (
 	TypeC5460A = "cs5460a"
 )
 
-// PowerMeter
+// PowerMeter is an abstraction for measurement hardware.
 type PowerMeter interface {
 	Reset()
 	GetEnergy() float64

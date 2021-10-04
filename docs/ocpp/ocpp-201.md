@@ -1,6 +1,7 @@
 # OCPP 2.0.1
 
-Configuration for protocol version 2.0.1 can be found in _/charge_point/v201/configuration/configuration.json_.
+The default/reference configuration for protocol version 2.0.1 is not yet available. This document is a reference for
+the [Python version](https://github.com/xBlaz3kx/ChargePi).
 
 In the protocol version 2.0.1, configuration variables are nested in Controllers (postfix - Ctrlr). Each controller has
 variables represented as a dictionary with attributes: **readOnly**, **value** and _optionally_ **unit**. Some

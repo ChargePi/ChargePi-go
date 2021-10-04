@@ -6,18 +6,20 @@ import (
 	"log"
 )
 
+// supported readers
 const (
 	PN532 = "PN532"
 )
 
+// Reader is an abstraction for an RFID/NFC tag reader.
 type Reader interface {
-	init()
 	ListenForTags()
 	Cleanup()
 	Reset()
 	GetTagChannel() chan string
 }
 
+// NewTagReader creates an instance of the Reader interface based on the provided configuration.
 func NewTagReader() Reader {
 	cacheSettings, isFound := cache.Cache.Get("settings")
 	if !isFound {

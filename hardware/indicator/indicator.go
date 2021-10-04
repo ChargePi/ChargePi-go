@@ -6,8 +6,8 @@ import (
 	"log"
 )
 
+// color constants
 const (
-	// color constants
 	Off    = 0x0
 	White  = 0xFFFFFF
 	Red    = 0xff0000
@@ -15,8 +15,10 @@ const (
 	Blue   = 0x000ff
 	Yellow = 0xeeff00
 	Orange = 0xff7b00
+)
 
-	// supported types
+// supported types
+const (
 	TypeWS281x = "WS281x"
 )
 
