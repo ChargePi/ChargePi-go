@@ -11,7 +11,7 @@ type Relay struct {
 	pin          *gpiod.Line
 }
 
-// NewRelay creates a new Relay struct that will comunicate with the GPIO pin specified.
+// NewRelay creates a new Relay struct that will communicate with the GPIO pin specified.
 func NewRelay(relayPin int, inverseLogic bool) *Relay {
 	if relayPin <= 0 {
 		return nil

@@ -5,11 +5,9 @@ import (
 	"os/exec"
 	"time"
 
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/lorenzodonini/ocpp-go/ws"
 	"github.com/xBlaz3kx/ChargePi-go/chargepoint"
 	"github.com/xBlaz3kx/ChargePi-go/hardware"
-	"github.com/xBlaz3kx/ChargePi-go/settings"
 	"reflect"
 	"testing"
 )
@@ -18,77 +16,35 @@ func TestChargePointHandler_AddConnectors(t *testing.T) {
 	type fields struct {
 		connectors []chargepoint.Connector
 	}
-	type args struct {
-		connectors []settings.Connector
-	}
 	tests := []struct {
 		name   string
 		fields fields
-		args   args
 	}{
 		{
 			name: "AddConnectors",
 			fields: fields{
 				connectors: nil,
 			},
-			args: args{
-				connectors: []settings.Connector{{
-					EvseId:      0,
-					ConnectorId: 0,
-					Type:        "",
-					Status:      "",
-					Session: struct {
-						IsActive      bool   `fig:"IsActive"`
-						TransactionId string `fig:"TransactionId" default:""`
-						TagId         string `fig:"TagId" default:""`
-						Started       string `fig:"Started" default:""`
-						Consumption   []types.MeterValue
-					}(struct {
-						IsActive      bool
-						TransactionId string
-						TagId         string
-						Started       string
-						Consumption   []types.MeterValue
-					}{
-						IsActive:      false,
-						TransactionId: "",
-						TagId:         "",
-						Started:       "",
-						Consumption:   nil,
-					}),
-					Relay: struct {
-						RelayPin     int  `fig:"RelayPin" validate:"required"`
-						InverseLogic bool `fig:"InverseLogic"`
-					}(struct {
-						RelayPin     int
-						InverseLogic bool
-					}{}),
-					PowerMeter: struct {
-						Enabled              bool    `fig:"Enabled"`
-						PowerMeterPin        int     `fig:"PowerMeterPin"`
-						SpiBus               int     `fig:"SpiBus" default:"0"`
-						PowerUnits           string  `fig:"PowerUnits" `
-						Consumption          float64 `fig:"Consumption"`
-						ShuntOffset          float64 `fig:"ShuntOffset"`
-						VoltageDividerOffset float64 `fig:"VoltageDividerOffset"`
-					}(struct {
-						Enabled              bool
-						PowerMeterPin        int
-						SpiBus               int
-						PowerUnits           string
-						Consumption          float64
-						ShuntOffset          float64
-						VoltageDividerOffset float64
-					}{}),
-				},
-				},
+		}, {
+			name: "NoConnectors",
+			fields: fields{
+				connectors: nil,
+			},
+		}, {
+			name: "InvalidConnectorSettings",
+			fields: fields{
+				connectors: nil,
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			handler := &chargepoint.ChargePointHandler{}
-			handler.AddConnectors(nil)
+			switch tt.name {
+			case "AddConnectors":
+				break
+			}
+			handler.AddConnectors()
 		})
 	}
 }
@@ -183,6 +139,7 @@ func TestChargePointHandler_findAvailableConnector(t *testing.T) {
 			},
 		},
 	}
+	relay := hardware.NewRelay(10, false)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			handler := &chargepoint.ChargePointHandler{}
@@ -191,7 +148,7 @@ func TestChargePointHandler_findAvailableConnector(t *testing.T) {
 					connector.ConnectorId,
 					connector.ConnectorId,
 					connector.ConnectorType,
-					hardware.NewRelay(i+10, false),
+					relay,
 					nil,
 					false,
 					connector.MaxChargingTime,
@@ -321,15 +278,16 @@ func TestChargePointHandler_findConnectorWithId(t *testing.T) {
 			},
 		},
 	}
+	relay := hardware.NewRelay(15, false)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			handler := &chargepoint.ChargePointHandler{}
-			for i, connector := range tt.fields.connectors {
+			for _, connector := range tt.fields.connectors {
 				newConnector, err := chargepoint.NewConnector(
 					connector.EvseId,
 					connector.ConnectorId,
 					connector.ConnectorType,
-					hardware.NewRelay(i, false),
+					relay,
 					nil,
 					false,
 					connector.MaxChargingTime,
@@ -428,6 +386,7 @@ func TestChargePointHandler_findConnectorWithTagId(t *testing.T) {
 			},
 		},
 	}
+	relay := hardware.NewRelay(2, false)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			handler := &chargepoint.ChargePointHandler{}
@@ -437,7 +396,7 @@ func TestChargePointHandler_findConnectorWithTagId(t *testing.T) {
 					connector.ConnectorId,
 					connector.ConnectorId,
 					connector.ConnectorType,
-					hardware.NewRelay(i+10, false),
+					relay,
 					nil,
 					false,
 					connector.MaxChargingTime,
@@ -510,15 +469,16 @@ func TestChargePointHandler_findConnectorWithTransactionId(t *testing.T) {
 			},
 		},
 	}
+	relay := hardware.NewRelay(1, false)
 	for i, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			handler := &chargepoint.ChargePointHandler{}
-			for i2, connector := range tt.fields.connectors {
+			for _, connector := range tt.fields.connectors {
 				newConnector, err := chargepoint.NewConnector(
 					connector.ConnectorId,
 					connector.ConnectorId,
 					connector.ConnectorType,
-					hardware.NewRelay(i2+10, false),
+					relay,
 					nil,
 					false,
 					connector.MaxChargingTime,

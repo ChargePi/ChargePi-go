@@ -4,15 +4,14 @@
 
 You should have a publicly accessible Linux or Windows server with Docker and docker-compose installed.
 
-See [Docker](https://docs.docker.com/engine/install/)
-and [docker-compose installation](https://docs.docker.com/compose/install/)
+See [Docker](https://docs.docker.com/engine/install/) and [docker-compose](https://docs.docker.com/compose/install/)
 for installation guides.
 
 ## Running Graylog server with docker-compose
 
-1. Copy the following code into docker-compose.yaml. If cloning from GitHub, the docker-compose should be in the
-   _docs/services_ folder. There are two docker-compose files; the first one is the base and the second one uses Traefik
-   reverse proxy for routing.
+1. Copy the following code into a docker-compose.yaml or use the provided [docker-compose](docker-compose.yaml). There
+   are two docker-compose files - the first one is the base and the second one uses Traefik as a reverse proxy for
+   routing.
 
 ```yaml
 version: '3'
@@ -67,13 +66,15 @@ volumes:
     driver: local
 ```
 
-2. Run using:
-   
+2. Change the password hint and SHA256 as well as the external `GRAYLOG_HTTP_EXTERNAL_URI` environment variable.
+
+3. Run using:
+
    ```bash
    sudo docker-compose up -d
    ```
 
-or
+   or
 
    ```bash
    sudo docker-compose -f docker-compose.yaml -f docker-compose.traefik.yaml up -d

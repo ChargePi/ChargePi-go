@@ -6,7 +6,7 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/chargepoint"
 	"github.com/xBlaz3kx/ChargePi-go/data"
 	"github.com/xBlaz3kx/ChargePi-go/hardware"
-	"math/rand"
+	"github.com/xBlaz3kx/ChargePi-go/hardware/power-meter"
 	"reflect"
 	"testing"
 	"time"
@@ -78,7 +78,7 @@ func TestConnector_ResumeCharging(t *testing.T) {
 		1,
 		1,
 		"Schuko",
-		hardware.NewRelay(rand.Intn(20)+10, false),
+		hardware.NewRelay(15, false),
 		nil,
 		false,
 		5,
@@ -159,13 +159,14 @@ func TestConnector_StartCharging(t *testing.T) {
 			wantErr: true,
 		},
 	}
+	relay := hardware.NewRelay(2, false)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			connector, err := chargepoint.NewConnector(
 				tt.fields.EvseId,
 				tt.fields.ConnectorId,
 				tt.fields.ConnectorType,
-				hardware.NewRelay(rand.Intn(20)+10, false),
+				relay,
 				nil,
 				false,
 				5,
@@ -173,7 +174,7 @@ func TestConnector_StartCharging(t *testing.T) {
 			if err != nil {
 				t.Errorf("StartCharging() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			if err = connector.StartCharging(tt.args.transactionId, tt.args.tagId); (err != nil) != tt.wantErr {
+			if err := connector.StartCharging(tt.args.transactionId, tt.args.tagId); (err != nil) != tt.wantErr {
 				t.Errorf("StartCharging() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -212,7 +213,7 @@ func TestConnector_StopCharging(t *testing.T) {
 	relay := hardware.NewRelay(1, false)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			connector, _ := chargepoint.NewConnector(
+			connector, err := chargepoint.NewConnector(
 				tt.fields.EvseId,
 				tt.fields.ConnectorId,
 				tt.fields.ConnectorType,
@@ -221,6 +222,9 @@ func TestConnector_StopCharging(t *testing.T) {
 				false,
 				5,
 			)
+			if err != nil {
+				t.Errorf("StopCharging() error at connector = %v, wantErr %v", err, tt.wantErr)
+			}
 			switch tt.name {
 			case "StopCharging":
 				err := connector.StartCharging("123", "123")
@@ -239,13 +243,13 @@ func TestConnector_StopCharging(t *testing.T) {
 }
 
 func TestNewConnector(t *testing.T) {
-	var relay = hardware.NewRelay(1, false)
+	var relay = hardware.NewRelay(21, false)
 	type args struct {
 		EvseId            int
 		connectorId       int
 		connectorType     string
 		relay             *hardware.Relay
-		powerMeter        *hardware.PowerMeter
+		powerMeter        *power_meter.C5460A
 		powerMeterEnabled bool
 		maxChargingTime   int
 	}
@@ -327,17 +331,21 @@ func TestNewConnector(t *testing.T) {
 				tt.args.powerMeterEnabled,
 				tt.args.maxChargingTime,
 			)
+
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewConnector() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if tt.name == "CorrectConnector" {
-				if tt.args.connectorType != got.ConnectorType || tt.args.connectorId != got.ConnectorId || tt.args.EvseId != got.EvseId || tt.args.powerMeterEnabled != got.PowerMeterEnabled || tt.args.maxChargingTime != got.MaxChargingTime {
+
+			switch tt.name {
+			case "CorrectConnector":
+				if tt.args.connectorType != got.ConnectorType || tt.args.connectorId != got.ConnectorId ||
+					tt.args.EvseId != got.EvseId || tt.args.powerMeterEnabled != got.PowerMeterEnabled || tt.args.maxChargingTime != got.MaxChargingTime {
 					t.Errorf("NewConnector() got = %v, want %v", got, tt.want)
 				}
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
+			if err == nil && !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("NewConnector() got = %v, want %v", got, tt.want)
 			}
 		})

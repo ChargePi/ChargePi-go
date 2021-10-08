@@ -8,14 +8,14 @@ Central Systems as well.
 Running the program in Golang:
 
    ```bash
-   go run main.go
+   go run .
    ```
 
 Compiling and executing the program:
 
    ```bash
-   go build main.go
-   ./main
+   go build -o chargepi .
+   ./chargepi
    ```
 
 ### Client flags/options
@@ -33,7 +33,7 @@ Example:
       -config-folder string
         Path to the configuration folder (default "/home/pi/ChargePi-go/configs")
       -config-format string
-        Format of the configuration files (YAML, JSON or TOML) (default "json")
+        Format of the configuration files (yaml, json or toml) (default "json")
       -connector-folder string
         Path to the connector folder (default "/home/pi/ChargePi-go/configs/connectors")
       -ocpp-config string

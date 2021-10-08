@@ -1,4 +1,4 @@
-version: '3.4'
+version: '3.7'
 services:
   steve-db:
     image: jsurf/rpi-mariadb # Raspberry Pi MariaDB image
@@ -14,7 +14,7 @@ services:
       TZ: Europe/London
     networks:
       ocpp_network:
-        ipv4_address: "172.0.1.120"
+        ipv4_address: 172.0.1.120
   steve:
     build:
       dockerfile: build/package/Dockerfile-steve
@@ -34,13 +34,12 @@ services:
       - "9000:9000"
     networks:
       ocpp_network:
-        ipv4_address: "172.0.1.121"
+        ipv4_address: 172.0.1.12
 volumes:
   maven:
   db:
 networks:
   ocpp_network:
-    name: ocpp_network
     ipam:
       config:
-        - subnet: "172.0.1.0/24"
+        - subnet: 172.0.1.0/24

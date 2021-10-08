@@ -11,11 +11,6 @@ import (
 	"path/filepath"
 )
 
-type OCPPConfig struct {
-	Version int
-	Keys    []core.ConfigurationKey
-}
-
 // InitConfiguration load OCPP configuration from the persistence file.
 func InitConfiguration() {
 	var (

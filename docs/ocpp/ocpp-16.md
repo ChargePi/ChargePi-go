@@ -1,6 +1,6 @@
 # OCPP 1.6
 
-Configuration for protocol version 1.6 can be found in _/charge_point/v16/configuration/configuration.json_.
+The default/reference configuration for protocol version 1.6 can be found [here](../../configs/configuration.json).
 
 Each OCPP 1.6 configuration variable is represented as a dictionary with key equal to **variable name**, the **value** and
 **permission** attributes. For more information regarding OCPP 1.6 configuration,

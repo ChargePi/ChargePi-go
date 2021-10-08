@@ -1,21 +1,23 @@
 # Supported hardware and schematics
 
-This client supports following hardware:
+The hardware must be configured in [_settings file_](../../configs/settings.json) and [_connectors_](../../configs/connectors)
+folder, each connector in a separate file with a predefined structure. 
 
-- Raspberry Pi 3B/4B
-- Relay(s) 230V 10A
-- PN532 RFID/NFC reader or any reader supported by [libnfc](http://nfc-tools.org/index.php/Libnfc)
-- Power meter (CS5460A chip)
-- LCD (optionally with PCF8574 I2C module)
-- WS281x LED strip
+If you want to add support for any type of hardware, read the [contribution guide](./adding-support-for-hardware.md).
 
-Hardware must be configured in [_settings file_](../../configs/settings.json) and [_connectors_](../../configs/connectors) files.
+## RFID/NFC readers
 
-## RFID/NFC reader
+### Supported or tested readers
 
-PN532 can communicate through UART/I2C/SPI. The client uses the NFC go library, which is a wrapper for libnfc 1.8.0 (and
-above). You could use any other libnfc compatible NFC/RFID reader, but the configuration steps as well as wiring could
-vary.
+| Reader |  Is supported    | 
+| :---:	| :---:	|
+|  PN532    |  Yes  |
+
+#### PN532
+
+The PN532 reader can communicate through UART/I2C/SPI. The client uses the NFC go library, which is a wrapper for libnfc
+1.8.0 (and above). You could use any other libnfc compatible NFC/RFID reader, but the configuration steps as well as
+wiring could vary.
 
 The pinout will also vary depending on your preferred communication protocol. This pinout is used for UART.
 
@@ -26,9 +28,17 @@ The pinout will also vary depending on your preferred communication protocol. Th
 |   GPIO 14    |  TX    |
 |   GPIO 15    |  RX    | 
 
-## LCD I2C
+## Displays
 
-LCD should be on I2C bus 1 with address 0x27. To find the I2C address, follow these steps:
+### Supported displays
+
+| Display |  Is supported    | 
+| :---:	| :---:	|
+|  HD44780    |  Yes |
+
+#### HD44780
+
+The HD44780 LCD should be on I2C bus 1 with an address equal to 0x27. To find the I2C address, follow these steps:
 
 1. Download i2c tools:
 
@@ -63,6 +73,14 @@ It is highly recommended splitting both GND and VCC between relays or using a re
 
 ## Power meter
 
+### Supported power meters
+
+| Power meter |  Is supported | 
+| :---:	| :---:	|
+|  CS5460A    |  Yes |
+
+#### CS5460A
+
 | RPI PIN|  CS5460A PIN    |  RPI PIN |   CS5460A PIN    |
 | :---:	| :---:	| :---:	| :---:	|
 |   4 or 2    |   VCC    |  38 (GPIO 20)    |   MOSI    |
@@ -70,7 +88,16 @@ It is highly recommended splitting both GND and VCC between relays or using a re
 |   Any free pin    |   CE/CS    |   /    |   /    |
 |   40 (GPIO 21)    |   SCK    |   /    |  /    |
 
-## WS281x LED strip
+## Indicators
+
+### Supported LED indicators
+
+| Indicator |  Is supported | 
+| :---:	| :---:	|
+|  WS2812b    |  Yes |
+|  WS2811    |  Yes |
+
+#### WS2811 and WS2812b
 
 The WS281x LED strip comes in multiple voltage variants. It is recommended to use the 5V variant, because there is no
 need to add an external power supply that will supply 12V or more.

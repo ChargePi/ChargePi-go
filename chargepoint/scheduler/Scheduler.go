@@ -1,4 +1,4 @@
-package chargepoint
+package scheduler
 
 import (
 	"github.com/go-co-op/gocron"

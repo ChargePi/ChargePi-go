@@ -20,7 +20,9 @@
     "hardware": {
       "lcd": {
         "isSupported": true,
-        "i2cAddress": "0x27"
+        "driver": "hd44780",
+        "i2cAddress": "0x27",
+        "i2cBus": 1
       },
       "tagReader": {
         "isSupported": true,
