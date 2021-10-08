@@ -11,6 +11,7 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/chargepoint/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/data"
 	"github.com/xBlaz3kx/ChargePi-go/hardware"
+	"github.com/xBlaz3kx/ChargePi-go/hardware/display/i18n"
 	"github.com/xBlaz3kx/ChargePi-go/hardware/indicator"
 	"github.com/xBlaz3kx/ChargePi-go/hardware/power-meter"
 	"github.com/xBlaz3kx/ChargePi-go/settings"
@@ -170,18 +171,44 @@ func (handler *ChargePointHandler) listenForConnectorStatusChange() {
 }
 
 func (handler *ChargePointHandler) displayConnectorStatus(connectorId int, status core.ChargePointStatus) {
+	language := handler.Settings.ChargePoint.Hardware.Lcd.Language
+	fmt.Println(language)
 	switch status {
 	case core.ChargePointStatusAvailable:
-		handler.sendToLCD(fmt.Sprintf("Connector %d", connectorId), "available")
+		message, err := i18n.TranslateConnectorAvailableMessage(language, connectorId)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		handler.sendToLCD(message...)
 		break
 	case core.ChargePointStatusFinishing:
-		handler.sendToLCD("Stopped charging", fmt.Sprintf("at %d", connectorId))
+		message, err := i18n.TranslateConnectorFinishingMessage(language, connectorId)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		handler.sendToLCD(message...)
 		break
 	case core.ChargePointStatusCharging:
-		handler.sendToLCD("Started charging", fmt.Sprintf("at %d", connectorId))
+		message, err := i18n.TranslateConnectorChargingMessage(language, connectorId)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		handler.sendToLCD(message...)
 		break
 	case core.ChargePointStatusFaulted:
-		handler.sendToLCD(fmt.Sprintf("Connector %d", connectorId), "faulted")
+		message, err := i18n.TranslateConnectorFaultedMessage(language, connectorId)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		handler.sendToLCD(message...)
 		break
 	}
 }

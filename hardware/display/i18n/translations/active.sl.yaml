@@ -1,0 +1,24 @@
+ConnectorAvailable:
+  hash: sha1-9636bdbd71b2eb12321b01059eaff0c2fc811c75
+  other: je na voljo.
+ConnectorCharging:
+  hash: sha1-c6da238960ec122c63062c4944c70c37c6e2dada
+  other: Start polnjenja
+ConnectorFaulted:
+  hash: sha1-7779f053982a2915e34e35cb901a227d63988bec
+  other: je okvarjena.
+ConnectorFinishing:
+  hash: sha1-893a797163164d35a2cf8f8431bf07bd515d3f34
+  other: Konec polnjenja
+ConnectorStopTemplate:
+  hash: sha1-e740c244c76a2ad6cc892a8782ccb9ec63f2730e
+  other: na {{.Id}}.
+ConnectorTemplate:
+  hash: sha1-faab2db8985000bfc70c3624e6a430ef9ea8ffea
+  other: Vticnica {{.Id}}
+WelcomeMessage:
+  hash: sha1-73ecd675a73b631c77eee228ec76d3aef19d84bc
+  other: Dobrodosli pri
+WelcomeMessage2:
+  hash: sha1-40d75a64dbdabdc3e0e32bbd098e92a5a66e4a2d
+  other: ChargePi!

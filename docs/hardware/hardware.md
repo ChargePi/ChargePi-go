@@ -11,7 +11,7 @@ If you want to add support for any type of hardware, read the [contribution guid
 
 | Reader |  Is supported    | 
 | :---:	| :---:	|
-|  PN532    |  Yes  |
+|  PN532    |  ✔  |
 
 #### PN532
 
@@ -34,7 +34,7 @@ The pinout will also vary depending on your preferred communication protocol. Th
 
 | Display |  Is supported    | 
 | :---:	| :---:	|
-|  HD44780    |  Yes |
+|  HD44780    |  ✔ |
 
 #### HD44780
 
@@ -77,7 +77,7 @@ It is highly recommended splitting both GND and VCC between relays or using a re
 
 | Power meter |  Is supported | 
 | :---:	| :---:	|
-|  CS5460A    |  Yes |
+|  CS5460A    |  ✔ |
 
 #### CS5460A
 
@@ -94,8 +94,8 @@ It is highly recommended splitting both GND and VCC between relays or using a re
 
 | Indicator |  Is supported | 
 | :---:	| :---:	|
-|  WS2812b    |  Yes |
-|  WS2811    |  Yes |
+|  WS2812b    |  ✔ |
+|  WS2811    |  ✔ |
 
 #### WS2811 and WS2812b
 

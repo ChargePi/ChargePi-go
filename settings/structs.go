@@ -28,6 +28,7 @@ type Settings struct {
 			Lcd struct {
 				IsSupported bool   `fig:"IsSupported"`
 				Driver      string `fig:"Driver"`
+				Language    string `fig:"Language"`
 				I2CAddress  string `fig:"I2CAddress"`
 				I2CBus      int    `fig:"I2CBus"`
 			}
