@@ -23,11 +23,13 @@ import (
 func (handler *ChargePointHandler) AddConnectors() {
 	connectors := settings.GetConnectors()
 	log.Println("Adding connectors")
+
 	handler.Connectors = []*Connector{}
 	if connectors == nil {
 		panic("connector array is nil")
 		return
 	}
+
 	for _, connector := range connectors {
 
 		// Create a power meter from settings
@@ -172,7 +174,7 @@ func (handler *ChargePointHandler) listenForConnectorStatusChange() {
 
 func (handler *ChargePointHandler) displayConnectorStatus(connectorId int, status core.ChargePointStatus) {
 	language := handler.Settings.ChargePoint.Hardware.Lcd.Language
-	fmt.Println(language)
+
 	switch status {
 	case core.ChargePointStatusAvailable:
 		message, err := i18n.TranslateConnectorAvailableMessage(language, connectorId)
