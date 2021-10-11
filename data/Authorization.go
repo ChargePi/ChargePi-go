@@ -164,7 +164,7 @@ func IsTagAuthorized(tagId string) bool {
 	log.Println("Checking if tag authorized", tagId)
 	tagObject, isFound := AuthCache.Get(fmt.Sprintf("AuthTag%s", tagId))
 	if isFound {
-		tagInfo := tagObject.(*types.IdTagInfo)
+		tagInfo := tagObject.(types.IdTagInfo)
 		if tagInfo.Status == types.AuthorizationStatusAccepted {
 			if tagInfo.ExpiryDate != nil && tagInfo.ExpiryDate.Before(time.Now()) {
 				return false
