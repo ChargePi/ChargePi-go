@@ -2,7 +2,8 @@
 
 ## Configuring connectivity and basic information of the Charging Point
 
-Settings can be found in the [_settings_](../../configs/settings.json) file and feature basic Charge Point information such as:
+Settings can be found in the [_settings_](../../configs/settings.json) file and feature basic Charge Point information
+such as:
 
 - vendor and model,
 - unique registered charging point ID, server URI and logging server IP,
@@ -14,8 +15,8 @@ Settings can be found in the [_settings_](../../configs/settings.json) file and 
 The settings file is supported in YAML or JSON format.
 
 The table represents attributes, their values and descriptions that require more attention and might not be
-self-explanatory. Some attributes can have multiple possible values, if any are empty, they will be treated as disabled or
-might not work properly.
+self-explanatory. Some attributes can have multiple possible values, if any are empty, they will be treated as disabled
+or might not work properly.
 
 | Attribute| Description |Possible values | 
 | :---:    | :---:    | :---:    | 
@@ -54,7 +55,9 @@ Example settings:
       "lcd": {
         "isSupported": true,
         "driver": "hd44780",
-        "i2cAddress": "0x27"
+        "i2cAddress": "0x27",
+        "i2cBus": 1,
+        "language": "en"
       },
       "tagReader": {
         "isSupported": true,

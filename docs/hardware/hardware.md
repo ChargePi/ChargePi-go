@@ -3,7 +3,7 @@
 The hardware must be configured in [_settings file_](../../configs/settings.json) and [_connectors_](../../configs/connectors)
 folder, each connector in a separate file with a predefined structure. 
 
-If you want to add support for any type of hardware, read the [contribution guide](./adding-support-for-hardware.md).
+If you want to add support for any type of hardware, read the [contribution guide](../contribution/adding-support-for-hardware.md).
 
 ## RFID/NFC readers
 
