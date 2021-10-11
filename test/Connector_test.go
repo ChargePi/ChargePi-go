@@ -98,7 +98,7 @@ func TestConnector_ResumeCharging(t *testing.T) {
 				connector.ErrorCode = core.NoError
 				break
 			}
-			if err = connector.ResumeCharging(tt.args.session); (err != nil) != tt.wantErr {
+			if err, _ = connector.ResumeCharging(tt.args.session); (err != nil) != tt.wantErr {
 				t.Errorf("ResumeCharging() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
