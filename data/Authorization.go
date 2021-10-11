@@ -6,8 +6,10 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	goCache "github.com/patrickmn/go-cache"
 	"github.com/xBlaz3kx/ChargePi-go/cache"
+	"github.com/xBlaz3kx/ChargePi-go/settings"
 	"log"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 )
@@ -15,7 +17,7 @@ import (
 type AuthorizationModule struct {
 	Version       int               `fig:"Version" validation:"required"`
 	MaxCachedTags int               `fig:"MaxCachedTags" validation:"required"`
-	tags          []types.IdTagInfo `fig:"tags"`
+	Tags          []types.IdTagInfo `fig:"Tags"`
 }
 
 var AuthCache *goCache.Cache
@@ -28,7 +30,7 @@ func init() {
 	})
 }
 
-// GetAuthFile read tags from the persistence cache.
+// GetAuthFile read Tags from the persistence cache.
 func GetAuthFile() {
 	var (
 		auth         AuthorizationModule
@@ -39,39 +41,58 @@ func GetAuthFile() {
 	if isFound {
 		authFilePath = authPath.(string)
 	}
+
 	err = fig.Load(&auth,
 		fig.File(filepath.Base(authFilePath)),
 		fig.Dirs(filepath.Dir(authFilePath)))
 	if err != nil {
-		log.Fatal(err)
+		//log.Fatal(err)
+		//todo temporary fix - tags with ExpiryDate won't unmarshall successfully
+		log.Println(err)
 	}
+
 	AuthCache.Set("AuthCacheVersion", auth.Version, goCache.NoExpiration)
-	AuthCache.Set("AuthCacheMaxTags", 0, goCache.NoExpiration)
-	for _, tag := range auth.tags {
-		if tag.ExpiryDate != nil {
-			AuthCache.Set(fmt.Sprintf("AuthTag%s", tag.ParentIdTag), tag, tag.ExpiryDate.Sub(time.Now()))
-			continue
+	AuthCache.Set("AuthCacheMaxTags", auth.MaxCachedTags, goCache.NoExpiration)
+
+	if auth.Tags != nil {
+
+		for _, tag := range auth.Tags {
+			log.Println("Adding tag:", tag)
+			if tag.ExpiryDate != nil {
+				AuthCache.Set(fmt.Sprintf("AuthTag%s", tag.ParentIdTag), tag, tag.ExpiryDate.Sub(time.Now()))
+				continue
+			}
+			AuthCache.SetDefault(fmt.Sprintf("AuthTag%s", tag.ParentIdTag), tag)
 		}
-		AuthCache.SetDefault(fmt.Sprintf("AuthTag%s", tag.ParentIdTag), tag)
 	}
-	log.Printf("Read auth file version %d with tags %s", auth.Version, auth.tags)
+
+	log.Printf("Read auth file version %d with Tags %s", auth.Version, auth.Tags)
 }
 
 // AddTag Add a tag to the global authorization cache.
 func AddTag(tagId string, tagInfo *types.IdTagInfo) {
+	var (
+		maxTags        int
+		expirationTime = time.Minute * 10
+	)
 	cacheMaxTags, isFound := AuthCache.Get("AuthCacheMaxTags")
 	if !isFound {
 		return
 	}
-	var maxTags = cacheMaxTags.(int)
+	maxTags = cacheMaxTags.(int)
+
 	if AuthCache.ItemCount()-2 >= maxTags {
 		return
 	}
+
 	if tagInfo.ExpiryDate != nil {
-		AuthCache.Set(fmt.Sprintf("AuthTag%s", tagId), tagInfo, tagInfo.ExpiryDate.Sub(time.Now()))
-		return
+		expirationTime = tagInfo.ExpiryDate.Sub(time.Now())
 	}
-	AuthCache.SetDefault(fmt.Sprintf("AuthTag%s", tagId), tagInfo)
+	// add a tag if it doesn't exist in the cache already
+	err := AuthCache.Add(fmt.Sprintf("AuthTag%s", tagId), *tagInfo, expirationTime)
+	if err != nil {
+		log.Println(err)
+	}
 }
 
 // RemoveTag Remove a tag from the global authorization cache.
@@ -79,23 +100,62 @@ func RemoveTag(tagId string) {
 	AuthCache.Delete(fmt.Sprintf("AuthTag%s", tagId))
 }
 
-// RemoveCachedTags Remove all tags from the global authorization cache.
+// RemoveCachedTags Remove all Tags from the global authorization cache.
 func RemoveCachedTags() {
 	version, isVersionFound := AuthCache.Get("AuthCacheVersion")
 	maxCachedTags, isMaxFound := AuthCache.Get("AuthCacheMaxTags")
 	AuthCache.Flush()
-	if isVersionFound {
-		AuthCache.Set("AuthCacheVersion", version, goCache.NoExpiration)
+
+	if !isVersionFound {
+		version = 1
 	}
-	if isMaxFound {
-		AuthCache.Set("AuthCacheMaxTags", maxCachedTags, goCache.NoExpiration)
+	AuthCache.Set("AuthCacheVersion", version, goCache.NoExpiration)
+
+	if !isMaxFound {
+		maxCachedTags = 0
 	}
+	AuthCache.Set("AuthCacheMaxTags", maxCachedTags, goCache.NoExpiration)
 }
 
-// SetMaxCachedTags Set the maximum number of tags allowed in the global authorization cache.
+// SetMaxCachedTags Set the maximum number of Tags allowed in the global authorization cache.
 func SetMaxCachedTags(number int) {
 	if number > 0 {
 		AuthCache.Set("AuthCacheMaxTags", number, goCache.NoExpiration)
+	}
+}
+
+func DumpTags() {
+	log.Println("Writing tags to file..")
+	authFilePath, isFound := cache.Cache.Get("authFilePath")
+	if !isFound {
+		return
+	}
+
+	var authTags []types.IdTagInfo
+	for key, item := range AuthCache.Items() {
+		if strings.Contains(key, "AuthTag") && !item.Expired() {
+			authTags = append(authTags, item.Object.(types.IdTagInfo))
+		}
+	}
+
+	version, isVersionFound := AuthCache.Get("AuthCacheVersion")
+	maxCachedTags, isMaxFound := AuthCache.Get("AuthCacheMaxTags")
+
+	if !isVersionFound {
+		version = 1
+	}
+
+	if !isMaxFound {
+		maxCachedTags = 0
+	}
+
+	err := settings.WriteToFile(authFilePath.(string), AuthorizationModule{
+		Version:       version.(int),
+		MaxCachedTags: maxCachedTags.(int),
+		Tags:          authTags,
+	})
+	if err != nil {
+		log.Println(err)
 	}
 }
 
