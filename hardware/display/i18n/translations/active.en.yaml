@@ -1,0 +1,8 @@
+ConnectorAvailable: available.
+ConnectorCharging: Started charging
+ConnectorFaulted: has faulted.
+ConnectorFinishing: Stopped charging
+ConnectorStopTemplate: at {{.Id}}.
+ConnectorTemplate: Connector {{.Id}}
+WelcomeMessage: Welcome to
+WelcomeMessage2: ChargePi!

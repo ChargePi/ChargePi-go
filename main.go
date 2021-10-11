@@ -64,7 +64,7 @@ func main() {
 		config      *settings.Settings
 		tagReader   reader.Reader
 		lcd         display.LCD
-		handler     chargepoint.ChargePointHandler
+		handler     *chargepoint.ChargePointHandler
 		quitChannel = make(chan os.Signal, 1)
 	)
 
@@ -96,7 +96,7 @@ func main() {
 		}
 
 		// Instantiate ChargePoint struct with provided settings
-		handler := &chargepoint.ChargePointHandler{
+		handler = &chargepoint.ChargePointHandler{
 			Settings:  config,
 			TagReader: tagReader,
 			LCD:       lcd,
