@@ -7,6 +7,7 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ws"
 	"github.com/reactivex/rxgo/v2"
 	"github.com/xBlaz3kx/ChargePi-go/chargepoint/scheduler"
+	"github.com/xBlaz3kx/ChargePi-go/data"
 	"github.com/xBlaz3kx/ChargePi-go/hardware/display"
 	"github.com/xBlaz3kx/ChargePi-go/hardware/indicator"
 	"github.com/xBlaz3kx/ChargePi-go/hardware/reader"
@@ -182,4 +183,6 @@ func (handler *ChargePointHandler) CleanUp(reason core.Reason) {
 	log.Println("Clearing the scheduler...")
 	scheduler.GetScheduler().Stop()
 	scheduler.GetScheduler().Clear()
+
+	data.DumpTags()
 }
