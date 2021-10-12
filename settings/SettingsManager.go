@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/kkyr/fig"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	goCache "github.com/patrickmn/go-cache"
 	"github.com/xBlaz3kx/ChargePi-go/cache"
 	"gopkg.in/yaml.v2"
@@ -20,15 +19,18 @@ import (
 
 // GetSettings Read settings from the specified path
 func GetSettings() {
+	log.Println("Reading settings..")
 	var (
 		settings     Settings
 		settingsPath = ""
 		err          error
 	)
+
 	cacheSettings, isFound := cache.Cache.Get("settingsFilePath")
 	if !isFound {
 		log.Fatal("settings file path not found")
 	}
+
 	settingsPath = cacheSettings.(string)
 	err = fig.Load(&settings,
 		fig.File(filepath.Base(settingsPath)),
@@ -37,8 +39,9 @@ func GetSettings() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	defer log.Println("Read settings from ", settingsPath)
 	cache.Cache.Set("settings", &settings, goCache.NoExpiration)
-	log.Println("Read settings from ", settingsPath)
 }
 
 // GetConnectors Scan the connectors folder and read all the connectors' settings.
@@ -152,13 +155,7 @@ func UpdateConnectorSessionInfo(evseId int, connectorId int, session *Session) {
 	}
 
 	//Replace the session values
-	connectorSettings.Session = struct {
-		IsActive      bool   `fig:"IsActive"`
-		TransactionId string `fig:"TransactionId" default:""`
-		TagId         string `fig:"TagId" default:""`
-		Started       string `fig:"Started" default:""`
-		Consumption   []types.MeterValue
-	}(*session)
+	connectorSettings.Session = *session
 
 	err = WriteToFile(connectorFilePath, &connectorSettings)
 	if err != nil {

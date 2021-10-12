@@ -22,47 +22,48 @@ result, the test will fail, and we know that we have a bug in our code (or test)
    go test -v
    ```
 
-### Writing unit tests in Go
+### Writing unit tests
 
-More about testing in Golang [here](https://golang.org/doc/tutorial/add-a-test).
+ChargePi-go uses [testify](https://github.com/stretchr/testify) to test the code. Check out their docs on how to write
+tests.
 
-An example of a function test in Golang:
+An example test for a [connector](../../test/Connector_test.go):
 
 ```golang
 package test
 
-import "testing"
+import (
+	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/xBlaz3kx/ChargePi-go/chargepoint"
+	"github.com/xBlaz3kx/ChargePi-go/data"
+	"github.com/xBlaz3kx/ChargePi-go/hardware"
+	"testing"
+)
 
-func TestFunction(t *testing.T) {
-	type args struct {
-		testArgument string
-	}
-	tests := []struct {
-		name string
-		args args
-		want bool
-	}{
-		{
-			name: "PositiveTestCase",
-			args: args{
-				testArgument: "123",
-			},
-			want: true,
-		}, {
-			name: "NegativeTestCase",
-			args: args{
-				testArgument: "1234",
-			},
-			want: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := functionWeAreTestingThatReturnsBool(tt.args.testArgument); got != tt.want {
-				t.Errorf("functionWeAreTestingThatReturnsBool() = %v, want %v", got, tt.want)
-			}
-		})
-	}
+func TestConnector_ReserveConnector(t *testing.T) {
+	require := require.New(t)
+
+	connector1, err := chargepoint.NewConnector(1, 1, "Schuko",
+		hardware.NewRelay(25, false), nil, false, 15)
+	require.NoError(err)
+
+	//ok case
+	err = connector1.ReserveConnector(1)
+	require.NoError(err)
+
+	// connector already reserved
+	err = connector1.ReserveConnector(2)
+	require.Error(err)
+
+	err = connector1.RemoveReservation()
+	assert.NoError(t, err)
+
+	// invalid connector status
+	connector1.SetStatus(core.ChargePointStatusCharging, core.NoError)
+	err = connector1.ReserveConnector(2)
+	require.Error(err)
 }
 ```
 
@@ -70,5 +71,4 @@ func TestFunction(t *testing.T) {
 
 As of now, we can only test certain segments of the client: AuthCache, Sessions, Connector and Settings. Hardware
 testing must be done manually. If we wanted to test the client as a whole, it would be necessary to mock the central
-system's responses and connectivity (todo, [example](https://github.com/lorenzodonini/ocpp-go/tree/master/ocpp1.6_test))
-. 
+system's responses and connectivity ([example](https://github.com/lorenzodonini/ocpp-go/tree/master/ocpp1.6_test)). 

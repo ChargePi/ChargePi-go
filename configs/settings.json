@@ -1,21 +1,21 @@
 {
   "chargePoint": {
     "info": {
-      "vendor": "UL FE",
-      "model": "ChargePi",
       "id": "ChargePi",
       "protocolVersion": "1.6",
-      "currentClientVersion": "1.0",
-      "targetClientVersion": "1.0",
       "serverUri": "example.com",
       "logServer": "example.com:12201",
       "maxChargingTime": 5,
-      "tls": {
-        "isEnabled": false,
-        "CACertificatePath": "/usr/share/certs/rootCA.crt",
-        "clientCertificatePath": "/usr/share/certs/charge-point.crt",
-        "clientKeyPath": "/usr/share/certs/charge-point.key"
+      "ocpp": {
+        "vendor": "UL FE",
+        "model": "ChargePi"
       }
+    },
+    "tls": {
+      "isEnabled": false,
+      "CACertificatePath": "/usr/share/certs/rootCA.crt",
+      "clientCertificatePath": "/usr/share/certs/charge-point.crt",
+      "clientKeyPath": "/usr/share/certs/charge-point.key"
     },
     "hardware": {
       "lcd": {

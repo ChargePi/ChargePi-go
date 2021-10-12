@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/kkyr/fig"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -209,13 +208,7 @@ func TestUpdateConnectorSessionInfo(t *testing.T) {
 		ConnectorId: 1,
 		Type:        "Schuko",
 		Status:      "Available",
-		Session: struct {
-			IsActive      bool   `fig:"IsActive"`
-			TransactionId string `fig:"TransactionId" default:""`
-			TagId         string `fig:"TagId" default:""`
-			Started       string `fig:"Started" default:""`
-			Consumption   []types.MeterValue
-		}{
+		Session: settings.Session{
 			IsActive:      false,
 			TransactionId: "",
 			TagId:         "",
@@ -287,13 +280,7 @@ func TestUpdateConnectorStatus(t *testing.T) {
 		ConnectorId: 1,
 		Type:        "Schuko",
 		Status:      "Available",
-		Session: struct {
-			IsActive      bool   `fig:"IsActive"`
-			TransactionId string `fig:"TransactionId" default:""`
-			TagId         string `fig:"TagId" default:""`
-			Started       string `fig:"Started" default:""`
-			Consumption   []types.MeterValue
-		}{
+		Session: settings.Session{
 			IsActive:      false,
 			TransactionId: "",
 			TagId:         "",

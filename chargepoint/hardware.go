@@ -18,7 +18,7 @@ func (handler *ChargePointHandler) sendToLCD(messages ...string) {
 		return
 	}
 
-	log.Println("Sending messages to LCD", messages)
+	log.Println("Sending message(s) to LCD:", messages)
 	handler.LCD.GetLcdChannel() <- display.NewMessage(time.Second*5, messages)
 }
 
@@ -27,7 +27,7 @@ func (handler *ChargePointHandler) displayLEDStatus(connectorIndex int, status c
 		return
 	}
 
-	var color = 0x00
+	var color = indicator.Off
 	switch status {
 	case core.ChargePointStatusFaulted:
 		color = indicator.Red
@@ -49,7 +49,7 @@ func (handler *ChargePointHandler) displayLEDStatus(connectorIndex int, status c
 		break
 	}
 
-	if color != 0x00 {
+	if color != indicator.Off {
 		go func() {
 			err := handler.Indicator.DisplayColor(connectorIndex, uint32(color))
 			if err != nil {

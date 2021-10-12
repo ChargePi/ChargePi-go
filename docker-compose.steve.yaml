@@ -17,7 +17,7 @@ services:
         ipv4_address: 172.0.1.120
   steve:
     build:
-      dockerfile: build/package/Dockerfile-steve
+      dockerfile: build/package/Steve.Dockerfile
       context: .
     volumes:
       - ./steve:/code

@@ -97,6 +97,19 @@ func TestConnector_StartCharging(t *testing.T) {
 	//invalid transaction and tag id
 	err = connector1.StartCharging("@1234asd", "~ˇˇ3123")
 	require.Error(err)
+
+	//invalid transaction id
+	err = connector1.StartCharging("", "1234")
+	require.Error(err)
+
+	//invalid tag id
+	err = connector1.StartCharging("1234", "")
+	require.Error(err)
+
+	//invalid connector status
+	connector1.SetStatus(core.ChargePointStatusUnavailable, core.InternalError)
+	err = connector1.StartCharging("1234a", "1234a")
+	require.Error(err)
 }
 
 func TestConnector_StopCharging(t *testing.T) {
