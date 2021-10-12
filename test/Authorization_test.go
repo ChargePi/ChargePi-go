@@ -4,210 +4,177 @@ import (
 	"fmt"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/patrickmn/go-cache"
+	"github.com/stretchr/testify/require"
 	"github.com/xBlaz3kx/ChargePi-go/data"
 	"testing"
 	"time"
 )
 
 func TestAddTag(t *testing.T) {
-	type args struct {
-		tagId   string
-		tagInfo *types.IdTagInfo
-	}
-	tests := []struct {
-		name string
-		args args
-	}{
-		{
-			name: "AddTag",
-			args: args{
-				tagId: "123",
-				tagInfo: &types.IdTagInfo{
-					ParentIdTag: "123",
-					ExpiryDate:  types.NewDateTime(time.Now().Add(10 * time.Minute)),
-					Status:      types.AuthorizationStatusAccepted,
-				},
-			},
-		}, {
-			name: "TagLimitReached",
-			args: args{
-				tagId: "123",
-				tagInfo: &types.IdTagInfo{
-					ParentIdTag: "123",
-					ExpiryDate:  types.NewDateTime(time.Now().Add(10 * time.Minute)),
-					Status:      types.AuthorizationStatusAccepted,
-				},
-			},
-		},
-	}
+	require := require.New(t)
 	data.AuthCache = cache.New(time.Minute*10, time.Minute*10)
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			switch tt.name {
-			case "AddTag":
-				data.SetMaxCachedTags(3)
-				break
-			case "TagLimitReached":
-				data.SetMaxCachedTags(1)
-				for i := 0; i < 5; i++ {
-					data.AddTag(fmt.Sprintf("%d", i), &types.IdTagInfo{
-						ExpiryDate:  nil,
-						ParentIdTag: fmt.Sprintf("%d", i),
-						Status:      types.AuthorizationStatusAccepted,
-					})
-				}
-				if data.AuthCache.ItemCount()+2 != 5 {
-					t.Errorf("Items added to cache regardless of set limit")
-				}
-				break
-			}
-			data.AddTag(tt.args.tagId, tt.args.tagInfo)
-			cacheData, exists := data.AuthCache.Get(fmt.Sprintf("AuthTag%s", tt.args.tagId))
-			if (!exists || cacheData != tt.args.tagInfo) && tt.name != "TagLimitReached" {
-				t.Errorf("AddTag() did not insert the tag")
-			}
-		})
+
+	data.AuthCache.Set("AuthCacheVersion", 1, cache.NoExpiration)
+	data.SetMaxCachedTags(1)
+
+	tag := types.IdTagInfo{
+		ParentIdTag: "123",
+		ExpiryDate:  types.NewDateTime(time.Now().Add(10 * time.Minute)),
+		Status:      types.AuthorizationStatusAccepted,
 	}
+
+	data.AddTag(tag.ParentIdTag, &tag)
+
+	cachedTag, isFound := data.AuthCache.Get(fmt.Sprintf("AuthTag%s", tag.ParentIdTag))
+
+	require.True(isFound)
+	require.Equal(tag, cachedTag)
+
+	overLimitTag := types.IdTagInfo{
+		ParentIdTag: "1234",
+		ExpiryDate:  types.NewDateTime(time.Now().Add(10 * time.Minute)),
+		Status:      types.AuthorizationStatusAccepted,
+	}
+
+	// test cached tag limit
+	data.AddTag(overLimitTag.ParentIdTag, &overLimitTag)
+
+	_, isFound = data.AuthCache.Get(fmt.Sprintf("AuthTag%s", overLimitTag.ParentIdTag))
+
+	require.False(isFound)
 }
 
 func TestIsTagAuthorized(t *testing.T) {
-	type args struct {
-		tagId string
-	}
-	tests := []struct {
-		name string
-		args args
-		want bool
-	}{
-		{
-			name: "TagInCacheAndAuthorized",
-			args: args{
-				tagId: "123",
-			},
-			want: true,
-		}, {
-			name: "TagInCacheAndNotAuthorized",
-			args: args{
-				tagId: "123",
-			},
-			want: false,
-		}, {
-			name: "TagNotInCache",
-			args: args{
-				tagId: "1234",
-			},
-			want: false,
-		},
-	}
+	require := require.New(t)
 	data.AuthCache = cache.New(time.Minute*10, time.Minute*10)
-	data.SetMaxCachedTags(10)
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			switch tt.name {
-			case "TagInCacheAndAuthorized":
-				data.AddTag(tt.args.tagId, &types.IdTagInfo{
-					ParentIdTag: "",
-					ExpiryDate:  types.NewDateTime(time.Now().Add(40 * time.Minute)),
-					Status:      types.AuthorizationStatusAccepted,
-				})
-				break
-			case "TagInCacheAndNotAuthorized":
-				data.AddTag(
-					tt.args.tagId,
-					&types.IdTagInfo{
-						ParentIdTag: "",
-						ExpiryDate:  types.NewDateTime(time.Now().Add(40 * time.Minute)),
-						Status:      types.AuthorizationStatusBlocked,
-					})
-				break
-			case "TagNotInCache":
-				break
-			}
-			if got := data.IsTagAuthorized(tt.args.tagId); got != tt.want {
-				t.Errorf("IsTagAuthorized() = %v, want %v", got, tt.want)
-			}
-		})
+
+	okTag := types.IdTagInfo{
+		ParentIdTag: "OkTag123",
+		ExpiryDate:  types.NewDateTime(time.Now().Add(40 * time.Minute)),
+		Status:      types.AuthorizationStatusAccepted,
 	}
+
+	blockedTag := types.IdTagInfo{
+		ParentIdTag: "BlockedTag123",
+		ExpiryDate:  types.NewDateTime(time.Now().Add(40 * time.Minute)),
+		Status:      types.AuthorizationStatusBlocked,
+	}
+
+	expiredTag := types.IdTagInfo{
+		ParentIdTag: "ExpiredTag123",
+		ExpiryDate:  types.NewDateTime(time.Date(1999, 1, 1, 1, 1, 1, 0, time.Local)),
+		Status:      types.AuthorizationStatusAccepted,
+	}
+
+	data.SetMaxCachedTags(5)
+
+	data.AddTag(okTag.ParentIdTag, &okTag)
+	data.AddTag(blockedTag.ParentIdTag, &blockedTag)
+	data.AddTag(expiredTag.ParentIdTag, &expiredTag)
+
+	require.True(data.IsTagAuthorized(okTag.ParentIdTag))
+	require.False(data.IsTagAuthorized(blockedTag.ParentIdTag))
+	require.False(data.IsTagAuthorized(expiredTag.ParentIdTag))
+
 }
 
 func TestRemoveCachedTags(t *testing.T) {
-	tests := []struct {
-		name string
-	}{
-		{name: "JustTags"},
-		{name: "OtherElements"},
-		{name: "Empty"},
-	}
+	require := require.New(t)
 	data.AuthCache = cache.New(time.Minute*10, time.Minute*10)
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			switch tt.name {
-			case "JustTags":
-				break
-			case "OtherElements":
-				break
-			case "Empty":
-				break
-			}
-		})
+
+	okTag := types.IdTagInfo{
+		ParentIdTag: "OkTag123",
+		ExpiryDate:  types.NewDateTime(time.Now().Add(40 * time.Minute)),
+		Status:      types.AuthorizationStatusAccepted,
 	}
+
+	blockedTag := types.IdTagInfo{
+		ParentIdTag: "BlockedTag123",
+		ExpiryDate:  types.NewDateTime(time.Now().Add(40 * time.Minute)),
+		Status:      types.AuthorizationStatusBlocked,
+	}
+
+	expiredTag := types.IdTagInfo{
+		ParentIdTag: "ExpiredTag123",
+		ExpiryDate:  types.NewDateTime(time.Date(1999, 1, 1, 1, 1, 1, 0, time.Local)),
+		Status:      types.AuthorizationStatusAccepted,
+	}
+
+	data.SetMaxCachedTags(5)
+
+	data.AddTag(okTag.ParentIdTag, &okTag)
+	data.AddTag(blockedTag.ParentIdTag, &blockedTag)
+	data.AddTag(expiredTag.ParentIdTag, &expiredTag)
+
+	data.RemoveCachedTags()
+
+	require.Equal(2, data.AuthCache.ItemCount())
 }
 
 func TestRemoveTag(t *testing.T) {
-	type args struct {
-		tagId string
-	}
-	tests := []struct {
-		name string
-		args args
-	}{
-		{
-			name: "TagInCache",
-			args: args{tagId: "123"},
-		}, {
-			name: "TagNotInCache",
-			args: args{tagId: "2134"},
-		},
-	}
+	require := require.New(t)
 	data.AuthCache = cache.New(time.Minute*10, time.Minute*10)
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-		})
+
+	okTag := types.IdTagInfo{
+		ParentIdTag: "OkTag123",
+		ExpiryDate:  types.NewDateTime(time.Now().Add(40 * time.Minute)),
+		Status:      types.AuthorizationStatusAccepted,
 	}
+
+	blockedTag := types.IdTagInfo{
+		ParentIdTag: "BlockedTag123",
+		ExpiryDate:  types.NewDateTime(time.Now().Add(40 * time.Minute)),
+		Status:      types.AuthorizationStatusBlocked,
+	}
+
+	expiredTag := types.IdTagInfo{
+		ParentIdTag: "ExpiredTag123",
+		ExpiryDate:  types.NewDateTime(time.Date(1999, 1, 1, 1, 1, 1, 0, time.Local)),
+		Status:      types.AuthorizationStatusAccepted,
+	}
+
+	data.SetMaxCachedTags(15)
+
+	data.AddTag(okTag.ParentIdTag, &okTag)
+	data.AddTag(blockedTag.ParentIdTag, &blockedTag)
+	data.AddTag(expiredTag.ParentIdTag, &expiredTag)
+
+	data.RemoveTag(blockedTag.ParentIdTag)
+
+	_, isFound := data.AuthCache.Get(fmt.Sprintf("AuthTag%s", blockedTag.ParentIdTag))
+	require.False(isFound)
+
+	_, isFound = data.AuthCache.Get(fmt.Sprintf("AuthTag%s", okTag.ParentIdTag))
+	require.True(isFound)
+
+	data.RemoveTag("AuthTag1234")
+	_, isFound = data.AuthCache.Get(fmt.Sprintf("AuthTag%s", okTag.ParentIdTag))
+	require.True(isFound)
+
 }
 
 func TestSetMaxCachedTags(t *testing.T) {
-	type args struct {
-		number int
-	}
-	tests := []struct {
-		name string
-		args args
-	}{
-		{
-			name: "NoTagCached",
-			args: args{number: 0},
-		}, {
-			name: "MaxOneTagCached",
-			args: args{number: 1},
-		}, {
-			name: "FewTagsCached",
-			args: args{number: 10},
-		},
-	}
+	require := require.New(t)
 	data.AuthCache = cache.New(time.Minute*10, time.Minute*10)
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			data.RemoveCachedTags()
-			data.SetMaxCachedTags(tt.args.number)
-			maxTags, isFound := data.AuthCache.Get("AuthCacheMaxTags")
-			if isFound {
-				if maxTags != tt.args.number {
-					t.Errorf("Variable not set to cache")
-				}
-			} else if tt.name != "NoTagCached" {
-				t.Errorf("Did not find the variable in cache")
-			}
-		})
-	}
+
+	data.SetMaxCachedTags(1)
+	numCachedTags, isFound := data.AuthCache.Get("AuthCacheMaxTags")
+	require.True(isFound)
+	require.Equal(1, numCachedTags)
+
+	data.SetMaxCachedTags(2)
+	numCachedTags, isFound = data.AuthCache.Get("AuthCacheMaxTags")
+	require.True(isFound)
+	require.Equal(2, numCachedTags)
+
+	data.SetMaxCachedTags(-1)
+	numCachedTags, isFound = data.AuthCache.Get("AuthCacheMaxTags")
+	require.True(isFound)
+	require.Equal(2, numCachedTags)
+
+	data.SetMaxCachedTags(0)
+	numCachedTags, isFound = data.AuthCache.Get("AuthCacheMaxTags")
+	require.True(isFound)
+	require.Equal(2, numCachedTags)
+
 }

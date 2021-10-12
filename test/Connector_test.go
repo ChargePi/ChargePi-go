@@ -2,352 +2,203 @@ package test
 
 import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/xBlaz3kx/ChargePi-go/chargepoint"
 	"github.com/xBlaz3kx/ChargePi-go/data"
 	"github.com/xBlaz3kx/ChargePi-go/hardware"
-	"github.com/xBlaz3kx/ChargePi-go/hardware/power-meter"
-	"reflect"
 	"testing"
 	"time"
 )
 
 func TestConnector_ResumeCharging(t *testing.T) {
-	type fields struct {
-		EvseId        int
-		ConnectorId   int
-		ConnectorType string
+	require := require.New(t)
+
+	connector, err := chargepoint.NewConnector(1, 1, "Schuko",
+		hardware.NewRelay(11, false), nil, false, 15)
+	assert.NoError(t, err)
+
+	validSession := data.Session{
+		IsActive:      true,
+		TransactionId: "1234",
+		TagId:         "1234",
+		Started:       time.Now().Format(time.RFC3339),
+		Consumption:   nil,
 	}
-	type args struct {
-		session data.Session
+
+	expiredSession := data.Session{
+		IsActive:      true,
+		TransactionId: "1234",
+		TagId:         "1234",
+		Started:       time.Date(2021, 1, 1, 1, 1, 1, 1, time.Local).Format(time.RFC3339),
+		Consumption:   nil,
 	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
-	}{
-		{
-			name: "ResumeSuccessful",
-			fields: fields{
-				EvseId:        1,
-				ConnectorId:   1,
-				ConnectorType: "Schuko",
-			},
-			args: args{session: data.Session{
-				IsActive:      true,
-				TransactionId: "123",
-				TagId:         "123",
-				Started:       time.Now().Format(time.RFC3339),
-				Consumption:   []types.MeterValue{},
-			}},
-			wantErr: false,
-		}, {
-			name: "WrongStatus",
-			fields: fields{
-				EvseId:        1,
-				ConnectorId:   1,
-				ConnectorType: "Schuko",
-			},
-			args: args{session: data.Session{
-				IsActive:      true,
-				TransactionId: "123",
-				TagId:         "123",
-				Started:       time.Now().Format(time.RFC3339),
-				Consumption:   []types.MeterValue{},
-			}},
-			wantErr: true,
-		}, {
-			name: "SessionNotActive",
-			fields: fields{
-				EvseId:        1,
-				ConnectorId:   1,
-				ConnectorType: "Schuko",
-			},
-			args: args{session: data.Session{
-				IsActive:      false,
-				TransactionId: "",
-				TagId:         "",
-				Started:       "",
-				Consumption:   []types.MeterValue{},
-			}},
-			wantErr: true,
-		},
+
+	invalidSession := data.Session{
+		IsActive:      false,
+		TransactionId: "",
+		TagId:         "",
+		Started:       "",
+		Consumption:   nil,
 	}
-	connector, err := chargepoint.NewConnector(
-		1,
-		1,
-		"Schuko",
-		hardware.NewRelay(15, false),
-		nil,
-		false,
-		5,
-	)
-	if err != nil {
-		t.Errorf("ResumeCharging() error = %v", err)
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			switch tt.name {
-			case "ResumeSuccessful":
-				connector.ConnectorStatus = core.ChargePointStatusCharging
-				connector.ErrorCode = core.NoError
-				break
-			case "SessionNotActive":
-				connector.ConnectorStatus = core.ChargePointStatusCharging
-				connector.ErrorCode = core.NoError
-				break
-			}
-			if err, _ = connector.ResumeCharging(tt.args.session); (err != nil) != tt.wantErr {
-				t.Errorf("ResumeCharging() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
+
+	// ok case
+	connector.SetStatus(core.ChargePointStatusCharging, core.NoError)
+	err, timeElapsed := connector.ResumeCharging(validSession)
+	require.NoError(err)
+	require.InDelta(0, timeElapsed, 1)
+
+	err = connector.StopCharging(core.ReasonLocal)
+	require.NoError(err)
+
+	//invalid session
+	connector.SetStatus(core.ChargePointStatusCharging, core.NoError)
+	err, timeElapsed = connector.ResumeCharging(invalidSession)
+	require.Error(err)
+	require.InDelta(connector.MaxChargingTime, timeElapsed, 1)
+
+	//invalid status
+	connector.SetStatus(core.ChargePointStatusAvailable, core.NoError)
+	err, timeElapsed = connector.ResumeCharging(validSession)
+	require.Error(err)
+	require.InDelta(connector.MaxChargingTime, timeElapsed, 1)
+
+	//expired session
+	connector.SetStatus(core.ChargePointStatusAvailable, core.NoError)
+	err, timeElapsed = connector.ResumeCharging(expiredSession)
+	require.Error(err)
+	require.InDelta(connector.MaxChargingTime, timeElapsed, 1)
+
+	// invalid status
+	connector.SetStatus(core.ChargePointStatusUnavailable, core.EVCommunicationError)
+	err, timeElapsed = connector.ResumeCharging(invalidSession)
+	require.Error(err)
+	require.InDelta(connector.MaxChargingTime, timeElapsed, 1)
+
 }
 
 func TestConnector_StartCharging(t *testing.T) {
-	type fields struct {
-		EvseId        int
-		ConnectorId   int
-		ConnectorType string
-	}
-	type args struct {
-		transactionId string
-		tagId         string
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
-	}{
-		{
-			name: "WillStartCharging",
-			fields: fields{
-				EvseId:        1,
-				ConnectorId:   1,
-				ConnectorType: "Schuko",
-			},
-			args: args{
-				transactionId: "123",
-				tagId:         "1234",
-			},
-			wantErr: false,
-		}, {
-			name: "MissingTransactionId",
-			fields: fields{
-				EvseId:        1,
-				ConnectorId:   1,
-				ConnectorType: "Schuko",
-			},
-			args: args{
-				transactionId: "",
-				tagId:         "1234",
-			},
-			wantErr: true,
-		}, {
-			name: "MissingTagId",
-			fields: fields{
-				EvseId:        1,
-				ConnectorId:   1,
-				ConnectorType: "Schuko",
-			},
-			args: args{
-				transactionId: "1234",
-				tagId:         "",
-			},
-			wantErr: true,
-		},
-	}
-	relay := hardware.NewRelay(2, false)
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			connector, err := chargepoint.NewConnector(
-				tt.fields.EvseId,
-				tt.fields.ConnectorId,
-				tt.fields.ConnectorType,
-				relay,
-				nil,
-				false,
-				5,
-			)
-			if err != nil {
-				t.Errorf("StartCharging() error = %v, wantErr %v", err, tt.wantErr)
-			}
-			if err := connector.StartCharging(tt.args.transactionId, tt.args.tagId); (err != nil) != tt.wantErr {
-				t.Errorf("StartCharging() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
+	require := require.New(t)
+
+	connector1, _ := chargepoint.NewConnector(1, 1, "Schuko",
+		hardware.NewRelay(14, false), nil, false, 15)
+
+	//ok case
+	err := connector1.StartCharging("1234", "1234")
+	require.NoError(err)
+
+	// cannot start new session on a connector that is already charging
+	err = connector1.StartCharging("1234a", "1234a")
+	require.Error(err)
+
+	err = connector1.StopCharging(core.ReasonLocal)
+	assert.NoError(t, err)
+
+	//invalid transaction and tag id
+	err = connector1.StartCharging("@1234asd", "~ˇˇ3123")
+	require.Error(err)
 }
 
 func TestConnector_StopCharging(t *testing.T) {
-	type fields struct {
-		EvseId        int
-		ConnectorId   int
-		ConnectorType string
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		wantErr bool
-	}{
-		{
-			name: "StopCharging",
-			fields: fields{
-				EvseId:        1,
-				ConnectorId:   1,
-				ConnectorType: "Schuko",
-			},
-			wantErr: false,
-		}, {
-			name: "StopChargingFailure",
-			fields: fields{
-				EvseId:        1,
-				ConnectorId:   1,
-				ConnectorType: "Schuko",
-			},
-			wantErr: true,
-		},
-	}
-	relay := hardware.NewRelay(1, false)
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			connector, err := chargepoint.NewConnector(
-				tt.fields.EvseId,
-				tt.fields.ConnectorId,
-				tt.fields.ConnectorType,
-				relay,
-				nil,
-				false,
-				5,
-			)
-			if err != nil {
-				t.Errorf("StopCharging() error at connector = %v, wantErr %v", err, tt.wantErr)
-			}
-			switch tt.name {
-			case "StopCharging":
-				err := connector.StartCharging("123", "123")
-				if err != nil {
-					t.Errorf("StopCharging() error while starting to charge = %v, wantErr %v", err, tt.wantErr)
-				}
-				break
-			case "StopChargingFailure":
-				break
-			}
-			if err := connector.StopCharging(core.ReasonLocal); (err != nil) != tt.wantErr {
-				t.Errorf("StopCharging() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
+	require := require.New(t)
+
+	connector1, _ := chargepoint.NewConnector(1, 1, "Schuko",
+		hardware.NewRelay(16, false), nil, false, 15)
+
+	//start charging
+	err := connector1.StartCharging("1234", "1234")
+	require.NoError(err)
+
+	//ok case
+	err = connector1.StopCharging(core.ReasonLocal)
+	require.NoError(err)
+
+	// cannot stop charging if the connector is available
+	err = connector1.StopCharging(core.ReasonLocal)
+	require.Error(err)
 }
 
 func TestNewConnector(t *testing.T) {
-	var relay = hardware.NewRelay(21, false)
-	type args struct {
-		EvseId            int
-		connectorId       int
-		connectorType     string
-		relay             *hardware.Relay
-		powerMeter        *power_meter.C5460A
-		powerMeterEnabled bool
-		maxChargingTime   int
-	}
-	var tests = []struct {
-		name    string
-		args    args
-		want    chargepoint.Connector
-		wantErr bool
-	}{
-		{
-			name: "CorrectConnector",
-			args: args{
-				EvseId:            1,
-				connectorId:       1,
-				connectorType:     "Schuko",
-				relay:             relay,
-				powerMeter:        nil,
-				powerMeterEnabled: false,
-				maxChargingTime:   5,
-			},
-			want: chargepoint.Connector{
-				EvseId:            1,
-				ConnectorId:       1,
-				ConnectorType:     "Schuko",
-				ConnectorStatus:   "Available",
-				PowerMeterEnabled: false,
-				MaxChargingTime:   5,
-			},
-			wantErr: false,
-		}, {
-			name: "InvalidEVSEID",
-			args: args{
-				EvseId:            0,
-				connectorId:       1,
-				connectorType:     "Schuko",
-				relay:             relay,
-				powerMeter:        nil,
-				powerMeterEnabled: false,
-				maxChargingTime:   5,
-			},
-			want:    chargepoint.Connector{},
-			wantErr: true,
-		}, {
-			name: "InvalidConnectorId",
-			args: args{
-				EvseId:            1,
-				connectorId:       0,
-				connectorType:     "Schuko",
-				relay:             relay,
-				powerMeter:        nil,
-				powerMeterEnabled: false,
-				maxChargingTime:   5,
-			},
-			want:    chargepoint.Connector{},
-			wantErr: true,
-		}, {
-			name: "RelayNotCreated",
-			args: args{
-				EvseId:            1,
-				connectorId:       1,
-				connectorType:     "Schuko",
-				relay:             nil,
-				powerMeter:        nil,
-				powerMeterEnabled: false,
-				maxChargingTime:   5,
-			},
-			want:    chargepoint.Connector{},
-			wantErr: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := chargepoint.NewConnector(
-				tt.args.EvseId,
-				tt.args.connectorId,
-				tt.args.connectorType,
-				tt.args.relay,
-				tt.args.powerMeter,
-				tt.args.powerMeterEnabled,
-				tt.args.maxChargingTime,
-			)
+	require := require.New(t)
 
-			if (err != nil) != tt.wantErr {
-				t.Errorf("NewConnector() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
+	// ok case
+	connector1, err := chargepoint.NewConnector(1, 1, "Schuko",
+		hardware.NewRelay(21, false), nil, false, 15)
+	require.NoError(err)
 
-			switch tt.name {
-			case "CorrectConnector":
-				if tt.args.connectorType != got.ConnectorType || tt.args.connectorId != got.ConnectorId ||
-					tt.args.EvseId != got.EvseId || tt.args.powerMeterEnabled != got.PowerMeterEnabled || tt.args.maxChargingTime != got.MaxChargingTime {
-					t.Errorf("NewConnector() got = %v, want %v", got, tt.want)
-				}
-				return
-			}
-			if err == nil && !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewConnector() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
+	require.Equal(1, connector1.ConnectorId)
+	require.Equal(1, connector1.EvseId)
+	require.Equal(core.ChargePointStatusAvailable, connector1.ConnectorStatus)
+	require.Equal("Schuko", connector1.ConnectorType)
+	require.Equal(15, connector1.MaxChargingTime)
+	require.False(connector1.PowerMeterEnabled)
+
+	//invalid evseId
+	_, err = chargepoint.NewConnector(0, 1, "Schuko",
+		hardware.NewRelay(21, false), nil, false, 15)
+	require.Error(err)
+
+	// invalid connectorId
+	_, err = chargepoint.NewConnector(1, 0, "Schuko",
+		hardware.NewRelay(12, false), nil, false, 15)
+	require.Error(err)
+
+	//negative connector id
+	_, err = chargepoint.NewConnector(1, -1, "Schuko",
+		hardware.NewRelay(13, false), nil, false, 15)
+	require.Error(err)
+
+	// relay already in use
+	_, err = chargepoint.NewConnector(1, 5, "Schuko",
+		hardware.NewRelay(21, false), nil, false, 15)
+	require.Error(err)
+
+}
+
+func TestConnector_SamplePowerMeter(t *testing.T) {
+	//todo
+}
+
+func TestConnector_ReserveConnector(t *testing.T) {
+	require := require.New(t)
+
+	connector1, err := chargepoint.NewConnector(1, 1, "Schuko",
+		hardware.NewRelay(25, false), nil, false, 15)
+	require.NoError(err)
+
+	//ok case
+	err = connector1.ReserveConnector(1)
+	require.NoError(err)
+
+	// connector already reserved
+	err = connector1.ReserveConnector(2)
+	require.Error(err)
+
+	err = connector1.RemoveReservation()
+	assert.NoError(t, err)
+
+	// invalid connector status
+	connector1.SetStatus(core.ChargePointStatusCharging, core.NoError)
+	err = connector1.ReserveConnector(2)
+	require.Error(err)
+}
+
+func TestConnector_RemoveReservation(t *testing.T) {
+	require := require.New(t)
+
+	connector1, err := chargepoint.NewConnector(1, 1, "Schuko",
+		hardware.NewRelay(23, false), nil, false, 15)
+	require.NoError(err)
+
+	//make a reservation
+	err = connector1.ReserveConnector(1)
+	require.NoError(err)
+
+	//ok case
+	err = connector1.RemoveReservation()
+	require.NoError(err)
+
+	// cannot remove reservation that is not there
+	err = connector1.RemoveReservation()
+	require.Error(err)
 }
