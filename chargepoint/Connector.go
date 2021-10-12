@@ -106,20 +106,35 @@ func (connector *Connector) StartCharging(transactionId string, tagId string) er
 }
 
 // ResumeCharging Resumes or restores the charging state after boot if a charging session was active.
-func (connector *Connector) ResumeCharging(session data.Session) error {
+func (connector *Connector) ResumeCharging(session data.Session) (err error, chargingTimeElapsed int) {
 	//set the transaction id so connector is able to stop the transaction if charging fails
 	connector.session.TransactionId = session.TransactionId
+
+	startedChargingTime, err := time.Parse(time.RFC3339, session.Started)
+	if err != nil {
+		return
+	}
+
+	chargingTimeElapsed = int(time.Now().Sub(startedChargingTime).Minutes())
+	if connector.MaxChargingTime < chargingTimeElapsed {
+		chargingTimeElapsed = connector.MaxChargingTime
+		err = fmt.Errorf("session time limit exceeded")
+		return
+	}
+
 	if connector.IsCharging() || connector.IsPreparing() {
 		hasSessionStarted := connector.session.StartSession(session.TransactionId, session.TagId)
 		if hasSessionStarted {
 			connector.relay.On()
 			connector.session.Started = session.Started
 			connector.session.Consumption = append(connector.session.Consumption, session.Consumption...)
-			return nil
+			return nil, chargingTimeElapsed
 		}
-		return errors.New("cannot resume session: unable to start session")
+		err = errors.New("cannot resume session: unable to start session")
+		return
 	}
-	return errors.New("cannot resume session: invalid connector status")
+
+	return errors.New("cannot resume session: invalid connector status"), connector.MaxChargingTime
 }
 
 // StopCharging Stops charging the connector by turning the relay off and ending the session.

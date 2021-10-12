@@ -112,23 +112,15 @@ func (handler *ChargePointHandler) restoreState() {
 // attemptToResumeChargingAtConnector try to resume or stop charging at a connector based on the status in the connector persistence file.
 func (handler *ChargePointHandler) attemptToResumeChargingAtConnector(connector *Connector, session data.Session) error {
 	log.Println("Attempt to resume charging at charging at", connector.ConnectorId)
-	parse, err := time.Parse(time.RFC3339, session.Started)
-	if err != nil {
-		return err
-	}
-	chargingTimeElapsed := int(time.Now().Sub(parse).Minutes())
-	if connector.MaxChargingTime < chargingTimeElapsed {
-		//set the transaction id so connector is able to stop the transaction
-		connector.session.TransactionId = session.TransactionId
-		return fmt.Errorf("session time limit exceeded")
-	}
-	err = connector.ResumeCharging(session)
+
+	err, chargingTimeLeft:= connector.ResumeCharging(session)
 	if err != nil {
 		return fmt.Errorf("charging session is unable to be resumed")
 	}
-	_, err = scheduler.GetScheduler().Every(connector.MaxChargingTime-chargingTimeElapsed).Minutes().LimitRunsTo(1).
+
+	_, err = scheduler.GetScheduler().Every(connector.MaxChargingTime-chargingTimeLeft).Minutes().LimitRunsTo(1).
 		Tag(fmt.Sprintf("connector%dTimer", connector.ConnectorId)).Do(handler.stopChargingConnector, connector, core.ReasonLocal)
-	return nil
+	return err
 }
 
 // notifyConnectorStatus Notify the central system about the connector's status and updates the LED indicator.
