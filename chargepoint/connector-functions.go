@@ -26,41 +26,49 @@ func (handler *ChargePointHandler) AddConnectors() {
 
 	handler.Connectors = []*Connector{}
 	if connectors == nil {
-		panic("connector array is nil")
-		return
+		log.Fatal("no connectors configured")
 	}
 
 	for _, connector := range connectors {
 
-		// Create a power meter from settings
-		powerMeter, err := power_meter.NewPowerMeter(connector)
-		if err != nil {
-			log.Printf("Cannot instantiate power meter: %s", err)
-		}
-
-		// Create a connector object
-		connectorObj, err := NewConnector(
-			connector.EvseId,
-			connector.ConnectorId,
-			connector.Type,
-			hardware.NewRelay(
-				connector.Relay.RelayPin,
-				connector.Relay.InverseLogic,
-			),
-			powerMeter,
-			connector.PowerMeter.Enabled,
-			handler.Settings.ChargePoint.Info.MaxChargingTime,
-		)
+		err := handler.addConnector(connector)
 		if err != nil {
 			log.Println("Error while creating a connector:", err)
 			continue
 		}
-
-		handler.Connectors = append(handler.Connectors, connectorObj)
-		pretty.Print("Added a connector", connectorObj)
 	}
 	// Add an indicator with the length of valid connectors
 	handler.Indicator = indicator.NewIndicator(len(handler.Connectors))
+}
+
+func (handler *ChargePointHandler) addConnector(connector *settings.Connector) (err error) {
+	// Create a power meter from connector settings
+	powerMeter, powerMeterErr := power_meter.NewPowerMeter(connector)
+	if powerMeterErr != nil {
+		log.Printf("Cannot instantiate power meter: %s", err)
+	}
+
+	// Create a new connector
+	connectorObj, err := NewConnector(
+		connector.EvseId,
+		connector.ConnectorId,
+		connector.Type,
+		hardware.NewRelay(
+			connector.Relay.RelayPin,
+			connector.Relay.InverseLogic,
+		),
+		powerMeter,
+		connector.PowerMeter.Enabled,
+		handler.Settings.ChargePoint.Info.MaxChargingTime,
+	)
+	if err != nil {
+		return
+	}
+
+	//add the connector to connector list
+	handler.Connectors = append(handler.Connectors, connectorObj)
+	pretty.Print("Added a connector", connectorObj)
+	return nil
 }
 
 // restoreState After connecting to the central system, try to restore the previous state of each Connector and notify the system about its state.
@@ -113,7 +121,7 @@ func (handler *ChargePointHandler) restoreState() {
 func (handler *ChargePointHandler) attemptToResumeChargingAtConnector(connector *Connector, session data.Session) error {
 	log.Println("Attempt to resume charging at charging at", connector.ConnectorId)
 
-	err, chargingTimeLeft:= connector.ResumeCharging(session)
+	err, chargingTimeLeft := connector.ResumeCharging(session)
 	if err != nil {
 		return fmt.Errorf("charging session is unable to be resumed")
 	}

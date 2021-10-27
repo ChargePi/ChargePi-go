@@ -32,7 +32,7 @@ func (handler *ChargePointHandler) Run() {
 	var (
 		client ws.WsClient = nil
 		info               = handler.Settings.ChargePoint.Info
-		tls                = info.TLS
+		tls                = handler.Settings.ChargePoint.TLS
 	)
 
 	// Check if the client has TLS
@@ -42,6 +42,8 @@ func (handler *ChargePointHandler) Run() {
 	} else {
 		handler.chargePoint = ocpp16.NewChargePoint(info.Id, nil, nil)
 	}
+
+	handler.AddConnectors()
 
 	// Set handlers for Core, Reservation and RemoteTrigger
 	handler.chargePoint.SetCoreHandler(handler)

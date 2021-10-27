@@ -81,8 +81,8 @@ func main() {
 
 	initLogger(chargePointInfo.LogServer)
 
-	switch chargePointInfo.ProtocolVersion {
-	case "1.6":
+	switch settings.ProtocolVersion(chargePointInfo.ProtocolVersion) {
+	case settings.OCPP16:
 		// try to create hardware components based on settings
 		tagReader = reader.NewTagReader()
 		lcd = display.NewDisplay()
@@ -102,11 +102,10 @@ func main() {
 			LCD:       lcd,
 		}
 
-		handler.AddConnectors()
 		// Listen to incoming requests from the Central System
 		handler.Run()
 		break
-	case "2.0.1":
+	case settings.OCPP201:
 		log.Println("Version 2.0.1 is not supported yet.")
 	default:
 		log.Fatal("Protocol version not supported:", chargePointInfo.ProtocolVersion)

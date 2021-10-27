@@ -41,7 +41,7 @@ the port.
    ```
 
    *_When cloning Steve from GitHub, steve directory should be automatically generated._
-   Replace SteVe's default Dockerfile with Dockerfile provided [here](build/package/Dockerfile-steve) to run on
+   Replace SteVe's default Dockerfile with Dockerfile provided [here](build/package/Steve.Dockerfile) to run on
    Raspberry Pi.
 
 2. Wire your hardware according to the provided [schematics](/docs/hardware/hardware.md).

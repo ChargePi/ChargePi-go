@@ -27,7 +27,7 @@ func (handler *ChargePointHandler) isTagAuthorized(tagId string) bool {
 
 	if authCacheEnabled == "true" && localPreAuthorize == "true" {
 		// Check if the tag exists in cache and is valid.
-		log.Println("Authorizing tag ", tagId, " with cache")
+		log.Println("Authorizing tag", tagId, "with cache")
 		if data.IsTagAuthorized(tagId) {
 			// Reauthorize in 10 seconds
 			_, err2 := scheduler.GetScheduler().Every(10).Seconds().LimitRunsTo(1).Do(handler.sendAuthorizeRequest, tagId)

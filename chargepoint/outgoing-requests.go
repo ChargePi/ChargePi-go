@@ -10,7 +10,6 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/chargepoint/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/settings"
 	"log"
-	"os"
 	"strconv"
 	"time"
 )
@@ -18,10 +17,17 @@ import (
 // bootNotification Notify the central system that the charging point is online. Set the setHeartbeat interval and call restoreState.
 // If the central system does not accept the charge point, exit the client.
 func (handler *ChargePointHandler) bootNotification() {
+	ocppInfo := handler.Settings.ChargePoint.Info.OCPPInfo
 	request := core.BootNotificationRequest{
-		ChargePointModel:  handler.Settings.ChargePoint.Info.Model,
-		ChargePointVendor: handler.Settings.ChargePoint.Info.Vendor,
+		ChargeBoxSerialNumber:   ocppInfo.ChargeBoxSerialNumber,
+		ChargePointModel:        ocppInfo.Model,
+		ChargePointSerialNumber: ocppInfo.ChargePointSerialNumber,
+		ChargePointVendor:       ocppInfo.Vendor,
+		FirmwareVersion:         "1.0",
+		Iccid:                   ocppInfo.Iccid,
+		Imsi:                    ocppInfo.Imsi,
 	}
+
 	callback := func(confirmation ocpp.Response, protoError error) {
 		bootConf := confirmation.(*core.BootNotificationConfirmation)
 		if bootConf.Status == core.RegistrationStatusAccepted {
@@ -29,10 +35,10 @@ func (handler *ChargePointHandler) bootNotification() {
 			handler.setHeartbeat(bootConf.Interval)
 			handler.restoreState()
 		} else {
-			log.Printf("Denied by the central system.")
-			os.Exit(1)
+			log.Fatal("Denied by the central system.")
 		}
 	}
+
 	handler.SendRequest(request, callback)
 }
 
