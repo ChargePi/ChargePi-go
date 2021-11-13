@@ -1,0 +1,15 @@
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+LICENSE.txt
+.idea
+build
+docs
+docker-compose.yaml
+docker-compose.steve.yaml
+ReadMe.md
