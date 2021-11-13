@@ -1,4 +1,4 @@
-# Configuring mobile connectivity
+# 🛠️ Configuring mobile connectivity
 
 ## Setting up & running Sakis3G
 
@@ -46,7 +46,7 @@
     MODEM="12d1:155e"
     ```
 
-## Running as service script:
+## 📜 Running as service script:
 
 **Golang should be installed and the binary should be added to PATH variable.**
 

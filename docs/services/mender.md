@@ -1,4 +1,4 @@
-# Charging station with Mender
+# ⚡ Charge point with Mender
 
 We will use [Mender](https://mender.io/) as OTA service for updating Linux, Docker and the client. For the OCPP
 server/central system, we will use **[SteVe](https://github.com/RWTH-i5-IDSG/steve)**.

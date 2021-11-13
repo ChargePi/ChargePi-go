@@ -1,6 +1,6 @@
-# Configuration
+# 🛠️ Configuration
 
-## Configuring connectivity and basic information of the Charging Point
+## Connectivity and basic information of the Charge Point
 
 Settings can be found in the [_settings_](../../configs/settings.json) file and feature basic Charge Point information
 such as:
@@ -27,7 +27,7 @@ or might not work properly.
 | info: maxChargingTime | Max charging time allowed on the Charging point in minutes. | Default:180 |
 | rfidReader: readerModel | RFID/NFC reader model used. |  "PN532", ""| 
 | ledIndicator: type | Type of the led indicator.  | "WS281x", ""|
-| hardware: minPower| Minimum power draw needed to continue charging, if Power meter is configured. | Default:20|
+| hardware: minPower| Minimum power draw needed to continue charging, if Power meter is configured. | Default:20 |
 
 Example settings:
 
@@ -81,14 +81,18 @@ Example settings:
 }
 ```
 
-## Configuring EVSEs and connectors
+## 🔌 EVSEs and connectors
 
 ### General information
 
-Connector (or equipment, hardware) settings can be found in _/connectors/connector-{id}.json_. To add a connector and
-its settings, simply add a new json file that contains the structure below and modify it to your specs. The client will
-scan the **connectors** folder at boot and configure the connectors from the files. Charging point can have multiple
-EVSE and each can have one or more connectors, but only one connector of the EVSE can charge at a time.
+EVSE and connector settings can be found in _/connectors/connector-{id}_. To add and configure the connector, simply add
+a new file that contains the structure, defined in [attributes](#attributes) and modify it to your specs. The client
+will scan the folder at boot and configure the connectors from the files if all the settings have valid values.
+
+A Charge point can have multiple EVSEs, each oh which can have multiple connectors, but only one connector of the EVSE
+can charge at a time.
+
+The settings files are supported in YAML, JSON or TOML format.
 
 ### Attributes
 

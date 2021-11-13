@@ -1,10 +1,10 @@
-# Installing libraries
+# 💻 Installing libraries
 
 ## Read before continuing
 
 The process of installing the dependencies was automated by creating a [script](../install-dependencies.sh) for
 installing the necessary dependencies. The script has only one argument: weather or not you want to install Go on your
-device. It is recommended you use this if you do not want to configure anything.
+device. It is recommended you use this if you do not want to (re)configure anything.
 
 Usage:
 
