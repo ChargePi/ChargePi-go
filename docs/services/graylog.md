@@ -1,4 +1,4 @@
-# Graylog logging server
+# 📜 Graylog logging server
 
 ## Prerequisites
 
@@ -7,7 +7,7 @@ You should have a publicly accessible Linux or Windows server with Docker and do
 See [Docker](https://docs.docker.com/engine/install/) and [docker-compose](https://docs.docker.com/compose/install/)
 for installation guides.
 
-## Running Graylog server with docker-compose
+## 🏃 Deploying Graylog server with docker-compose
 
 1. Copy the following code into a docker-compose.yaml or use the provided [docker-compose](docker-compose.yaml). There
    are two docker-compose files - the first one is the base and the second one uses Traefik as a reverse proxy for
@@ -49,11 +49,11 @@ services:
       - mongo
       - elasticsearch
     ports:
-      - 8081:9000
-      - 1514:1514
-      - 1514:1514/udp
-      - 12201:12201
-      - 12201:12201/udp
+      - "8081:9000"
+      - "1514:1514"
+      - "1514:1514/udp"
+      - "12201:12201"
+      - "12201:12201/udp"
 networks:
   graylog:
     driver: bridge
