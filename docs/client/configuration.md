@@ -1,12 +1,13 @@
-# Configuration
+# 🛠️ Configuration
 
-## Configuring connectivity and basic information of the Charging Point
+## Connectivity and basic information of the Charge Point
 
 Settings can be found in the [_settings_](../../configs/settings.json) file and feature basic Charge Point information
 such as:
 
 - vendor and model,
-- unique registered charging point ID, server URI and logging server IP,
+- unique registered charging point ID,
+- server URI and logging server IP,
 - default max charging time,
 - OCPP protocol version,
 - client current and target version for tracking updates,
@@ -18,16 +19,16 @@ The table represents attributes, their values and descriptions that require more
 self-explanatory. Some attributes can have multiple possible values, if any are empty, they will be treated as disabled
 or might not work properly.
 
-| Attribute| Description |Possible values | 
-| :---:    | :---:    | :---:    | 
-| id | ID of the charging point. Must be registered in the Central System | Default:"ChargePi" |
-| protocolVersion | Version of the OCPP protocol. | "1.6", "2.0.1" |
-| serverUri | URI of the Central System with the port and endpoint. | Default: "172.0.1.121:8080/steve/websocket/CentralSystemService" | 
-| logServer | IP of the logging server. | Any valid IP | 
-| info: maxChargingTime | Max charging time allowed on the Charging point in minutes. | Default:180 |
-| rfidReader: readerModel | RFID/NFC reader model used. |  "PN532", ""| 
-| ledIndicator: type | Type of the led indicator.  | "WS281x", ""|
-| hardware: minPower| Minimum power draw needed to continue charging, if Power meter is configured. | Default:20|
+|        Attribute        |                                  Description                                  |                         Possible values                          | 
+|:-----------------------:|:-----------------------------------------------------------------------------:|:----------------------------------------------------------------:|
+|           id            |      ID of the charging point. Must be registered in the Central System       |                        Default:"ChargePi"                        |
+|     protocolVersion     |                         Version of the OCPP protocol.                         |                          "1.6", "2.0.1"                          |
+|        serverUri        |             URI of the Central System with the port and endpoint.             | Default: "172.0.1.121:8080/steve/websocket/CentralSystemService" | 
+|        logServer        |                           IP of the logging server.                           |                           Any valid IP                           | 
+|  info: maxChargingTime  |          Max charging time allowed on the Charging point in minutes.          |                           Default:180                            |
+| rfidReader: readerModel |                          RFID/NFC reader model used.                          |                           "PN532", ""                            | 
+|   ledIndicator: type    |                          Type of the led indicator.                           |                           "WS281x", ""                           |
+|   hardware: minPower    | Minimum power draw needed to continue charging, if Power meter is configured. |                            Default:20                            |
 
 Example settings:
 
@@ -35,21 +36,21 @@ Example settings:
 {
   "chargePoint": {
     "info": {
-      "vendor": "UL FE",
-      "model": "ChargePi",
       "id": "ChargePi",
       "protocolVersion": "1.6",
-      "currentClientVersion": "1.0",
-      "targetClientVersion": "1.0",
-      "serverUri": "yourCSMSURL/",
-      "logServer": "yourLoggingServer:12201",
-      "maxChargingTime": 180,
-      "tls": {
-        "isEnabled": false,
-        "CACertificatePath": "/usr/share/certs/rootCA.crt",
-        "clientCertificatePath": "/usr/share/certs/charge-point.crt",
-        "clientKeyPath": "/usr/share/certs/charge-point.key"
+      "serverUri": "example.com",
+      "logServer": "example.com:12201",
+      "maxChargingTime": 5,
+      "ocpp": {
+        "vendor": "UL FE",
+        "model": "ChargePi"
       }
+    },
+    "tls": {
+      "isEnabled": false,
+      "CACertificatePath": "/usr/share/certs/rootCA.crt",
+      "clientCertificatePath": "/usr/share/certs/charge-point.crt",
+      "clientKeyPath": "/usr/share/certs/charge-point.key"
     },
     "hardware": {
       "lcd": {
@@ -81,14 +82,18 @@ Example settings:
 }
 ```
 
-## Configuring EVSEs and connectors
+## 🔌 EVSEs and connectors
 
 ### General information
 
-Connector (or equipment, hardware) settings can be found in _/connectors/connector-{id}.json_. To add a connector and
-its settings, simply add a new json file that contains the structure below and modify it to your specs. The client will
-scan the **connectors** folder at boot and configure the connectors from the files. Charging point can have multiple
-EVSE and each can have one or more connectors, but only one connector of the EVSE can charge at a time.
+EVSE and connector settings can be found in _/connectors/connector-{id}_. To add and configure the connector, simply add
+a new file that contains the structure, defined in [attributes](#attributes) and modify it to your specs. The client
+will scan the folder at boot and configure the connectors from the files if all the settings have valid values.
+
+A Charge point can have multiple EVSEs, each oh which can have multiple connectors, but only one connector of the EVSE
+can charge at a time.
+
+The settings files are supported in YAML, JSON or TOML format.
 
 ### Attributes
 
@@ -104,13 +109,13 @@ The table represents attributes, their values and descriptions that require more
 self-explanatory. Some attributes can have multiple possible values, if any are empty, they will be treated as disabled
 or might not work properly.
 
-| Attribute| Description |Possible values | 
-| :---:    | :---:    | :---:    | 
-| evseId | ID of the EVSE | / |
-| type | A type of the connector used in the build. | Refer to OCPP documentation. Default: "Schuko" |
-| relay: inverseLogic | Uses negative logic for operating with the relay | false| 
-| powerMeter: shuntOffset | Value of the shunt resistor used in the build to measure power. | Default: 0.01 | 
-| powerMeter: voltageDividerOffset| Value of the voltage divider used in the build to measure power.| Default:1333 |
+|            Attribute             |                           Description                            |                Possible values                 | 
+|:--------------------------------:|:----------------------------------------------------------------:|:----------------------------------------------:|
+|              evseId              |                          ID of the EVSE                          |                       /                        |
+|               type               |            A type of the connector used in the build.            | Refer to OCPP documentation. Default: "Schuko" |
+|       relay: inverseLogic        |         Uses negative logic for operating with the relay         |                     false                      | 
+|     powerMeter: shuntOffset      | Value of the shunt resistor used in the build to measure power.  |                 Default: 0.01                  | 
+| powerMeter: voltageDividerOffset | Value of the voltage divider used in the build to measure power. |                  Default:1333                  |
 
 Example connector:
 

@@ -19,14 +19,14 @@
     },
     "hardware": {
       "lcd": {
-        "isSupported": true,
+        "isEnabled": true,
         "driver": "hd44780",
         "language": "en",
         "i2cAddress": "0x27",
         "i2cBus": 1
       },
       "tagReader": {
-        "isSupported": true,
+        "isEnabled": true,
         "readerModel": "PN532",
         "device": "/dev/ttyS0",
         "resetPin": 19

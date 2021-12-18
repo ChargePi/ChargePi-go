@@ -30,10 +30,3 @@ Optionally, you can run only the client service:
   ```bash
   docker-compose up -d chargepi
   ```
-
-## Helpful references
-
-- [Installing Docker on Pi](https://www.docker.com/blog/happy-pi-day-docker-raspberry-pi/)
-- [Watchtower](https://github.com/containrrr/watchtower)
-- [Docker](https://docs.docker.com/)
-- [Mender docs](https://docs.mender.io/get-started/preparation/prepare-a-raspberry-pi-device)

@@ -27,7 +27,7 @@ result, the test will fail, and we know that we have a bug in our code (or test)
 ChargePi-go uses [testify](https://github.com/stretchr/testify) to test the code. Check out their docs on how to write
 tests.
 
-An example test for a [connector](../../test/Connector_test.go):
+An example test for a [connector](../../components/connector/Connector_test.go):
 
 ```golang
 package test

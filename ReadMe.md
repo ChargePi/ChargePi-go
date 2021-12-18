@@ -1,29 +1,29 @@
-# ChargePi-go
+# ⚡ ChargePi-go
 
-⚡ChargePi⚡ is an open-source Raspberry Pi 4 based ⚡Charging Point🔌 project, which supports multiple EVSEs and simple
+⚡ChargePi is an open-source Raspberry Pi 4 based ⚡Charging Point🔌 project, which supports multiple EVSEs and simple
 connectors🔌. A charging connector🔌 consists of a WS281x RGB 🚥 LED strip, a relay and a power meter. The client is
-written in Golang and requires installation of a few C libraries.
+written in Go and requires installation of a few C libraries.
 
 ChargePi client can be deployed/run in multiple ways:
 
 - standalone
 - Docker 🐳 by building the image and running the container
-- Docker-compose to be deployed with SteVe Central System and Watchtower (**recommended for dev/testing only**)
-- Docker-compose by running the client
+- Docker-compose with SteVe Central System and Watchtower (**recommended for dev/testing only**)
+- Docker-compose (client only)
 
-### Charging station specifications
+## 🔌 Charge point specifications
 
-| Protocol implementation | Core functionalities | Offline charging | Local authorization | Charging profiles |
-| :---:    | :---:    | :---:    |:---:    | :---:    |
-| OCPP 1.6 JSON/WS | ✔️ | ✔️ | ✔️ | ❌ |
-| OCPP 2.0.1 JSON/WS | Will be implemented | Will be implemented | Will be implemented | ❌ |
+| OCPP version  | Core functionalities |  Offline charging   | Local authorization | Charging profiles |
+|:-------------:|:--------------------:|:-------------------:|:-------------------:|:-----------------:|
+|  1.6 JSON/WS  |          ✔️          |     ✔️(partial)     |         ✔️          |         ❌         |
+| 2.0.1 JSON/WS | Will be implemented  | Will be implemented | Will be implemented |         ❌         |
 
-### Configuration and settings
+### 🛠️ Configuration and settings
 
-To configure the ChargePi client, check out the [guide](/docs/client/configuration.md). Client comes with predefined
-settings which require minimal configuration.
+To configure the ChargePi client, check out the [configuration guide](/docs/client/configuration.md). Client comes with
+default settings which require minimal configuration.
 
-### Logging
+### 📑 Logging
 
 ChargePi uses [Graylog](https://www.graylog.org/) logging server for remote logging, so a server should be up and
 running if you want the logs to be stored (check setup [instructions](/docs/services/graylog.md)). Logs are sent through
@@ -32,7 +32,7 @@ UDP protocol in GELF format. The library used for sending logs is [go-gelf](http
 Configure the `logServer` property in the [settings](/configs/settings.json) file with your server IP/domain name with
 the port.
 
-## Initial setup
+## Quickstart
 
 1. If you want to run SteVe on the same host:
 
@@ -54,7 +54,7 @@ the port.
 
 5. Run the client.
 
-## Running standalone
+## 🏃 Running standalone
 
 Running the client:
 
@@ -69,37 +69,4 @@ or compiling and executing the client:
    ./chargepi
    ```
 
-## Deploying on Docker
-
-1. Build the client image on Docker:
-
-   ```bash
-   cd ChargePi-go/
-   docker build -t chargepi .
-   ```
-
-2. Run the container from built image:
-
-   ```bash
-   docker run --device /dev/ttyAMA0:/dev/ttyAMA0 --device /dev/mem:/dev/mem --privileged chargepi
-   ```
-
-### Deploying using docker-compose
-
-Alternatively, you can run the client, SteVe server and Watchtower on the same Pi using **docker-compose**.
-The **[Watchtower](https://github.com/containrrr/watchtower)** service will automatically pull the newest image and run
-it when it is available.
-
-1. Change the IP address under `serverUri` in the settings file to **172.0.1.121**.
-
-2. Build services:
-
-    ```bash
-    docker-compose build
-    ```
-
-3. Run services in daemon mode:
-
-   ```bash
-   docker-compose up -d
-   ```
+More options available in the [client startup guide](docs/client/running-the-client.md).

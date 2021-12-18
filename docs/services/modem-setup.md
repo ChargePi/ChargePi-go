@@ -59,7 +59,7 @@
 
 2. Paste into modem-connection.service file:
 
-   ```bash
+   ```text
        [Unit]
        Description=Modem connection service
    
@@ -76,7 +76,7 @@
 
 3. Paste into ChargePi.service file:
 
-   ```bash
+   ```text
        [Unit]
        Description=ChargePi client 
        After=network.target modem-connection.service
