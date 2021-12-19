@@ -1,6 +1,7 @@
 # ⚡ ChargePi-go
 
 ⚡ChargePi is an open-source Raspberry Pi 4 based ⚡Charging Point🔌 project, which supports multiple EVSEs and simple
+
 connectors🔌. A charging connector🔌 consists of a WS281x RGB 🚥 LED strip, a relay and a power meter. The client is
 written in Go and requires installation of a few C libraries.
 

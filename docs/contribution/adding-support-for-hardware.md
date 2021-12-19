@@ -1,4 +1,4 @@
-# Adding support for hardware
+# ➡️Adding support for hardware
 
 There are four hardware component groups that are included in the project:
 
@@ -14,7 +14,7 @@ You're welcome to submit a Pull Request with any additional hardware model imple
 your changes, update the [supported hardware](../hardware/hardware.md) table(s) with the new hardware model(s). It would
 be nice to have a wiring sketch or a connection table included for the new model(s).
 
-## Reader hardware
+## 💳 Reader hardware
 
 All readers must implement the `Reader` interface. It is recommended that you implement the interface in a new file
 named after the model of the reader in the `hardware/reader` package. Then you should add a **constant** named after
@@ -57,7 +57,7 @@ func NewTagReader() Reader {
 }
 ```
 
-## Display hardware
+## 🖥️ Display hardware
 
 All displays must implement the `LCD` interface. It is recommended that you implement the interface in a new file named
 after the model of the display/LCD in the `hardware/display` package. Then you should add a **constant** named after
@@ -146,7 +146,7 @@ func NewIndicator(stripLength int) Indicator {
 }
 ```
 
-## Power meters
+## ⚡ Power meters
 
 The process is the same as the previous description.
 

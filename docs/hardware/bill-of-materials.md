@@ -1,6 +1,6 @@
-# Bill of materials
+# 📝 Bill of materials
 
-## Note:
+## ❗ Note:
 
 The bill of materials can vary, depending on your preferences, part availability and price. The aim of the project is to
 make a charging point out of off-the-shelf hardware that is widely available. Also, the list is not in any way perfect.
