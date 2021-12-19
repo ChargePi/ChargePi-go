@@ -3,6 +3,7 @@ package ocpp
 import (
 	"errors"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -89,6 +90,8 @@ func (k Key) String() string {
 
 // UpdateKey Update the configuration variable in the configuration if it is not readonly.
 func (config *Config) UpdateKey(key string, value string) error {
+	log.Debugf("Updating key %s to %s", key, value)
+
 	for i, configKey := range config.Keys {
 		if configKey.Key == key {
 			if !configKey.Readonly {
@@ -105,6 +108,8 @@ func (config *Config) UpdateKey(key string, value string) error {
 
 //GetConfigurationValue Get the value of specified configuration variable in String format.
 func (config *Config) GetConfigurationValue(key string) (string, error) {
+	log.Debugf("Getting key %s", key)
+
 	for _, configKey := range config.Keys {
 		if configKey.Key == key {
 			return configKey.Value, nil

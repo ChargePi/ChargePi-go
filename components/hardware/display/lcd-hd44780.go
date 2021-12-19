@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/d2r2/go-hd44780"
 	"github.com/d2r2/go-i2c"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"time"
 )
 
@@ -40,7 +40,7 @@ func NewHD44780(lcdChannel chan LCDMessage, i2cAddress string, i2cBus int) (*HD4
 
 // DisplayMessage displays the message on the LCD. Pairs of messages will be displayed for the duration set in LCDMessage.
 func (lcd *HD44780) DisplayMessage(message LCDMessage) {
-	log.Println("Displaying the message to LCD:", message.Messages)
+	log.Debugf("Displaying the message to LCD: %v", message.Messages)
 
 	// Display lines in pairs. If there are odd number of lines, display the last line by itself.
 	for i := 0; i < len(message.Messages); i = i + 2 {

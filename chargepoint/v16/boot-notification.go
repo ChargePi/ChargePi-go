@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/lorenzodonini/ocpp-go/ocpp"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
+	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/components/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/components/settings/conf-manager"
-	"log"
 )
 
 // bootNotification Notify the central system that the charging point is online. Set the setHeartbeat interval and call restoreState.
@@ -30,7 +30,7 @@ func (handler *ChargePointHandler) bootNotification() {
 
 		switch bootConf.Status {
 		case core.RegistrationStatusAccepted:
-			log.Println("Notified and accepted from the central system")
+			log.Info("Notified and accepted from the central system")
 			handler.setHeartbeat(bootConf.Interval)
 			handler.restoreState()
 			break
@@ -46,6 +46,8 @@ func (handler *ChargePointHandler) bootNotification() {
 }
 
 func (handler *ChargePointHandler) setHeartbeat(interval int) {
+	log.Infof("Setting a heartbeat schedule")
+
 	heartBeatInterval, _ := conf_manager.GetConfigurationValue("HeartbeatInterval")
 	if interval > 0 {
 		heartBeatInterval = fmt.Sprintf("%d", interval)
@@ -54,7 +56,7 @@ func (handler *ChargePointHandler) setHeartbeat(interval int) {
 	heartBeatInterval = fmt.Sprintf("%ss", heartBeatInterval)
 	_, err := scheduler.GetScheduler().Every(heartBeatInterval).Tag("heartbeat").Do(handler.sendHeartBeat)
 	if err != nil {
-		fmt.Println(err)
+		log.Errorf("%v", err)
 	}
 }
 
@@ -63,6 +65,6 @@ func (handler *ChargePointHandler) sendHeartBeat() error {
 	return handler.SendRequest(
 		core.NewHeartbeatRequest(),
 		func(confirmation ocpp.Response, protoError error) {
-			log.Printf("Sent heartbeat")
+			log.Info("Sent heartbeat")
 		})
 }

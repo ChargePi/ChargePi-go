@@ -2,7 +2,7 @@ package cache
 
 import (
 	goCache "github.com/patrickmn/go-cache"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"sync"
 	"time"
 )
@@ -12,7 +12,7 @@ var Cache *goCache.Cache
 func init() {
 	once := sync.Once{}
 	once.Do(func() {
-		log.Println("Creating cache..")
+		log.Info("Creating cache..")
 		GetCache()
 	})
 }

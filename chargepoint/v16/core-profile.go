@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	types2 "github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
+	log "github.com/sirupsen/logrus"
+	"github.com/xBlaz3kx/ChargePi-go/components/connector"
 	"github.com/xBlaz3kx/ChargePi-go/components/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/components/settings/conf-manager"
+	"github.com/xBlaz3kx/ChargePi-go/data"
 	"github.com/xBlaz3kx/ChargePi-go/data/auth"
-	"log"
 	"os/exec"
 )
 
@@ -17,8 +19,8 @@ func (handler *ChargePointHandler) OnChangeAvailability(request *core.ChangeAvai
 }
 
 func (handler *ChargePointHandler) OnChangeConfiguration(request *core.ChangeConfigurationRequest) (confirmation *core.ChangeConfigurationConfirmation, err error) {
+	log.Infof("Received request %s", request.GetFeatureName())
 	response := core.ConfigurationStatusRejected
-	log.Printf("Requested configuration change")
 
 	err = conf_manager.UpdateKey(request.Key, request.Value)
 	if err == nil {
@@ -29,13 +31,13 @@ func (handler *ChargePointHandler) OnChangeConfiguration(request *core.ChangeCon
 }
 
 func (handler *ChargePointHandler) OnClearCache(request *core.ClearCacheRequest) (confirmation *core.ClearCacheConfirmation, err error) {
-	log.Printf("Got request: %s", request.GetFeatureName())
+	log.Infof("Received request %s", request.GetFeatureName())
 	var (
 		authCacheEnabled, confErr = conf_manager.GetConfigurationValue("AuthorizationCacheEnabled")
 	)
 
 	if confErr != nil || authCacheEnabled == "false" {
-		log.Printf("Error clearing cache: %s", err)
+		log.Errorf("Error clearing cache: %s", err)
 		return core.NewClearCacheConfirmation(core.ClearCacheStatusRejected), nil
 	}
 
@@ -47,12 +49,13 @@ func (handler *ChargePointHandler) OnClearCache(request *core.ClearCacheRequest)
 }
 
 func (handler *ChargePointHandler) OnDataTransfer(request *core.DataTransferRequest) (confirmation *core.DataTransferConfirmation, err error) {
+	log.Infof("Received request %s", request.GetFeatureName())
 	var response = core.DataTransferStatusRejected
 	return core.NewDataTransferConfirmation(response), nil
 }
 
 func (handler *ChargePointHandler) OnGetConfiguration(request *core.GetConfigurationRequest) (confirmation *core.GetConfigurationConfirmation, err error) {
-	log.Printf("Got request: %s", request.GetFeatureName())
+	log.Infof("Received request %s", request.GetFeatureName())
 	var (
 		unknownKeys            []string
 		configArray            []core.ConfigurationKey
@@ -77,8 +80,8 @@ func (handler *ChargePointHandler) OnGetConfiguration(request *core.GetConfigura
 }
 
 func (handler *ChargePointHandler) OnReset(request *core.ResetRequest) (confirmation *core.ResetConfirmation, err error) {
+	log.Infof("Received request %s", request.GetFeatureName())
 	var response = core.ResetStatusRejected
-	log.Printf("Requested reset %s", request.Type)
 
 	switch request.Type {
 	case core.ResetTypeHard:
@@ -102,6 +105,8 @@ func (handler *ChargePointHandler) OnReset(request *core.ResetRequest) (confirma
 }
 
 func (handler *ChargePointHandler) OnUnlockConnector(request *core.UnlockConnectorRequest) (confirmation *core.UnlockConnectorConfirmation, err error) {
+	log.Infof("Received request %s", request.GetFeatureName())
+
 	var (
 		response  = core.UnlockStatusNotSupported
 		connector = handler.connectorManager.FindConnector(1, request.ConnectorId)
@@ -122,12 +127,13 @@ func (handler *ChargePointHandler) OnUnlockConnector(request *core.UnlockConnect
 }
 
 func (handler *ChargePointHandler) OnRemoteStopTransaction(request *core.RemoteStopTransactionRequest) (confirmation *core.RemoteStopTransactionConfirmation, err error) {
+	log.WithField("transactionId", request.TransactionId).Infof("Received request %s", request.GetFeatureName())
+
 	var (
 		response      = types2.RemoteStartStopStatusRejected
 		transactionId = fmt.Sprintf("%d", request.TransactionId)
 		connector     = handler.connectorManager.FindConnectorWithTransactionId(transactionId)
 	)
-	log.Printf("Got remote stop request for transaction %s", transactionId)
 
 	if connector != nil && connector.IsCharging() {
 		response = types2.RemoteStartStopStatusAccepted
@@ -142,14 +148,22 @@ func (handler *ChargePointHandler) OnRemoteStopTransaction(request *core.RemoteS
 }
 
 func (handler *ChargePointHandler) OnRemoteStartTransaction(request *core.RemoteStartTransactionRequest) (confirmation *core.RemoteStartTransactionConfirmation, err error) {
+	log.WithFields(log.Fields{
+		"connectorId": request.ConnectorId,
+		"tagId":       request.IdTag,
+	}).Infof("Received request %s", request.GetFeatureName())
 	var (
-		connectorId = *request.ConnectorId
-		response    = types2.RemoteStartStopStatusRejected
-		connector   = handler.connectorManager.FindConnector(1, connectorId)
+		response = types2.RemoteStartStopStatusRejected
+		conn     connector.Connector
 	)
-	log.Printf("Got remote start request for connector %d with tag %s", connectorId, request.IdTag)
 
-	if connector != nil && connector.IsAvailable() {
+	if request.ConnectorId != nil {
+		conn = handler.connectorManager.FindConnector(1, *request.ConnectorId)
+	} else {
+		conn = handler.connectorManager.FindAvailableConnector()
+	}
+
+	if !data.IsNilInterfaceOrPointer(conn) && conn.IsAvailable() {
 		// Delay the charging by 3 seconds
 		response = types2.RemoteStartStopStatusAccepted
 		_, schedulerErr := scheduler.GetScheduler().Every(3).Seconds().LimitRunsTo(1).Do(handler.startCharging, request.IdTag)

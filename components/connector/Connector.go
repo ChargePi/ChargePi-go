@@ -6,6 +6,7 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/reactivex/rxgo/v2"
+	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/components/cache"
 	"github.com/xBlaz3kx/ChargePi-go/components/hardware"
 	"github.com/xBlaz3kx/ChargePi-go/components/hardware/power-meter"
@@ -14,7 +15,6 @@ import (
 	settings2 "github.com/xBlaz3kx/ChargePi-go/components/settings/settings-manager"
 	"github.com/xBlaz3kx/ChargePi-go/data/session"
 	"github.com/xBlaz3kx/ChargePi-go/data/settings"
-	"log"
 	"sync"
 	"time"
 )
@@ -77,6 +77,14 @@ type (
 // When created, it makes an empty session, turns off the relay and defaults the status to Available.
 func NewConnector(evseId int, connectorId int, connectorType string, relay hardware.Relay,
 	powerMeter power_meter.PowerMeter, powerMeterEnabled bool, maxChargingTime int) (*ConnectorImpl, error) {
+	log.WithFields(log.Fields{
+		"evseId":          evseId,
+		"connectorId":     connectorId,
+		"type":            connectorType,
+		"maxChargingTime": maxChargingTime,
+		"hasPowerMeter":   powerMeterEnabled,
+	}).Info("Creating a new connector")
+
 	if maxChargingTime <= 0 {
 		maxChargingTime = 180
 	}
@@ -112,6 +120,14 @@ func NewConnector(evseId int, connectorId int, connectorType string, relay hardw
 // StartCharging Start charging a connector if connector is available and session could be started.
 // It turns on the relay (even if negative logic applies).
 func (connector *ConnectorImpl) StartCharging(transactionId string, tagId string) error {
+	logInfo := log.WithFields(log.Fields{
+		"evseId":        connector.EvseId,
+		"connectorId":   connector.ConnectorId,
+		"transactionId": transactionId,
+		"tagId":         tagId,
+	})
+	logInfo.Debugf("Trying to start charging on connector")
+
 	if !(connector.IsAvailable() || connector.IsPreparing()) {
 		return ErrInvalidConnectorStatus
 	}
@@ -139,7 +155,7 @@ func (connector *ConnectorImpl) StartCharging(transactionId string, tagId string
 	if connector.GetPowerMeter() != nil {
 		sampleError := connector.preparePowerMeterAtConnector()
 		if sampleError != nil {
-			log.Printf("Cannot sample connector %d; %v \n", connector.GetConnectorId(), sampleError)
+			logInfo.Errorf("Cannot sample connector: %v", sampleError)
 		}
 	}
 
@@ -149,6 +165,13 @@ func (connector *ConnectorImpl) StartCharging(transactionId string, tagId string
 // ResumeCharging Resumes or restores the charging state after boot if a charging session was active.
 func (connector *ConnectorImpl) ResumeCharging(session session.Session) (err error, chargingTimeElapsed int) {
 	// Set the transaction id so connector is able to stop the transaction if charging fails
+	logInfo := log.WithFields(log.Fields{
+		"evseId":      connector.EvseId,
+		"connectorId": connector.ConnectorId,
+		"session":     session,
+	})
+	logInfo.Debugf("Trying to resume charging on connector")
+
 	chargingTimeElapsed = connector.MaxChargingTime
 	connector.session.TransactionId = session.TransactionId
 
@@ -167,7 +190,7 @@ func (connector *ConnectorImpl) ResumeCharging(session session.Session) (err err
 	if connector.IsCharging() || connector.IsPreparing() {
 		sessionErr := connector.session.StartSession(session.TransactionId, session.TagId)
 		if sessionErr != nil {
-			return fmt.Errorf("cannot resume session: %v", sessionErr), 0
+			return fmt.Errorf("cannot resume session: %v", sessionErr), connector.MaxChargingTime
 		}
 
 		connector.relay.Enable()
@@ -181,7 +204,14 @@ func (connector *ConnectorImpl) ResumeCharging(session session.Session) (err err
 
 // StopCharging Stops charging the connector by turning the relay off and ending the session.
 func (connector *ConnectorImpl) StopCharging(reason core.Reason) error {
+	logInfo := log.WithFields(log.Fields{
+		"evseId":      connector.EvseId,
+		"connectorId": connector.ConnectorId,
+		"reason":      reason,
+	})
+
 	if connector.IsCharging() || connector.IsPreparing() {
+		logInfo.Debugf("Stopping charging")
 		connector.session.EndSession()
 		connector.relay.Disable()
 
@@ -216,11 +246,16 @@ func (connector *ConnectorImpl) StopCharging(reason core.Reason) error {
 // SamplePowerMeter Get a sample from the power meter. The measurands argument takes the list of all the types of the measurands to sample.
 // It will add all the samples to the connector's Session if it is active.
 func (connector *ConnectorImpl) SamplePowerMeter(measurands []types.Measurand) {
+	logInfo := log.WithFields(log.Fields{
+		"evseId":      connector.EvseId,
+		"connectorId": connector.ConnectorId,
+	})
+
 	if !connector.PowerMeterEnabled || connector.powerMeter == nil {
 		return
 	}
 
-	log.Println("Sampling connector", connector.ConnectorId)
+	logInfo.Debugf("Sampling connector %v", measurands)
 	var (
 		samples []types.SampledValue
 		value   = 0.0
@@ -305,6 +340,12 @@ func (connector *ConnectorImpl) IsUnavailable() bool {
 }
 
 func (connector *ConnectorImpl) SetStatus(status core.ChargePointStatus, errCode core.ChargePointErrorCode) {
+	logInfo := log.WithFields(log.Fields{
+		"evseId":      connector.EvseId,
+		"connectorId": connector.ConnectorId,
+	})
+	logInfo.Debugf("Setting connector status %s with err %s", status, errCode)
+
 	connector.mu.Lock()
 	connector.ConnectorStatus = status
 	connector.ErrorCode = errCode
@@ -325,6 +366,12 @@ func (connector *ConnectorImpl) GetTagId() string {
 }
 
 func (connector *ConnectorImpl) ReserveConnector(reservationId int) error {
+	logInfo := log.WithFields(log.Fields{
+		"evseId":      connector.EvseId,
+		"connectorId": connector.ConnectorId,
+	})
+	logInfo.Debugf("Reserving connector for id %d", reservationId)
+
 	if reservationId <= 0 {
 		return ErrInvalidReservationId
 	}
@@ -341,6 +388,12 @@ func (connector *ConnectorImpl) RemoveReservation() error {
 	if !connector.IsReserved() {
 		return ErrInvalidConnectorStatus
 	}
+
+	logInfo := log.WithFields(log.Fields{
+		"evseId":      connector.EvseId,
+		"connectorId": connector.ConnectorId,
+	})
+	logInfo.Debugf("Removing reservation")
 
 	connector.reservationId = -1
 	connector.SetStatus(core.ChargePointStatusAvailable, core.NoError)

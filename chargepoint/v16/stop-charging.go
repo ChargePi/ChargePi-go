@@ -5,12 +5,12 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	types2 "github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
+	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/chargepoint"
 	"github.com/xBlaz3kx/ChargePi-go/components/connector"
 	"github.com/xBlaz3kx/ChargePi-go/components/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/components/settings/conf-manager"
 	"github.com/xBlaz3kx/ChargePi-go/data"
-	"log"
 	"strconv"
 	"time"
 )
@@ -24,6 +24,11 @@ func (handler *ChargePointHandler) stopChargingConnector(connector connector.Con
 	var (
 		stopTransactionOnEVDisconnect, err = conf_manager.GetConfigurationValue("StopTransactionOnEVSideDisconnect")
 		transactionId, convErr             = strconv.Atoi(connector.GetTransactionId())
+		logInfo                            = log.WithFields(log.Fields{
+			"evseId":      connector.GetEvseId(),
+			"connectorId": connector.GetConnectorId(),
+			"reason":      reason,
+		})
 	)
 
 	if err != nil {
@@ -36,8 +41,7 @@ func (handler *ChargePointHandler) stopChargingConnector(connector connector.Con
 
 	if connector.IsCharging() || connector.IsPreparing() {
 		if stopTransactionOnEVDisconnect != "true" && reason == core.ReasonEVDisconnected {
-			err = connector.StopCharging(reason)
-			return err
+			return connector.StopCharging(reason)
 		}
 
 		request := core.NewStopTransactionRequest(
@@ -49,23 +53,28 @@ func (handler *ChargePointHandler) stopChargingConnector(connector connector.Con
 
 		var callback = func(confirmation ocpp.Response, protoError error) {
 			if protoError != nil {
-				log.Printf("Server responded with error for stopping a transaction at %d: %s", connector.GetConnectorId(), err)
+				logInfo.Infof("Server responded with error for stopping a transaction: %v", err)
 				return
 			}
 
-			log.Println("Stopping transaction at ", connector.GetConnectorId())
+			logInfo.Info("Stopping transaction")
 			err = connector.StopCharging(reason)
 			if err != nil {
-				log.Printf("Unable to stop charging connector %d: %s", connector.GetConnectorId(), err)
+				logInfo.Errorf("Unable to stop charging connector: %v", err)
 				return
 			}
 
 			schedulerErr := scheduler.GetScheduler().RemoveByTag(fmt.Sprintf("connector%dSampling", connector.GetConnectorId()))
-			log.Println(schedulerErr)
-			schedulerErr = scheduler.GetScheduler().RemoveByTag(fmt.Sprintf("connector%dTimer", connector.GetConnectorId()))
-			log.Println(schedulerErr)
+			if schedulerErr != nil {
+				log.Errorf("%v", err)
+			}
 
-			log.Printf("Stopped charging connector %d at %s", connector.GetConnectorId(), time.Now())
+			schedulerErr = scheduler.GetScheduler().RemoveByTag(fmt.Sprintf("connector%dTimer", connector.GetConnectorId()))
+			if schedulerErr != nil {
+				log.Errorf("%v", err)
+			}
+
+			logInfo.Infof("Stopped charging connector at %s", time.Now())
 		}
 
 		return handler.SendRequest(request, callback)

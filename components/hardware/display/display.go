@@ -3,8 +3,8 @@ package display
 import (
 	"context"
 	"errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/data/settings"
-	"log"
 	"time"
 )
 
@@ -47,15 +47,14 @@ func NewMessage(duration time.Duration, messages []string) LCDMessage {
 // The LCD is built with the settings from the settings file.
 func NewDisplay(lcdSettings settings.Lcd) (LCD, error) {
 	if lcdSettings.IsEnabled {
-		log.Println("Preparing LCD from config")
+		log.Info("Preparing LCD from config")
+
+		lcdChannel := make(chan LCDMessage, 5)
 
 		switch lcdSettings.Driver {
 		case DriverHD44780:
-			lcdChannel := make(chan LCDMessage, 5)
-
 			lcd, err := NewHD44780(lcdChannel, lcdSettings.I2CAddress, lcdSettings.I2CBus)
 			if err != nil {
-				log.Println("Could not create the LCD:", err)
 				return nil, err
 			}
 

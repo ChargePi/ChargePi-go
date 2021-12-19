@@ -2,9 +2,9 @@ package indicator
 
 import (
 	"errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/components/cache"
 	"github.com/xBlaz3kx/ChargePi-go/data/settings"
-	"log"
 )
 
 // color constants
@@ -48,16 +48,16 @@ func NewIndicator(stripLength int) Indicator {
 	indicatorSettings := config.ChargePoint.Hardware.LedIndicator
 
 	if indicatorSettings.Enabled {
-		log.Println("Preparing Indicator from config: ", indicatorSettings.Type)
+		if indicatorSettings.IndicateCardRead {
+			stripLength++
+		}
+
+		log.Infof("Preparing Indicator from config: %s", indicatorSettings.Type)
 		switch indicatorSettings.Type {
 		case TypeWS281x:
-			if indicatorSettings.IndicateCardRead {
-				stripLength++
-			}
-
 			ledStrip, ledError := NewWS281xStrip(stripLength, indicatorSettings.DataPin)
 			if ledError != nil {
-				log.Println(ledError)
+				log.Errorf("Error creating indicator: %v", ledError)
 				return nil
 			}
 

@@ -2,13 +2,13 @@ package v16
 
 import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
+	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/components/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/data"
-	"log"
 )
 
 func (handler *ChargePointHandler) OnReserveNow(request *reservation.ReserveNowRequest) (confirmation *reservation.ReserveNowConfirmation, err error) {
-	log.Printf("Received %s for %v", request.GetFeatureName(), request.ConnectorId)
+	log.Infof("Received %s for %v", request.GetFeatureName(), request.ConnectorId)
 	connector := handler.connectorManager.FindConnector(1, request.ConnectorId)
 
 	if data.IsNilInterfaceOrPointer(connector) {
@@ -31,7 +31,7 @@ func (handler *ChargePointHandler) OnReserveNow(request *reservation.ReserveNowR
 }
 
 func (handler *ChargePointHandler) OnCancelReservation(request *reservation.CancelReservationRequest) (confirmation *reservation.CancelReservationConfirmation, err error) {
-	log.Printf("Received %s for %v", request.GetFeatureName(), request.ReservationId)
+	log.Infof("Received %s for %v", request.GetFeatureName(), request.ReservationId)
 	var (
 		connector = handler.connectorManager.FindConnectorWithReservationId(request.ReservationId)
 		status    = reservation.CancelReservationStatusAccepted

@@ -5,11 +5,11 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	types2 "github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
+	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/chargepoint"
 	"github.com/xBlaz3kx/ChargePi-go/components/connector"
 	"github.com/xBlaz3kx/ChargePi-go/components/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/data"
-	"log"
 	"strconv"
 	"time"
 )
@@ -29,6 +29,12 @@ func (handler *ChargePointHandler) startChargingConnector(connector connector.Co
 	if data.IsNilInterfaceOrPointer(connector) {
 		return chargepoint.ErrConnectorNil
 	}
+
+	logInfo := log.WithFields(log.Fields{
+		"evseId":      connector.GetEvseId(),
+		"connectorId": connector.GetConnectorId(),
+		"tagId":       tagId,
+	})
 
 	if !connector.IsAvailable() {
 		return chargepoint.ErrConnectorUnavailable
@@ -57,17 +63,17 @@ func (handler *ChargePointHandler) startChargingConnector(connector connector.Co
 			if startTransactionConf.TransactionId > 0 {
 				err := connector.StartCharging(strconv.Itoa(startTransactionConf.TransactionId), tagId)
 				if err != nil {
-					log.Printf("Unable to start charging connector %d: %s", connector.GetConnectorId(), err)
+					logInfo.Errorf("Unable to start charging connector %d: %s", connector.GetConnectorId(), err)
 					return
 				}
 
-				log.Printf("Started charging connector %d at %s", connector.GetConnectorId(), time.Now())
+				logInfo.Infof("Started charging connector at %s", time.Now())
 
 				// Schedule timer to stop the transaction at the time limit
 				_, err = scheduler.GetScheduler().Every(connector.GetMaxChargingTime()).Minutes().LimitRunsTo(1).
 					Tag(fmt.Sprintf("connector%dTimer", connector.GetConnectorId())).Do(handler.stopChargingConnector, connector, core.ReasonOther)
 				if err != nil {
-					fmt.Println("cannot schedule stop charging:", err)
+					logInfo.Errorf("Cannot schedule stop charging: %v", err)
 				}
 			}
 			break
@@ -77,7 +83,7 @@ func (handler *ChargePointHandler) startChargingConnector(connector connector.Co
 		case types2.AuthorizationStatusBlocked, types2.AuthorizationStatusInvalid, types2.AuthorizationStatusExpired:
 			fallthrough
 		default:
-			log.Printf("Transaction unauthorized at connector %d", connector.GetConnectorId())
+			logInfo.Errorf("Transaction unauthorized")
 		}
 	}
 

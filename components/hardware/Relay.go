@@ -1,6 +1,7 @@
 package hardware
 
 import (
+	log "github.com/sirupsen/logrus"
 	"github.com/warthog618/gpiod"
 )
 
@@ -24,6 +25,7 @@ func NewRelay(relayPin int, inverseLogic bool) *RelayImpl {
 		return nil
 	}
 
+	log.Debugf("Creating new relay at pin %d", relayPin)
 	relay := RelayImpl{
 		RelayPin:     relayPin,
 		InverseLogic: inverseLogic,

@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/reactivex/rxgo/v2"
+	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/components/connector"
 	"github.com/xBlaz3kx/ChargePi-go/components/hardware"
 	power_meter "github.com/xBlaz3kx/ChargePi-go/components/hardware/power-meter"
 	"github.com/xBlaz3kx/ChargePi-go/data"
 	"github.com/xBlaz3kx/ChargePi-go/data/session"
 	"github.com/xBlaz3kx/ChargePi-go/data/settings"
-	"log"
 	"sync"
 )
 
@@ -50,7 +50,7 @@ type (
 
 func init() {
 	once.Do(func() {
-		log.Println("Creating connector manager..")
+		log.Info("Creating connector manager..")
 		GetManager()
 	})
 }
@@ -189,6 +189,8 @@ func (m *ManagerImpl) StopChargingConnector(tagId, transactionId string, reason 
 }
 
 func (m *ManagerImpl) StopAllConnectors(reason core.Reason) error {
+	log.Debugf("Stopping all connectors: %s", reason)
+
 	var err error
 
 	for _, c := range m.GetConnectors() {
@@ -205,6 +207,12 @@ func (m *ManagerImpl) AddConnector(c connector.Connector) error {
 	if data.IsNilInterfaceOrPointer(c) {
 		return ErrConnectorNil
 	}
+
+	logInfo := log.WithFields(log.Fields{
+		"evseId":      c.GetEvseId(),
+		"connectorId": c.GetConnectorId(),
+	})
+	logInfo.Debugf("Adding a connector to manager")
 
 	var (
 		key = fmt.Sprintf("Evse%dConnector%d", c.GetEvseId(), c.GetConnectorId())
@@ -236,7 +244,7 @@ func (m *ManagerImpl) AddConnectorFromSettings(maxChargingTime int, c *settings.
 	)
 
 	if powerMeterErr != nil {
-		log.Printf("Cannot instantiate power meter: %s", powerMeterErr)
+		log.Warnf("Cannot instantiate power meter: %s", powerMeterErr)
 	}
 
 	// Create a new connector
@@ -274,6 +282,14 @@ func (m *ManagerImpl) RestoreConnectorStatus(c *settings.Connector) error {
 		return ErrConnectorNotFound
 	}
 
+	logInfo := log.WithFields(log.Fields{
+		"evseId":         c.EvseId,
+		"connectorId":    c.ConnectorId,
+		"previousStatus": c.Status,
+		"session":        c.Session,
+	})
+	logInfo.Debugf("Attempting to restore connector status")
+
 	var (
 		err  error
 		conn = m.FindConnector(c.EvseId, c.ConnectorId)
@@ -296,7 +312,6 @@ func (m *ManagerImpl) RestoreConnectorStatus(c *settings.Connector) error {
 		core.ChargePointStatusSuspendedEVSE:
 		return nil
 	case core.ChargePointStatusPreparing:
-		log.Println("Attempting to start charging at connector", conn.GetConnectorId())
 		err = conn.StartCharging(c.Session.TransactionId, c.Session.TagId)
 		if err != nil {
 			conn.SetStatus(core.ChargePointStatusAvailable, core.InternalError)
@@ -306,19 +321,19 @@ func (m *ManagerImpl) RestoreConnectorStatus(c *settings.Connector) error {
 	case core.ChargePointStatusCharging:
 		err, timeLeft := conn.ResumeCharging(session.Session(c.Session))
 		if err != nil {
-			log.Printf("Resume charging failed at %d %d, reason: %v", conn, conn.GetConnectorId(), err)
+			logInfo.Errorf("Resume charging failed, reason: %v", err)
 
 			// Attempt to stop charging
 			err = conn.StopCharging(core.ReasonDeAuthorized)
 			if err != nil {
-				log.Println("Stopping the charging returned", err)
+				logInfo.Errorf("Err stopping the charging: %v", err)
 				conn.SetStatus(core.ChargePointStatusFaulted, core.InternalError)
 			}
 		}
 		//todo figure out what if time left
 		log.Println(timeLeft)
 
-		log.Println("Charging continued at ", conn.GetEvseId(), conn.GetConnectorId())
+		logInfo.Debugf("Successfully resumed charging")
 		return nil
 	case core.ChargePointStatusFaulted:
 		conn.SetStatus(core.ChargePointStatusFaulted, core.InternalError)

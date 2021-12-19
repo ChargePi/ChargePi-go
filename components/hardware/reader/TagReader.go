@@ -3,10 +3,9 @@ package reader
 import (
 	"context"
 	"encoding/hex"
-	"fmt"
 	"github.com/clausecker/nfc/v2"
+	log "github.com/sirupsen/logrus"
 	"github.com/warthog618/gpiod"
-	"log"
 	"time"
 )
 
@@ -61,7 +60,7 @@ Listener:
 		default:
 			count, target, err = reader.reader.InitiatorPollTarget(modulations, 1, 300*time.Millisecond)
 			if err != nil {
-				fmt.Println("Error polling the reader", err)
+				log.Errorf("Error polling the reader %v", err)
 				reader.Reset()
 				continue
 			}
@@ -126,26 +125,26 @@ func (reader *TagReader) Cleanup() {
 
 // Reset Implements the hardware reset by pulling the ResetPin low and then releasing.
 func (reader *TagReader) Reset() {
-	log.Println("Resetting the reader..")
+	log.Infof("Resetting the reader")
 	// Refer to gpiod docs
 	c, err := gpiod.NewChip("gpiochip0")
 	pin, err := c.RequestLine(reader.ResetPin, gpiod.AsOutput(1))
 	if err != nil {
-		log.Println(err)
+		log.Errorf("%v", err)
 		return
 	}
 
 	time.Sleep(time.Millisecond * 300)
 	err = pin.SetValue(0)
 	if err != nil {
-		log.Println(err)
+		log.Errorf("%v", err)
 		return
 	}
 
 	time.Sleep(time.Millisecond * 300)
 	err = pin.SetValue(1)
 	if err != nil {
-		log.Println(err)
+		log.Errorf("%v", err)
 		return
 	}
 }

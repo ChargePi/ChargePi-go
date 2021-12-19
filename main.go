@@ -7,6 +7,7 @@ import (
 	"github.com/Graylog2/go-gelf/gelf"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	goCache "github.com/patrickmn/go-cache"
+	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/chargepoint/v16"
 	"github.com/xBlaz3kx/ChargePi-go/components/cache"
 	"github.com/xBlaz3kx/ChargePi-go/components/hardware/display"
@@ -16,7 +17,6 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/data/auth"
 	"github.com/xBlaz3kx/ChargePi-go/data/settings"
 	"io"
-	"log"
 	"os"
 	"os/signal"
 	"strings"
@@ -26,7 +26,17 @@ import (
 
 var once = sync.Once{}
 
-func initLogger(grayLogAddress string) {
+func initLogger(grayLogAddress string, isDebug bool) {
+	// Default (production) logging settings
+	log.SetLevel(log.WarnLevel)
+	log.SetFormatter(&log.JSONFormatter{})
+
+	if isDebug {
+		log.SetLevel(log.DebugLevel)
+		log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
+	}
+
+	// Remote logging setup
 	gelfWriter, err := gelf.NewWriter(grayLogAddress)
 	if err != nil {
 		log.Fatalf("gelf.NewWriter: %s", err)
@@ -86,7 +96,7 @@ func main() {
 
 	cacheSettings, isFound := cache.Cache.Get("settings")
 	if !isFound {
-		log.Fatalf("settings not found")
+		log.Fatalf("Settings not found")
 	}
 	config = cacheSettings.(*settings.Settings)
 
@@ -96,7 +106,7 @@ func main() {
 	)
 
 	// Create the logger
-	initLogger(chargePointInfo.LogServer)
+	initLogger(chargePointInfo.LogServer, true)
 
 	// Create hardware components based on settings
 	tagReader, err = reader.NewTagReader(hardware.TagReader)
@@ -116,9 +126,9 @@ func main() {
 		handler.Run(ctx, config)
 		break
 	case settings.OCPP201:
-		log.Println("Version 2.0.1 is not supported yet.")
+		log.Fatal("Version 2.0.1 is not supported yet.")
 	default:
-		log.Fatal("Protocol version not supported:", chargePointInfo.ProtocolVersion)
+		log.WithField("protocolVersion", chargePointInfo.ProtocolVersion).Fatal("Protocol version not supported")
 	}
 
 	// Capture terminate signal

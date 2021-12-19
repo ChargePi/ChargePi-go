@@ -3,6 +3,7 @@ package settings
 import (
 	"encoding/json"
 	"errors"
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"regexp"
@@ -18,6 +19,8 @@ const (
 var ErrUnsupportedFileFormat = errors.New("unsupported file format")
 
 func WriteToFile(filename string, structure interface{}) (err error) {
+	log.Debugf("Creating a file: %s", filename)
+
 	var (
 		encodingType          string
 		marshal               []byte

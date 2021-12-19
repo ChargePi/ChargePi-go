@@ -41,6 +41,7 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/reactivex/rxgo/v2 v2.5.0
 	github.com/rpi-ws281x/rpi-ws281x-go v1.0.8
+	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/stretchr/testify v1.7.0
 	github.com/teivah/onecontext v1.3.0 // indirect

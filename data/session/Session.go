@@ -4,6 +4,7 @@ import (
 	"errors"
 	strUtil "github.com/agrison/go-commons-lang/stringUtils"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
+	log "github.com/sirupsen/logrus"
 	"strconv"
 	"time"
 )
@@ -57,6 +58,8 @@ func (session *Session) StartSession(transactionId string, tagId string) error {
 		return ErrInvalidTagId
 	}
 
+	log.Debugf("Started a session %s for %s", transactionId, tagId)
+
 	session.TransactionId = transactionId
 	session.TagId = tagId
 	session.IsActive = true
@@ -68,6 +71,7 @@ func (session *Session) StartSession(transactionId string, tagId string) error {
 // EndSession End the Session if one is active. Reset the attributes, except the measurands.
 func (session *Session) EndSession() {
 	if session.IsActive {
+		log.Debugf("Ended a session %s for %s", session.TransactionId, session.TagId)
 		session.TransactionId = ""
 		session.TagId = ""
 		session.IsActive = false
@@ -78,6 +82,7 @@ func (session *Session) EndSession() {
 // AddSampledValue Add all the samples taken to the Session.
 func (session *Session) AddSampledValue(samples []types.SampledValue) {
 	if session.IsActive {
+		log.Debugf("Added meter sample for session %s", session.TransactionId)
 		session.Consumption = append(session.Consumption, types.MeterValue{SampledValue: samples})
 	}
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ws"
 	"github.com/reactivex/rxgo/v2"
+	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/chargepoint/tls"
 	"github.com/xBlaz3kx/ChargePi-go/components/connector"
 	connector_manager "github.com/xBlaz3kx/ChargePi-go/components/connector-manager"
@@ -16,7 +17,6 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/components/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/data/auth"
 	"github.com/xBlaz3kx/ChargePi-go/data/settings"
-	"log"
 )
 
 type (
@@ -64,6 +64,11 @@ func (handler *ChargePointHandler) Run(ctx context.Context, settings *settings.S
 		client    ws.WsClient = nil
 		info                  = settings.ChargePoint.Info
 		tlsConfig             = settings.ChargePoint.TLS
+		serverUrl             = fmt.Sprintf("ws://%s/%s", info.ServerUri, info.Id)
+		logInfo               = log.WithFields(log.Fields{
+			"chargePointId": info.Id,
+			"serverUrl":     serverUrl,
+		})
 	)
 
 	handler.Settings = settings
@@ -73,6 +78,7 @@ func (handler *ChargePointHandler) Run(ctx context.Context, settings *settings.S
 		client = tls.GetTLSClient(tlsConfig.CACertificatePath, tlsConfig.ClientCertificatePath, tlsConfig.ClientKeyPath)
 		handler.chargePoint = ocpp16.NewChargePoint(info.Id, nil, client)
 	} else {
+		logInfo.Info("Creating charge point")
 		handler.chargePoint = ocpp16.NewChargePoint(info.Id, nil, nil)
 	}
 
@@ -89,12 +95,12 @@ func (handler *ChargePointHandler) Run(ctx context.Context, settings *settings.S
 	handler.chargePoint.SetReservationHandler(handler)
 	handler.chargePoint.SetRemoteTriggerHandler(handler)
 
-	handler.connect(ctx, fmt.Sprintf("ws://%s/%s", info.ServerUri, info.Id))
+	handler.connect(ctx, serverUrl)
 }
 
 // connect to the central system and attempt to boot
 func (handler *ChargePointHandler) connect(ctx context.Context, serverUrl string) {
-	log.Println("Trying to connect to the central system: ", serverUrl)
+	log.Infof("Trying to connect to the central system: %s", serverUrl)
 	connectErr := handler.chargePoint.Start(serverUrl)
 
 	// Check if the connection was successful
@@ -104,7 +110,7 @@ func (handler *ChargePointHandler) connect(ctx context.Context, serverUrl string
 		log.Fatalf("Error connecting to the central system: %s \n", connectErr)
 	}
 
-	log.Printf("connected to central server: %s", serverUrl)
+	log.Infof("connected to central server: %s", serverUrl)
 	handler.availability = core.AvailabilityTypeOperative
 
 	go handler.listenForConnectorStatusChange(ctx)
@@ -114,57 +120,57 @@ func (handler *ChargePointHandler) connect(ctx context.Context, serverUrl string
 // HandleChargingRequest Entry point for determining if the request is to start or stop charging. Trying to find a connector that has the tag stored in the Session; if such a connector exists,
 // execute stopChargingConnector, otherwise startCharging.
 func (handler *ChargePointHandler) HandleChargingRequest(tagId string) {
-	log.Printf("Handling request for tag %s", tagId)
+	log.Infof("Handling request for tag %s", tagId)
 
 	c := handler.connectorManager.FindConnectorWithTagId(tagId)
 	if c != nil {
 		err := handler.stopChargingConnector(c, core.ReasonLocal)
 		if err != nil {
-			log.Printf("Error stopping charing the connector: %s", err)
+			log.Errorf("Error stopping charing the connector: %s", err)
 		}
 	} else {
 		err := handler.startCharging(tagId)
 		if err != nil {
-			log.Printf("Error started charing the connector: %s \n", err)
+			log.Errorf("Error started charing the connector: %s \n", err)
 		}
 	}
 }
 
 // CleanUp When exiting the client, stop all the transactions, clean up all the peripherals and terminate the connection.
 func (handler *ChargePointHandler) CleanUp(reason core.Reason) {
-	log.Println("Cleaning up ChargePoint, reason:", reason)
+	log.Infof("Cleaning up ChargePoint, reason: %s", reason)
 
 	handler.connectorManager.StopAllConnectors(reason)
 	for _, c := range handler.connectorManager.GetConnectors() {
 		if c.IsCharging() {
-			log.Println("Stopping a transaction at connector: ", c.GetConnectorId())
+			log.Infof("Stopping a transaction at connector: %d", c.GetConnectorId())
 			err := handler.stopChargingConnector(c, reason)
 			if err != nil {
-				log.Printf("error while stopping the transaction at cleanup: %v", err)
+				log.Errorf("error while stopping the transaction at cleanup: %v", err)
 			}
 		}
 	}
 
-	log.Println("Disconnecting the client..")
+	log.Infof("Disconnecting the client..")
 	handler.chargePoint.Stop()
 
 	if handler.TagReader != nil {
-		log.Println("Cleaning up the Tag Reader")
+		log.Info("Cleaning up the Tag Reader")
 		handler.TagReader.Cleanup()
 	}
 
 	if handler.LCD != nil {
-		log.Println("Cleaning up LCD")
+		log.Info("Cleaning up LCD")
 		handler.LCD.Cleanup()
 	}
 
 	if handler.Indicator != nil {
-		log.Println("Cleaning up Indicator")
+		log.Info("Cleaning up Indicator")
 		handler.Indicator.Cleanup()
 	}
 
 	close(handler.connectorChannel)
-	log.Println("Clearing the scheduler...")
+	log.Info("Clearing the scheduler...")
 	scheduler.GetScheduler().Stop()
 	scheduler.GetScheduler().Clear()
 

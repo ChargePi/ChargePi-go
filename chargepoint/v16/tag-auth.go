@@ -3,10 +3,10 @@ package v16
 import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	types2 "github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
+	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/components/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/components/settings/conf-manager"
 	"github.com/xBlaz3kx/ChargePi-go/data/auth"
-	"log"
 	"strconv"
 )
 
@@ -29,13 +29,14 @@ func (handler *ChargePointHandler) isTagAuthorized(tagId string) bool {
 	}
 
 	if authCacheEnabled == "true" && localPreAuthorize == "true" {
+		log.Infof("Authorizing tag %s with cache", tagId)
+
 		// Check if the tag exists in cache and is valid.
-		log.Println("Authorizing tag", tagId, "with cache")
 		if auth.IsTagAuthorized(tagId) {
 			// Reauthorize in 10 seconds
 			_, schedulerErr := scheduler.GetScheduler().Every(10).Seconds().LimitRunsTo(1).Do(handler.sendAuthorizeRequest, tagId)
 			if schedulerErr != nil {
-				log.Println(schedulerErr)
+				log.Errorf("Cannot schedule check with central system: %v", schedulerErr)
 			}
 
 			return true
@@ -43,7 +44,7 @@ func (handler *ChargePointHandler) isTagAuthorized(tagId string) bool {
 	}
 
 	// If the card is not in cache or is not authorized, (re)authorize it with the central system
-	log.Println("Authorizing tag with central system: ", tagId)
+	log.Infof("Authorizing tag %s with central system", tagId)
 	tagInfo, err := handler.sendAuthorizeRequest(tagId)
 	if err != nil {
 		return false
@@ -53,7 +54,7 @@ func (handler *ChargePointHandler) isTagAuthorized(tagId string) bool {
 		response = true
 	}
 
-	log.Println("Tag authorization result: ", response)
+	log.Infof("Tag authorization result: %v", response)
 	return response
 }
 

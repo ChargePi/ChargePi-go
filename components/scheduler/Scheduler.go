@@ -2,7 +2,7 @@ package scheduler
 
 import (
 	"github.com/go-co-op/gocron"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"sync"
 	"time"
 )
@@ -12,7 +12,7 @@ var scheduler *gocron.Scheduler
 func init() {
 	once := sync.Once{}
 	once.Do(func() {
-		log.Println("Initializing scheduler")
+		log.Info("Initializing scheduler")
 		GetScheduler()
 	})
 }

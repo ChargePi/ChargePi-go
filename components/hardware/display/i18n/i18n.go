@@ -3,9 +3,9 @@ package i18n
 import (
 	"fmt"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/text/language"
 	"gopkg.in/yaml.v3"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -75,7 +75,7 @@ func addDefaultMessage(message i18n.Message) {
 
 // loadTranslations loads all available translations from the translations folder into the bundle.
 func loadTranslations() {
-	log.Println("Loading translations..")
+	log.Info("Loading translations..")
 
 	err := filepath.Walk("./hardware/display/i18n/translations", func(path string, info os.FileInfo, err error) error {
 		//load all active.*.yaml translations into the bundle
@@ -87,7 +87,7 @@ func loadTranslations() {
 	})
 
 	if err != nil {
-		log.Println(err)
+		log.Errorf("Error loading translations: %v", err)
 	}
 
 	// create a matcher based on imported translation files.
@@ -103,7 +103,8 @@ func loadTranslation(path string, info os.FileInfo) error {
 
 	// the language is second to last
 	lang := strs[len(strs)-2]
-	log.Println("loading translation:", lang)
+	log.Debugf("loading translation: %s", lang)
+
 	err := addLanguageSupport(lang)
 	if err != nil {
 		return err
@@ -138,7 +139,6 @@ func Localize(lang string, messageId string, data map[string]interface{}, plural
 		TemplateData:   data,
 		PluralCount:    plural,
 	})
-
 	if err != nil {
 		return "", err
 	}

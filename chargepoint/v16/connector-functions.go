@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"github.com/lorenzodonini/ocpp-go/ocpp"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	types2 "github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
+	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/reactivex/rxgo/v2"
+	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/components/cache"
 	connector2 "github.com/xBlaz3kx/ChargePi-go/components/connector"
 	"github.com/xBlaz3kx/ChargePi-go/components/hardware/display/i18n"
@@ -14,8 +15,7 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/components/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/components/settings/settings-manager"
 	"github.com/xBlaz3kx/ChargePi-go/data"
-	settings2 "github.com/xBlaz3kx/ChargePi-go/data/settings"
-	"log"
+	settingsData "github.com/xBlaz3kx/ChargePi-go/data/settings"
 	"time"
 )
 
@@ -26,7 +26,7 @@ func (handler *ChargePointHandler) addConnectors() {
 		log.Fatal("no connectors configured")
 	}
 
-	log.Println("Adding connectors")
+	log.Info("Adding connectors")
 	err := handler.connectorManager.AddConnectorsFromConfiguration(handler.Settings.ChargePoint.Info.MaxChargingTime, connectors)
 	if err != nil {
 		log.Fatal(err)
@@ -39,6 +39,7 @@ func (handler *ChargePointHandler) addConnectors() {
 // restoreState After connecting to the central system, try to restore the previous state of each ConnectorImpl and notify the system about its state.
 // If the ConnectorStatus was "Preparing" or "Charging", try to resume or start charging. If the charging fails, change the connector status and notify the central system.
 func (handler *ChargePointHandler) restoreState() {
+	log.Info("Restoring connectors' state")
 	var err error
 
 	for _, connector := range handler.connectorManager.GetConnectors() {
@@ -47,7 +48,7 @@ func (handler *ChargePointHandler) restoreState() {
 		if !isFound {
 			continue
 		}
-		cachedConnector := connectorSettings.(*settings2.Connector)
+		cachedConnector := connectorSettings.(*settingsData.Connector)
 
 		err = handler.connectorManager.RestoreConnectorStatus(cachedConnector)
 		switch err {
@@ -59,7 +60,7 @@ func (handler *ChargePointHandler) restoreState() {
 			// Attempt to stop charging
 			err = handler.stopChargingConnector(connector, core.ReasonDeAuthorized)
 			if err != nil {
-				log.Println("Stopping the charging returned", err)
+				log.Debugf("Stopping the charging returned %v", err)
 				connector.SetStatus(core.ChargePointStatusFaulted, core.InternalError)
 			}
 		}
@@ -68,28 +69,29 @@ func (handler *ChargePointHandler) restoreState() {
 
 // notifyConnectorStatus Notify the central system about the connector's status and updates the LED indicator.
 func (handler *ChargePointHandler) notifyConnectorStatus(connector connector2.Connector) {
-	if connector != nil {
+	if !data.IsNilInterfaceOrPointer(connector) {
 		var (
 			status, errorCode = connector.GetStatus()
 			connectorId       = connector.GetConnectorId()
 			request           = core.NewStatusNotificationRequest(connectorId, errorCode, status)
 		)
 
-		request.Timestamp = types2.NewDateTime(time.Now())
+		request.Timestamp = types.NewDateTime(time.Now())
 
 		callback := func(confirmation ocpp.Response, protoError error) {
-			log.Printf("Notified status of the connector %d: %s", connectorId, status)
+			log.Infof("Notified status of the connector %d: %s", connectorId, status)
 		}
 
 		err := handler.SendRequest(request, callback)
 		if err != nil {
-			log.Println("Cannot send status notification of connector: ", err)
+			log.Errorf("Cannot send status notification of connector: %v", err)
 		}
 	}
 }
 
 // listenForConnectorStatusChange listen for change in connector and notify the central system about the state
 func (handler *ChargePointHandler) listenForConnectorStatusChange(ctx context.Context) {
+	log.Infof("Starting to listen for connector status change")
 	observableConnectors := rxgo.FromChannel(handler.connectorChannel)
 
 	if observableConnectors != nil {
@@ -100,7 +102,9 @@ func (handler *ChargePointHandler) listenForConnectorStatusChange(ctx context.Co
 			case item := <-observableConnectors.Observe():
 				connector, canCast := item.V.(*connector2.ConnectorImpl)
 				if canCast {
+					// Connector starts with index 1,
 					connectorIndex := connector.ConnectorId - 1
+
 					handler.displayLEDStatus(connectorIndex, connector.ConnectorStatus)
 					go handler.displayConnectorStatus(connector.ConnectorId, connector.ConnectorStatus)
 					handler.notifyConnectorStatus(connector)
@@ -108,6 +112,7 @@ func (handler *ChargePointHandler) listenForConnectorStatusChange(ctx context.Co
 				break
 			case <-ctx.Done():
 				break Listener
+			default:
 			}
 		}
 	}

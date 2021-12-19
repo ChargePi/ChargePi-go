@@ -5,10 +5,10 @@ import (
 	"github.com/kkyr/fig"
 	types2 "github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	goCache "github.com/patrickmn/go-cache"
+	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/components/cache"
 	s "github.com/xBlaz3kx/ChargePi-go/components/settings"
 	"github.com/xBlaz3kx/ChargePi-go/data/ocpp"
-	"log"
 	"path/filepath"
 	"strings"
 )
@@ -44,7 +44,7 @@ func InitConfiguration() {
 		return
 	}
 
-	log.Println("Added OCPP configuration to cache")
+	log.Info("Added OCPP configuration to cache")
 }
 
 // GetConfiguration Get the global configuration

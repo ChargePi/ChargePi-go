@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
+	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/components/hardware/display"
 	"github.com/xBlaz3kx/ChargePi-go/components/hardware/indicator"
-	"log"
 	"strings"
 	"time"
 )
@@ -16,7 +16,7 @@ func (handler *ChargePointHandler) sendToLCD(messages ...string) {
 		return
 	}
 
-	log.Println("Sending message(s) to LCD:", messages)
+	log.Infof("Sending message(s) to LCD: %v", messages)
 	handler.LCD.GetLcdChannel() <- display.NewMessage(time.Second*5, messages)
 }
 
@@ -50,10 +50,12 @@ func (handler *ChargePointHandler) displayLEDStatus(connectorIndex int, status c
 		return
 	}
 
+	log.Infof("Indicating connector status")
+
 	go func() {
 		err := handler.Indicator.DisplayColor(connectorIndex, uint32(color))
 		if err != nil {
-			log.Println(err)
+			log.Errorf("Error indicating status: %v", err)
 		}
 	}()
 }
@@ -63,6 +65,8 @@ func (handler *ChargePointHandler) indicateCard(index int, color uint32) {
 	if !handler.Settings.ChargePoint.Hardware.LedIndicator.Enabled || handler.Indicator == nil {
 		return
 	}
+
+	log.Info("Indicating tag was read")
 
 	err := handler.Indicator.Blink(index, 3, color)
 	if err != nil {
@@ -76,6 +80,8 @@ func (handler *ChargePointHandler) ListenForTag(ctx context.Context) {
 	if !handler.Settings.ChargePoint.Hardware.TagReader.IsEnabled || handler.TagReader == nil {
 		return
 	}
+
+	log.Info("Started listening for tags from reader")
 
 Listener:
 	for {
