@@ -23,7 +23,8 @@ FROM alpine as chargepi
 
 COPY --from=base /ChargePi/src/configs /etc/ChargePi/configs
 COPY --from=base /ChargePi/src/chargepi /etc/ChargePi/chargepi
-RUN cd /etc/ChargePi
+
+WORKDIR /etc/ChargePi
 
 ENTRYPOINT ["./chargepi"]
 

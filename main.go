@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/Graylog2/go-gelf/gelf"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	goCache "github.com/patrickmn/go-cache"
 	log "github.com/sirupsen/logrus"
@@ -13,10 +12,10 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/components/hardware/display"
 	"github.com/xBlaz3kx/ChargePi-go/components/hardware/reader"
 	"github.com/xBlaz3kx/ChargePi-go/components/settings/conf-manager"
+	"github.com/xBlaz3kx/ChargePi-go/components/settings/logging"
 	"github.com/xBlaz3kx/ChargePi-go/components/settings/settings-manager"
 	"github.com/xBlaz3kx/ChargePi-go/data/auth"
 	"github.com/xBlaz3kx/ChargePi-go/data/settings"
-	"io"
 	"os"
 	"os/signal"
 	"strings"
@@ -26,42 +25,26 @@ import (
 
 var once = sync.Once{}
 
-func initLogger(grayLogAddress string, isDebug bool) {
-	// Default (production) logging settings
-	log.SetLevel(log.WarnLevel)
-	log.SetFormatter(&log.JSONFormatter{})
-
-	if isDebug {
-		log.SetLevel(log.DebugLevel)
-		log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
-	}
-
-	// Remote logging setup
-	gelfWriter, err := gelf.NewWriter(grayLogAddress)
-	if err != nil {
-		log.Fatalf("gelf.NewWriter: %s", err)
-	}
-
-	log.SetOutput(io.MultiWriter(os.Stderr, gelfWriter))
-}
-
 func getFlags() {
 	once.Do(func() {
 		var (
 			workingDirectory, _ = os.Getwd()
 			configurationPath   = fmt.Sprintf("%s/configs", workingDirectory)
+
+			// Get the paths from arguments
+			configurationFileFormatFlag = flag.String("config-format", "json", "Format of the configuration files (YAML, JSON or TOML)")
+			configurationFileFormat     = strings.ToLower(*configurationFileFormatFlag)
+			configurationFolderPath     = flag.String("config-folder", configurationPath, "Path to the configuration folder")
+			connectorsFolderPath        = flag.String("connector-folder", fmt.Sprintf("%s/%s", configurationPath, "connectors"), "Path to the connector folder")
+			configurationFilePath       = flag.String("ocpp-config", fmt.Sprintf("%s/%s.%s", configurationPath, "configuration", configurationFileFormat), "Path to the OCPP configuration file")
+			settingsFilePath            = flag.String("settings", fmt.Sprintf("%s/%s.%s", configurationPath, "settings", configurationFileFormat), "Path to the settings file")
+			authFilePath                = flag.String("auth", fmt.Sprintf("%s/%s.%s", configurationPath, "auth", configurationFileFormat), "Path to the authorization persistence file")
+			isDebug                     = flag.Bool("d", false, "Debug mode")
 		)
 
-		// Get the paths from arguments
-		configurationFileFormatFlag := flag.String("config-format", "json", "Format of the configuration files (YAML, JSON or TOML)")
-		configurationFileFormat := strings.ToLower(*configurationFileFormatFlag)
-		configurationFolderPath := flag.String("config-folder", configurationPath, "Path to the configuration folder")
-		connectorsFolderPath := flag.String("connector-folder", fmt.Sprintf("%s/%s", configurationPath, "connectors"), "Path to the connector folder")
-		configurationFilePath := flag.String("ocpp-config", fmt.Sprintf("%s/%s.%s", configurationPath, "configuration", configurationFileFormat), "Path to the OCPP configuration file")
-		settingsFilePath := flag.String("settings", fmt.Sprintf("%s/%s.%s", configurationPath, "settings", configurationFileFormat), "Path to the settings file")
-		authFilePath := flag.String("auth", fmt.Sprintf("%s/%s.%s", configurationPath, "auth", configurationFileFormat), "Path to the authorization persistence file")
 		flag.Parse()
 
+		log.Println(isDebug)
 		// Put the paths in the mem
 		cache.Cache.Set("configurationFolderPath", *configurationFolderPath, goCache.NoExpiration)
 		cache.Cache.Set("connectorsFolderPath", *connectorsFolderPath, goCache.NoExpiration)
@@ -103,10 +86,18 @@ func main() {
 	var (
 		chargePointInfo = config.ChargePoint.Info
 		hardware        = config.ChargePoint.Hardware
+		isDebug         = false
 	)
 
+	// Check if the service is run in production or debug mode.
+	flag.Visit(func(f *flag.Flag) {
+		if f.Name == "d" {
+			isDebug = f.Value.String() == "true"
+		}
+	})
+
 	// Create the logger
-	initLogger(chargePointInfo.LogServer, true)
+	logging.SetupLogs(config.ChargePoint.Logging, isDebug)
 
 	// Create hardware components based on settings
 	tagReader, err = reader.NewTagReader(hardware.TagReader)

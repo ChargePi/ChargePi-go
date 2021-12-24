@@ -105,7 +105,6 @@ func (handler *ChargePointHandler) connect(ctx context.Context, serverUrl string
 
 	// Check if the connection was successful
 	if connectErr != nil {
-		handler.chargePoint.Stop()
 		handler.CleanUp(core.ReasonOther)
 		log.Fatalf("Error connecting to the central system: %s \n", connectErr)
 	}
@@ -140,15 +139,20 @@ func (handler *ChargePointHandler) HandleChargingRequest(tagId string) {
 func (handler *ChargePointHandler) CleanUp(reason core.Reason) {
 	log.Infof("Cleaning up ChargePoint, reason: %s", reason)
 
-	handler.connectorManager.StopAllConnectors(reason)
-	for _, c := range handler.connectorManager.GetConnectors() {
-		if c.IsCharging() {
-			log.Infof("Stopping a transaction at connector: %d", c.GetConnectorId())
-			err := handler.stopChargingConnector(c, reason)
-			if err != nil {
-				log.Errorf("error while stopping the transaction at cleanup: %v", err)
+	switch reason {
+	case core.ReasonRemote, core.ReasonLocal, core.ReasonHardReset, core.ReasonSoftReset:
+		handler.connectorManager.StopAllConnectors(reason)
+		for _, c := range handler.connectorManager.GetConnectors() {
+			// Notify the central system that the transactions
+			if c.IsCharging() {
+				log.Infof("Stopping a transaction at connector: %d", c.GetConnectorId())
+				err := handler.stopChargingConnector(c, reason)
+				if err != nil {
+					log.Errorf("error while stopping the transaction at cleanup: %v", err)
+				}
 			}
 		}
+		break
 	}
 
 	log.Infof("Disconnecting the client..")

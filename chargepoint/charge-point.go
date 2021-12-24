@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
+	"github.com/xBlaz3kx/ChargePi-go/data/settings"
 )
 
 var (
@@ -19,7 +20,7 @@ var (
 
 type (
 	ChargePoint interface {
-		Run(ctx context.Context)
+		Run(ctx context.Context, settings *settings.Settings)
 		HandleChargingRequest(tagId string)
 		CleanUp(reason core.Reason)
 		ListenForTag(ctx context.Context)
