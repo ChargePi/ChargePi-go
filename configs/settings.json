@@ -4,12 +4,20 @@
       "id": "ChargePi",
       "protocolVersion": "1.6",
       "serverUri": "example.com",
-      "logServer": "example.com:12201",
       "maxChargingTime": 5,
       "ocpp": {
         "vendor": "UL FE",
         "model": "ChargePi"
       }
+    },
+    "logging": {
+      "type": [
+        "remote",
+        "file"
+      ],
+      "format": "gelf",
+      "host": "logging.example.com",
+      "port": 12201
     },
     "tls": {
       "isEnabled": false,
@@ -19,14 +27,14 @@
     },
     "hardware": {
       "lcd": {
-        "isSupported": true,
+        "isEnabled": true,
         "driver": "hd44780",
         "language": "en",
         "i2cAddress": "0x27",
         "i2cBus": 1
       },
       "tagReader": {
-        "isSupported": true,
+        "isEnabled": true,
         "readerModel": "PN532",
         "device": "/dev/ttyS0",
         "resetPin": 19

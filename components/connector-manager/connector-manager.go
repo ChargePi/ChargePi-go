@@ -1,0 +1,344 @@
+package connector_manager
+
+import (
+	"errors"
+	"fmt"
+	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
+	"github.com/reactivex/rxgo/v2"
+	log "github.com/sirupsen/logrus"
+	"github.com/xBlaz3kx/ChargePi-go/components/connector"
+	"github.com/xBlaz3kx/ChargePi-go/components/hardware"
+	power_meter "github.com/xBlaz3kx/ChargePi-go/components/hardware/power-meter"
+	"github.com/xBlaz3kx/ChargePi-go/data"
+	"github.com/xBlaz3kx/ChargePi-go/data/session"
+	"github.com/xBlaz3kx/ChargePi-go/data/settings"
+	"sync"
+)
+
+var (
+	ErrConnectorNotFound      = errors.New("connector not found")
+	ErrConnectorAlreadyExists = errors.New("connector already exists")
+	ErrConnectorStatusInvalid = errors.New("connector status invalid")
+	ErrConnectorNil           = errors.New("connector is nil")
+	manager                   Manager
+	once                      = sync.Once{}
+)
+
+type (
+	Manager interface {
+		GetConnectors() []connector.Connector
+		FindConnector(evseId, connectorID int) connector.Connector
+		FindAvailableConnector() connector.Connector
+		FindConnectorWithTagId(tagId string) connector.Connector
+		FindConnectorWithTransactionId(transactionId string) connector.Connector
+		FindConnectorWithReservationId(reservationId int) connector.Connector
+		StartChargingConnector(evseId, connectorID int, tagId, transactionId string) error
+		StopChargingConnector(tagId, transactionId string, reason core.Reason) error
+		StopAllConnectors(reason core.Reason) error
+		AddConnector(c connector.Connector) error
+		AddConnectorFromSettings(maxChargingTime int, c *settings.Connector) error
+		AddConnectorsFromConfiguration(maxChargingTime int, c []*settings.Connector) error
+		RestoreConnectorStatus(*settings.Connector) error
+		SetNotificationChannel(notificationChannel chan rxgo.Item)
+	}
+
+	ManagerImpl struct {
+		connectors          sync.Map
+		notificationChannel chan rxgo.Item
+	}
+)
+
+func init() {
+	once.Do(func() {
+		log.Info("Creating connector manager..")
+		GetManager()
+	})
+}
+
+func GetManager() Manager {
+	if manager == nil {
+		manager = NewManager(nil)
+	}
+
+	return manager
+}
+
+func NewManager(notificationChannel chan rxgo.Item) Manager {
+	return &ManagerImpl{
+		connectors:          sync.Map{},
+		notificationChannel: notificationChannel,
+	}
+}
+
+func (m *ManagerImpl) GetConnectors() []connector.Connector {
+	var connectors []connector.Connector
+
+	m.connectors.Range(func(key, value interface{}) bool {
+		c, canCast := value.(connector.Connector)
+		if canCast {
+			connectors = append(connectors, c)
+		}
+		return true
+	})
+
+	return connectors
+}
+
+func (m *ManagerImpl) SetNotificationChannel(notificationChannel chan rxgo.Item) {
+	if notificationChannel != nil {
+		m.notificationChannel = notificationChannel
+	}
+}
+
+func (m *ManagerImpl) FindConnector(evseId, connectorID int) connector.Connector {
+	var (
+		key        = fmt.Sprintf("Evse%dConnector%d", evseId, connectorID)
+		c, isFound = m.connectors.Load(key)
+	)
+
+	if isFound {
+		return c.(connector.Connector)
+	}
+
+	return nil
+}
+
+func (m *ManagerImpl) FindAvailableConnector() connector.Connector {
+	var availableConnector connector.Connector
+
+	m.connectors.Range(func(key, value interface{}) bool {
+		c, canCast := value.(connector.Connector)
+		// todo check if there is no connector with the same EVSE charging
+		if canCast && c.IsAvailable() {
+			availableConnector = c
+			return false
+		}
+
+		return true
+	})
+
+	return availableConnector
+}
+
+func (m *ManagerImpl) FindConnectorWithTagId(tagId string) connector.Connector {
+	var connectorWithTag connector.Connector
+
+	m.connectors.Range(func(key, value interface{}) bool {
+		c, _ := value.(connector.Connector)
+		if c.GetTagId() == tagId {
+			connectorWithTag = c
+			return false
+		}
+
+		return true
+	})
+
+	return connectorWithTag
+}
+
+func (m *ManagerImpl) FindConnectorWithTransactionId(transactionId string) connector.Connector {
+	var connectorWithTransaction connector.Connector
+
+	m.connectors.Range(func(key, value interface{}) bool {
+		c, _ := value.(connector.Connector)
+		if c.GetTransactionId() == transactionId {
+			connectorWithTransaction = c
+			return false
+		}
+
+		return true
+	})
+
+	return connectorWithTransaction
+}
+
+func (m *ManagerImpl) FindConnectorWithReservationId(reservationId int) connector.Connector {
+	var connectorWithReservation connector.Connector
+
+	m.connectors.Range(func(key, value interface{}) bool {
+		c, _ := value.(connector.Connector)
+		if c.GetReservationId() == reservationId {
+			connectorWithReservation = c
+			return false
+		}
+
+		return true
+	})
+
+	return connectorWithReservation
+}
+
+func (m *ManagerImpl) StartChargingConnector(evseId, connectorID int, tagId, transactionId string) error {
+	c := m.FindConnector(evseId, connectorID)
+
+	if c != nil {
+		return c.StartCharging(transactionId, tagId)
+	}
+
+	return ErrConnectorNotFound
+}
+
+func (m *ManagerImpl) StopChargingConnector(tagId, transactionId string, reason core.Reason) error {
+	c := m.FindConnectorWithTransactionId(transactionId)
+
+	if c != nil {
+		return c.StopCharging(reason)
+	}
+
+	return ErrConnectorNotFound
+}
+
+func (m *ManagerImpl) StopAllConnectors(reason core.Reason) error {
+	log.Debugf("Stopping all connectors: %s", reason)
+
+	var err error
+
+	for _, c := range m.GetConnectors() {
+		stopErr := c.StopCharging(reason)
+		if stopErr != nil {
+			err = stopErr
+		}
+	}
+
+	return err
+}
+
+func (m *ManagerImpl) AddConnector(c connector.Connector) error {
+	if data.IsNilInterfaceOrPointer(c) {
+		return ErrConnectorNil
+	}
+
+	logInfo := log.WithFields(log.Fields{
+		"evseId":      c.GetEvseId(),
+		"connectorId": c.GetConnectorId(),
+	})
+	logInfo.Debugf("Adding a connector to manager")
+
+	var (
+		key = fmt.Sprintf("Evse%dConnector%d", c.GetEvseId(), c.GetConnectorId())
+	)
+	c.SetNotificationChannel(m.notificationChannel)
+
+	// Add the connector
+	_, isLoaded := m.connectors.LoadOrStore(key, c)
+	//pretty.Print("Added a connector", c)
+	if isLoaded {
+		return ErrConnectorAlreadyExists
+	}
+
+	return nil
+}
+
+func (m *ManagerImpl) AddConnectorFromSettings(maxChargingTime int, c *settings.Connector) error {
+	if data.IsNilInterfaceOrPointer(c) {
+		return ErrConnectorNil
+	}
+
+	var (
+		relay = hardware.NewRelay(
+			c.Relay.RelayPin,
+			c.Relay.InverseLogic,
+		)
+		// Create a PowerMeter from connector settings
+		powerMeter, powerMeterErr = power_meter.NewPowerMeter(c.PowerMeter)
+	)
+
+	if powerMeterErr != nil {
+		log.Warnf("Cannot instantiate power meter: %s", powerMeterErr)
+	}
+
+	// Create a new connector
+	connectorObj, err := connector.NewConnector(
+		c.EvseId,
+		c.ConnectorId,
+		c.Type,
+		relay,
+		powerMeter,
+		c.PowerMeter.Enabled,
+		maxChargingTime,
+	)
+	if err != nil {
+		return err
+	}
+
+	return m.AddConnector(connectorObj)
+}
+
+func (m *ManagerImpl) AddConnectorsFromConfiguration(maxChargingTime int, connectors []*settings.Connector) error {
+	var err error
+
+	for _, c := range connectors {
+		addErr := m.AddConnectorFromSettings(maxChargingTime, c)
+		if addErr != nil {
+			err = addErr
+		}
+	}
+
+	return err
+}
+
+func (m *ManagerImpl) RestoreConnectorStatus(c *settings.Connector) error {
+	if data.IsNilInterfaceOrPointer(c) {
+		return ErrConnectorNotFound
+	}
+
+	logInfo := log.WithFields(log.Fields{
+		"evseId":         c.EvseId,
+		"connectorId":    c.ConnectorId,
+		"previousStatus": c.Status,
+		"session":        c.Session,
+	})
+	logInfo.Debugf("Attempting to restore connector status")
+
+	var (
+		err  error
+		conn = m.FindConnector(c.EvseId, c.ConnectorId)
+	)
+
+	if conn == nil {
+		return ErrConnectorNotFound
+	}
+
+	// Set the previous status to determine what action to do
+	connectorPreviousStatus := core.ChargePointStatus(c.Status)
+	conn.SetStatus(connectorPreviousStatus, core.NoError)
+
+	switch connectorPreviousStatus {
+	case core.ChargePointStatusAvailable:
+		return nil
+	case core.ChargePointStatusReserved,
+		core.ChargePointStatusFinishing,
+		core.ChargePointStatusSuspendedEV,
+		core.ChargePointStatusSuspendedEVSE:
+		return nil
+	case core.ChargePointStatusPreparing:
+		err = conn.StartCharging(c.Session.TransactionId, c.Session.TagId)
+		if err != nil {
+			conn.SetStatus(core.ChargePointStatusAvailable, core.InternalError)
+		}
+
+		return err
+	case core.ChargePointStatusCharging:
+		err, timeLeft := conn.ResumeCharging(session.Session(c.Session))
+		if err != nil {
+			logInfo.Errorf("Resume charging failed, reason: %v", err)
+
+			// Attempt to stop charging
+			err = conn.StopCharging(core.ReasonDeAuthorized)
+			if err != nil {
+				logInfo.Errorf("Err stopping the charging: %v", err)
+				conn.SetStatus(core.ChargePointStatusFaulted, core.InternalError)
+			}
+		}
+		//todo figure out what if time left
+		log.Println(timeLeft)
+
+		logInfo.Debugf("Successfully resumed charging")
+		return nil
+	case core.ChargePointStatusFaulted:
+		conn.SetStatus(core.ChargePointStatusFaulted, core.InternalError)
+		return nil
+	default:
+		return ErrConnectorStatusInvalid
+	}
+}
