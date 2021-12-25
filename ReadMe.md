@@ -1,15 +1,17 @@
 # ⚡ ChargePi-go
 
 ⚡ChargePi is an open-source Raspberry Pi 4 based ⚡Charging Point🔌 project, which supports multiple EVSEs and simple
+connectors🔌. You can also add an RFID/NFC reader and a display to the Charging Point. It is configurable, simple to
+make and uses off-the-shelf hardware.
 
-connectors🔌. A charging connector🔌 consists of a WS281x RGB 🚥 LED strip, a relay and a power meter. The client is
-written in Go and requires installation of a few C libraries.
+A connector🔌 consists of an indicator (🚥 RGB LED strip), a relay and a ⚡ power meter. The client is written in Go and
+requires installation of a few C libraries.
 
-ChargePi client can be deployed/run in multiple ways:
+ChargePi-go client can be deployed/run in multiple ways:
 
 - standalone
 - Docker 🐳 by building the image and running the container
-- Docker-compose with SteVe Central System and Watchtower (**recommended for dev/testing only**)
+- Docker-compose with SteVe Central System and Watchtower (**recommended for testing only**)
 - Docker-compose (client only)
 
 ## 🔌 Charge point specifications
@@ -26,22 +28,25 @@ default settings which require minimal configuration.
 
 ### 📑 Logging
 
-ChargePi uses [Graylog](https://www.graylog.org/) logging server for remote logging, so a server should be up and
-running if you want the logs to be stored (check setup [instructions](/docs/services/graylog.md)). Logs are sent through
-UDP protocol in GELF format. The library used for sending logs is [go-gelf](https://github.com/Graylog2/go-gelf).
+ChargePi supports multiple logging outputs. Configure the `logging` property in the [settings](/configs/settings.json)
+file. Check out the list below:
 
-Configure the `logServer` property in the [settings](/configs/settings.json) file with your server IP/domain name with
-the port.
+|            Logging type             | Supported |
+|:-----------------------------------:|:---------:|
+| [Graylog](https://www.graylog.org/) |     ✔     |
+|               Syslog                |     ✔     |
+|                File                 |     ✔     |
 
-## Quickstart
+For details, check out the [logging](/docs/logging/logging.md) docs.
 
-1. If you want to run SteVe on the same host:
+## ⚡ Quickstart
+
+1. If you want to run SteVe on the same host (_Not recommended in production_):
 
    ```bash
    git clone https://github.com/RWTH-i5-IDSG/steve
    ```
 
-   *_When cloning Steve from GitHub, steve directory should be automatically generated._
    Replace SteVe's default Dockerfile with Dockerfile provided [here](build/package/Steve.Dockerfile) to run on
    Raspberry Pi.
 

@@ -1,0 +1,99 @@
+version: '3'
+services:
+  traefik:
+    image: "traefik:v2.4"
+    command:
+      - "--log.level=DEBUG"
+      - "--api.insecure=false"
+      - "--api.dashboard=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker=true"
+      - "--entrypoints.http.address=:80"
+      - "--entrypoints.https.address=:443"
+      - "--entrypoints.graylog-gelf.address=:12201"
+      - "--entrypoints.graylog-syslog.address=:1514"
+      - "--entrypoints.udp-graylog-gelf.address=:12201/udp"
+      - "--entrypoints.udp-graylog-syslog.address=:1514/udp"
+    labels:
+      - "traefik.docker.network=graylog"
+      - "traefik.enable=true"
+      - "traefik.http.middlewares.auth.basicauth.usersfile=/etc/traefik/.htpasswd"
+      - "traefik.http.routers.traefik-dashboard.middlewares=auth"
+      - "traefik.http.routers.traefik-dashboard.rule=Host(`traefik.${DOMAIN_NAME}`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+      - "traefik.http.services.traefik-dashboard.loadbalancer.server.port=8080"
+      - "traefik.http.routers.traefik-dashboard.service=api@internal"
+      - "traefik.http.routers.traefik-dashboard.entrypoints=http"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "12201:12201"
+      - "12201:12201/udp"
+      - "1514:1514"
+      - "1514:1514/udp"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./.htpasswd:/etc/traefik/.htpasswd"
+  mongo:
+    image: mongo:4.4.1
+    volumes:
+      - mongo_data:/data/db
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch-oss:7.10.0
+    environment:
+      - http.host=0.0.0.0
+      - transport.host=localhost
+      - network.host=0.0.0.0
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+  graylog:
+    image: graylog/graylog:4.0.8-1
+    environment:
+      - GRAYLOG_PASSWORD_SECRET=secret
+      - GRAYLOG_ROOT_PASSWORD_SHA2=571dc059e9aac28f272adbb668914318f95f2a2e98cae34d807f54710f6da8dd
+      - "GRAYLOG_HTTP_EXTERNAL_URI=https://graylog.${DOMAIN_NAME}/"
+    volumes:
+      - graylog_data:/usr/share/graylog/data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=graylog"
+      # Add the WebUI router
+      - "traefik.http.routers.graylog-https.rule=Host(`graylog.${DOMAIN_NAME}`)"
+      - "traefik.http.routers.graylog-https.entrypoints=https"
+      - "traefik.http.routers.graylog-https.middlewares=redirect-to-admin"
+      - "traefik.http.services.graylog-https.loadbalancer.server.port=9000"
+      - "traefik.http.routers.graylog.rule=Host(`graylog.${DOMAIN_NAME}`)"
+      - "traefik.http.routers.graylog.entrypoints=http"
+      - "traefik.http.routers.graylog-https.middlewares=https-redirect"
+      - "traefik.http.middlewares.redirect-to-admin.replacepathregex.regex=^graylog.${DOMAIN_NAME}/(.*)"
+      - "traefik.http.middlewares.redirect-to-admin.replacepathregex.replacement=graylog.${DOMAIN_NAME}/api/$${1}"
+      # Add TCP routers for syslog and gelf
+      - "traefik.tcp.routers.graylog-gelf.rule=HostSNI(`graylog.${DOMAIN_NAME}`)"
+      - "traefik.tcp.routers.graylog-gelf.entrypoints=graylog-gelf"
+      - "traefik.tcp.routers.graylog-gelf.service=graylog-gelf"
+      - "traefik.tcp.services.graylog-gelf.loadbalancer.server.port=12201"
+      - "traefik.tcp.routers.graylog-syslog.rule=HostSNI(`graylog.${DOMAIN_NAME}`)"
+      - "traefik.tcp.routers.graylog-syslog.entrypoints=graylog-syslog"
+      - "traefik.tcp.services.graylog-syslog.loadbalancer.server.port=1514"
+      # Add UDP routers for syslog and gelf
+      - "traefik.udp.routers.graylog-gelf.entrypoints=udp-graylog-gelf"
+      - "traefik.udp.routers.graylog-gelf.service=graylog-gelf"
+      - "traefik.udp.services.graylog-gelf.loadbalancer.server.port=12201"
+      - "traefik.udp.routers.graylog-syslog.entrypoints=udp-graylog-syslog"
+      - "traefik.udp.routers.graylog-syslog.service=graylog-syslog"
+      - "traefik.udp.services.graylog-syslog.loadbalancer.server.port=1514"
+    restart: always
+    depends_on:
+      - mongo
+      - elasticsearch
+networks:
+  default:
+    external:
+      name: graylog
+volumes:
+  mongo_data:
+    driver: local
+  es_data:
+    driver: local
+  graylog_data:
+    driver: local

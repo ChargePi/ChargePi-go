@@ -4,12 +4,20 @@
       "id": "ChargePi",
       "protocolVersion": "1.6",
       "serverUri": "example.com",
-      "logServer": "example.com:12201",
       "maxChargingTime": 5,
       "ocpp": {
         "vendor": "UL FE",
         "model": "ChargePi"
       }
+    },
+    "logging": {
+      "type": [
+        "remote",
+        "file"
+      ],
+      "format": "gelf",
+      "host": "logging.example.com",
+      "port": 12201
     },
     "tls": {
       "isEnabled": false,
