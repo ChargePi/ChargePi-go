@@ -47,7 +47,7 @@ For details, check out the [logging](/docs/logging/logging.md) docs.
    git clone https://github.com/RWTH-i5-IDSG/steve
    ```
 
-   Replace SteVe's default Dockerfile with Dockerfile provided [here](build/package/Steve.Dockerfile) to run on
+   Replace SteVe's default Dockerfile with Dockerfile provided [here](build/SteVe/Steve.Dockerfile) to run on
    Raspberry Pi.
 
 2. Wire your hardware according to the provided [schematics](/docs/hardware/hardware.md).

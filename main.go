@@ -2,102 +2,76 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	goCache "github.com/patrickmn/go-cache"
+	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/chargepoint/v16"
-	"github.com/xBlaz3kx/ChargePi-go/components/cache"
-	"github.com/xBlaz3kx/ChargePi-go/components/hardware/display"
-	"github.com/xBlaz3kx/ChargePi-go/components/hardware/reader"
-	"github.com/xBlaz3kx/ChargePi-go/components/settings/conf-manager"
-	"github.com/xBlaz3kx/ChargePi-go/components/settings/logging"
-	"github.com/xBlaz3kx/ChargePi-go/components/settings/settings-manager"
-	"github.com/xBlaz3kx/ChargePi-go/data/auth"
-	"github.com/xBlaz3kx/ChargePi-go/data/settings"
+	"github.com/spf13/cobra"
+	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint"
+	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/v16"
+	"github.com/xBlaz3kx/ChargePi-go/internal/components/auth"
+	connectorManager "github.com/xBlaz3kx/ChargePi-go/internal/components/connector-manager"
+	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware/display"
+	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware/reader"
+	s "github.com/xBlaz3kx/ChargePi-go/internal/components/settings"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/cache"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/logging"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/scheduler"
+	"github.com/xBlaz3kx/ocppManager-go/configuration"
 	"os"
 	"os/signal"
 	"strings"
-	"sync"
 	"syscall"
 )
 
-var once = sync.Once{}
+const (
+	debugFlag = "debug"
+)
 
-func getFlags() {
-	once.Do(func() {
-		var (
-			workingDirectory, _ = os.Getwd()
-			configurationPath   = fmt.Sprintf("%s/configs", workingDirectory)
+var (
+	configurationFilePath string
+	connectorsFolderPath  string
+	settingsFilePath      string
+	authFilePath          string
 
-			// Get the paths from arguments
-			configurationFileFormatFlag = flag.String("config-format", "json", "Format of the configuration files (YAML, JSON or TOML)")
-			configurationFileFormat     = strings.ToLower(*configurationFileFormatFlag)
-			configurationFolderPath     = flag.String("config-folder", configurationPath, "Path to the configuration folder")
-			connectorsFolderPath        = flag.String("connector-folder", fmt.Sprintf("%s/%s", configurationPath, "connectors"), "Path to the connector folder")
-			configurationFilePath       = flag.String("ocpp-config", fmt.Sprintf("%s/%s.%s", configurationPath, "configuration", configurationFileFormat), "Path to the OCPP configuration file")
-			settingsFilePath            = flag.String("settings", fmt.Sprintf("%s/%s.%s", configurationPath, "settings", configurationFileFormat), "Path to the settings file")
-			authFilePath                = flag.String("auth", fmt.Sprintf("%s/%s.%s", configurationPath, "auth", configurationFileFormat), "Path to the authorization persistence file")
-			isDebug                     = flag.Bool("d", false, "Debug mode")
-		)
+	isDebug = false
 
-		flag.Parse()
+	rootCmd = &cobra.Command{
+		Use:   "chargepi",
+		Short: "ChargePi is an open-source OCPP client.",
+		Long:  ``,
+		Run:   run,
+	}
+)
 
-		log.Println(isDebug)
-		// Put the paths in the mem
-		cache.Cache.Set("configurationFolderPath", *configurationFolderPath, goCache.NoExpiration)
-		cache.Cache.Set("connectorsFolderPath", *connectorsFolderPath, goCache.NoExpiration)
-		cache.Cache.Set("configurationFilePath", *configurationFilePath, goCache.NoExpiration)
-		cache.Cache.Set("settingsFilePath", *settingsFilePath, goCache.NoExpiration)
-		cache.Cache.Set("authFilePath", *authFilePath, goCache.NoExpiration)
-	})
-}
-
-func readSettings() {
-	// Read settings from files
-	settings_manager.GetSettings()
-	go conf_manager.InitConfiguration()
-	go auth.LoadAuthFile()
-}
-
-func main() {
+func run(cmd *cobra.Command, args []string) {
 	var (
+		handler     chargepoint.ChargePoint
 		config      *settings.Settings
 		tagReader   reader.Reader
 		lcd         display.LCD
+		mem         = cache.GetCache()
+		authCache   = auth.NewAuthCache(authFilePath)
 		err         error
-		handler     *v16.ChargePointHandler
 		quitChannel = make(chan os.Signal, 1)
 		ctx, cancel = context.WithCancel(context.Background())
 	)
 	signal.Notify(quitChannel, syscall.SIGINT, syscall.SIGTERM)
 
-	// Read flags and settings file
-	getFlags()
-	readSettings()
-
-	cacheSettings, isFound := cache.Cache.Get("settings")
-	if !isFound {
-		log.Fatalf("Settings not found")
-	}
-	config = cacheSettings.(*settings.Settings)
+	// Read settings file and cache it
+	config = s.GetSettings(mem, settingsFilePath)
+	go authCache.LoadAuthFile(authFilePath)
 
 	var (
 		chargePointInfo = config.ChargePoint.Info
 		hardware        = config.ChargePoint.Hardware
-		isDebug         = false
+		serverUrl       = fmt.Sprintf("ws://%s", chargePointInfo.ServerUri)
+		protocolVersion = settings.ProtocolVersion(chargePointInfo.ProtocolVersion)
 	)
 
-	// Check if the service is run in production or debug mode.
-	flag.Visit(func(f *flag.Flag) {
-		if f.Name == "d" {
-			isDebug = f.Value.String() == "true"
-		}
-	})
-
 	// Create the logger
-	logging.SetupLogs(config.ChargePoint.Logging, isDebug)
+	logging.Setup(config.ChargePoint.Logging, isDebug)
 
 	// Create hardware components based on settings
 	tagReader, err = reader.NewTagReader(hardware.TagReader)
@@ -110,21 +84,73 @@ func main() {
 		go lcd.ListenForMessages(ctx)
 	}
 
-	switch settings.ProtocolVersion(chargePointInfo.ProtocolVersion) {
+	if config.ChargePoint.TLS.IsEnabled {
+		// Replace insecure Websockets
+		serverUrl = strings.Replace(serverUrl, "ws", "wss", 1)
+	}
+
+	// Setup OCPP configuration manager
+	s.SetupOcppConfigurationManager(
+		configurationFilePath,
+		configuration.ProtocolVersion(config.ChargePoint.Info.ProtocolVersion),
+		core.ProfileName,
+		reservation.ProfileName)
+
+	switch protocolVersion {
 	case settings.OCPP16:
-		// Create the client & listen to incoming requests from the Central System
-		handler = v16.NewChargePoint(tagReader, lcd)
-		handler.Run(ctx, config)
+		// Create the client
+		handler = v16.NewChargePoint(tagReader, lcd, connectorManager.GetManager(), scheduler.GetScheduler(), authCache)
 		break
 	case settings.OCPP201:
 		log.Fatal("Version 2.0.1 is not supported yet.")
 	default:
-		log.WithField("protocolVersion", chargePointInfo.ProtocolVersion).Fatal("Protocol version not supported")
+		log.WithField("protocolVersion", protocolVersion).Fatal("Protocol version not supported")
 	}
 
-	// Capture terminate signal
-	<-quitChannel
-	handler.CleanUp(core.ReasonPowerLoss)
-	cancel()
-	fmt.Println("Exiting...")
+	// Initialize and connect to the Central System
+	handler.Init(ctx, config)
+
+	// Add connectors
+	connectors := s.GetConnectors(mem, connectorsFolderPath)
+	handler.AddConnectors(connectors)
+
+	// Finally, connect to the central system
+	handler.Connect(ctx, serverUrl)
+
+Loop:
+	for {
+		select {
+		// Capture the terminate signal
+		case <-quitChannel:
+			handler.CleanUp(core.ReasonLocal)
+			cancel()
+			break Loop
+		case <-ctx.Done():
+			handler.CleanUp(core.ReasonPowerLoss)
+			cancel()
+			break Loop
+		}
+	}
+}
+
+func main() {
+	var (
+		workingDirectory, _     = os.Getwd()
+		defaultConfigFileName   = fmt.Sprintf("%s/configs/configuration.%s", workingDirectory, "json")
+		defaultSettingsFileName = fmt.Sprintf("%s/configs/settings.%s", workingDirectory, "json")
+		connectorsFolderName    = fmt.Sprintf("%s/configs/connectors", workingDirectory)
+		defaultAuthFileName     = fmt.Sprintf("%s/configs/auth.%s", workingDirectory, "json")
+	)
+
+	// Set flags
+	rootCmd.PersistentFlags().StringVar(&settingsFilePath, "settings", defaultSettingsFileName, "config file path")
+	rootCmd.PersistentFlags().StringVar(&connectorsFolderPath, "connector-folder", connectorsFolderName, "connector folder path")
+	rootCmd.PersistentFlags().StringVar(&configurationFilePath, "ocpp-config", defaultConfigFileName, "OCPP config file path")
+	rootCmd.PersistentFlags().StringVar(&authFilePath, "auth", defaultAuthFileName, "authorization file path")
+	rootCmd.PersistentFlags().BoolVarP(&isDebug, debugFlag, "d", false, "debug mode")
+
+	err := rootCmd.Execute()
+	if err != nil {
+		log.WithError(err).Fatal("Unable to run")
+	}
 }
