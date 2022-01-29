@@ -2,6 +2,7 @@ package settings
 
 import (
 	"github.com/stretchr/testify/assert"
+	"os/exec"
 	"testing"
 )
 
@@ -27,4 +28,8 @@ func TestWriteToFile(t *testing.T) {
 	err = WriteToFile("test123.o", &Test123)
 	require.Error(err)
 	require.NoFileExists("test123.o")
+
+	// Clean up
+	cmd := exec.Command("rm", "test123.*")
+	err = cmd.Run()
 }

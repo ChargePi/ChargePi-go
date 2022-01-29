@@ -80,7 +80,7 @@ func (cp *ChargePoint) stopChargingConnector(connector connector.Connector, reas
 		logInfo.Infof("Stopped charging at %s", time.Now())
 	}
 
-	return sendRequest(cp.chargePoint, request, callback)
+	return util.SendRequest(cp.chargePoint, request, callback)
 }
 
 // stopChargingConnectorWithTagId Search for a ConnectorImpl that contains the tagId and stop the charging.

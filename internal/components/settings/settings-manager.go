@@ -99,7 +99,7 @@ func loadConnectorFromPath(cache *goCache.Cache, name, path string) (*settings.C
 	return &connector, nil
 }
 
-// GetConnectors Scan the connectors folder and read all the connectors' settings.
+// GetConnectors Scan the connectors folder, read all the connectors' settings and cache the settings.
 func GetConnectors(cache *goCache.Cache, connectorsFolderPath string) []*settings.Connector {
 	var (
 		connectors []*settings.Connector

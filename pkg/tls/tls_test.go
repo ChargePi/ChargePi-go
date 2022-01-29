@@ -18,7 +18,7 @@ func Test_getTLSClient(t *testing.T) {
 		require = require.New(t)
 	)
 
-	cmd := exec.Command("sh", "../../test/create-test-certs.sh")
+	cmd := exec.Command("/bin/sh", "../../test/create-test-certs.sh")
 	err := cmd.Run()
 	require.NoError(err)
 

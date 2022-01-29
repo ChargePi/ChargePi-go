@@ -30,7 +30,7 @@ const (
 )
 
 // Setup set up all logs
-func Setup(loggingConfig settings.Logging, isDebug bool) {
+func Setup(logger *log.Logger, loggingConfig settings.Logging, isDebug bool) {
 	var (
 		// Default (production) logging settings
 		logLevel                = log.WarnLevel
@@ -42,16 +42,16 @@ func Setup(loggingConfig settings.Logging, isDebug bool) {
 		logLevel = log.DebugLevel
 	}
 
-	log.SetFormatter(formatter)
-	log.SetLevel(logLevel)
+	logger.SetFormatter(formatter)
+	logger.SetLevel(logLevel)
 
 	for _, logType := range loggingConfig.Type {
 		switch LogType(logType) {
 		case FileLogging:
-			fileLogging(isDebug, logFilePath)
+			fileLogging(logger, isDebug, logFilePath)
 			break
 		case RemoteLogging:
-			remoteLogging(loggingConfig.Host, loggingConfig.Port, logFormat)
+			remoteLogging(logger, loggingConfig.Host, loggingConfig.Port, logFormat)
 			break
 		case ConsoleLogging:
 			break
@@ -60,33 +60,40 @@ func Setup(loggingConfig settings.Logging, isDebug bool) {
 }
 
 // remoteLogging sends logs remotely to Graylog or any Syslog receiver.
-func remoteLogging(host string, port int, format LogFormat) {
-	var address = fmt.Sprintf("%s:%d", host, port)
+func remoteLogging(logger *log.Logger, host string, port int, format LogFormat) {
+	var (
+		address = fmt.Sprintf("%s:%d", host, port)
+		hook    log.Hook
+		err     error
+	)
 
 	switch format {
 	case Gelf:
-		hook := graylog.NewAsyncGraylogHook(address, map[string]interface{}{})
-		defer hook.Flush()
-		log.AddHook(hook)
+		graylogHook := graylog.NewAsyncGraylogHook(address, map[string]interface{}{})
+		defer graylogHook.Flush()
+		hook = graylogHook
 		break
 	case Json:
 		break
 	case Syslog:
-		hook, err := lSyslog.NewSyslogHook(
+		hook, err = lSyslog.NewSyslogHook(
 			"tcp",
 			address,
 			syslog.LOG_WARNING,
 			"chargePi",
 		)
-		if err == nil {
-			log.AddHook(hook)
-		}
 		break
+	default:
+		return
+	}
+
+	if err == nil {
+		logger.AddHook(hook)
 	}
 }
 
 // fileLogging sets up the logging to file.
-func fileLogging(isDebug bool, path string) {
+func fileLogging(logger *log.Logger, isDebug bool, path string) {
 	writer, err := rotatelogs.New(
 		path+".%Y%m%d%H%M",
 		rotatelogs.WithLinkName(path),
@@ -110,5 +117,5 @@ func fileLogging(isDebug bool, path string) {
 		&log.JSONFormatter{},
 	)
 
-	log.AddHook(hook)
+	logger.AddHook(hook)
 }

@@ -83,8 +83,8 @@ func (cp *ChargePoint) notifyConnectorStatus(connector connector2.Connector) {
 		log.Infof("Notified status of the connector %d: %s", connectorId, status)
 	}
 
-	err := sendRequest(cp.chargePoint, request, callback)
-	handleRequestErr(err, "Cannot send status of connector")
+	err := util.SendRequest(cp.chargePoint, request, callback)
+	util.HandleRequestErr(err, "Cannot send status of connector")
 }
 
 // ListenForConnectorStatusChange listen for change in connector and notify the central system about the state

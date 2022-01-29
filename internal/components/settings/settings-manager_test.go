@@ -6,24 +6,28 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/suite"
-	settings2 "github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
+	settingsData "github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 	cache2 "github.com/xBlaz3kx/ChargePi-go/pkg/cache"
 	"os/exec"
 	"testing"
 	"time"
 )
 
+const (
+	fileName = "connector-1.json"
+)
+
 type SettingsManagerTestSuite struct {
 	suite.Suite
-	connector  settings2.Connector
-	session    settings2.Session
-	relay      settings2.Relay
-	powerMeter settings2.PowerMeter
+	connector  settingsData.Connector
+	session    settingsData.Session
+	relay      settingsData.Relay
+	powerMeter settingsData.PowerMeter
 }
 
 func (s *SettingsManagerTestSuite) SetupTest() {
 	cache2.Cache = cache.New(time.Minute*10, time.Minute*10)
-	s.session = settings2.Session{
+	s.session = settingsData.Session{
 		IsActive:      false,
 		TransactionId: "",
 		TagId:         "",
@@ -31,12 +35,12 @@ func (s *SettingsManagerTestSuite) SetupTest() {
 		Consumption:   nil,
 	}
 
-	s.relay = settings2.Relay{
+	s.relay = settingsData.Relay{
 		RelayPin:     1,
 		InverseLogic: false,
 	}
 
-	s.powerMeter = settings2.PowerMeter{
+	s.powerMeter = settingsData.PowerMeter{
 		Enabled:              false,
 		Type:                 "",
 		PowerMeterPin:        0,
@@ -46,7 +50,7 @@ func (s *SettingsManagerTestSuite) SetupTest() {
 		VoltageDividerOffset: 0,
 	}
 
-	s.connector = settings2.Connector{
+	s.connector = settingsData.Connector{
 		EvseId:      1,
 		ConnectorId: 1,
 		Type:        "Schuko",
@@ -61,14 +65,14 @@ func (s *SettingsManagerTestSuite) SetupTest() {
 		cacheConnectorKey = fmt.Sprintf("connectorEvse%dId%dConfiguration", s.connector.EvseId, s.connector.ConnectorId)
 	)
 
-	cache2.Cache.Set(cachePathKey, "./connector-1.json", cache.DefaultExpiration)
+	cache2.Cache.Set(cachePathKey, "./"+fileName, cache.DefaultExpiration)
 	cache2.Cache.Set(cacheConnectorKey, &s.connector, cache.DefaultExpiration)
 }
 
 func (s *SettingsManagerTestSuite) TestUpdateSessionInfo() {
 	var (
-		connectorFromFile settings2.Connector
-		newSession        = settings2.Session{
+		connectorFromFile settingsData.Connector
+		newSession        = settingsData.Session{
 			IsActive:      true,
 			TransactionId: "Transaction1234",
 			TagId:         "Tag1234",
@@ -79,28 +83,36 @@ func (s *SettingsManagerTestSuite) TestUpdateSessionInfo() {
 
 	UpdateConnectorSessionInfo(s.connector.EvseId, s.connector.ConnectorId, &newSession)
 
-	err := fig.Load(&connectorFromFile, fig.File("connector-1.json"))
-	s.Require().FileExists("./connector-1.json")
+	err := fig.Load(&connectorFromFile, fig.File(fileName))
+	s.Require().FileExists("./" + fileName)
 	s.Require().NoError(err)
 	s.Require().EqualValues(newSession, connectorFromFile.Session)
 
 	// Clean up
-	exec.Command("rm connector-1.json")
+	cmd := exec.Command("rm", fileName)
+	err = cmd.Run()
+	s.Require().NoError(err)
 }
 
 func (s *SettingsManagerTestSuite) TestUpdateConnectorStatus() {
-	var connectorFromFile settings2.Connector
+	cmd := exec.Command("touch", fileName)
+	err := cmd.Run()
+	s.Require().NoError(err)
+
+	var connectorFromFile settingsData.Connector
 
 	UpdateConnectorStatus(s.connector.EvseId, s.connector.ConnectorId, core.ChargePointStatusCharging)
 
-	err := fig.Load(&connectorFromFile, fig.File("connector-1.json"), fig.Dirs("."))
+	err = fig.Load(&connectorFromFile, fig.File(fileName), fig.Dirs("."))
 	s.Require().FileExists("./connector-1.json")
 	s.Require().NoError(err)
 
 	s.Require().EqualValues(core.ChargePointStatusCharging, connectorFromFile.Status)
 
-	// Delete the unnecessary file
-	exec.Command("rm connector-1.json")
+	// Clean up
+	cmd = exec.Command("rm", fileName)
+	err = cmd.Run()
+	s.Require().NoError(err)
 }
 
 func TestSettingsManager(t *testing.T) {

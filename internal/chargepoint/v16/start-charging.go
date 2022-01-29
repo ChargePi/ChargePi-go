@@ -57,32 +57,29 @@ func (cp *ChargePoint) startChargingConnector(connector connector.Connector, tag
 
 	callback := func(confirmation ocpp.Response, protoError error) {
 		if protoError != nil {
+			logInfo.WithError(protoError).Errorf("Server responded with error when starting a transaction")
 			return
 		}
 
 		startTransactionConf := confirmation.(*core.StartTransactionConfirmation)
 
 		switch startTransactionConf.IdTagInfo.Status {
-		case types.AuthorizationStatusAccepted:
-			if startTransactionConf.TransactionId > 0 {
-				err := connector.StartCharging(strconv.Itoa(startTransactionConf.TransactionId), tagId)
-				if err != nil {
-					logInfo.WithError(err).Errorf("Unable to start charging connector")
-					return
-				}
-
-				logInfo.Infof("Started charging connector at %s", time.Now())
-
-				// Schedule timer to stop the transaction at the time limit
-				_, err = cp.scheduler.Every(connector.GetMaxChargingTime()).Minutes().LimitRunsTo(1).
-					Tag(fmt.Sprintf("connector%dTimer", connector.GetConnectorId())).Do(cp.stopChargingConnector, connector, core.ReasonOther)
-				if err != nil {
-					logInfo.WithError(err).Errorf("Cannot schedule stop charging")
-				}
+		case types.AuthorizationStatusAccepted, types.AuthorizationStatusConcurrentTx:
+			// Attempt to start charging
+			err := connector.StartCharging(strconv.Itoa(startTransactionConf.TransactionId), tagId)
+			if err != nil {
+				logInfo.WithError(err).Errorf("Unable to start charging connector")
+				return
 			}
-			break
-		case types.AuthorizationStatusConcurrentTx:
-			// todo figure out what to do here exactly
+
+			logInfo.Infof("Started charging connector at %s", time.Now())
+
+			// Schedule timer to stop the transaction at the time limit
+			_, err = cp.scheduler.Every(connector.GetMaxChargingTime()).Minutes().LimitRunsTo(1).
+				Tag(fmt.Sprintf("connector%dTimer", connector.GetConnectorId())).Do(cp.stopChargingConnector, connector, core.ReasonOther)
+			if err != nil {
+				logInfo.WithError(err).Errorf("Cannot schedule stop charging")
+			}
 			break
 		case types.AuthorizationStatusBlocked, types.AuthorizationStatusInvalid, types.AuthorizationStatusExpired:
 			fallthrough
@@ -91,5 +88,5 @@ func (cp *ChargePoint) startChargingConnector(connector connector.Connector, tag
 		}
 	}
 
-	return sendRequest(cp.chargePoint, request, callback)
+	return util.SendRequest(cp.chargePoint, request, callback)
 }

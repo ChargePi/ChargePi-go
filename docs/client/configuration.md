@@ -98,7 +98,7 @@ Example settings:
 ## 🔌 The `connector` file(s) - EVSEs and connectors
 
 EVSE and connector settings file scan be found in the `connectors` folder. To add and configure the connector, simply
-add a new file that contains the structure, defined in [attributes](#attributes) and modify it to your specs. The client
+add a new file that contains the structure, defined in [attributes](#Attributes) and modify it to your specs. The client
 will scan the folder at boot and configure the connectors from the files if all the settings have valid values.
 
 Note: A Charge point can have multiple EVSEs, each oh which can have multiple connectors, but only one connector of the

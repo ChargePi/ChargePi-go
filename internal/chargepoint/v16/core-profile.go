@@ -19,6 +19,7 @@ func (cp *ChargePoint) OnChangeAvailability(request *core.ChangeAvailabilityRequ
 	}
 
 	if request.ConnectorId == 0 {
+		// todo check if there are ongoing transactions
 		cp.availability = request.Type
 		response = core.AvailabilityStatusAccepted
 	} else {
@@ -30,9 +31,6 @@ func (cp *ChargePoint) OnChangeAvailability(request *core.ChangeAvailabilityRequ
 
 func (cp *ChargePoint) OnChangeConfiguration(request *core.ChangeConfigurationRequest) (confirmation *core.ChangeConfigurationConfirmation, err error) {
 	var response = core.ConfigurationStatusRejected
-	if err != nil {
-		return core.NewChangeConfigurationConfirmation(response), nil
-	}
 
 	log.Infof("Received request %s", request.GetFeatureName())
 
@@ -57,10 +55,6 @@ func (cp *ChargePoint) OnClearCache(request *core.ClearCacheRequest) (confirmati
 		authCacheEnabled, confErr = ocppManager.GetConfigurationValue(v16.AuthorizationCacheEnabled.String())
 	)
 
-	if err != nil {
-		return core.NewClearCacheConfirmation(response), nil
-	}
-
 	if confErr != nil || authCacheEnabled == "false" {
 		log.WithError(confErr).Errorf("Cannot clear cache")
 		return core.NewClearCacheConfirmation(response), nil
@@ -78,18 +72,11 @@ func (cp *ChargePoint) OnDataTransfer(request *core.DataTransferRequest) (confir
 	log.Infof("Received request %s", request.GetFeatureName())
 	var response = core.DataTransferStatusRejected
 
-	if err != nil {
-		return core.NewDataTransferConfirmation(response), nil
-	}
-
 	return core.NewDataTransferConfirmation(response), nil
 }
 
 func (cp *ChargePoint) OnGetConfiguration(request *core.GetConfigurationRequest) (confirmation *core.GetConfigurationConfirmation, err error) {
 	log.Infof("Received request %s", request.GetFeatureName())
-	if err != nil {
-		return
-	}
 
 	var (
 		unknownKeys            []string
@@ -117,9 +104,6 @@ func (cp *ChargePoint) OnGetConfiguration(request *core.GetConfigurationRequest)
 func (cp *ChargePoint) OnReset(request *core.ResetRequest) (confirmation *core.ResetConfirmation, err error) {
 	log.Infof("Received request %s", request.GetFeatureName())
 	var response = core.ResetStatusRejected
-	if err != nil {
-		return core.NewResetConfirmation(response), nil
-	}
 
 	switch request.Type {
 	case core.ResetTypeHard:
@@ -144,9 +128,6 @@ func (cp *ChargePoint) OnReset(request *core.ResetRequest) (confirmation *core.R
 
 func (cp *ChargePoint) OnUnlockConnector(request *core.UnlockConnectorRequest) (confirmation *core.UnlockConnectorConfirmation, err error) {
 	log.Infof("Received request %s", request.GetFeatureName())
-	if err != nil {
-		return nil, err
-	}
 
 	var (
 		response = core.UnlockStatusNotSupported
@@ -169,9 +150,6 @@ func (cp *ChargePoint) OnUnlockConnector(request *core.UnlockConnectorRequest) (
 
 func (cp *ChargePoint) OnRemoteStopTransaction(request *core.RemoteStopTransactionRequest) (confirmation *core.RemoteStopTransactionConfirmation, err error) {
 	log.WithField("transactionId", request.TransactionId).Infof("Received request %s", request.GetFeatureName())
-	if err != nil {
-		return nil, err
-	}
 
 	var (
 		response      = types.RemoteStartStopStatusRejected
@@ -192,9 +170,6 @@ func (cp *ChargePoint) OnRemoteStopTransaction(request *core.RemoteStopTransacti
 }
 
 func (cp *ChargePoint) OnRemoteStartTransaction(request *core.RemoteStartTransactionRequest) (confirmation *core.RemoteStartTransactionConfirmation, err error) {
-	if err != nil {
-		return nil, err
-	}
 
 	var (
 		logInfo = log.WithFields(log.Fields{

@@ -6,10 +6,11 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/reactivex/rxgo/v2"
 	"github.com/stretchr/testify/mock"
-	"github.com/xBlaz3kx/ChargePi-go/components/connector"
-	"github.com/xBlaz3kx/ChargePi-go/components/hardware/display"
-	powerMeter "github.com/xBlaz3kx/ChargePi-go/components/hardware/power-meter"
-	"github.com/xBlaz3kx/ChargePi-go/data/session"
+	"github.com/xBlaz3kx/ChargePi-go/internal/components/connector"
+	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware/display"
+	powerMeter "github.com/xBlaz3kx/ChargePi-go/internal/components/hardware/power-meter"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models/session"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 )
 
 type (
@@ -29,7 +30,67 @@ type (
 		mock.Mock
 		connector.Connector
 	}
+
+	managerMock struct {
+		mock.Mock
+	}
 )
+
+func (o *managerMock) GetConnectors() []connector.Connector {
+	return o.Called().Get(0).([]connector.Connector)
+}
+
+func (o *managerMock) FindConnector(evseId, connectorID int) connector.Connector {
+	return o.Called(evseId, connectorID).Get(0).(connector.Connector)
+}
+
+func (o *managerMock) FindAvailableConnector() connector.Connector {
+	return o.Called().Get(0).(connector.Connector)
+}
+
+func (o *managerMock) FindConnectorWithTagId(tagId string) connector.Connector {
+	return o.Called(tagId).Get(0).(connector.Connector)
+}
+
+func (o *managerMock) FindConnectorWithTransactionId(transactionId string) connector.Connector {
+	return o.Called(transactionId).Get(0).(connector.Connector)
+}
+
+func (o *managerMock) FindConnectorWithReservationId(reservationId int) connector.Connector {
+	return o.Called(reservationId).Get(0).(connector.Connector)
+}
+
+func (o *managerMock) StartChargingConnector(evseId, connectorID int, tagId, transactionId string) error {
+	return o.Called(evseId, connectorID, tagId, transactionId).Error(0)
+}
+
+func (o *managerMock) StopChargingConnector(tagId, transactionId string, reason core.Reason) error {
+	return o.Called(tagId, transactionId).Error(0)
+}
+
+func (o *managerMock) StopAllConnectors(reason core.Reason) error {
+	return o.Called().Error(0)
+}
+
+func (o *managerMock) AddConnector(c connector.Connector) error {
+	return o.Called(c).Error(0)
+}
+
+func (o *managerMock) AddConnectorFromSettings(maxChargingTime int, c *settings.Connector) error {
+	return o.Called(c).Error(0)
+}
+
+func (o *managerMock) AddConnectorsFromConfiguration(maxChargingTime int, c []*settings.Connector) error {
+	return o.Called(c).Error(0)
+}
+
+func (o *managerMock) RestoreConnectorStatus(s *settings.Connector) error {
+	return o.Called(s).Error(0)
+}
+
+func (o *managerMock) SetNotificationChannel(notificationChannel chan rxgo.Item) {
+	o.Called()
+}
 
 /*------------------ CentralSystem mock ------------------*/
 

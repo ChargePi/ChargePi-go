@@ -2,16 +2,9 @@ package v16
 
 import (
 	"context"
-	"fmt"
 	"github.com/go-co-op/gocron"
 	ocpp16 "github.com/lorenzodonini/ocpp-go/ocpp1.6"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/firmware"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/localauth"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/remotetrigger"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/smartcharging"
-	"github.com/lorenzodonini/ocpp-go/ws"
 	"github.com/reactivex/rxgo/v2"
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint"
@@ -22,12 +15,7 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware/indicator"
 	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware/reader"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/tls"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/util"
-	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
-	v16 "github.com/xBlaz3kx/ocppManager-go/v16"
-	"strings"
-	"time"
 )
 
 type (
@@ -71,23 +59,6 @@ func NewChargePoint(tagReader reader.Reader, lcd display.LCD, manager connectorM
 	}
 }
 
-// createClientConfiguration creates default configuration for websocket client
-func createClientConfiguration() ws.ClientTimeoutConfig {
-	var (
-		clientConfig      = ws.NewClientTimeoutConfig()
-		pingInterval, err = ocppConfigManager.GetConfigurationValue(v16.WebSocketPingInterval.String())
-	)
-
-	if err == nil {
-		duration, err := time.ParseDuration(fmt.Sprintf("%ss", pingInterval))
-		if err == nil {
-			clientConfig.PingPeriod = duration
-		}
-	}
-
-	return clientConfig
-}
-
 // Init initializes the charge point based on the settings and listens to the Reader.
 func (cp *ChargePoint) Init(ctx context.Context, settings *settings.Settings) {
 	if settings == nil {
@@ -97,52 +68,19 @@ func (cp *ChargePoint) Init(ctx context.Context, settings *settings.Settings) {
 	cp.Settings = settings
 
 	var (
-		client    ws.WsClient = ws.NewClient()
-		info                  = settings.ChargePoint.Info
-		tlsConfig             = settings.ChargePoint.TLS
-		logInfo               = log.WithFields(log.Fields{
+		info      = settings.ChargePoint.Info
+		tlsConfig = settings.ChargePoint.TLS
+		wsClient  = createClient(tlsConfig)
+		logInfo   = log.WithFields(log.Fields{
 			"chargePointId": info.Id,
 		})
 	)
 
-	// Check if the client has TLS
-	if tlsConfig.IsEnabled {
-		client = tls.GetTLSClient(tlsConfig.CACertificatePath, tlsConfig.ClientCertificatePath, tlsConfig.ClientKeyPath)
-	}
-
-	client.SetTimeoutConfig(createClientConfiguration())
-
 	logInfo.Debug("Creating charge point")
-	cp.chargePoint = ocpp16.NewChargePoint(info.Id, nil, client)
+	cp.chargePoint = ocpp16.NewChargePoint(info.Id, nil, wsClient)
 
-	// Set handlers based on configuration
-	profiles, err := ocppConfigManager.GetConfigurationValue(v16.SupportedFeatureProfiles.String())
-	if err != nil {
-		log.WithError(err).Fatalf("No supported profiles specified")
-	}
-
-	for _, profile := range strings.Split(profiles, " ,") {
-		switch strings.ToLower(profile) {
-		case core.ProfileName:
-			cp.chargePoint.SetCoreHandler(cp)
-			break
-		case reservation.ProfileName:
-			cp.chargePoint.SetReservationHandler(cp)
-			break
-		case smartcharging.ProfileName:
-			//cp.chargePoint.SetSmartChargingHandler(cp)
-			break
-		case localauth.ProfileName:
-			//cp.chargePoint.SetLocalAuthListHandler(cp)
-			break
-		case remotetrigger.ProfileName:
-			cp.chargePoint.SetRemoteTriggerHandler(cp)
-			break
-		case firmware.ProfileName:
-			//cp.chargePoint.SetFirmwareManagementHandler(cp)
-			break
-		}
-	}
+	// Set charging profiles
+	setProfilesFromConfig(cp.chargePoint, cp, cp, cp)
 
 	cp.setMaxCachedTags()
 

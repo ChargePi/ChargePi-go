@@ -27,6 +27,7 @@ import (
 
 const (
 	debugFlag = "debug"
+	apiFlag   = "api"
 )
 
 var (
@@ -35,7 +36,8 @@ var (
 	settingsFilePath      string
 	authFilePath          string
 
-	isDebug = false
+	isDebug   = false
+	exposeApi = false
 
 	rootCmd = &cobra.Command{
 		Use:   "chargepi",
@@ -71,7 +73,7 @@ func run(cmd *cobra.Command, args []string) {
 	)
 
 	// Create the logger
-	logging.Setup(config.ChargePoint.Logging, isDebug)
+	logging.Setup(log.StandardLogger(), config.ChargePoint.Logging, isDebug)
 
 	// Create hardware components based on settings
 	tagReader, err = reader.NewTagReader(hardware.TagReader)
@@ -107,7 +109,7 @@ func run(cmd *cobra.Command, args []string) {
 		log.WithField("protocolVersion", protocolVersion).Fatal("Protocol version not supported")
 	}
 
-	// Initialize and connect to the Central System
+	// Initialize the Central System
 	handler.Init(ctx, config)
 
 	// Add connectors
@@ -148,6 +150,7 @@ func main() {
 	rootCmd.PersistentFlags().StringVar(&configurationFilePath, "ocpp-config", defaultConfigFileName, "OCPP config file path")
 	rootCmd.PersistentFlags().StringVar(&authFilePath, "auth", defaultAuthFileName, "authorization file path")
 	rootCmd.PersistentFlags().BoolVarP(&isDebug, debugFlag, "d", false, "debug mode")
+	rootCmd.PersistentFlags().BoolVarP(&exposeApi, apiFlag, "a", false, "expose API")
 
 	err := rootCmd.Execute()
 	if err != nil {

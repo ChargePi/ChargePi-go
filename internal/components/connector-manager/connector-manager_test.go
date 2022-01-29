@@ -157,7 +157,7 @@ func CreateNewConnectorMock(evseId, connectorId int, session session.Session) *c
 	connector1.On("IsReserved").Return(false)
 	connector1.On("IsUnavailable").Return(false)
 	connector1.On("GetMaxChargingTime").Return(15)
-	connector1.On("SetNotificationChannel").Return()
+	connector1.On("SetNotificationChannel", mock.Anything).Return()
 	return connector1
 }
 
@@ -236,7 +236,7 @@ func (suite *connectorManagerTestSuite) TestStartChargingConnector() {
 	newConn := new(connectorMock)
 	newConn.On("GetEvseId").Return(1)
 	newConn.On("GetConnectorId").Return(4)
-	newConn.On("SetNotificationChannel").Return()
+	newConn.On("SetNotificationChannel", mock.Anything).Return()
 	err = suite.connectorManager.AddConnector(newConn)
 	suite.Require().NoError(err)
 
