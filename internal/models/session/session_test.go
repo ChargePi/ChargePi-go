@@ -36,13 +36,13 @@ func (s *SessionTestSuite) TestAddSampledValue() {
 		samples = []types.SampledValue{
 			{
 				Value:     "123.21",
-				Measurand: types.MeasurandCurrentExport,
+				Measurand: types.MeasurandCurrentImport,
 			}, {
 				Value:     "123.21",
 				Measurand: types.MeasurandVoltage,
 			}, {
 				Value:     "123.21",
-				Measurand: types.MeasurandPowerActiveExport,
+				Measurand: types.MeasurandPowerActiveImport,
 			},
 		}
 
@@ -115,7 +115,7 @@ func (s *SessionTestSuite) TestCalculateAvgPower() {
 			SampledValue: []types.SampledValue{
 				{
 					Value:     "10",
-					Measurand: types.MeasurandPowerActiveExport,
+					Measurand: types.MeasurandPowerActiveImport,
 				},
 			},
 		}
@@ -131,7 +131,7 @@ func (s *SessionTestSuite) TestCalculateAvgPower() {
 				SampledValue: []types.SampledValue{
 					{
 						Value:     "2",
-						Measurand: types.MeasurandCurrentExport,
+						Measurand: types.MeasurandCurrentImport,
 					}, {
 						Value:     "15",
 						Measurand: types.MeasurandVoltage,
@@ -147,7 +147,7 @@ func (s *SessionTestSuite) TestCalculateAvgPower() {
 				SampledValue: []types.SampledValue{
 					{
 						Value:     "2",
-						Measurand: types.MeasurandCurrentExport,
+						Measurand: types.MeasurandCurrentImport,
 					},
 				},
 			},
@@ -159,11 +159,11 @@ func (s *SessionTestSuite) TestCalculateAvgPower() {
 				SampledValue: []types.SampledValue{
 					{
 						Value:     "10",
-						Measurand: types.MeasurandPowerActiveExport,
+						Measurand: types.MeasurandPowerActiveImport,
 					},
 					{
 						Value:     "2",
-						Measurand: types.MeasurandCurrentExport,
+						Measurand: types.MeasurandCurrentImport,
 					},
 					{
 						Value:     "15",
@@ -175,7 +175,7 @@ func (s *SessionTestSuite) TestCalculateAvgPower() {
 				SampledValue: []types.SampledValue{
 					{
 						Value:     "2",
-						Measurand: types.MeasurandCurrentExport,
+						Measurand: types.MeasurandCurrentImport,
 					},
 					{
 						Value:     "15",
@@ -183,7 +183,7 @@ func (s *SessionTestSuite) TestCalculateAvgPower() {
 					},
 					{
 						Value:     "10",
-						Measurand: types.MeasurandPowerActiveExport,
+						Measurand: types.MeasurandPowerActiveImport,
 					},
 				},
 			},
@@ -221,13 +221,13 @@ func (s *SessionTestSuite) TestCalculateEnergyConsumptionWithAvgPower() {
 	s.emptySession.AddSampledValue([]types.SampledValue{
 		{
 			Value:     "10",
-			Measurand: types.MeasurandPowerActiveExport,
+			Measurand: types.MeasurandPowerActiveImport,
 		},
 	})
 
 	// Session started 5 minutes before
 	s.emptySession.Started = started5min
-	s.Require().InDelta(float32(300*10), s.emptySession.CalculateEnergyConsumptionWithAvgPower(), 8)
+	s.Require().InDelta(float64(300*10), s.emptySession.CalculateEnergyConsumptionWithAvgPower(), 8)
 
 	// Session just started
 	s.emptySession.Started = time.Now().Format(time.RFC3339)
@@ -240,7 +240,7 @@ func (s *SessionTestSuite) TestCalculateEnergyConsumptionWithAvgPower() {
 	s.emptySession.AddSampledValue([]types.SampledValue{
 		{
 			Value:     "10",
-			Measurand: types.MeasurandPowerActiveExport,
+			Measurand: types.MeasurandPowerActiveImport,
 		},
 	})
 	s.Require().InDelta(0.0, s.emptySession.CalculateEnergyConsumptionWithAvgPower(), 1)
@@ -254,7 +254,7 @@ func (s *SessionTestSuite) TestCalculateEnergyConsumption() {
 				SampledValue: []types.SampledValue{
 					{
 						Value:     "1",
-						Measurand: types.MeasurandEnergyActiveExportInterval,
+						Measurand: types.MeasurandEnergyActiveImportRegister,
 					},
 				},
 			},
@@ -269,10 +269,10 @@ func (s *SessionTestSuite) TestCalculateEnergyConsumption() {
 						Measurand: types.MeasurandVoltage,
 					}, {
 						Value:     "10",
-						Measurand: types.MeasurandCurrentExport,
+						Measurand: types.MeasurandCurrentImport,
 					}, {
 						Value:     "10",
-						Measurand: types.MeasurandPowerActiveExport,
+						Measurand: types.MeasurandPowerActiveImport,
 					},
 				},
 			},
@@ -284,7 +284,7 @@ func (s *SessionTestSuite) TestCalculateEnergyConsumption() {
 				SampledValue: []types.SampledValue{
 					{
 						Value:     "1",
-						Measurand: types.MeasurandEnergyActiveExportInterval,
+						Measurand: types.MeasurandEnergyActiveImportInterval,
 					},
 				},
 			}, {
@@ -292,7 +292,7 @@ func (s *SessionTestSuite) TestCalculateEnergyConsumption() {
 				SampledValue: []types.SampledValue{
 					{
 						Value:     "10",
-						Measurand: types.MeasurandEnergyActiveExportInterval,
+						Measurand: types.MeasurandEnergyActiveImportInterval,
 					},
 				},
 			}, {
@@ -300,7 +300,7 @@ func (s *SessionTestSuite) TestCalculateEnergyConsumption() {
 				SampledValue: []types.SampledValue{
 					{
 						Value:     "11",
-						Measurand: types.MeasurandEnergyActiveExportInterval,
+						Measurand: types.MeasurandEnergyActiveImportInterval,
 					},
 				},
 			},

@@ -60,7 +60,7 @@ type (
 		GetTransactionId() string
 		GetConnectorId() int
 		GetEvseId() int
-		CalculateSessionAvgEnergyConsumption() float32
+		CalculateSessionAvgEnergyConsumption() float64
 		SamplePowerMeter(measurands []types.Measurand)
 		SetStatus(status core.ChargePointStatus, errCode core.ChargePointErrorCode)
 		GetStatus() (core.ChargePointStatus, core.ChargePointErrorCode)
@@ -264,15 +264,14 @@ func (connector *Impl) SamplePowerMeter(measurands []types.Measurand) {
 	)
 
 	for _, measurand := range measurands {
-		value = 0.0
 		switch measurand {
-		case types.MeasurandEnergyActiveExportInterval:
+		case types.MeasurandEnergyActiveImportInterval, types.MeasurandEnergyActiveImportRegister:
 			value = connector.powerMeter.GetEnergy()
 			break
-		case types.MeasurandCurrentExport:
+		case types.MeasurandCurrentImport, types.MeasurandCurrentExport:
 			value = connector.powerMeter.GetCurrent()
 			break
-		case types.MeasurandPowerActiveExport:
+		case types.MeasurandPowerActiveImport, types.MeasurandPowerActiveExport:
 			value = connector.powerMeter.GetPower()
 			break
 		case types.MeasurandVoltage:
@@ -414,7 +413,7 @@ func (connector *Impl) GetEvseId() int {
 	return connector.EvseId
 }
 
-func (connector *Impl) CalculateSessionAvgEnergyConsumption() float32 {
+func (connector *Impl) CalculateSessionAvgEnergyConsumption() float64 {
 	return connector.session.CalculateEnergyConsumptionWithAvgPower()
 }
 
@@ -442,7 +441,7 @@ func GetTypesToSample() []types.Measurand {
 	)
 
 	if err != nil {
-		measurandsString = string(types.MeasurandPowerActiveExport)
+		measurandsString = string(types.MeasurandPowerActiveImport)
 	}
 
 	for _, measurand := range strings.Split(measurandsString, ",") {

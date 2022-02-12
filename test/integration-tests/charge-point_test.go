@@ -30,9 +30,10 @@ const (
 	centralSystemPort     = 7777
 	centralSystemHost     = "localhost"
 
-	tagId           = "exampleTag"
-	chargePointId   = "exampleChargePoint"
-	protocolVersion = settings.OCPP16
+	tagId                     = "exampleTag"
+	chargePointId             = "exampleChargePoint"
+	protocolVersion           = settings.OCPP16
+	ocppConfigurationFilePath = "../../configs/configuration.json"
 )
 
 var chargePointSettings = settings.Settings{ChargePoint: settings.ChargePoint{
@@ -76,6 +77,13 @@ func (s *chargePointTestSuite) SetupTest() {
 	s.tagReader = new(readerMock)
 	s.display = new(displayMock)
 	s.manager = new(managerMock)
+
+	// Setup OCPP configuration manager
+	setting.SetupOcppConfigurationManager(
+		ocppConfigurationFilePath,
+		configuration.OCPP16,
+		core.ProfileName,
+		reservation.ProfileName)
 }
 
 func (s *chargePointTestSuite) setupCentralSystem(cs *centralSystemMock) {
@@ -101,13 +109,6 @@ func (s *chargePointTestSuite) TestStartTransaction() {
 		ctx, cancel = context.WithTimeout(context.Background(), time.Minute)
 		conn        = new(connectorMock)
 	)
-
-	// Setup OCPP configuration manager
-	setting.SetupOcppConfigurationManager(
-		"../../configs/configuration.json",
-		configuration.OCPP16,
-		core.ProfileName,
-		reservation.ProfileName)
 
 	// Mock central system
 	s.csMock.On("OnAuthorize", mock.Anything, nil).
@@ -199,13 +200,6 @@ func (s *chargePointTestSuite) TestStartTransactionWithReader() {
 		ctx, cancel = context.WithTimeout(context.Background(), time.Minute)
 		conn        = new(connectorMock)
 	)
-
-	// Setup OCPP configuration manager
-	setting.SetupOcppConfigurationManager(
-		"../../configs/configuration.json",
-		configuration.OCPP16,
-		core.ProfileName,
-		reservation.ProfileName)
 
 	// Mock central system
 	s.csMock.On("OnAuthorize", mock.Anything, nil).
