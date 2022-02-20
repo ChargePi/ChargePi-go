@@ -11,7 +11,7 @@ configurable though program flags.
 
 ## The `settings` file
 
-The `settings` file contains basic information about the charge point and provide connectivity details:
+The `settings` file contains basic information about the charge point and provides connectivity details:
 
 - Charge Point ID,
 - central system URI and OCPP protocol version,
@@ -97,8 +97,8 @@ Example settings:
 
 ## 🔌 The `connector` file(s) - EVSEs and connectors
 
-EVSE and connector settings file scan be found in the `connectors` folder. To add and configure the connector, simply
-add a new file that contains the structure, defined in [attributes](#Attributes) and modify it to your specs. The client
+EVSE and connector settings files can be found in the `connectors` folder. To add and configure the connector, simply
+add a new file that contains the structure, defined in [attributes](#attributes) and modify it to your specs. The client
 will scan the folder at boot and configure the connectors from the files if all the settings have valid values.
 
 Note: A Charge point can have multiple EVSEs, each oh which can have multiple connectors, but only one connector of the
@@ -108,7 +108,7 @@ EVSE can charge at a time.
 
 `Connector` object contains a connector type and an ID of the connector, which must start with 1 and increment by one.
 The status attribute changes according to the OCPP specification. The `session` represents a Charging session and is
-used to restore the connector's last state when starting the client.
+used to restore the connector's last state when (re)starting the client.
 
 The `relay` and `powerMeter` objects are configurable to specific GPIO pins and SPI bus. The `inverseLogic` attribute in
 the relay object indicates the logic of the relay. If `inverseLogic` is set to _true_, the relay will use negative
