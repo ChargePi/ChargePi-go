@@ -1,0 +1,30 @@
+version: '3.7'
+services:
+  chargepi:
+    build:
+      dockerfile: ../build/package/Dockerfile
+      context: ..
+      target: chargepi
+    restart: always
+    volumes:
+      - /configs/:/ChargePi/configs/
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true" # change to false if you do not wish to get automatic updates
+    devices:
+      - /dev/ttyAMA0:/dev/ttyAMA0
+      - /dev/mem:/dev/mem
+    privileged: true
+    networks:
+      ocpp_network:
+        ipv4_address: 172.0.1.124
+  watchtower:
+    image: containrrr/watchtower:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+volumes:
+  chargepi:
+networks:
+  ocpp_network:
+    ipam:
+      config:
+        - subnet: 172.0.1.0/24
