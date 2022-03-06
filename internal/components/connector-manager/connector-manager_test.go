@@ -1,4 +1,4 @@
-package connector_manager
+package connectorManager
 
 import (
 	"errors"
@@ -86,9 +86,9 @@ func (m *connectorMock) GetEvseId() int {
 	return args.Int(0)
 }
 
-func (m *connectorMock) CalculateSessionAvgEnergyConsumption() float32 {
+func (m *connectorMock) CalculateSessionAvgEnergyConsumption() float64 {
 	args := m.Called()
-	return args.Get(0).(float32)
+	return args.Get(0).(float64)
 }
 
 func (m *connectorMock) SamplePowerMeter(measurands []types.Measurand) {

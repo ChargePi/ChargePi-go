@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware/display"
 	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware/indicator"
 	"strings"
@@ -16,7 +15,7 @@ func (cp *ChargePoint) sendToLCD(messages ...string) {
 		return
 	}
 
-	log.Debugf("Sending message(s) to LCD: %v", messages)
+	cp.logger.Debugf("Sending message(s) to LCD: %v", messages)
 	cp.LCD.GetLcdChannel() <- display.NewMessage(time.Second*5, messages)
 }
 
@@ -50,12 +49,12 @@ func (cp *ChargePoint) displayLEDStatus(connectorIndex int, status core.ChargePo
 		return
 	}
 
-	log.Debugf("Indicating connector status: %x", color)
+	cp.logger.Debugf("Indicating connector status: %x", color)
 
 	go func() {
 		err := cp.Indicator.DisplayColor(connectorIndex, uint32(color))
 		if err != nil {
-			log.WithError(err).Errorf("Error indicating status")
+			cp.logger.WithError(err).Errorf("Error indicating status")
 		}
 	}()
 }
@@ -66,11 +65,11 @@ func (cp *ChargePoint) indicateCard(index int, color uint32) {
 		return
 	}
 
-	log.Trace("Indicating tag was read")
+	cp.logger.Trace("Indicating tag was read")
 
 	err := cp.Indicator.Blink(index, 3, color)
 	if err != nil {
-		log.WithError(err).Errorf("Could not indicate card was read")
+		cp.logger.WithError(err).Errorf("Could not indicate card was read")
 	}
 }
 
@@ -81,7 +80,7 @@ func (cp *ChargePoint) ListenForTag(ctx context.Context, tagChannel <-chan strin
 		return
 	}
 
-	log.Info("Started listening for tags from reader")
+	cp.logger.Info("Started listening for tags from reader")
 
 Listener:
 	for {
@@ -89,7 +88,7 @@ Listener:
 		case tagId := <-tagChannel:
 			go cp.indicateCard(len(cp.connectorManager.GetConnectors()), indicator.White)
 			go cp.sendToLCD("Read tag:", tagId)
-			cp.HandleChargingRequest(strings.ToUpper(tagId))
+			_, _ = cp.HandleChargingRequest(strings.ToUpper(tagId))
 			break
 		case <-ctx.Done():
 			break Listener

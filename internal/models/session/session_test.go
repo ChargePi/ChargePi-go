@@ -17,7 +17,6 @@ func (s *SessionTestSuite) SetupTest() {
 	s.emptySession = Session{
 		IsActive:      false,
 		TransactionId: "",
-		TagId:         "",
 		Started:       "",
 		Consumption:   nil,
 	}

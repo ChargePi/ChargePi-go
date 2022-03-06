@@ -5,12 +5,11 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/firmware"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/remotetrigger"
 	"github.com/reactivex/rxgo/v2"
-	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/components/connector"
 )
 
 func (cp *ChargePoint) OnTriggerMessage(request *remotetrigger.TriggerMessageRequest) (confirmation *remotetrigger.TriggerMessageConfirmation, err error) {
-	log.Infof("received %s for %v", request.GetFeatureName(), request.RequestedMessage)
+	cp.logger.Infof("received %s for %v", request.GetFeatureName(), request.RequestedMessage)
 	status := remotetrigger.TriggerMessageStatusRejected
 
 	switch request.RequestedMessage {

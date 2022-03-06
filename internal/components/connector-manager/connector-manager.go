@@ -1,4 +1,4 @@
-package connector_manager
+package connectorManager
 
 import (
 	"errors"

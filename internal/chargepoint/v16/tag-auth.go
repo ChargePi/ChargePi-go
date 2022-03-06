@@ -3,7 +3,6 @@ package v16
 import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
-	log "github.com/sirupsen/logrus"
 	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
 	v16 "github.com/xBlaz3kx/ocppManager-go/v16"
 	"strconv"
@@ -28,14 +27,14 @@ func (cp *ChargePoint) isTagAuthorized(tagId string) bool {
 	}
 
 	if authCacheEnabled == "true" && localPreAuthorize == "true" {
-		log.Infof("Authorizing tag %s with cache", tagId)
+		cp.logger.Infof("Authorizing tag %s with cache", tagId)
 
 		// Check if the tag exists in cache and is valid.
 		if cp.authCache.IsTagAuthorized(tagId) {
 			// Reauthorize in 10 seconds
 			_, schedulerErr := cp.scheduler.Every(10).Seconds().LimitRunsTo(1).Do(cp.sendAuthorizeRequest, tagId)
 			if schedulerErr != nil {
-				log.WithError(schedulerErr).Errorf("Cannot schedule tag authorization with central system")
+				cp.logger.WithError(schedulerErr).Errorf("Cannot schedule tag authorization with central system")
 			}
 
 			return true
@@ -43,7 +42,7 @@ func (cp *ChargePoint) isTagAuthorized(tagId string) bool {
 	}
 
 	// If the card is not in cache or is not authorized, (re)authorize it with the central system
-	log.Infof("Authorizing tag %s with central system", tagId)
+	cp.logger.Infof("Authorizing tag %s with central system", tagId)
 	tagInfo, err := cp.sendAuthorizeRequest(tagId)
 	if err != nil {
 		return false
@@ -53,7 +52,7 @@ func (cp *ChargePoint) isTagAuthorized(tagId string) bool {
 		response = true
 	}
 
-	log.Debugf("Tag authorization result: %v", response)
+	cp.logger.Debugf("Tag authorization result: %v", response)
 	return response
 }
 

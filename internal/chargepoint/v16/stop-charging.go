@@ -24,7 +24,7 @@ func (cp *ChargePoint) stopChargingConnector(connector connector.Connector, reas
 	var (
 		stopTransactionOnEVDisconnect, err = ocppConfigManager.GetConfigurationValue(v16.StopTransactionOnEVSideDisconnect.String())
 		transactionId, convErr             = strconv.Atoi(connector.GetTransactionId())
-		logInfo                            = log.WithFields(log.Fields{
+		logInfo                            = cp.logger.WithFields(log.Fields{
 			"evseId":      connector.GetEvseId(),
 			"connectorId": connector.GetConnectorId(),
 			"reason":      reason,

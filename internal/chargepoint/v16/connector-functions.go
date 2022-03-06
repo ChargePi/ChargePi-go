@@ -7,7 +7,6 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/reactivex/rxgo/v2"
-	log "github.com/sirupsen/logrus"
 	connector2 "github.com/xBlaz3kx/ChargePi-go/internal/components/connector"
 	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware/display/i18n"
 	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware/indicator"
@@ -21,13 +20,13 @@ import (
 // AddConnectors Add the Connectors from the connectors.json file to the handler. Create and add all their components and initialize the struct.
 func (cp *ChargePoint) AddConnectors(connectors []*settingsData.Connector) {
 	if util.IsNilInterfaceOrPointer(connectors) {
-		log.Fatal("no connectors configured")
+		cp.logger.Fatal("no connectors configured")
 	}
 
-	log.Debugf("Adding connectors")
+	cp.logger.Debugf("Adding connectors")
 	err := cp.connectorManager.AddConnectorsFromConfiguration(cp.Settings.ChargePoint.Info.MaxChargingTime, connectors)
 	if err != nil {
-		log.WithError(err).Fatalf("Unable to add connectors from configuration")
+		cp.logger.WithError(err).Fatalf("Unable to add connectors from configuration")
 	}
 
 	// Add an indicator with the length of valid connectors
@@ -37,7 +36,7 @@ func (cp *ChargePoint) AddConnectors(connectors []*settingsData.Connector) {
 // restoreState After connecting to the central system, try to restore the previous state of each ConnectorImpl and notify the system about its state.
 // If the ConnectorStatus was "Preparing" or "Charging", try to resume or start charging. If the charging fails, change the connector status and notify the central system.
 func (cp *ChargePoint) restoreState() {
-	log.Debugf("Restoring connectors' state")
+	cp.logger.Debugf("Restoring connectors' state")
 	var err error
 
 	for _, connector := range cp.connectorManager.GetConnectors() {
@@ -58,7 +57,7 @@ func (cp *ChargePoint) restoreState() {
 			// Attempt to stop charging
 			err = cp.stopChargingConnector(connector, core.ReasonDeAuthorized)
 			if err != nil {
-				log.Debugf("Stopping the charging returned %v", err)
+				cp.logger.Debugf("Stopping the charging returned %v", err)
 				connector.SetStatus(core.ChargePointStatusFaulted, core.InternalError)
 			}
 		}
@@ -80,7 +79,7 @@ func (cp *ChargePoint) notifyConnectorStatus(connector connector2.Connector) {
 	request.Timestamp = types.NewDateTime(time.Now())
 
 	callback := func(confirmation ocpp.Response, protoError error) {
-		log.Infof("Notified status of the connector %d: %s", connectorId, status)
+		cp.logger.Infof("Notified status of the connector %d: %s", connectorId, status)
 	}
 
 	err := util.SendRequest(cp.chargePoint, request, callback)
@@ -89,7 +88,7 @@ func (cp *ChargePoint) notifyConnectorStatus(connector connector2.Connector) {
 
 // ListenForConnectorStatusChange listen for change in connector and notify the central system about the state
 func (cp *ChargePoint) ListenForConnectorStatusChange(ctx context.Context, ch <-chan rxgo.Item) {
-	log.Debug("Starting to listen for connector status change")
+	cp.logger.Debug("Starting to listen for connector status change")
 	observableConnectors := rxgo.FromChannel(ch)
 
 	if observableConnectors != nil {
@@ -141,7 +140,7 @@ func (cp *ChargePoint) displayConnectorStatus(connectorId int, status core.Charg
 	}
 
 	if err != nil {
-		log.WithError(err).Errorf("Error displaying status")
+		cp.logger.WithError(err).Errorf("Error displaying status")
 		return
 	}
 

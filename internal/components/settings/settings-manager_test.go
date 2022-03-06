@@ -103,8 +103,10 @@ func (s *SettingsManagerTestSuite) TestUpdateConnectorStatus() {
 
 	UpdateConnectorStatus(s.connector.EvseId, s.connector.ConnectorId, core.ChargePointStatusCharging)
 
-	err = fig.Load(&connectorFromFile, fig.File(fileName), fig.Dirs("."))
-	s.Require().FileExists("./connector-1.json")
+	time.Sleep(time.Second)
+
+	err = fig.Load(&connectorFromFile, fig.File(fileName))
+	s.Require().FileExists("./" + fileName)
 	s.Require().NoError(err)
 
 	s.Require().EqualValues(core.ChargePointStatusCharging, connectorFromFile.Status)

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/lorenzodonini/ocpp-go/ocpp"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/util"
 	configManager "github.com/xBlaz3kx/ocppManager-go"
@@ -32,16 +31,16 @@ func (cp *ChargePoint) bootNotification() {
 
 		switch bootConf.Status {
 		case core.RegistrationStatusAccepted:
-			log.Info("Notified and accepted from the central system")
+			cp.logger.Info("Notified and accepted from the central system")
 			cp.setHeartbeat(bootConf.Interval)
 			cp.restoreState()
 			break
 		case core.RegistrationStatusPending:
-			log.Info("Registration status pending")
+			cp.logger.Info("Registration status pending")
 			//todo reschedule boot notification
 			break
 		default:
-			log.Fatal("Denied by the central system.")
+			cp.logger.Fatal("Denied by the central system.")
 		}
 	}
 
@@ -50,7 +49,7 @@ func (cp *ChargePoint) bootNotification() {
 }
 
 func (cp *ChargePoint) setHeartbeat(interval int) {
-	log.Infof("Setting a heartbeat schedule")
+	cp.logger.Infof("Setting a heartbeat schedule")
 
 	heartBeatInterval, _ := configManager.GetConfigurationValue(v16.HeartbeatInterval.String())
 	if interval > 0 {
@@ -60,7 +59,7 @@ func (cp *ChargePoint) setHeartbeat(interval int) {
 	heartBeatInterval = fmt.Sprintf("%ss", heartBeatInterval)
 	_, err := scheduler.GetScheduler().Every(heartBeatInterval).Tag("heartbeat").Do(cp.sendHeartBeat)
 	if err != nil {
-		log.WithError(err).Errorf("Error scheduling heartbeat")
+		cp.logger.WithError(err).Errorf("Error scheduling heartbeat")
 	}
 }
 
@@ -69,6 +68,6 @@ func (cp *ChargePoint) sendHeartBeat() error {
 	return util.SendRequest(cp.chargePoint,
 		core.NewHeartbeatRequest(),
 		func(confirmation ocpp.Response, protoError error) {
-			log.Info("Sent heartbeat")
+			cp.logger.Info("Sent heartbeat")
 		})
 }

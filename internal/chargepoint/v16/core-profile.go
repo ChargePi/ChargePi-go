@@ -32,7 +32,7 @@ func (cp *ChargePoint) OnChangeAvailability(request *core.ChangeAvailabilityRequ
 func (cp *ChargePoint) OnChangeConfiguration(request *core.ChangeConfigurationRequest) (confirmation *core.ChangeConfigurationConfirmation, err error) {
 	var response = core.ConfigurationStatusRejected
 
-	log.Infof("Received request %s", request.GetFeatureName())
+	cp.logger.Infof("Received request %s", request.GetFeatureName())
 
 	err = ocppManager.UpdateKey(request.Key, request.Value)
 	if err == nil {
@@ -48,7 +48,7 @@ func (cp *ChargePoint) OnChangeConfiguration(request *core.ChangeConfigurationRe
 }
 
 func (cp *ChargePoint) OnClearCache(request *core.ClearCacheRequest) (confirmation *core.ClearCacheConfirmation, err error) {
-	log.Infof("Received request %s", request.GetFeatureName())
+	cp.logger.Infof("Received request %s", request.GetFeatureName())
 
 	var (
 		response                  = core.ClearCacheStatusRejected
@@ -56,7 +56,7 @@ func (cp *ChargePoint) OnClearCache(request *core.ClearCacheRequest) (confirmati
 	)
 
 	if confErr != nil || authCacheEnabled == "false" {
-		log.WithError(confErr).Errorf("Cannot clear cache")
+		cp.logger.WithError(confErr).Errorf("Cannot clear cache")
 		return core.NewClearCacheConfirmation(response), nil
 	}
 
@@ -65,18 +65,18 @@ func (cp *ChargePoint) OnClearCache(request *core.ClearCacheRequest) (confirmati
 		response = core.ClearCacheStatusAccepted
 	}
 
-	return core.NewClearCacheConfirmation(core.ClearCacheStatusAccepted), nil
+	return core.NewClearCacheConfirmation(response), nil
 }
 
 func (cp *ChargePoint) OnDataTransfer(request *core.DataTransferRequest) (confirmation *core.DataTransferConfirmation, err error) {
-	log.Infof("Received request %s", request.GetFeatureName())
+	cp.logger.Infof("Received request %s", request.GetFeatureName())
 	var response = core.DataTransferStatusRejected
 
 	return core.NewDataTransferConfirmation(response), nil
 }
 
 func (cp *ChargePoint) OnGetConfiguration(request *core.GetConfigurationRequest) (confirmation *core.GetConfigurationConfirmation, err error) {
-	log.Infof("Received request %s", request.GetFeatureName())
+	cp.logger.Infof("Received request %s", request.GetFeatureName())
 
 	var (
 		unknownKeys            []string
@@ -102,7 +102,7 @@ func (cp *ChargePoint) OnGetConfiguration(request *core.GetConfigurationRequest)
 }
 
 func (cp *ChargePoint) OnReset(request *core.ResetRequest) (confirmation *core.ResetConfirmation, err error) {
-	log.Infof("Received request %s", request.GetFeatureName())
+	cp.logger.Infof("Received request %s", request.GetFeatureName())
 	var response = core.ResetStatusRejected
 
 	switch request.Type {
@@ -127,7 +127,7 @@ func (cp *ChargePoint) OnReset(request *core.ResetRequest) (confirmation *core.R
 }
 
 func (cp *ChargePoint) OnUnlockConnector(request *core.UnlockConnectorRequest) (confirmation *core.UnlockConnectorConfirmation, err error) {
-	log.Infof("Received request %s", request.GetFeatureName())
+	cp.logger.Infof("Received request %s", request.GetFeatureName())
 
 	var (
 		response = core.UnlockStatusNotSupported
@@ -149,7 +149,7 @@ func (cp *ChargePoint) OnUnlockConnector(request *core.UnlockConnectorRequest) (
 }
 
 func (cp *ChargePoint) OnRemoteStopTransaction(request *core.RemoteStopTransactionRequest) (confirmation *core.RemoteStopTransactionConfirmation, err error) {
-	log.WithField("transactionId", request.TransactionId).Infof("Received request %s", request.GetFeatureName())
+	cp.logger.WithField("transactionId", request.TransactionId).Infof("Received request %s", request.GetFeatureName())
 
 	var (
 		response      = types.RemoteStartStopStatusRejected
@@ -170,9 +170,8 @@ func (cp *ChargePoint) OnRemoteStopTransaction(request *core.RemoteStopTransacti
 }
 
 func (cp *ChargePoint) OnRemoteStartTransaction(request *core.RemoteStartTransactionRequest) (confirmation *core.RemoteStartTransactionConfirmation, err error) {
-
 	var (
-		logInfo = log.WithFields(log.Fields{
+		logInfo = cp.logger.WithFields(log.Fields{
 			"connectorId": request.ConnectorId,
 			"tagId":       request.IdTag,
 		})

@@ -30,7 +30,7 @@ func (cp *ChargePoint) startChargingConnector(connector connector.Connector, tag
 		return errors.ErrConnectorNil
 	}
 
-	logInfo := log.WithFields(log.Fields{
+	logInfo := cp.logger.WithFields(log.Fields{
 		"evseId":      connector.GetEvseId(),
 		"connectorId": connector.GetConnectorId(),
 		"tagId":       tagId,

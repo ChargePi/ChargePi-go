@@ -6,7 +6,6 @@ import (
 	goCache "github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
-	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/session"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/cache"
@@ -26,7 +25,6 @@ type (
 
 	RelayMock struct {
 		mock.Mock
-		hardware.Relay
 	}
 
 	ConnectorTestSuite struct {
@@ -44,33 +42,33 @@ func (p *PowerMeterMock) Reset() {
 }
 
 func (p *PowerMeterMock) GetEnergy() float64 {
-	_ = p.Called()
-	return float64(300)
+	args := p.Called()
+	return args.Get(0).(float64)
 }
 
 func (p *PowerMeterMock) GetPower() float64 {
-	_ = p.Called()
-	return float64(1)
+	args := p.Called()
+	return args.Get(0).(float64)
 }
 
 func (p *PowerMeterMock) GetCurrent() float64 {
-	_ = p.Called()
-	return float64(1)
+	args := p.Called()
+	return args.Get(0).(float64)
 }
 
 func (p *PowerMeterMock) GetVoltage() float64 {
-	_ = p.Called()
-	return float64(1)
+	args := p.Called()
+	return args.Get(0).(float64)
 }
 
 func (p *PowerMeterMock) GetRMSCurrent() float64 {
-	_ = p.Called()
-	return float64(1)
+	args := p.Called()
+	return args.Get(0).(float64)
 }
 
 func (p *PowerMeterMock) GetRMSVoltage() float64 {
-	_ = p.Called()
-	return float64(1)
+	args := p.Called()
+	return args.Get(0).(float64)
 }
 
 /*---------------------- Relay Mock ----------------------*/

@@ -1,4 +1,4 @@
-package v16
+package util
 
 import (
 	"fmt"
@@ -19,7 +19,7 @@ import (
 	"time"
 )
 
-func createClient(tlsConfig settings.TLS) *ws.Client {
+func CreateClient(tlsConfig settings.TLS) *ws.Client {
 	var (
 		client            = ws.NewClient()
 		clientConfig      = ws.NewClientTimeoutConfig()
@@ -42,33 +42,40 @@ func createClient(tlsConfig settings.TLS) *ws.Client {
 	return client
 }
 
-func setProfilesFromConfig(chargePoint ocpp16.ChargePoint, coreHandler core.ChargePointHandler,
-	reservationHandler reservation.ChargePointHandler, triggerHandler remotetrigger.ChargePointHandler) {
+func SetProfilesFromConfig(
+	chargePoint ocpp16.ChargePoint,
+	coreHandler core.ChargePointHandler,
+	reservationHandler reservation.ChargePointHandler,
+	triggerHandler remotetrigger.ChargePointHandler,
+) {
 	// Set handlers based on configuration
 	profiles, err := ocppConfigManager.GetConfigurationValue(v16.SupportedFeatureProfiles.String())
 	if err != nil {
 		log.WithError(err).Fatalf("No supported profiles specified")
 	}
 
-	for _, profile := range strings.Split(profiles, " ,") {
+	for _, profile := range strings.Split(profiles, ", ") {
 		switch strings.ToLower(profile) {
-		case core.ProfileName:
+		case strings.ToLower(core.ProfileName):
 			chargePoint.SetCoreHandler(coreHandler)
+			log.Debug("Setting core handler")
 			break
-		case reservation.ProfileName:
+		case strings.ToLower(reservation.ProfileName):
 			chargePoint.SetReservationHandler(reservationHandler)
+			log.Debug("Setting reservation handler")
 			break
-		case smartcharging.ProfileName:
-			//cp.chargePoint.SetSmartChargingHandler(cp)
+		case strings.ToLower(smartcharging.ProfileName):
+			//chargePoint.SetSmartChargingHandler(cp)
 			break
-		case localauth.ProfileName:
-			//cp.chargePoint.SetLocalAuthListHandler(cp)
+		case strings.ToLower(localauth.ProfileName):
+			//chargePoint.SetLocalAuthListHandler(cp)
 			break
-		case remotetrigger.ProfileName:
+		case strings.ToLower(remotetrigger.ProfileName):
+			log.Debug("Setting remote trigger handler")
 			chargePoint.SetRemoteTriggerHandler(triggerHandler)
 			break
-		case firmware.ProfileName:
-			//cp.chargePoint.SetFirmwareManagementHandler(cp)
+		case strings.ToLower(firmware.ProfileName):
+			//chargePoint.SetFirmwareManagementHandler(cp)
 			break
 		}
 	}
