@@ -1,3 +1,6 @@
+//go:build rpi
+// +build rpi
+
 package reader
 
 import (

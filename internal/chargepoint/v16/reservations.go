@@ -1,6 +1,7 @@
 package v16
 
 import (
+	"fmt"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/util"
 )
@@ -15,12 +16,13 @@ func (cp *ChargePoint) OnReserveNow(request *reservation.ReserveNowRequest) (con
 		return reservation.NewReserveNowConfirmation(reservation.ReservationStatusOccupied), nil
 	}
 
-	err = connector.ReserveConnector(request.ReservationId)
+	err = connector.ReserveConnector(request.ReservationId, request.IdTag)
 	if err != nil {
 		return reservation.NewReserveNowConfirmation(reservation.ReservationStatusRejected), nil
 	}
 
-	_, schedulerErr := cp.scheduler.At(request.ExpiryDate.Format("HH:MM")).Do(connector.RemoveReservation)
+	timeFormat := fmt.Sprintf("%d:%d", request.ExpiryDate.Hour(), request.ExpiryDate.Minute())
+	_, schedulerErr := cp.scheduler.At(timeFormat).Do(connector.RemoveReservation)
 	if schedulerErr != nil {
 		return reservation.NewReserveNowConfirmation(reservation.ReservationStatusRejected), nil
 	}

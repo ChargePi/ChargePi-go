@@ -3,14 +3,11 @@ package connectorManager
 import (
 	"errors"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
-	"github.com/reactivex/rxgo/v2"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
-	"github.com/xBlaz3kx/ChargePi-go/internal/components/connector"
-	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware/power-meter"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/session"
-	settings2 "github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
+	settingsModel "github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
+	"github.com/xBlaz3kx/ChargePi-go/test"
 	"testing"
 	"time"
 )
@@ -19,128 +16,16 @@ type (
 	connectorManagerTestSuite struct {
 		suite.Suite
 		connectorManager  Manager
-		connector1        *connectorMock
-		connector2        *connectorMock
-		connector3        *connectorMock
+		connector1        *test.ConnectorMock
+		connector2        *test.ConnectorMock
+		connector3        *test.ConnectorMock
 		chSession         session.Session
-		connectorSettings *settings2.Connector
-	}
-
-	connectorMock struct {
-		mock.Mock
-		connector.Connector
+		connectorSettings *settingsModel.Connector
 	}
 )
 
-func (m *connectorMock) StartCharging(transactionId string, tagId string) error {
-	args := m.Called(transactionId, tagId)
-	return args.Error(0)
-}
-
-func (m *connectorMock) ResumeCharging(session session.Session) (error, int) {
-	args := m.Called(session)
-	return args.Error(0), args.Int(1)
-}
-
-func (m *connectorMock) StopCharging(reason core.Reason) error {
-	args := m.Called(reason)
-	return args.Error(0)
-}
-
-func (m *connectorMock) SetNotificationChannel(notificationChannel chan<- rxgo.Item) {
-	m.Called(notificationChannel)
-}
-
-func (m *connectorMock) ReserveConnector(reservationId int) error {
-	args := m.Called(reservationId)
-	return args.Error(0)
-}
-
-func (m *connectorMock) RemoveReservation() error {
-	args := m.Called()
-	return args.Error(0)
-}
-
-func (m *connectorMock) GetReservationId() int {
-	args := m.Called()
-	return args.Int(0)
-}
-
-func (m *connectorMock) GetTagId() string {
-	args := m.Called()
-	return args.String(0)
-}
-
-func (m *connectorMock) GetTransactionId() string {
-	args := m.Called()
-	return args.String(0)
-}
-
-func (m *connectorMock) GetConnectorId() int {
-	args := m.Called()
-	return args.Int(0)
-}
-
-func (m *connectorMock) GetEvseId() int {
-	args := m.Called()
-	return args.Int(0)
-}
-
-func (m *connectorMock) CalculateSessionAvgEnergyConsumption() float64 {
-	args := m.Called()
-	return args.Get(0).(float64)
-}
-
-func (m *connectorMock) SamplePowerMeter(measurands []types.Measurand) {
-	m.Called(measurands)
-}
-
-func (m *connectorMock) SetStatus(status core.ChargePointStatus, errCode core.ChargePointErrorCode) {
-	m.Called(status, errCode)
-}
-
-func (m *connectorMock) GetStatus() (core.ChargePointStatus, core.ChargePointErrorCode) {
-	args := m.Called()
-	return core.ChargePointStatus(args.String(0)), core.ChargePointErrorCode(args.String(1))
-}
-
-func (m *connectorMock) IsAvailable() bool {
-	args := m.Called()
-	return args.Bool(0)
-}
-
-func (m *connectorMock) IsPreparing() bool {
-	args := m.Called()
-	return args.Bool(0)
-}
-
-func (m *connectorMock) IsCharging() bool {
-	args := m.Called()
-	return args.Bool(0)
-}
-
-func (m *connectorMock) IsReserved() bool {
-	args := m.Called()
-	return args.Bool(0)
-}
-
-func (m *connectorMock) IsUnavailable() bool {
-	args := m.Called()
-	return args.Bool(0)
-}
-
-func (m *connectorMock) GetPowerMeter() power_meter.PowerMeter {
-	args := m.Called()
-	return args.Get(0).(power_meter.PowerMeter)
-}
-
-func (m *connectorMock) GetMaxChargingTime() int {
-	args := m.Called()
-	return args.Int(0)
-}
-
-func CreateNewConnectorMock(evseId, connectorId int, session session.Session) *connectorMock {
-	connector1 := new(connectorMock)
+func CreateNewConnectorMock(evseId, connectorId int, session session.Session) *test.ConnectorMock {
+	connector1 := new(test.ConnectorMock)
 	// Setup expectations
 	connector1.On("StartCharging", "exampleTransactionId123", "exampleTag").Return(nil)
 	connector1.On("ResumeCharging", session).Return(nil, 0)
@@ -174,23 +59,23 @@ func (suite *connectorManagerTestSuite) SetupTest() {
 		Consumption:   nil,
 	}
 
-	suite.connectorSettings = &settings2.Connector{
+	suite.connectorSettings = &settingsModel.Connector{
 		EvseId:      1,
 		ConnectorId: 1,
 		Type:        "Schuko",
 		Status:      "Available",
-		Session: settings2.Session{
+		Session: settingsModel.Session{
 			IsActive:      false,
 			TransactionId: "",
 			TagId:         "",
 			Started:       "",
 			Consumption:   nil,
 		},
-		Relay: settings2.Relay{
+		Relay: settingsModel.Relay{
 			RelayPin:     14,
 			InverseLogic: false,
 		},
-		PowerMeter: settings2.PowerMeter{
+		PowerMeter: settingsModel.PowerMeter{
 			Enabled:              false,
 			Type:                 "",
 			PowerMeterPin:        0,
@@ -233,7 +118,7 @@ func (suite *connectorManagerTestSuite) TestStartChargingConnector() {
 	err := suite.connectorManager.StartChargingConnector(1, 1, tagId, transactionId)
 	suite.Require().NoError(err)
 
-	newConn := new(connectorMock)
+	newConn := new(test.ConnectorMock)
 	newConn.On("GetEvseId").Return(1)
 	newConn.On("GetConnectorId").Return(4)
 	newConn.On("SetNotificationChannel", mock.Anything).Return()
@@ -260,17 +145,17 @@ func (suite *connectorManagerTestSuite) TestAddConnectorFromSettings() {
 	suite.Require().Error(err)
 
 	// Try to add another connector
-	err = suite.connectorManager.AddConnectorFromSettings(15, &settings2.Connector{
+	err = suite.connectorManager.AddConnectorFromSettings(15, &settingsModel.Connector{
 		EvseId:      1,
 		ConnectorId: 2,
 		Type:        "Schuko",
 		Status:      "Available",
-		Session:     settings2.Session{},
-		Relay: settings2.Relay{
+		Session:     settingsModel.Session{},
+		Relay: settingsModel.Relay{
 			RelayPin:     23,
 			InverseLogic: false,
 		},
-		PowerMeter: settings2.PowerMeter{},
+		PowerMeter: settingsModel.PowerMeter{},
 	})
 	suite.Require().NoError(err)
 
@@ -335,7 +220,7 @@ func (suite *connectorManagerTestSuite) TestFindConnectorWithTransactionId() {
 func (suite *connectorManagerTestSuite) TestStopAllConnectors() {
 	var (
 		mConnector = suite.connector1
-		newConn    = new(connectorMock)
+		newConn    = new(test.ConnectorMock)
 	)
 
 	newConn.On("GetConnectorId").Return(1)

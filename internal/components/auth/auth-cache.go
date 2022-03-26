@@ -59,21 +59,6 @@ func (c *Cache) LoadAuthFile(authFilePath string) {
 	log.Infof("Read auth file version %d with Tags %s", auth.Version, auth.Tags)
 }
 
-// loadTags loads the tags into the cache
-func loadTags(cache *goCache.Cache, tags []types.IdTagInfo) {
-	if tags != nil {
-		for _, tag := range tags {
-			log.Tracef("Adding tag: %v", tag)
-			if tag.ExpiryDate != nil {
-				cache.Set(fmt.Sprintf("AuthTag%s", tag.ParentIdTag), tag, tag.ExpiryDate.Sub(time.Now()))
-				continue
-			}
-
-			cache.SetDefault(fmt.Sprintf("AuthTag%s", tag.ParentIdTag), tag)
-		}
-	}
-}
-
 // AddTag Add a tag to the global authorization cache.
 func (c *Cache) AddTag(tagId string, tagInfo *types.IdTagInfo) {
 	var (
@@ -196,4 +181,19 @@ func (c *Cache) IsTagAuthorized(tagId string) bool {
 	}
 
 	return false
+}
+
+// loadTags loads the tags into the cache
+func loadTags(cache *goCache.Cache, tags []types.IdTagInfo) {
+	if tags != nil {
+		for _, tag := range tags {
+			log.Tracef("Adding tag: %v", tag)
+			if tag.ExpiryDate != nil {
+				cache.Set(fmt.Sprintf("AuthTag%s", tag.ParentIdTag), tag, tag.ExpiryDate.Sub(time.Now()))
+				continue
+			}
+
+			cache.SetDefault(fmt.Sprintf("AuthTag%s", tag.ParentIdTag), tag)
+		}
+	}
 }

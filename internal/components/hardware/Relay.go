@@ -53,9 +53,9 @@ func (r *RelayImpl) initPin() error {
 
 func (r *RelayImpl) Enable() {
 	if r.InverseLogic {
-		r.pin.SetValue(0)
+		_ = r.pin.SetValue(0)
 	} else {
-		r.pin.SetValue(1)
+		_ = r.pin.SetValue(1)
 	}
 
 	// Always consider positive logic for status determination
@@ -64,9 +64,9 @@ func (r *RelayImpl) Enable() {
 
 func (r *RelayImpl) Disable() {
 	if r.InverseLogic {
-		r.pin.SetValue(1)
+		_ = r.pin.SetValue(1)
 	} else {
-		r.pin.SetValue(0)
+		_ = r.pin.SetValue(0)
 	}
 
 	// Always consider positive logic for status determination
@@ -74,5 +74,5 @@ func (r *RelayImpl) Disable() {
 }
 
 func (r *RelayImpl) Close() {
-	r.pin.Close()
+	_ = r.pin.Close()
 }

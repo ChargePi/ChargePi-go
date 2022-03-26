@@ -4,16 +4,38 @@ import (
 	"github.com/avast/retry-go"
 	"github.com/lorenzodonini/ocpp-go/ocpp"
 	ocpp16 "github.com/lorenzodonini/ocpp-go/ocpp1.6"
+	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
 	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
 	v16 "github.com/xBlaz3kx/ocppManager-go/v16"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 )
 
+// IsNilInterfaceOrPointer check if the variable is nil or if the pointer's value is nil.
 func IsNilInterfaceOrPointer(sth interface{}) bool {
 	return sth == nil || (reflect.ValueOf(sth).Kind() == reflect.Ptr && reflect.ValueOf(sth).IsNil())
+}
+
+// GetTypesToSample get the measurands to sample from the OCPP configuration.
+func GetTypesToSample() []types.Measurand {
+	var (
+		measurands []types.Measurand
+		// Get the types to sample
+		measurandsString, err = ocppConfigManager.GetConfigurationValue(v16.MeterValuesSampledData.String())
+	)
+
+	if err != nil {
+		return measurands
+	}
+
+	for _, measurand := range strings.Split(measurandsString, ",") {
+		measurands = append(measurands, types.Measurand(measurand))
+	}
+
+	return measurands
 }
 
 func HandleRequestErr(err error, text string) {

@@ -10,8 +10,6 @@ import (
 	v16 "github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/v16"
 	"github.com/xBlaz3kx/ChargePi-go/internal/components/auth"
 	connectorManager "github.com/xBlaz3kx/ChargePi-go/internal/components/connector-manager"
-	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware/display"
-	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware/reader"
 	s "github.com/xBlaz3kx/ChargePi-go/internal/components/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
@@ -31,8 +29,6 @@ func Run(isDebug bool, settingsFilePath, configurationFilePath, connectorsFolder
 		// ChargePoint components
 		handler   chargePoint.ChargePoint
 		config    *settings.Settings
-		tagReader reader.Reader
-		lcd       display.LCD
 		mem       = cache.GetCache()
 		authCache = auth.NewAuthCache(authFilePath)
 		logger    = log.StandardLogger()
@@ -44,7 +40,6 @@ func Run(isDebug bool, settingsFilePath, configurationFilePath, connectorsFolder
 		// Execution
 		ctx, cancel = context.WithCancel(context.Background())
 		quitChannel = make(chan os.Signal, 1)
-		err         error
 	)
 	defer cancel()
 	signal.Notify(quitChannel, syscall.SIGINT, syscall.SIGTERM)
@@ -63,17 +58,6 @@ func Run(isDebug bool, settingsFilePath, configurationFilePath, connectorsFolder
 	// Create the logger
 	logging.Setup(logger, config.ChargePoint.Logging, isDebug)
 
-	// Create hardware components based on settings
-	tagReader, err = reader.NewTagReader(hardware.TagReader)
-	if err == nil {
-		go tagReader.ListenForTags(ctx)
-	}
-
-	lcd, err = display.NewDisplay(hardware.Lcd)
-	if err == nil {
-		go lcd.ListenForMessages(ctx)
-	}
-
 	if config.ChargePoint.TLS.IsEnabled {
 		// Replace insecure Websockets
 		serverUrl = strings.Replace(serverUrl, "ws", "wss", 1)
@@ -89,7 +73,14 @@ func Run(isDebug bool, settingsFilePath, configurationFilePath, connectorsFolder
 	switch protocolVersion {
 	case settings.OCPP16:
 		// Create the client
-		handler = v16.NewChargePoint(tagReader, lcd, manager, sch, authCache, v16.WithLogger(logger))
+		handler = v16.NewChargePoint(
+			manager,
+			sch,
+			authCache,
+			v16.WithDisplayFromSettings(ctx, hardware.Lcd),
+			v16.WithReaderFromSettings(ctx, hardware.TagReader),
+			v16.WithLogger(logger),
+		)
 		break
 	case settings.OCPP201:
 		logger.Fatal("Version 2.0.1 is not supported yet.")
@@ -98,7 +89,7 @@ func Run(isDebug bool, settingsFilePath, configurationFilePath, connectorsFolder
 	}
 
 	// Initialize the client
-	handler.Init(ctx, config)
+	handler.Init(config)
 
 	// Add connectors from file
 	connectors := s.GetConnectors(mem, connectorsFolderPath)

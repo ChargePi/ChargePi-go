@@ -172,8 +172,15 @@ func (s *chargePointTestSuite) setupCentralSystemCoreExpectations() {
 }
 
 func (s *chargePointTestSuite) setupChargePoint(ctx context.Context, lcd display.LCD, reader reader.Reader, connectorManager *test.ManagerMock) chargePoint.ChargePoint {
-	cp := v16.NewChargePoint(reader, lcd, connectorManager, scheduler.GetScheduler(), auth.NewAuthCache("./auth.json"), v16.WithLogger(log.StandardLogger()))
-	cp.Init(ctx, &chargePointSettings)
+	cp := v16.NewChargePoint(
+		connectorManager,
+		scheduler.GetScheduler(),
+		auth.NewAuthCache("./auth.json"),
+		v16.WithDisplay(ctx, lcd),
+		v16.WithReader(ctx, reader),
+		v16.WithLogger(log.StandardLogger()),
+	)
+	cp.Init(&chargePointSettings)
 	cp.Connect(ctx, fmt.Sprintf("ws://%s:%d%s", centralSystemHost, centralSystemPort, centralSystemEndpoint))
 	return cp
 }

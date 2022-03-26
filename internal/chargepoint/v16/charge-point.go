@@ -22,14 +22,16 @@ import (
 
 type (
 	ChargePoint struct {
-		chargePoint      ocpp16.ChargePoint
-		availability     core.AvailabilityType
+		chargePoint  ocpp16.ChargePoint
+		availability core.AvailabilityType
+		Settings     *settings.Settings
+		// Hardware components
+		TagReader reader.Reader
+		Indicator indicator.Indicator
+		LCD       display.LCD
+		// Software components
 		connectorManager connectorManager.Manager
 		connectorChannel chan rxgo.Item
-		Settings         *settings.Settings
-		TagReader        reader.Reader
-		Indicator        indicator.Indicator
-		LCD              display.LCD
 		scheduler        *gocron.Scheduler
 		authCache        *auth.Cache
 		logger           *log.Logger
@@ -47,49 +49,13 @@ type (
 	Options func(point *ChargePoint)
 )
 
-func WithLogger(logger *log.Logger) Options {
-	return func(point *ChargePoint) {
-		if logger != nil {
-			point.logger = logger
-		}
-	}
-}
-
-func WithTagReader(ctx context.Context, readerSettings settings.TagReader) Options {
-	return func(point *ChargePoint) {
-		// Create hardware components based on settings
-		tagReader, err := reader.NewTagReader(readerSettings)
-		if err == nil {
-			go tagReader.ListenForTags(ctx)
-		}
-
-		point.TagReader = tagReader
-
-		// Listen for incoming tags
-		go point.ListenForTag(ctx, tagReader.GetTagChannel())
-	}
-}
-
-func WithDisplay(ctx context.Context, lcdSettings settings.Lcd) Options {
-	return func(point *ChargePoint) {
-		lcd, err := display.NewDisplay(lcdSettings)
-		if err == nil {
-			go lcd.ListenForMessages(ctx)
-		}
-
-		point.LCD = lcd
-	}
-}
-
 // NewChargePoint creates a new ChargePoint for OCPP version 1.6.
-func NewChargePoint(tagReader reader.Reader, lcd display.LCD, manager connectorManager.Manager, scheduler *gocron.Scheduler, cache *auth.Cache, opts ...Options) *ChargePoint {
+func NewChargePoint(manager connectorManager.Manager, scheduler *gocron.Scheduler, cache *auth.Cache, opts ...Options) *ChargePoint {
 	ch := make(chan rxgo.Item, 5)
 	// Set the channel
 	manager.SetNotificationChannel(ch)
 
 	cp := &ChargePoint{
-		TagReader:        tagReader,
-		LCD:              lcd,
 		availability:     core.AvailabilityTypeInoperative,
 		connectorChannel: ch,
 		scheduler:        scheduler,
@@ -107,7 +73,7 @@ func NewChargePoint(tagReader reader.Reader, lcd display.LCD, manager connectorM
 }
 
 // Init initializes the charge point based on the settings and listens to the Reader.
-func (cp *ChargePoint) Init(ctx context.Context, settings *settings.Settings) {
+func (cp *ChargePoint) Init(settings *settings.Settings) {
 	if settings == nil {
 		log.Fatal("no settings provided")
 	}
@@ -130,11 +96,6 @@ func (cp *ChargePoint) Init(ctx context.Context, settings *settings.Settings) {
 	chargePointUtil.SetProfilesFromConfig(cp.chargePoint, cp, cp, cp)
 
 	cp.setMaxCachedTags()
-
-	// Start listening for tags from reader
-	if cp.TagReader != nil && cp.Settings.ChargePoint.Hardware.TagReader.IsEnabled {
-		go cp.ListenForTag(ctx, cp.TagReader.GetTagChannel())
-	}
 }
 
 // Connect to the central system and send a BootNotification

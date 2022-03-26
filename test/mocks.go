@@ -24,13 +24,26 @@ type (
 
 	ConnectorMock struct {
 		mock.Mock
-		connector.Connector
 	}
 
 	ManagerMock struct {
 		mock.Mock
 	}
+
+	IndicatorMock struct {
+		mock.Mock
+	}
+
+	PowerMeterMock struct {
+		mock.Mock
+	}
+
+	RelayMock struct {
+		mock.Mock
+	}
 )
+
+/*------------------ Manager mock ------------------*/
 
 func (o *ManagerMock) GetConnectors() []connector.Connector {
 	return o.Called().Get(0).([]connector.Connector)
@@ -39,7 +52,7 @@ func (o *ManagerMock) GetConnectors() []connector.Connector {
 func (o *ManagerMock) FindConnector(evseId, connectorID int) connector.Connector {
 	args := o.Called(evseId, connectorID)
 	if args.Get(0) != nil {
-		return o.Called().Get(0).(connector.Connector)
+		return args.Get(0).(connector.Connector)
 	}
 
 	return nil
@@ -48,7 +61,7 @@ func (o *ManagerMock) FindConnector(evseId, connectorID int) connector.Connector
 func (o *ManagerMock) FindAvailableConnector() connector.Connector {
 	args := o.Called()
 	if args.Get(0) != nil {
-		return o.Called().Get(0).(connector.Connector)
+		return args.Get(0).(connector.Connector)
 	}
 
 	return nil
@@ -57,7 +70,7 @@ func (o *ManagerMock) FindAvailableConnector() connector.Connector {
 func (o *ManagerMock) FindConnectorWithTagId(tagId string) connector.Connector {
 	args := o.Called(tagId)
 	if args.Get(0) != nil {
-		return o.Called(tagId).Get(0).(connector.Connector)
+		return args.Get(0).(connector.Connector)
 	}
 
 	return nil
@@ -66,7 +79,7 @@ func (o *ManagerMock) FindConnectorWithTagId(tagId string) connector.Connector {
 func (o *ManagerMock) FindConnectorWithTransactionId(transactionId string) connector.Connector {
 	args := o.Called(transactionId)
 	if args.Get(0) != nil {
-		return o.Called(transactionId).Get(0).(connector.Connector)
+		return args.Get(0).(connector.Connector)
 	}
 
 	return nil
@@ -75,7 +88,7 @@ func (o *ManagerMock) FindConnectorWithTransactionId(transactionId string) conne
 func (o *ManagerMock) FindConnectorWithReservationId(reservationId int) connector.Connector {
 	args := o.Called(reservationId)
 	if args.Get(0) != nil {
-		return o.Called(reservationId).Get(0).(connector.Connector)
+		return args.Get(0).(connector.Connector)
 	}
 
 	return nil
@@ -174,8 +187,8 @@ func (m *ConnectorMock) SetNotificationChannel(notificationChannel chan<- rxgo.I
 	m.Called(notificationChannel)
 }
 
-func (m *ConnectorMock) ReserveConnector(reservationId int) error {
-	args := m.Called(reservationId)
+func (m *ConnectorMock) ReserveConnector(reservationId int, tagId string) error {
+	args := m.Called(reservationId, tagId)
 	return args.Error(0)
 }
 
@@ -260,4 +273,66 @@ func (m *ConnectorMock) GetPowerMeter() powerMeter.PowerMeter {
 func (m *ConnectorMock) GetMaxChargingTime() int {
 	args := m.Called()
 	return args.Int(0)
+}
+
+/*------------------ Indicator mock ------------------*/
+
+func (i *IndicatorMock) DisplayColor(index int, colorHex uint32) error {
+	args := i.Called(index, colorHex)
+	return args.Error(0)
+}
+
+func (i *IndicatorMock) Blink(index int, times int, colorHex uint32) error {
+	args := i.Called(index, times, colorHex)
+	return args.Error(0)
+}
+
+func (i *IndicatorMock) Cleanup() {
+	i.Called()
+}
+
+/*---------------------- Power Meter Mock ----------------------*/
+
+func (p *PowerMeterMock) Reset() {
+	p.Called()
+}
+
+func (p *PowerMeterMock) GetEnergy() float64 {
+	args := p.Called()
+	return args.Get(0).(float64)
+}
+
+func (p *PowerMeterMock) GetPower() float64 {
+	args := p.Called()
+	return args.Get(0).(float64)
+}
+
+func (p *PowerMeterMock) GetCurrent() float64 {
+	args := p.Called()
+	return args.Get(0).(float64)
+}
+
+func (p *PowerMeterMock) GetVoltage() float64 {
+	args := p.Called()
+	return args.Get(0).(float64)
+}
+
+func (p *PowerMeterMock) GetRMSCurrent() float64 {
+	args := p.Called()
+	return args.Get(0).(float64)
+}
+
+func (p *PowerMeterMock) GetRMSVoltage() float64 {
+	args := p.Called()
+	return args.Get(0).(float64)
+}
+
+/*---------------------- Relay Mock ----------------------*/
+
+func (r *RelayMock) Enable() {
+	r.Called()
+}
+
+func (r *RelayMock) Disable() {
+	r.Called()
 }

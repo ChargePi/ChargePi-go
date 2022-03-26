@@ -10,7 +10,7 @@ import (
 
 type (
 	ChargePoint interface {
-		Init(ctx context.Context, settings *settings.Settings)
+		Init(settings *settings.Settings)
 		Connect(ctx context.Context, serverUrl string)
 		HandleChargingRequest(tagId string) (*api.HandleChargingResponse, error)
 		StartCharging(tagId string, connectorId int) (*api.StartTransactionResponse, error)

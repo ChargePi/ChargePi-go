@@ -32,7 +32,7 @@ func init() {
 
 		loadTranslations()
 
-		// command and plugin messages
+		// Default messages
 		addDefaultMessage(i18n.Message{
 			ID:    "ConnectorTemplate",
 			Other: "Connector {{.Id}}",

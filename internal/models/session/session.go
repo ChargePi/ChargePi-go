@@ -54,7 +54,7 @@ func (session *Session) StartSession(transactionId string, tagId string) error {
 		return ErrInvalidTransactionId
 	}
 
-	if !strUtil.IsNotEmpty(tagId) {
+	if strUtil.IsEmpty(tagId) {
 		return ErrInvalidTagId
 	}
 

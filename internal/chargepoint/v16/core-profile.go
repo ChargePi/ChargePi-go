@@ -13,10 +13,7 @@ import (
 )
 
 func (cp *ChargePoint) OnChangeAvailability(request *core.ChangeAvailabilityRequest) (confirmation *core.ChangeAvailabilityConfirmation, err error) {
-	var response core.AvailabilityStatus = core.AvailabilityStatusRejected
-	if err != nil {
-		return core.NewChangeAvailabilityConfirmation(response), nil
-	}
+	var response = core.AvailabilityStatusRejected
 
 	if request.ConnectorId == 0 {
 		// todo check if there are ongoing transactions
@@ -80,24 +77,46 @@ func (cp *ChargePoint) OnGetConfiguration(request *core.GetConfigurationRequest)
 
 	var (
 		unknownKeys            []string
-		configArray            []core.ConfigurationKey
-		response               *core.GetConfigurationConfirmation
+		configArray            = []core.ConfigurationKey{}
+		response               = core.NewGetConfigurationConfirmation(configArray)
 		configuration, confErr = ocppManager.GetConfiguration()
 	)
 
-	if confErr == nil && configuration != nil {
-		configArray = configuration
-		for _, key := range request.Key {
-			_, keyErr := ocppManager.GetConfigurationValue(key)
-			if keyErr != nil {
-				unknownKeys = append(unknownKeys, key)
+	if confErr != nil || configuration == nil {
+		return response, nil
+	}
+
+	configArray = configuration
+
+	// Get all configuration variables
+	if request.Key == nil || len(request.Key) == 0 {
+		response.ConfigurationKey = configArray
+		response.UnknownKey = unknownKeys
+		return response, nil
+	}
+
+	configArray2 := []core.ConfigurationKey{}
+	// Get only the requested variables
+	for _, key := range request.Key {
+
+		// Note: redundant looping, should've just created an ocpp.ConfigurationKey function
+		// Check if the key exists
+		_, keyErr := ocppManager.GetConfigurationValue(key)
+		if keyErr != nil {
+			unknownKeys = append(unknownKeys, key)
+			continue
+		}
+
+		// Key should exist, therefore find it in the config
+		for _, configurationKey := range configArray {
+			if key == configurationKey.Key {
+				configArray2 = append(configArray2, configurationKey)
 			}
 		}
 	}
 
-	response = core.NewGetConfigurationConfirmation(configArray)
+	response.ConfigurationKey = configArray2
 	response.UnknownKey = unknownKeys
-
 	return response, nil
 }
 

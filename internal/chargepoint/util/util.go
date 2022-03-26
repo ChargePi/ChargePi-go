@@ -19,6 +19,7 @@ import (
 	"time"
 )
 
+// CreateClient creates a Websocket client based on the settings.
 func CreateClient(tlsConfig settings.TLS) *ws.Client {
 	var (
 		client            = ws.NewClient()
@@ -42,6 +43,7 @@ func CreateClient(tlsConfig settings.TLS) *ws.Client {
 	return client
 }
 
+// SetProfilesFromConfig based on the provided OCPP configuration, set the profiles
 func SetProfilesFromConfig(
 	chargePoint ocpp16.ChargePoint,
 	coreHandler core.ChargePointHandler,

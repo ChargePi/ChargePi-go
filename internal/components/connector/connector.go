@@ -9,14 +9,14 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware"
 	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware/power-meter"
-	settings2 "github.com/xBlaz3kx/ChargePi-go/internal/components/settings"
+	"github.com/xBlaz3kx/ChargePi-go/internal/components/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/session"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
+	settingsModel "github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/cache"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/scheduler"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/util"
 	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
 	v16 "github.com/xBlaz3kx/ocppManager-go/v16"
-	"strings"
 	"sync"
 	"time"
 )
@@ -32,7 +32,7 @@ var (
 )
 
 type (
-	Impl struct {
+	connectorImpl struct {
 		mu                           sync.Mutex
 		EvseId                       int
 		ConnectorId                  int
@@ -53,7 +53,7 @@ type (
 		ResumeCharging(session session.Session) (error, int)
 		StopCharging(reason core.Reason) error
 		SetNotificationChannel(notificationChannel chan<- rxgo.Item)
-		ReserveConnector(reservationId int) error
+		ReserveConnector(reservationId int, tagId string) error
 		RemoveReservation() error
 		GetReservationId() int
 		GetTagId() string
@@ -71,14 +71,13 @@ type (
 		IsUnavailable() bool
 		GetPowerMeter() power_meter.PowerMeter
 		GetMaxChargingTime() int
-		preparePowerMeterAtConnector() error
 	}
 )
 
 // NewConnector Create a new connector object from the provided arguments. EvseId, connectorId and maxChargingTime must be greater than zero.
 // When created, it makes an empty session, turns off the relay and defaults the status to Available.
 func NewConnector(evseId int, connectorId int, connectorType string, relay hardware.Relay,
-	powerMeter power_meter.PowerMeter, powerMeterEnabled bool, maxChargingTime int) (*Impl, error) {
+	powerMeter power_meter.PowerMeter, powerMeterEnabled bool, maxChargingTime int) (*connectorImpl, error) {
 	log.WithFields(log.Fields{
 		"evseId":          evseId,
 		"connectorId":     connectorId,
@@ -99,12 +98,12 @@ func NewConnector(evseId int, connectorId int, connectorType string, relay hardw
 		return nil, ErrInvalidConnectorId
 	}
 
-	if relay == nil {
+	if util.IsNilInterfaceOrPointer(relay) {
 		return nil, ErrRelayPointerNil
 	}
 
 	relay.Disable()
-	return &Impl{
+	return &connectorImpl{
 		mu:                sync.Mutex{},
 		EvseId:            evseId,
 		ConnectorId:       connectorId,
@@ -121,7 +120,7 @@ func NewConnector(evseId int, connectorId int, connectorType string, relay hardw
 
 // StartCharging Start charging a connector if connector is available and session could be started.
 // It turns on the relay (even if negative logic applies).
-func (connector *Impl) StartCharging(transactionId string, tagId string) error {
+func (connector *connectorImpl) StartCharging(transactionId string, tagId string) error {
 	logInfo := log.WithFields(log.Fields{
 		"evseId":        connector.EvseId,
 		"connectorId":   connector.ConnectorId,
@@ -143,10 +142,10 @@ func (connector *Impl) StartCharging(transactionId string, tagId string) error {
 	connector.relay.Enable()
 	connector.SetStatus(core.ChargePointStatusCharging, core.NoError)
 
-	settings2.UpdateConnectorSessionInfo(
+	settings.UpdateConnectorSessionInfo(
 		connector.EvseId,
 		connector.ConnectorId,
-		&settings.Session{
+		&settingsModel.Session{
 			IsActive:      connector.session.IsActive,
 			TagId:         connector.session.TagId,
 			TransactionId: connector.session.TransactionId,
@@ -165,7 +164,7 @@ func (connector *Impl) StartCharging(transactionId string, tagId string) error {
 }
 
 // ResumeCharging Resumes or restores the charging state after boot if a charging session was active.
-func (connector *Impl) ResumeCharging(session session.Session) (err error, chargingTimeElapsed int) {
+func (connector *connectorImpl) ResumeCharging(session session.Session) (err error, chargingTimeElapsed int) {
 	// Set the transaction id so connector is able to stop the transaction if charging fails
 	logInfo := log.WithFields(log.Fields{
 		"evseId":      connector.EvseId,
@@ -205,7 +204,7 @@ func (connector *Impl) ResumeCharging(session session.Session) (err error, charg
 }
 
 // StopCharging Stops charging the connector by turning the relay off and ending the session.
-func (connector *Impl) StopCharging(reason core.Reason) error {
+func (connector *connectorImpl) StopCharging(reason core.Reason) error {
 	logInfo := log.WithFields(log.Fields{
 		"evseId":      connector.EvseId,
 		"connectorId": connector.ConnectorId,
@@ -217,10 +216,10 @@ func (connector *Impl) StopCharging(reason core.Reason) error {
 		connector.session.EndSession()
 		connector.relay.Disable()
 
-		settings2.UpdateConnectorSessionInfo(
+		settings.UpdateConnectorSessionInfo(
 			connector.EvseId,
 			connector.ConnectorId,
-			&settings.Session{
+			&settingsModel.Session{
 				IsActive:      connector.session.IsActive,
 				TagId:         connector.session.TagId,
 				TransactionId: connector.session.TransactionId,
@@ -247,13 +246,13 @@ func (connector *Impl) StopCharging(reason core.Reason) error {
 
 // SamplePowerMeter Get a sample from the power meter. The measurands argument takes the list of all the types of the measurands to sample.
 // It will add all the samples to the connector's Session if it is active.
-func (connector *Impl) SamplePowerMeter(measurands []types.Measurand) {
+func (connector *connectorImpl) SamplePowerMeter(measurands []types.Measurand) {
 	logInfo := log.WithFields(log.Fields{
 		"evseId":      connector.EvseId,
 		"connectorId": connector.ConnectorId,
 	})
 
-	if !connector.PowerMeterEnabled || connector.powerMeter == nil {
+	if !connector.PowerMeterEnabled || util.IsNilInterfaceOrPointer(connector.powerMeter) {
 		return
 	}
 
@@ -265,7 +264,8 @@ func (connector *Impl) SamplePowerMeter(measurands []types.Measurand) {
 
 	for _, measurand := range measurands {
 		switch measurand {
-		case types.MeasurandEnergyActiveImportInterval, types.MeasurandEnergyActiveImportRegister:
+		case types.MeasurandEnergyActiveImportInterval, types.MeasurandEnergyActiveImportRegister,
+			types.MeasurandEnergyActiveExportInterval, types.MeasurandEnergyActiveExportRegister:
 			value = connector.powerMeter.GetEnergy()
 			break
 		case types.MeasurandCurrentImport, types.MeasurandCurrentExport:
@@ -291,9 +291,9 @@ func (connector *Impl) SamplePowerMeter(measurands []types.Measurand) {
 }
 
 // preparePowerMeterAtConnector
-func (connector *Impl) preparePowerMeterAtConnector() error {
+func (connector *connectorImpl) preparePowerMeterAtConnector() error {
 	var (
-		measurands                 = GetTypesToSample()
+		measurands                 = util.GetTypesToSample()
 		sampleTime                 = "10s"
 		sampleInterval, err        = ocppConfigManager.GetConfigurationValue(v16.MeterValueSampleInterval.String())
 		meterValueLastSentIndexKey = fmt.Sprintf("MeterValueLastIndex%d%d", connector.EvseId, connector.ConnectorId)
@@ -314,33 +314,33 @@ func (connector *Impl) preparePowerMeterAtConnector() error {
 	return err
 }
 
-func (connector *Impl) IsAvailable() bool {
+func (connector *connectorImpl) IsAvailable() bool {
 	connector.mu.Lock()
 	defer connector.mu.Unlock()
 	return connector.ConnectorStatus == core.ChargePointStatusAvailable
 }
-func (connector *Impl) IsCharging() bool {
+func (connector *connectorImpl) IsCharging() bool {
 	connector.mu.Lock()
 	defer connector.mu.Unlock()
 	return connector.ConnectorStatus == core.ChargePointStatusCharging
 }
-func (connector *Impl) IsPreparing() bool {
+func (connector *connectorImpl) IsPreparing() bool {
 	connector.mu.Lock()
 	defer connector.mu.Unlock()
 	return connector.ConnectorStatus == core.ChargePointStatusPreparing
 }
-func (connector *Impl) IsReserved() bool {
+func (connector *connectorImpl) IsReserved() bool {
 	connector.mu.Lock()
 	defer connector.mu.Unlock()
 	return connector.ConnectorStatus == core.ChargePointStatusReserved
 }
-func (connector *Impl) IsUnavailable() bool {
+func (connector *connectorImpl) IsUnavailable() bool {
 	connector.mu.Lock()
 	defer connector.mu.Unlock()
 	return connector.ConnectorStatus == core.ChargePointStatusUnavailable
 }
 
-func (connector *Impl) SetStatus(status core.ChargePointStatus, errCode core.ChargePointErrorCode) {
+func (connector *connectorImpl) SetStatus(status core.ChargePointStatus, errCode core.ChargePointErrorCode) {
 	logInfo := log.WithFields(log.Fields{
 		"evseId":      connector.EvseId,
 		"connectorId": connector.ConnectorId,
@@ -350,7 +350,7 @@ func (connector *Impl) SetStatus(status core.ChargePointStatus, errCode core.Cha
 	connector.mu.Lock()
 	connector.ConnectorStatus = status
 	connector.ErrorCode = errCode
-	settings2.UpdateConnectorStatus(connector.EvseId, connector.ConnectorId, status)
+	settings.UpdateConnectorStatus(connector.EvseId, connector.ConnectorId, status)
 
 	if connector.ConnectorNotificationChannel != nil {
 		connector.ConnectorNotificationChannel <- rxgo.Of(connector)
@@ -359,17 +359,18 @@ func (connector *Impl) SetStatus(status core.ChargePointStatus, errCode core.Cha
 	connector.mu.Unlock()
 }
 
-func (connector *Impl) GetTransactionId() string {
+func (connector *connectorImpl) GetTransactionId() string {
 	return connector.session.TransactionId
 }
-func (connector *Impl) GetTagId() string {
+func (connector *connectorImpl) GetTagId() string {
 	return connector.session.TagId
 }
 
-func (connector *Impl) ReserveConnector(reservationId int) error {
+func (connector *connectorImpl) ReserveConnector(reservationId int, tagId string) error {
 	logInfo := log.WithFields(log.Fields{
 		"evseId":      connector.EvseId,
 		"connectorId": connector.ConnectorId,
+		"tagId":       tagId,
 	})
 	logInfo.Debugf("Reserving connector for id %d", reservationId)
 
@@ -385,7 +386,7 @@ func (connector *Impl) ReserveConnector(reservationId int) error {
 	connector.SetStatus(core.ChargePointStatusReserved, core.NoError)
 	return nil
 }
-func (connector *Impl) RemoveReservation() error {
+func (connector *connectorImpl) RemoveReservation() error {
 	if !connector.IsReserved() {
 		return ErrInvalidConnectorStatus
 	}
@@ -401,52 +402,34 @@ func (connector *Impl) RemoveReservation() error {
 	return nil
 }
 
-func (connector *Impl) GetReservationId() int {
+func (connector *connectorImpl) GetReservationId() int {
 	return connector.reservationId
 }
 
-func (connector *Impl) GetConnectorId() int {
+func (connector *connectorImpl) GetConnectorId() int {
 	return connector.ConnectorId
 }
 
-func (connector *Impl) GetEvseId() int {
+func (connector *connectorImpl) GetEvseId() int {
 	return connector.EvseId
 }
 
-func (connector *Impl) CalculateSessionAvgEnergyConsumption() float64 {
+func (connector *connectorImpl) CalculateSessionAvgEnergyConsumption() float64 {
 	return connector.session.CalculateEnergyConsumptionWithAvgPower()
 }
 
-func (connector *Impl) GetPowerMeter() power_meter.PowerMeter {
+func (connector *connectorImpl) GetPowerMeter() power_meter.PowerMeter {
 	return connector.powerMeter
 }
 
-func (connector *Impl) GetMaxChargingTime() int {
+func (connector *connectorImpl) GetMaxChargingTime() int {
 	return connector.MaxChargingTime
 }
 
-func (connector *Impl) GetStatus() (core.ChargePointStatus, core.ChargePointErrorCode) {
+func (connector *connectorImpl) GetStatus() (core.ChargePointStatus, core.ChargePointErrorCode) {
 	return connector.ConnectorStatus, connector.ErrorCode
 }
 
-func (connector *Impl) SetNotificationChannel(notificationChannel chan<- rxgo.Item) {
+func (connector *connectorImpl) SetNotificationChannel(notificationChannel chan<- rxgo.Item) {
 	connector.ConnectorNotificationChannel = notificationChannel
-}
-
-func GetTypesToSample() []types.Measurand {
-	var (
-		measurands []types.Measurand
-		// Get the types to sample
-		measurandsString, err = ocppConfigManager.GetConfigurationValue(v16.MeterValuesSampledData.String())
-	)
-
-	if err != nil {
-		measurandsString = string(types.MeasurandPowerActiveImport)
-	}
-
-	for _, measurand := range strings.Split(measurandsString, ",") {
-		measurands = append(measurands, types.Measurand(measurand))
-	}
-
-	return measurands
 }

@@ -6,12 +6,13 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware/display"
 	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware/indicator"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/util"
 	"strings"
 	"time"
 )
 
 func (cp *ChargePoint) sendToLCD(messages ...string) {
-	if cp.LCD == nil || cp.LCD.GetLcdChannel() == nil || !cp.Settings.ChargePoint.Hardware.Lcd.IsEnabled {
+	if util.IsNilInterfaceOrPointer(cp.LCD) || cp.LCD.GetLcdChannel() == nil || !cp.Settings.ChargePoint.Hardware.Lcd.IsEnabled {
 		return
 	}
 
@@ -20,7 +21,7 @@ func (cp *ChargePoint) sendToLCD(messages ...string) {
 }
 
 func (cp *ChargePoint) displayLEDStatus(connectorIndex int, status core.ChargePointStatus) {
-	if !cp.Settings.ChargePoint.Hardware.LedIndicator.Enabled || cp.Indicator == nil {
+	if !cp.Settings.ChargePoint.Hardware.LedIndicator.Enabled || util.IsNilInterfaceOrPointer(cp.Indicator) {
 		return
 	}
 
@@ -61,7 +62,7 @@ func (cp *ChargePoint) displayLEDStatus(connectorIndex int, status core.ChargePo
 
 // indicateCard Blinks the LED to indicate that the card was read.
 func (cp *ChargePoint) indicateCard(index int, color uint32) {
-	if !cp.Settings.ChargePoint.Hardware.LedIndicator.Enabled || cp.Indicator == nil {
+	if !cp.Settings.ChargePoint.Hardware.LedIndicator.Enabled || util.IsNilInterfaceOrPointer(cp.Indicator) {
 		return
 	}
 

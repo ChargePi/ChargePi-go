@@ -7,12 +7,11 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/reactivex/rxgo/v2"
-	connector2 "github.com/xBlaz3kx/ChargePi-go/internal/components/connector"
+	connector "github.com/xBlaz3kx/ChargePi-go/internal/components/connector"
 	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware/display/i18n"
 	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware/indicator"
 	settingsData "github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/cache"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/util"
 	"time"
 )
@@ -39,9 +38,10 @@ func (cp *ChargePoint) restoreState() {
 	cp.logger.Debugf("Restoring connectors' state")
 	var err error
 
-	for _, connector := range cp.connectorManager.GetConnectors() {
+	for _, c := range cp.connectorManager.GetConnectors() {
 		// Load connector configuration from cache
-		connectorSettings, isFound := cache.Cache.Get(fmt.Sprintf("connectorEvse%dId%dConfiguration", connector.GetEvseId(), connector.GetConnectorId()))
+		cacheKey := fmt.Sprintf("connectorEvse%dId%dConfiguration", c.GetEvseId(), c.GetConnectorId())
+		connectorSettings, isFound := cache.Cache.Get(cacheKey)
 		if !isFound {
 			continue
 		}
@@ -50,22 +50,22 @@ func (cp *ChargePoint) restoreState() {
 		err = cp.connectorManager.RestoreConnectorStatus(cachedConnector)
 		switch err {
 		case nil:
-			_, err = scheduler.GetScheduler().Every(connector.GetMaxChargingTime()-0).Minutes().LimitRunsTo(1).
-				Tag(fmt.Sprintf("connector%dTimer", connector.GetConnectorId())).Do(cp.stopChargingConnector, connector, core.ReasonLocal)
+			_, err = cp.scheduler.Every(c.GetMaxChargingTime()-0).Minutes().LimitRunsTo(1).
+				Tag(fmt.Sprintf("connector%dTimer", c.GetConnectorId())).Do(cp.stopChargingConnector, c, core.ReasonLocal)
 			break
 		default:
 			// Attempt to stop charging
-			err = cp.stopChargingConnector(connector, core.ReasonDeAuthorized)
+			err = cp.stopChargingConnector(c, core.ReasonDeAuthorized)
 			if err != nil {
 				cp.logger.Debugf("Stopping the charging returned %v", err)
-				connector.SetStatus(core.ChargePointStatusFaulted, core.InternalError)
+				c.SetStatus(core.ChargePointStatusFaulted, core.InternalError)
 			}
 		}
 	}
 }
 
 // notifyConnectorStatus Notify the central system about the connector's status and updates the LED indicator.
-func (cp *ChargePoint) notifyConnectorStatus(connector connector2.Connector) {
+func (cp *ChargePoint) notifyConnectorStatus(connector connector.Connector) {
 	if util.IsNilInterfaceOrPointer(connector) {
 		return
 	}
@@ -97,14 +97,15 @@ func (cp *ChargePoint) ListenForConnectorStatusChange(ctx context.Context, ch <-
 			select {
 			// Start observing the connector for changes in status
 			case item := <-observableConnectors.Observe():
-				connector, canCast := item.V.(*connector2.Impl)
+				c, canCast := item.V.(connector.Connector)
 				if canCast {
 					// Connector starts with index 1
-					connectorIndex := connector.ConnectorId - 1
+					connectorIndex := c.GetConnectorId() - 1
+					status, _ := c.GetStatus()
 
-					cp.displayLEDStatus(connectorIndex, connector.ConnectorStatus)
-					go cp.displayConnectorStatus(connector.ConnectorId, connector.ConnectorStatus)
-					cp.notifyConnectorStatus(connector)
+					cp.displayLEDStatus(connectorIndex, status)
+					go cp.displayConnectorStatus(c.GetConnectorId(), status)
+					cp.notifyConnectorStatus(c)
 				}
 				break
 			case <-ctx.Done():

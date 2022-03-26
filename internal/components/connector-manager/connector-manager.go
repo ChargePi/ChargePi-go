@@ -43,7 +43,7 @@ type (
 		SetNotificationChannel(notificationChannel chan rxgo.Item)
 	}
 
-	ManagerImpl struct {
+	managerImpl struct {
 		connectors          sync.Map
 		notificationChannel chan rxgo.Item
 	}
@@ -65,13 +65,13 @@ func GetManager() Manager {
 }
 
 func NewManager(notificationChannel chan rxgo.Item) Manager {
-	return &ManagerImpl{
+	return &managerImpl{
 		connectors:          sync.Map{},
 		notificationChannel: notificationChannel,
 	}
 }
 
-func (m *ManagerImpl) GetConnectors() []connector.Connector {
+func (m *managerImpl) GetConnectors() []connector.Connector {
 	var connectors []connector.Connector
 
 	m.connectors.Range(func(key, value interface{}) bool {
@@ -85,13 +85,13 @@ func (m *ManagerImpl) GetConnectors() []connector.Connector {
 	return connectors
 }
 
-func (m *ManagerImpl) SetNotificationChannel(notificationChannel chan rxgo.Item) {
+func (m *managerImpl) SetNotificationChannel(notificationChannel chan rxgo.Item) {
 	if notificationChannel != nil {
 		m.notificationChannel = notificationChannel
 	}
 }
 
-func (m *ManagerImpl) FindConnector(evseId, connectorID int) connector.Connector {
+func (m *managerImpl) FindConnector(evseId, connectorID int) connector.Connector {
 	var (
 		key        = fmt.Sprintf("Evse%dConnector%d", evseId, connectorID)
 		c, isFound = m.connectors.Load(key)
@@ -104,7 +104,7 @@ func (m *ManagerImpl) FindConnector(evseId, connectorID int) connector.Connector
 	return nil
 }
 
-func (m *ManagerImpl) FindAvailableConnector() connector.Connector {
+func (m *managerImpl) FindAvailableConnector() connector.Connector {
 	var availableConnector connector.Connector
 
 	m.connectors.Range(func(key, value interface{}) bool {
@@ -121,7 +121,7 @@ func (m *ManagerImpl) FindAvailableConnector() connector.Connector {
 	return availableConnector
 }
 
-func (m *ManagerImpl) FindConnectorWithTagId(tagId string) connector.Connector {
+func (m *managerImpl) FindConnectorWithTagId(tagId string) connector.Connector {
 	var connectorWithTag connector.Connector
 
 	m.connectors.Range(func(key, value interface{}) bool {
@@ -137,7 +137,7 @@ func (m *ManagerImpl) FindConnectorWithTagId(tagId string) connector.Connector {
 	return connectorWithTag
 }
 
-func (m *ManagerImpl) FindConnectorWithTransactionId(transactionId string) connector.Connector {
+func (m *managerImpl) FindConnectorWithTransactionId(transactionId string) connector.Connector {
 	var connectorWithTransaction connector.Connector
 
 	m.connectors.Range(func(key, value interface{}) bool {
@@ -153,7 +153,7 @@ func (m *ManagerImpl) FindConnectorWithTransactionId(transactionId string) conne
 	return connectorWithTransaction
 }
 
-func (m *ManagerImpl) FindConnectorWithReservationId(reservationId int) connector.Connector {
+func (m *managerImpl) FindConnectorWithReservationId(reservationId int) connector.Connector {
 	var connectorWithReservation connector.Connector
 
 	m.connectors.Range(func(key, value interface{}) bool {
@@ -169,7 +169,7 @@ func (m *ManagerImpl) FindConnectorWithReservationId(reservationId int) connecto
 	return connectorWithReservation
 }
 
-func (m *ManagerImpl) StartChargingConnector(evseId, connectorID int, tagId, transactionId string) error {
+func (m *managerImpl) StartChargingConnector(evseId, connectorID int, tagId, transactionId string) error {
 	c := m.FindConnector(evseId, connectorID)
 
 	if c != nil {
@@ -179,7 +179,7 @@ func (m *ManagerImpl) StartChargingConnector(evseId, connectorID int, tagId, tra
 	return ErrConnectorNotFound
 }
 
-func (m *ManagerImpl) StopChargingConnector(tagId, transactionId string, reason core.Reason) error {
+func (m *managerImpl) StopChargingConnector(tagId, transactionId string, reason core.Reason) error {
 	c := m.FindConnectorWithTransactionId(transactionId)
 
 	if c != nil {
@@ -189,7 +189,7 @@ func (m *ManagerImpl) StopChargingConnector(tagId, transactionId string, reason 
 	return ErrConnectorNotFound
 }
 
-func (m *ManagerImpl) StopAllConnectors(reason core.Reason) error {
+func (m *managerImpl) StopAllConnectors(reason core.Reason) error {
 	log.Debugf("Stopping all connectors: %s", reason)
 
 	var err error
@@ -204,7 +204,7 @@ func (m *ManagerImpl) StopAllConnectors(reason core.Reason) error {
 	return err
 }
 
-func (m *ManagerImpl) AddConnector(c connector.Connector) error {
+func (m *managerImpl) AddConnector(c connector.Connector) error {
 	if util.IsNilInterfaceOrPointer(c) {
 		return ErrConnectorNil
 	}
@@ -229,7 +229,7 @@ func (m *ManagerImpl) AddConnector(c connector.Connector) error {
 	return nil
 }
 
-func (m *ManagerImpl) AddConnectorFromSettings(maxChargingTime int, c *settings.Connector) error {
+func (m *managerImpl) AddConnectorFromSettings(maxChargingTime int, c *settings.Connector) error {
 	if util.IsNilInterfaceOrPointer(c) {
 		return ErrConnectorNil
 	}
@@ -264,7 +264,7 @@ func (m *ManagerImpl) AddConnectorFromSettings(maxChargingTime int, c *settings.
 	return m.AddConnector(connectorObj)
 }
 
-func (m *ManagerImpl) AddConnectorsFromConfiguration(maxChargingTime int, connectors []*settings.Connector) error {
+func (m *managerImpl) AddConnectorsFromConfiguration(maxChargingTime int, connectors []*settings.Connector) error {
 	var err error
 
 	for _, c := range connectors {
@@ -277,7 +277,7 @@ func (m *ManagerImpl) AddConnectorsFromConfiguration(maxChargingTime int, connec
 	return err
 }
 
-func (m *ManagerImpl) RestoreConnectorStatus(c *settings.Connector) error {
+func (m *managerImpl) RestoreConnectorStatus(c *settings.Connector) error {
 	if util.IsNilInterfaceOrPointer(c) {
 		return ErrConnectorNotFound
 	}

@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	goCache "github.com/patrickmn/go-cache"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/session"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/cache"
+	"github.com/xBlaz3kx/ChargePi-go/test"
 	"os/exec"
 	"testing"
 	"time"
@@ -19,67 +19,14 @@ const (
 )
 
 type (
-	PowerMeterMock struct {
-		mock.Mock
-	}
-
-	RelayMock struct {
-		mock.Mock
-	}
-
 	ConnectorTestSuite struct {
 		suite.Suite
 		connector      Connector
 		relayPinNum    int
-		relayMock      *RelayMock
-		powerMeterMock *PowerMeterMock
+		relayMock      *test.RelayMock
+		powerMeterMock *test.PowerMeterMock
 	}
 )
-
-/*---------------------- Power Meter Mock ----------------------*/
-func (p *PowerMeterMock) Reset() {
-	p.Called()
-}
-
-func (p *PowerMeterMock) GetEnergy() float64 {
-	args := p.Called()
-	return args.Get(0).(float64)
-}
-
-func (p *PowerMeterMock) GetPower() float64 {
-	args := p.Called()
-	return args.Get(0).(float64)
-}
-
-func (p *PowerMeterMock) GetCurrent() float64 {
-	args := p.Called()
-	return args.Get(0).(float64)
-}
-
-func (p *PowerMeterMock) GetVoltage() float64 {
-	args := p.Called()
-	return args.Get(0).(float64)
-}
-
-func (p *PowerMeterMock) GetRMSCurrent() float64 {
-	args := p.Called()
-	return args.Get(0).(float64)
-}
-
-func (p *PowerMeterMock) GetRMSVoltage() float64 {
-	args := p.Called()
-	return args.Get(0).(float64)
-}
-
-/*---------------------- Relay Mock ----------------------*/
-
-func (r *RelayMock) Enable() {
-	r.Called()
-}
-
-func (r *RelayMock) Disable() {
-	r.Called()
-}
 
 /*---------------------- Test suite ----------------------*/
 
@@ -94,8 +41,8 @@ func (s *ConnectorTestSuite) SetupTest() {
 	err := cmd.Run()
 	s.Require().NoError(err)
 
-	s.relayMock = new(RelayMock)
-	s.powerMeterMock = new(PowerMeterMock)
+	s.relayMock = new(test.RelayMock)
+	s.powerMeterMock = new(test.PowerMeterMock)
 
 	s.relayMock.On("Enable").Return()
 	s.relayMock.On("Disable").Return()
@@ -147,17 +94,17 @@ func (s *ConnectorTestSuite) TestCreateNewConnector() {
 
 	// Invalid evseId
 	_, err = NewConnector(0, 1, "Schuko",
-		s.relayMock, new(PowerMeterMock), false, 15)
+		s.relayMock, new(test.PowerMeterMock), false, 15)
 	s.Require().Error(err)
 
 	// Invalid connectorId
 	_, err = NewConnector(1, 0, "Schuko",
-		s.relayMock, new(PowerMeterMock), false, 15)
+		s.relayMock, new(test.PowerMeterMock), false, 15)
 	s.Require().Error(err)
 
 	// Negative connector id
 	_, err = NewConnector(1, -1, "Schuko",
-		s.relayMock, new(PowerMeterMock), false, 15)
+		s.relayMock, new(test.PowerMeterMock), false, 15)
 	s.Require().Error(err)
 }
 
@@ -277,11 +224,11 @@ func (s *ConnectorTestSuite) TestResumeCharging() {
 
 func (s *ConnectorTestSuite) TestReserveConnector() {
 	// Ok case
-	err := s.connector.ReserveConnector(1)
+	err := s.connector.ReserveConnector(1, "")
 	s.Require().NoError(err)
 
 	// Connector already reserved
-	err = s.connector.ReserveConnector(2)
+	err = s.connector.ReserveConnector(2, "")
 	s.Require().Error(err)
 
 	err = s.connector.RemoveReservation()
@@ -289,13 +236,13 @@ func (s *ConnectorTestSuite) TestReserveConnector() {
 
 	// Invalid connector status
 	s.connector.SetStatus(core.ChargePointStatusCharging, core.NoError)
-	err = s.connector.ReserveConnector(2)
+	err = s.connector.ReserveConnector(2, "")
 	s.Require().Error(err)
 }
 
 func (s *ConnectorTestSuite) TestRemoveReservation() {
 	// Make a reservation
-	err := s.connector.ReserveConnector(1)
+	err := s.connector.ReserveConnector(1, "")
 	s.Require().NoError(err)
 
 	// Ok case
