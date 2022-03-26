@@ -3,15 +3,19 @@
 ## Read before continuing
 
 The process of installing the dependencies was automated by creating a [script](../install-dependencies.sh) for
-installing the necessary dependencies. The script has only one argument: weather or not you want to install Go on your
-device. It is recommended you use this if you do not want to (re)configure anything.
+installing the necessary dependencies. The script has the following arguments:
 
-Usage:
+| Argument | Default value |                                                 Description                                                 |
+|:--------:|:-------------:|:-----------------------------------------------------------------------------------------------------------:|
+|    0     |  "pn532_i2c"  | The libnfc configuration for PN532 RFID card reader. Possible values are: pn532_uart, pn532_i2c, pn532_spi. |
+|    1     |   false (0)   |                      Whether or not to install Go on the system using a shell script.                       |
+
+Example usage:
 
 ```bash
  cd ~/ChargePi-go/docs
  chmod +x install-dependencies.sh
- ./install-dependencies.sh 1
+ ./install-dependencies.sh pn532_i2c 1
 ```
 
 ## Building libnfc for PN532

@@ -19,7 +19,7 @@ result, the test will fail, and we know that we have a bug in our code (or test)
 2. Run the tests:
 
     ```bash
-   go test -v
+   go test -v . 
    ```
 
 ### Writing unit tests
@@ -27,7 +27,7 @@ result, the test will fail, and we know that we have a bug in our code (or test)
 ChargePi-go uses [testify](https://github.com/stretchr/testify) to test the code. Check out their docs on how to write
 tests.
 
-An example test for a [connector](../../components/connector/Connector_test.go):
+An example test for a [connector](../../internal/components/connector/connector_test.go):
 
 ```golang
 package test
@@ -66,9 +66,3 @@ func TestConnector_ReserveConnector(t *testing.T) {
 	require.Error(err)
 }
 ```
-
-### Limits
-
-As of now, we can only test certain segments of the client: AuthCache, Sessions, Connector and Settings. Hardware
-testing must be done manually. If we wanted to test the client as a whole, it would be necessary to mock the central
-system's responses and connectivity ([example](https://github.com/lorenzodonini/ocpp-go/tree/master/ocpp1.6_test)). 
