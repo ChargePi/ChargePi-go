@@ -22,7 +22,7 @@ func (cp *ChargePoint) OnReserveNow(request *reservation.ReserveNowRequest) (con
 	}
 
 	timeFormat := fmt.Sprintf("%d:%d", request.ExpiryDate.Hour(), request.ExpiryDate.Minute())
-	_, schedulerErr := cp.scheduler.At(timeFormat).Do(connector.RemoveReservation)
+	_, schedulerErr := cp.scheduler.Every(1).Day().At(timeFormat).LimitRunsTo(1).Do(connector.RemoveReservation)
 	if schedulerErr != nil {
 		return reservation.NewReserveNowConfirmation(reservation.ReservationStatusRejected), nil
 	}
