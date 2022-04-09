@@ -60,6 +60,7 @@ func (s *reservationTestSuite) TestReservation() {
 	s.Assert().EqualValues(reservation.ReservationStatusUnavailable, response.Status)
 
 	// Unable to reserve for whatever reason
+	connectorMock.On("IsAvailable").Return(true).Once()
 	connectorMock.On("ReserveConnector", 2, tagId).Return(errors.New("unable to reserve the connector")).Once()
 	response, err = s.cp.OnReserveNow(reservation.NewReserveNowRequest(connectorId, expiryDate, tagId, 2))
 	s.Assert().NoError(err)

@@ -176,7 +176,7 @@ func (cp *ChargePoint) OnRemoteStopTransaction(request *core.RemoteStopTransacti
 		conn          = cp.connectorManager.FindConnectorWithTransactionId(transactionId)
 	)
 
-	if util.IsNilInterfaceOrPointer(conn) && conn.IsCharging() {
+	if !util.IsNilInterfaceOrPointer(conn) && conn.IsCharging() {
 		response = types.RemoteStartStopStatusAccepted
 		// Delay stopping the transaction by 3 seconds
 		_, schedulerErr := cp.scheduler.Every(3).Seconds().LimitRunsTo(1).Do(cp.stopChargingConnectorWithTransactionId, transactionId)

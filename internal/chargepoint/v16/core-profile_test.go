@@ -92,7 +92,7 @@ func (s *coreTestSuite) TestOnRemoteStopTransaction() {
 		transactionIdStr = "1"
 	)
 
-	connector.On("IsCharging").Return(true).Twice()
+	connector.On("IsCharging").Return(true).Once()
 	connectorManager.On("FindConnectorWithTransactionId", transactionIdStr).Return(connector).Once()
 
 	s.cp.connectorManager = connectorManager
