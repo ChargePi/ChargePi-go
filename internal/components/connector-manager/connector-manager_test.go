@@ -43,6 +43,7 @@ func CreateNewConnectorMock(evseId, connectorId int, session session.Session) *t
 	connector1.On("IsUnavailable").Return(false)
 	connector1.On("GetMaxChargingTime").Return(15)
 	connector1.On("SetNotificationChannel", mock.Anything).Return()
+	connector1.On("SetMeterValuesChannel", mock.Anything).Return()
 	return connector1
 }
 
@@ -122,6 +123,7 @@ func (suite *connectorManagerTestSuite) TestStartChargingConnector() {
 	newConn.On("GetEvseId").Return(1)
 	newConn.On("GetConnectorId").Return(4)
 	newConn.On("SetNotificationChannel", mock.Anything).Return()
+	newConn.On("SetMeterValuesChannel", mock.Anything).Return()
 	err = suite.connectorManager.AddConnector(newConn)
 	suite.Require().NoError(err)
 
@@ -226,6 +228,7 @@ func (suite *connectorManagerTestSuite) TestStopAllConnectors() {
 	newConn.On("GetConnectorId").Return(1)
 	newConn.On("GetEvseId").Return(4)
 	newConn.On("SetNotificationChannel", mock.Anything).Return()
+	newConn.On("SetMeterValuesChannel", mock.Anything).Return()
 	newConn.On("StopCharging", core.ReasonLocal).Return(errors.New("something happened"))
 
 	// Add another connector

@@ -10,9 +10,9 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware"
 	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware/power-meter"
 	"github.com/xBlaz3kx/ChargePi-go/internal/components/settings"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/session"
 	settingsModel "github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/cache"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/util"
 	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
@@ -40,12 +40,13 @@ type (
 		ConnectorStatus              core.ChargePointStatus
 		ErrorCode                    core.ChargePointErrorCode
 		relay                        hardware.Relay
-		powerMeter                   power_meter.PowerMeter
+		powerMeter                   powerMeter.PowerMeter
 		PowerMeterEnabled            bool
 		MaxChargingTime              int
 		reservationId                int
 		session                      *session.Session
 		ConnectorNotificationChannel chan<- rxgo.Item
+		meterValuesChannel           chan<- models.MeterValueNotification
 	}
 
 	Connector interface {
@@ -53,6 +54,7 @@ type (
 		ResumeCharging(session session.Session) (error, int)
 		StopCharging(reason core.Reason) error
 		SetNotificationChannel(notificationChannel chan<- rxgo.Item)
+		SetMeterValuesChannel(notificationChannel chan<- models.MeterValueNotification)
 		ReserveConnector(reservationId int, tagId string) error
 		RemoveReservation() error
 		GetReservationId() int
@@ -69,7 +71,7 @@ type (
 		IsCharging() bool
 		IsReserved() bool
 		IsUnavailable() bool
-		GetPowerMeter() power_meter.PowerMeter
+		GetPowerMeter() powerMeter.PowerMeter
 		GetMaxChargingTime() int
 	}
 )
@@ -77,7 +79,7 @@ type (
 // NewConnector Create a new connector object from the provided arguments. EvseId, connectorId and maxChargingTime must be greater than zero.
 // When created, it makes an empty session, turns off the relay and defaults the status to Available.
 func NewConnector(evseId int, connectorId int, connectorType string, relay hardware.Relay,
-	powerMeter power_meter.PowerMeter, powerMeterEnabled bool, maxChargingTime int) (*connectorImpl, error) {
+	powerMeter powerMeter.PowerMeter, powerMeterEnabled bool, maxChargingTime int) (*connectorImpl, error) {
 	log.WithFields(log.Fields{
 		"evseId":          evseId,
 		"connectorId":     connectorId,
@@ -258,11 +260,13 @@ func (connector *connectorImpl) SamplePowerMeter(measurands []types.Measurand) {
 
 	logInfo.Debugf("Sampling connector %v", measurands)
 	var (
-		samples []types.SampledValue
-		value   = 0.0
+		meterValues []types.MeterValue
+		samples     []types.SampledValue
+		value       = 0.0
 	)
 
 	for _, measurand := range measurands {
+
 		switch measurand {
 		case types.MeasurandEnergyActiveImportInterval, types.MeasurandEnergyActiveImportRegister,
 			types.MeasurandEnergyActiveExportInterval, types.MeasurandEnergyActiveExportRegister:
@@ -280,11 +284,22 @@ func (connector *connectorImpl) SamplePowerMeter(measurands []types.Measurand) {
 		}
 
 		if value != 0.0 {
-			samples = append(samples, types.SampledValue{
+			sample := types.SampledValue{
 				Value:     fmt.Sprintf("%.3f", value),
 				Measurand: measurand,
-			})
+			}
+
+			meterValues = append(meterValues, types.MeterValue{SampledValue: []types.SampledValue{sample}, Timestamp: types.NewDateTime(time.Now())})
 		}
+	}
+
+	if connector.meterValuesChannel != nil {
+		connector.meterValuesChannel <- models.NewMeterValueNotification(
+			connector.EvseId,
+			connector.ConnectorId,
+			nil,
+			meterValues...,
+		)
 	}
 
 	connector.session.AddSampledValue(samples)
@@ -293,17 +308,14 @@ func (connector *connectorImpl) SamplePowerMeter(measurands []types.Measurand) {
 // preparePowerMeterAtConnector
 func (connector *connectorImpl) preparePowerMeterAtConnector() error {
 	var (
-		measurands                 = util.GetTypesToSample()
-		sampleTime                 = "10s"
-		sampleInterval, err        = ocppConfigManager.GetConfigurationValue(v16.MeterValueSampleInterval.String())
-		meterValueLastSentIndexKey = fmt.Sprintf("MeterValueLastIndex%d%d", connector.EvseId, connector.ConnectorId)
-		jobTag                     = fmt.Sprintf("Evse%dConnector%dSampling", connector.EvseId, connector.ConnectorId)
+		measurands          = util.GetTypesToSample()
+		sampleTime          = "10s"
+		sampleInterval, err = ocppConfigManager.GetConfigurationValue(v16.MeterValueSampleInterval.String())
+		jobTag              = fmt.Sprintf("Evse%dConnector%dSampling", connector.EvseId, connector.ConnectorId)
 	)
 	if err != nil {
 		sampleInterval = "10"
 	}
-
-	cache.GetCache().Set(meterValueLastSentIndexKey, 0, time.Duration(connector.MaxChargingTime)*time.Minute)
 
 	sampleTime = fmt.Sprintf("%ss", sampleInterval)
 	// Schedule the sampling
@@ -418,7 +430,7 @@ func (connector *connectorImpl) CalculateSessionAvgEnergyConsumption() float64 {
 	return connector.session.CalculateEnergyConsumptionWithAvgPower()
 }
 
-func (connector *connectorImpl) GetPowerMeter() power_meter.PowerMeter {
+func (connector *connectorImpl) GetPowerMeter() powerMeter.PowerMeter {
 	return connector.powerMeter
 }
 
@@ -432,4 +444,8 @@ func (connector *connectorImpl) GetStatus() (core.ChargePointStatus, core.Charge
 
 func (connector *connectorImpl) SetNotificationChannel(notificationChannel chan<- rxgo.Item) {
 	connector.ConnectorNotificationChannel = notificationChannel
+}
+
+func (connector *connectorImpl) SetMeterValuesChannel(notificationChannel chan<- models.MeterValueNotification) {
+	connector.meterValuesChannel = notificationChannel
 }

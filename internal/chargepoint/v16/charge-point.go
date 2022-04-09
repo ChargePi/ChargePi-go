@@ -30,11 +30,12 @@ type (
 		Indicator indicator.Indicator
 		LCD       display.LCD
 		// Software components
-		connectorManager connectorManager.Manager
-		connectorChannel chan rxgo.Item
-		scheduler        *gocron.Scheduler
-		authCache        *auth.Cache
-		logger           *log.Logger
+		connectorManager   connectorManager.Manager
+		connectorChannel   chan rxgo.Item
+		meterValuesChannel chan rxgo.Item
+		scheduler          *gocron.Scheduler
+		authCache          *auth.Cache
+		logger             *log.Logger
 	}
 
 	ChargePointV16 interface {

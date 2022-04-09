@@ -3,12 +3,16 @@ package connector
 import (
 	"fmt"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
+	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	goCache "github.com/patrickmn/go-cache"
+	log "github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/session"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/cache"
-	"github.com/xBlaz3kx/ChargePi-go/test"
+	"golang.org/x/net/context"
 	"os/exec"
 	"testing"
 	"time"
@@ -19,14 +23,67 @@ const (
 )
 
 type (
+	PowerMeterMock struct {
+		mock.Mock
+	}
+
+	RelayMock struct {
+		mock.Mock
+	}
 	ConnectorTestSuite struct {
 		suite.Suite
-		connector      Connector
+		connector      *connectorImpl
 		relayPinNum    int
-		relayMock      *test.RelayMock
-		powerMeterMock *test.PowerMeterMock
+		relayMock      *RelayMock
+		powerMeterMock *PowerMeterMock
 	}
 )
+
+/*---------------------- Power Meter Mock ----------------------*/
+
+func (p *PowerMeterMock) Reset() {
+	p.Called()
+}
+
+func (p *PowerMeterMock) GetEnergy() float64 {
+	args := p.Called()
+	return args.Get(0).(float64)
+}
+
+func (p *PowerMeterMock) GetPower() float64 {
+	args := p.Called()
+	return args.Get(0).(float64)
+}
+
+func (p *PowerMeterMock) GetCurrent() float64 {
+	args := p.Called()
+	return args.Get(0).(float64)
+}
+
+func (p *PowerMeterMock) GetVoltage() float64 {
+	args := p.Called()
+	return args.Get(0).(float64)
+}
+
+func (p *PowerMeterMock) GetRMSCurrent() float64 {
+	args := p.Called()
+	return args.Get(0).(float64)
+}
+
+func (p *PowerMeterMock) GetRMSVoltage() float64 {
+	args := p.Called()
+	return args.Get(0).(float64)
+}
+
+/*---------------------- Relay Mock ----------------------*/
+
+func (r *RelayMock) Enable() {
+	r.Called()
+}
+
+func (r *RelayMock) Disable() {
+	r.Called()
+}
 
 /*---------------------- Test suite ----------------------*/
 
@@ -41,8 +98,8 @@ func (s *ConnectorTestSuite) SetupTest() {
 	err := cmd.Run()
 	s.Require().NoError(err)
 
-	s.relayMock = new(test.RelayMock)
-	s.powerMeterMock = new(test.PowerMeterMock)
+	s.relayMock = new(RelayMock)
+	s.powerMeterMock = new(PowerMeterMock)
 
 	s.relayMock.On("Enable").Return()
 	s.relayMock.On("Disable").Return()
@@ -94,17 +151,17 @@ func (s *ConnectorTestSuite) TestCreateNewConnector() {
 
 	// Invalid evseId
 	_, err = NewConnector(0, 1, "Schuko",
-		s.relayMock, new(test.PowerMeterMock), false, 15)
+		s.relayMock, new(PowerMeterMock), false, 15)
 	s.Require().Error(err)
 
 	// Invalid connectorId
 	_, err = NewConnector(1, 0, "Schuko",
-		s.relayMock, new(test.PowerMeterMock), false, 15)
+		s.relayMock, new(PowerMeterMock), false, 15)
 	s.Require().Error(err)
 
 	// Negative connector id
 	_, err = NewConnector(1, -1, "Schuko",
-		s.relayMock, new(test.PowerMeterMock), false, 15)
+		s.relayMock, new(PowerMeterMock), false, 15)
 	s.Require().Error(err)
 }
 
@@ -255,9 +312,52 @@ func (s *ConnectorTestSuite) TestRemoveReservation() {
 }
 
 func (s *ConnectorTestSuite) TestSamplePowerMeter() {
-	// todo
+	s.powerMeterMock = new(PowerMeterMock)
+
+	s.powerMeterMock.On("GetEnergy").Return(1.0)
+	s.powerMeterMock.On("GetCurrent").Return(1.0)
+	s.powerMeterMock.On("GetVoltage").Return(1.0)
+
+	var (
+		ctx, cancel    = context.WithTimeout(context.Background(), time.Second*30)
+		meterValueChan = make(chan models.MeterValueNotification)
+	)
+
+	defer cancel()
+	go func() {
+	Loop:
+		for {
+			select {
+			case notif := <-meterValueChan:
+				s.Assert().EqualValues(s.connector.GetConnectorId(), notif.ConnectorId)
+				s.Assert().EqualValues(s.connector.GetEvseId(), notif.EvseId)
+
+				s.Assert().Len(notif.MeterValues, 3)
+				s.Assert().EqualValues("1.000", notif.MeterValues[0].SampledValue[0].Value)
+				s.Assert().EqualValues(types.MeasurandVoltage, notif.MeterValues[0].SampledValue[0].Measurand)
+
+				s.Assert().EqualValues("1.000", notif.MeterValues[1].SampledValue[0].Value)
+				s.Assert().EqualValues(types.MeasurandCurrentImport, notif.MeterValues[1].SampledValue[0].Measurand)
+
+				s.Assert().EqualValues("1.000", notif.MeterValues[2].SampledValue[0].Value)
+				s.Assert().EqualValues(types.MeasurandEnergyActiveImportInterval, notif.MeterValues[2].SampledValue[0].Measurand)
+			case <-ctx.Done():
+				break Loop
+			}
+		}
+	}()
+
+	s.connector.SetMeterValuesChannel(meterValueChan)
+	s.connector.PowerMeterEnabled = true
+	s.connector.powerMeter = s.powerMeterMock
+	s.connector.SamplePowerMeter([]types.Measurand{types.MeasurandVoltage, types.MeasurandCurrentImport, types.MeasurandEnergyActiveImportInterval})
+
+	time.Sleep(time.Second)
+
+	s.connector.SamplePowerMeter([]types.Measurand{types.MeasurandVoltage, types.MeasurandCurrentImport, types.MeasurandEnergyActiveImportInterval})
 }
 
 func TestConnector(t *testing.T) {
+	log.SetLevel(log.DebugLevel)
 	suite.Run(t, NewConnectorTestSuite())
 }
