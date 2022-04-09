@@ -9,6 +9,7 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/components/connector"
 	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware"
 	powerMeter "github.com/xBlaz3kx/ChargePi-go/internal/components/hardware/power-meter"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/session"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/util"
@@ -41,11 +42,13 @@ type (
 		AddConnectorsFromConfiguration(maxChargingTime int, c []*settings.Connector) error
 		RestoreConnectorStatus(*settings.Connector) error
 		SetNotificationChannel(notificationChannel chan rxgo.Item)
+		SetMeterValuesChannel(notificationChannel chan models.MeterValueNotification)
 	}
 
 	managerImpl struct {
 		connectors          sync.Map
 		notificationChannel chan rxgo.Item
+		meterValuesChannel  chan models.MeterValueNotification
 	}
 )
 
@@ -88,6 +91,12 @@ func (m *managerImpl) GetConnectors() []connector.Connector {
 func (m *managerImpl) SetNotificationChannel(notificationChannel chan rxgo.Item) {
 	if notificationChannel != nil {
 		m.notificationChannel = notificationChannel
+	}
+}
+
+func (m *managerImpl) SetMeterValuesChannel(notificationChannel chan models.MeterValueNotification) {
+	if notificationChannel != nil {
+		m.meterValuesChannel = notificationChannel
 	}
 }
 
@@ -219,6 +228,7 @@ func (m *managerImpl) AddConnector(c connector.Connector) error {
 
 	logInfo.Debugf("Adding a connector to manager")
 	c.SetNotificationChannel(m.notificationChannel)
+	c.SetMeterValuesChannel(m.meterValuesChannel)
 
 	// Add the connector
 	_, isLoaded := m.connectors.LoadOrStore(key, c)

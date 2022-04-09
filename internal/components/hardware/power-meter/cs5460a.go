@@ -1,4 +1,4 @@
-package power_meter
+package powerMeter
 
 import (
 	"errors"

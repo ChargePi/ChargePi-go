@@ -19,6 +19,21 @@ import (
 	"time"
 )
 
+// CreateConnectionUrl creates a connection url from the provided settings
+func CreateConnectionUrl(point settings.ChargePoint) string {
+	var (
+		chargePointInfo = point.Info
+		serverUrl       = fmt.Sprintf("ws://%s", chargePointInfo.ServerUri)
+	)
+
+	// Replace insecure Websockets
+	if point.TLS.IsEnabled {
+		serverUrl = strings.Replace(serverUrl, "ws", "wss", 1)
+	}
+
+	return serverUrl
+}
+
 // CreateClient creates a Websocket client based on the settings.
 func CreateClient(tlsConfig settings.TLS) *ws.Client {
 	var (

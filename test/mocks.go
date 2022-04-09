@@ -9,6 +9,7 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/components/connector"
 	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware/display"
 	powerMeter "github.com/xBlaz3kx/ChargePi-go/internal/components/hardware/power-meter"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/session"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 )
@@ -126,6 +127,10 @@ func (o *ManagerMock) SetNotificationChannel(notificationChannel chan rxgo.Item)
 	o.Called()
 }
 
+func (o *ManagerMock) SetMeterValuesChannel(notificationChannel chan models.MeterValueNotification) {
+	o.Called()
+}
+
 /*------------------ Display mock ------------------*/
 
 func (l *DisplayMock) DisplayMessage(message display.LCDMessage) {
@@ -184,6 +189,10 @@ func (m *ConnectorMock) StopCharging(reason core.Reason) error {
 }
 
 func (m *ConnectorMock) SetNotificationChannel(notificationChannel chan<- rxgo.Item) {
+	m.Called(notificationChannel)
+}
+
+func (m *ConnectorMock) SetMeterValuesChannel(notificationChannel chan<- models.MeterValueNotification) {
 	m.Called(notificationChannel)
 }
 

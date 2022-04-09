@@ -10,6 +10,7 @@ import (
 	connector "github.com/xBlaz3kx/ChargePi-go/internal/components/connector"
 	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware/display/i18n"
 	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware/indicator"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models"
 	settingsData "github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/cache"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/util"
@@ -106,6 +107,16 @@ func (cp *ChargePoint) ListenForConnectorStatusChange(ctx context.Context, ch <-
 					cp.displayLEDStatus(connectorIndex, status)
 					go cp.displayConnectorStatus(c.GetConnectorId(), status)
 					cp.notifyConnectorStatus(c)
+				}
+				break
+			case meterVal := <-cp.meterValuesChannel:
+				meterValues, canCast := meterVal.V.(models.MeterValueNotification)
+				if canCast {
+					values := core.NewMeterValuesRequest(meterValues.ConnectorId, meterValues.MeterValues)
+					err := util.SendRequest(cp.chargePoint, values, func(confirmation ocpp.Response, protoError error) {})
+					if err != nil {
+						cp.logger.WithError(err).Errorf("Cannot send meter values")
+					}
 				}
 				break
 			case <-ctx.Done():
