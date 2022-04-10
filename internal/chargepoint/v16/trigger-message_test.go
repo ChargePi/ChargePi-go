@@ -23,6 +23,7 @@ func (s *triggerMessageTestSuite) SetupTest() {
 		logger:    log.StandardLogger(),
 		scheduler: scheduler.GetScheduler(),
 	}
+	s.cp.scheduler.Clear()
 }
 
 func (s *triggerMessageTestSuite) TestTriggerMessage() {
@@ -64,11 +65,17 @@ func (s *triggerMessageTestSuite) TestTriggerMessage() {
 	s.Assert().EqualValues(remotetrigger.TriggerMessageStatusAccepted, response.Status)
 	s.Assert().Len(s.cp.scheduler.Jobs(), 1)
 
+	s.cp.scheduler.Clear()
+
+	time.Sleep(time.Second)
+
 	response, err = s.cp.OnTriggerMessage(remotetrigger.NewTriggerMessageRequest(core.BootNotificationFeatureName))
 	s.Assert().NoError(err)
 	s.Assert().NotNil(response)
 	s.Assert().EqualValues(remotetrigger.TriggerMessageStatusAccepted, response.Status)
-	s.Assert().Len(s.cp.scheduler.Jobs(), 2)
+	s.Assert().Len(s.cp.scheduler.Jobs(), 1)
+
+	s.cp.scheduler.Clear()
 
 	// Get status of all connectors
 	response, err = s.cp.OnTriggerMessage(remotetrigger.NewTriggerMessageRequest(core.StatusNotificationFeatureName))

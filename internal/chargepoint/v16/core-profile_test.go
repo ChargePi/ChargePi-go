@@ -2,13 +2,13 @@ package v16
 
 import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	s "github.com/xBlaz3kx/ChargePi-go/internal/components/settings"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/test"
+	ocppManager "github.com/xBlaz3kx/ocppManager-go"
 	v16 "github.com/xBlaz3kx/ocppManager-go/v16"
 	"testing"
 )
@@ -182,12 +182,8 @@ func (s *coreTestSuite) TestOnRemoteStartTransaction() {
 func TestCore(t *testing.T) {
 	log.SetLevel(log.DebugLevel)
 
-	// Setup OCPP configuration manager
-	s.SetupOcppConfigurationManager(
-		"../../../configs/configuration.json",
-		"1.6",
-		core.ProfileName,
-		reservation.ProfileName)
+	err := ocppManager.GetManager().SetConfiguration(ocppConfig)
+	assert.NoError(t, err)
 
 	suite.Run(t, new(coreTestSuite))
 }

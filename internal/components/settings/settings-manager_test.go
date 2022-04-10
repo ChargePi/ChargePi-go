@@ -96,7 +96,7 @@ func (s *SettingsManagerTestSuite) TestUpdateSessionInfo() {
 
 func (s *SettingsManagerTestSuite) TestUpdateConnectorStatus() {
 	if testing.Short() {
-		s.T().Skip("Skipping integration test")
+		return
 	}
 
 	cmd := exec.Command("touch", fileName)
