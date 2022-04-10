@@ -3,16 +3,163 @@ package v16
 import (
 	"context"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
 	log "github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware/display"
-	s "github.com/xBlaz3kx/ChargePi-go/internal/components/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/test"
+	ocppManager "github.com/xBlaz3kx/ocppManager-go"
+	"github.com/xBlaz3kx/ocppManager-go/configuration"
 	"testing"
 	"time"
+)
+
+var (
+	ocppConfig = configuration.Config{
+		Version: 1,
+		Keys: []core.ConfigurationKey{
+			{
+				Key:      "AllowOfflineTxForUnknownId",
+				Readonly: false,
+				Value:    "false",
+			},
+			{
+				Key:      "AuthorizationCacheEnabled",
+				Readonly: false,
+				Value:    "false",
+			},
+			{
+				Key:      "AuthorizeRemoteTxRequests",
+				Readonly: false,
+				Value:    "false",
+			},
+			{
+				Key:      "ClockAlignedDataInterval",
+				Readonly: false,
+				Value:    "0",
+			},
+			{
+				Key:      "ConnectionTimeOut",
+				Readonly: false,
+				Value:    "50",
+			},
+			{
+				Key:      "GetConfigurationMaxKeys",
+				Readonly: false,
+				Value:    "30",
+			},
+			{
+				Key:      "HeartbeatInterval",
+				Readonly: false,
+				Value:    "60",
+			},
+			{
+				Key:      "LocalAuthorizeOffline",
+				Readonly: false,
+				Value:    "true",
+			},
+			{
+				Key:      "LocalPreAuthorize",
+				Readonly: false,
+				Value:    "true",
+			},
+			{
+				Key:      "MaxEnergyOnInvalidId",
+				Readonly: false,
+				Value:    "0",
+			},
+			{
+				Key:      "MeterValuesSampledData",
+				Readonly: false,
+				Value:    "Power.Active.Import",
+			},
+			{
+				Key:      "MeterValuesAlignedData",
+				Readonly: false,
+				Value:    "false",
+			},
+			{
+				Key:      "NumberOfConnectors",
+				Readonly: false,
+				Value:    "6",
+			},
+			{
+				Key:      "MeterValueSampleInterval",
+				Readonly: false,
+				Value:    "60",
+			},
+			{
+				Key:      "ResetRetries",
+				Readonly: false,
+				Value:    "3",
+			},
+			{
+				Key:      "ConnectorPhaseRotation",
+				Readonly: false,
+				Value:    "0.RST, 1.RST, 2.RTS",
+			},
+			{
+				Key:      "StopTransactionOnEVSideDisconnect",
+				Readonly: false,
+				Value:    "true",
+			},
+			{
+				Key:      "StopTransactionOnInvalidId",
+				Readonly: false,
+				Value:    "true",
+			},
+			{
+				Key:      "StopTxnAlignedData",
+				Readonly: false,
+			},
+			{
+				Key:      "StopTxnSampledData",
+				Readonly: false,
+			},
+			{
+				Key:      "SupportedFeatureProfiles",
+				Readonly: true,
+				Value:    "Core, LocalAuthListManagement, Reservation, RemoteTrigger",
+			},
+			{
+				Key:      "TransactionMessageAttempts",
+				Readonly: false,
+				Value:    "3",
+			},
+			{
+				Key:      "TransactionMessageRetryInterval",
+				Readonly: false,
+				Value:    "60",
+			},
+			{
+				Key:      "UnlockConnectorOnEVSideDisconnect",
+				Readonly: false,
+				Value:    "true",
+			},
+			{
+				Key:      "ReserveConnectorZeroSupported",
+				Readonly: false,
+				Value:    "false",
+			},
+			{
+				Key:      "SendLocalListMaxLength",
+				Readonly: false,
+				Value:    "20",
+			},
+			{
+				Key:      "LocalAuthListEnabled",
+				Readonly: false,
+				Value:    "true",
+			},
+			{
+				Key:      "LocalAuthListMaxLength",
+				Readonly: false,
+				Value:    "20",
+			},
+		},
+	}
 )
 
 type connectorFunctionsTestSuite struct {
@@ -123,12 +270,8 @@ func (s *connectorFunctionsTestSuite) TestNotifyConnectorStatus() {
 func TestConnectorFunctions(t *testing.T) {
 	log.SetLevel(log.DebugLevel)
 
-	// Setup OCPP configuration manager
-	s.SetupOcppConfigurationManager(
-		"../../../configs/configuration.json",
-		"1.6",
-		core.ProfileName,
-		reservation.ProfileName)
+	err := ocppManager.GetManager().SetConfiguration(ocppConfig)
+	assert.NoError(t, err)
 
 	suite.Run(t, new(connectorFunctionsTestSuite))
 }

@@ -142,6 +142,10 @@ func (suite *connectorManagerTestSuite) TestStartChargingConnector() {
 }
 
 func (suite *connectorManagerTestSuite) TestAddConnectorFromSettings() {
+	if testing.Short() {
+		return
+	}
+
 	// Try to add duplicate connector
 	err := suite.connectorManager.AddConnectorFromSettings(15, suite.connectorSettings)
 	suite.Require().Error(err)
