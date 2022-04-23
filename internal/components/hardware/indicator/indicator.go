@@ -3,8 +3,7 @@ package indicator
 import (
 	"errors"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/cache"
+	"github.com/spf13/viper"
 )
 
 // color constants
@@ -40,22 +39,22 @@ type (
 
 // NewIndicator constructs the Indicator based on the type provided by the settings file.
 func NewIndicator(stripLength int) Indicator {
-	cacheSettings, isFound := cache.Cache.Get("settings")
-	if !isFound {
-		log.Fatalf("settings not found")
-	}
-	config := cacheSettings.(*settings.Settings)
-	indicatorSettings := config.ChargePoint.Hardware.LedIndicator
+	var (
+		indicatorEnabled = viper.GetBool("chargepoint.hardware.ledIndicator.enabled")
+		indicatorType    = viper.GetString("chargepoint.hardware.ledIndicator.type")
+		indicateCardRead = viper.GetBool("chargepoint.hardware.ledIndicator.indicateCardRead")
+		indicatorDataPin = viper.GetInt("chargepoint.hardware.ledIndicator.dataPin")
+	)
 
-	if indicatorSettings.Enabled {
-		if indicatorSettings.IndicateCardRead {
+	if indicatorEnabled {
+		if indicateCardRead {
 			stripLength++
 		}
 
-		log.Infof("Preparing Indicator from config: %s", indicatorSettings.Type)
-		switch indicatorSettings.Type {
+		log.Infof("Preparing Indicator from config: %s", indicatorType)
+		switch indicatorType {
 		case TypeWS281x:
-			ledStrip, ledError := NewWS281xStrip(stripLength, indicatorSettings.DataPin)
+			ledStrip, ledError := NewWS281xStrip(stripLength, indicatorDataPin)
 			if ledError != nil {
 				log.WithError(ledError).Errorf("Error creating indicator")
 				return nil

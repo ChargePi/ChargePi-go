@@ -13,29 +13,29 @@ type (
 	ProtocolVersion string
 
 	OCPPInfo struct {
-		Vendor                  string `fig:"Vendor" default:"UL FE"`
-		Model                   string `fig:"Model" default:"ChargePi"`
-		ChargeBoxSerialNumber   string `fig:"ChargeBoxSerialNumber" default:""`
-		ChargePointSerialNumber string `fig:"ChargePointSerialNumber" default:""`
-		Iccid                   string `fig:"Iccid" default:""`
-		Imsi                    string `fig:"Imsi" default:""`
+		Vendor                  string `fig:"Vendor" default:"UL FE" json:"vendor,omitempty" yaml:"vendor" mapstructure:"vendor"`
+		Model                   string `fig:"Model" default:"ChargePi" json:"model,omitempty" yaml:"model" mapstructure:"model"`
+		ChargeBoxSerialNumber   string `fig:"ChargeBoxSerialNumber" default:"" json:"charge_box_serial_number,omitempty" yaml:"charge_box_serial_number" mapstructure:"charge_box_serial_number"`
+		ChargePointSerialNumber string `fig:"ChargePointSerialNumber" default:"" json:"charge_point_serial_number,omitempty" yaml:"charge_point_serial_number" mapstructure:"charge_point_serial_number"`
+		Iccid                   string `fig:"Iccid" default:"" json:"iccid,omitempty" yaml:"iccid" mapstructure:"iccid"`
+		Imsi                    string `fig:"Imsi" default:"" json:"imsi,omitempty" yaml:"imsi" mapstructure:"imsi"`
 	}
 
 	Connector struct {
-		EvseId      int        `fig:"EvseId" validate:"required"`
-		ConnectorId int        `fig:"ConnectorId" validate:"required"`
-		Type        string     `fig:"Type" validate:"required"`
-		Status      string     `fig:"Status" validation:"required"`
-		Session     Session    `fig:"Session"`
-		Relay       Relay      `fig:"Relay"`
-		PowerMeter  PowerMeter `fig:"PowerMeter"`
+		EvseId      int        `fig:"EvseId" validate:"required" json:"EvseId,omitempty" yaml:"EvseId" mapstructure:"EvseId"`
+		ConnectorId int        `fig:"ConnectorId" validate:"required" json:"ConnectorId,omitempty" yaml:"ConnectorId" mapstructure:"ConnectorId"`
+		Type        string     `fig:"Type" validate:"required" json:"type,omitempty" yaml:"type" mapstructure:"type"`
+		Status      string     `fig:"Status" validation:"required" json:"status,omitempty" yaml:"status" mapstructure:"status"`
+		Session     Session    `fig:"Session" json:"session" yaml:"session" mapstructure:"session"`
+		Relay       Relay      `fig:"Relay" json:"relay" yaml:"relay" mapstructure:"relay"`
+		PowerMeter  PowerMeter `fig:"PowerMeter" json:"PowerMeter" yaml:"PowerMeter" mapstructure:"PowerMeter"`
 	}
 
 	Session struct {
-		IsActive      bool               `fig:"IsActive"`
-		TransactionId string             `fig:"TransactionId" default:""`
-		TagId         string             `fig:"TagId" default:""`
-		Started       string             `fig:"Started" default:""`
-		Consumption   []types.MeterValue `fig:"Consumption"`
+		IsActive      bool               `fig:"IsActive" json:"IsActive,omitempty" yaml:"IsActive" mapstructure:"IsActive"`
+		TransactionId string             `fig:"TransactionId" default:"" json:"TransactionId,omitempty" yaml:"TransactionId" mapstructure:"TransactionId"`
+		TagId         string             `fig:"TagId" default:"" json:"TagId,omitempty" yaml:"TagId" mapstructure:"TagId"`
+		Started       string             `fig:"Started" default:"" json:"started,omitempty" yaml:"started" mapstructure:"started"`
+		Consumption   []types.MeterValue `fig:"Consumption" json:"consumption,omitempty" yaml:"consumption" mapstructure:"consumption"`
 	}
 )

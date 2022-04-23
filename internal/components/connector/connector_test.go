@@ -1,17 +1,13 @@
 package connector
 
 import (
-	"fmt"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
-	goCache "github.com/patrickmn/go-cache"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/session"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/cache"
 	"golang.org/x/net/context"
 	"os/exec"
 	"testing"
@@ -103,15 +99,6 @@ func (s *ConnectorTestSuite) SetupTest() {
 
 	s.relayMock.On("Enable").Return()
 	s.relayMock.On("Disable").Return()
-
-	// Set connector file path and configuration
-	cache.GetCache().Set(fmt.Sprintf("connectorEvse%dId%dFilePath", 1, 1), fileName, goCache.NoExpiration)
-	cache.GetCache().Set(fmt.Sprintf("connectorEvse%dId%dConfiguration", 1, 1), &settings.Connector{
-		EvseId:      1,
-		ConnectorId: 1,
-		Type:        "",
-		Status:      "Available",
-	}, goCache.DefaultExpiration)
 
 	// Create a new connector
 	connector, err := NewConnector(

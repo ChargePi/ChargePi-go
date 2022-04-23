@@ -14,6 +14,7 @@ require (
 	github.com/d2r2/go-logger v0.0.0-20210606094344-60e9d1233e22 // indirect
 	github.com/gemnasium/logrus-graylog-hook/v3 v3.1.0
 	github.com/go-co-op/gocron v1.6.0
+	github.com/go-playground/validator v9.31.0+incompatible // indirect
 	github.com/kkyr/fig v0.3.0
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/lestrrat-go/strftime v1.0.5 // indirect
@@ -26,13 +27,15 @@ require (
 	github.com/rpi-ws281x/rpi-ws281x-go v1.0.8
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.3.0
+	github.com/spf13/viper v1.11.0
 	github.com/stretchr/objx v0.3.0 // indirect
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.7.1
 	github.com/teivah/onecontext v1.3.0 // indirect
 	github.com/warthog618/gpiod v0.6.0
 	github.com/xBlaz3kx/ocppManager-go v0.1.3
+	golang.org/x/net v0.0.0-20220412020605-290c469a71a5
 	golang.org/x/text v0.3.7
-	google.golang.org/grpc v1.42.0
-	google.golang.org/protobuf v1.27.1
+	google.golang.org/grpc v1.45.0
+	google.golang.org/protobuf v1.28.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )

@@ -4,13 +4,21 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint"
+	"github.com/xBlaz3kx/ChargePi-go/internal/components/settings"
 	"os"
 )
 
 const (
-	debugFlag = "debug"
-	apiFlag   = "api"
+	debugFlag          = "debug"
+	apiFlag            = "api"
+	apiPortFlag        = "api-port"
+	apiAddressFlag     = "api-address"
+	settingsFlag       = "settings"
+	connectorsFlag     = "connector-folder"
+	authFileFlag       = "auth"
+	ocppConfigPathFlag = "ocpp-config"
 )
 
 var (
@@ -19,12 +27,6 @@ var (
 	connectorsFolderPath  string
 	settingsFilePath      string
 	authFilePath          string
-	isDebug               = false
-
-	// Settings for exposing the API
-	exposeApi  = false
-	apiAddress string
-	apiPort    int
 
 	rootCmd = &cobra.Command{
 		Use:   "chargepi",
@@ -35,29 +37,45 @@ var (
 )
 
 func run(cmd *cobra.Command, args []string) {
-	chargepoint.Run(isDebug, settingsFilePath, configurationFilePath, connectorsFolderPath, authFilePath, exposeApi, apiAddress, apiPort)
+	settings.InitSettings(settingsFilePath)
+
+	var (
+		isDebug      = viper.GetBool(settings.Debug)
+		mainSettings = settings.GetSettings()
+		connectors   = settings.GetConnectors(connectorsFolderPath)
+	)
+
+	chargepoint.Run(isDebug, mainSettings, connectors, configurationFilePath, authFilePath)
 }
 
-func main() {
+func setupFlags() {
 	var (
-		workingDirectory, _     = os.Getwd()
-		defaultConfigFileName   = fmt.Sprintf("%s/configs/configuration.%s", workingDirectory, "json")
-		defaultSettingsFileName = fmt.Sprintf("%s/configs/settings.%s", workingDirectory, "json")
-		connectorsFolderName    = fmt.Sprintf("%s/configs/connectors", workingDirectory)
-		defaultAuthFileName     = fmt.Sprintf("%s/configs/auth.%s", workingDirectory, "json")
+		workingDirectory, _   = os.Getwd()
+		connectorsFolderName  = fmt.Sprintf("%s/configs/connectors", workingDirectory)
+		defaultConfigFileName = fmt.Sprintf("%s/configs/configuration.%s", workingDirectory, "json")
 	)
 
 	// Set flags
-	rootCmd.PersistentFlags().StringVar(&settingsFilePath, "settings", defaultSettingsFileName, "config file path")
-	rootCmd.PersistentFlags().StringVar(&connectorsFolderPath, "connector-folder", connectorsFolderName, "connector folder path")
-	rootCmd.PersistentFlags().StringVar(&configurationFilePath, "ocpp-config", defaultConfigFileName, "OCPP config file path")
-	rootCmd.PersistentFlags().StringVar(&authFilePath, "auth", defaultAuthFileName, "authorization file path")
-	rootCmd.PersistentFlags().BoolVarP(&isDebug, debugFlag, "d", false, "debug mode")
-	// Api flags
-	rootCmd.PersistentFlags().BoolVarP(&exposeApi, apiFlag, "a", false, "expose API")
-	rootCmd.PersistentFlags().StringVar(&apiAddress, "api-address", "localhost", "address of the api")
-	rootCmd.PersistentFlags().IntVar(&apiPort, "port", 4269, "port for the API")
+	rootCmd.PersistentFlags().StringVar(&settingsFilePath, settingsFlag, "", "config file path")
+	rootCmd.PersistentFlags().StringVar(&connectorsFolderPath, connectorsFlag, connectorsFolderName, "connector folder path")
+	rootCmd.PersistentFlags().StringVar(&configurationFilePath, ocppConfigPathFlag, defaultConfigFileName, "OCPP config file path")
+	rootCmd.PersistentFlags().StringVar(&authFilePath, authFileFlag, "", "authorization file path")
+	rootCmd.PersistentFlags().BoolP(debugFlag, "d", false, "debug mode")
 
+	// Api flags
+	rootCmd.PersistentFlags().BoolP(apiFlag, "a", false, "expose API")
+	rootCmd.PersistentFlags().String(apiAddressFlag, "localhost", "address of the api")
+	rootCmd.PersistentFlags().Int(apiPortFlag, 4269, "port for the API")
+
+	// Bind flags to viper
+	_ = viper.BindPFlag(settings.Debug, rootCmd.PersistentFlags().Lookup(debugFlag))
+	_ = viper.BindPFlag(settings.ApiEnabled, rootCmd.PersistentFlags().Lookup(apiFlag))
+	_ = viper.BindPFlag(settings.ApiAddress, rootCmd.PersistentFlags().Lookup(apiAddressFlag))
+	_ = viper.BindPFlag(settings.ApiPort, rootCmd.PersistentFlags().Lookup(apiPortFlag))
+}
+
+func main() {
+	setupFlags()
 	err := rootCmd.Execute()
 	if err != nil {
 		log.WithError(err).Fatal("Unable to run")

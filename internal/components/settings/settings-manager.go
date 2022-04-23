@@ -1,26 +1,81 @@
 package settings
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
-	"github.com/kkyr/fig"
+	"github.com/agrison/go-commons-lang/stringUtils"
+	"github.com/go-playground/validator"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	goCache "github.com/patrickmn/go-cache"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/cache"
 	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
 	"github.com/xBlaz3kx/ocppManager-go/configuration"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 )
 
 const (
-	Key = "settings"
+	currentFolder   = "./configs"
+	connectorFolder = "./configs/connectors"
+	dockerFolder    = "/etc/ChargePi/configs"
 
-	currentFolder = "./connectors"
-	dockerFolder  = "/etc/ChargePi/configs"
+	Model           = "chargepoint.info.ocpp.model"
+	Vendor          = "chargepoint.info.ocpp.vendor"
+	MaxChargingTime = "chargepoint.info.maxChargingTime"
+	ProtocolVersion = "chargepoint.info.protocolVersion"
+	LoggingFormat   = "chargepoint.logging.format"
+	Debug           = "debug"
+	ApiEnabled      = "api.enabled"
+	ApiAddress      = "api.address"
+	ApiPort         = "api.port"
 )
+
+var (
+	ConnectorSettings = sync.Map{}
+)
+
+func InitSettings(settingsFilePath string) {
+	readConfiguration(viper.GetViper(), "settings", "yaml", settingsFilePath)
+	setupEnv()
+	setDefaults()
+}
+
+func readConfiguration(viper *viper.Viper, fileName, extension, filePath string) {
+	if stringUtils.IsNotEmpty(filePath) {
+		viper.SetConfigFile(filePath)
+	} else {
+		viper.SetConfigName(fileName)
+		viper.SetConfigType(extension)
+		viper.AddConfigPath(currentFolder)
+		viper.AddConfigPath(connectorFolder)
+		viper.AddConfigPath(dockerFolder)
+	}
+
+	err := viper.ReadInConfig()
+	if err != nil {
+		log.WithError(err).Fatalf("Cannot parse config file")
+	}
+
+	log.Debugf("Using configuration file: %s", viper.ConfigFileUsed())
+}
+
+func setupEnv() {
+	viper.SetEnvPrefix("chargepi")
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	viper.AutomaticEnv()
+}
+
+func setDefaults() {
+	viper.SetDefault(Model, "ChargePi")
+	viper.SetDefault(Vendor, "xBlaz3kx")
+	viper.SetDefault(MaxChargingTime, 180)
+	viper.SetDefault(ProtocolVersion, "1.6")
+	viper.SetDefault(LoggingFormat, "gelf")
+}
 
 func SetupOcppConfigurationManager(filePath string, version configuration.ProtocolVersion, supportedProfiles ...string) {
 	fileName := strings.TrimSuffix(filePath, filepath.Ext(filePath))
@@ -38,72 +93,54 @@ func SetupOcppConfigurationManager(filePath string, version configuration.Protoc
 	}
 }
 
-// loadSettings from file
-func loadSettings(cache *goCache.Cache, path string) *settings.Settings {
+// GetSettings gets settings from cache or reads the settings file if the cached settings are not found.
+func GetSettings() *settings.Settings {
 	log.Debug("Fetching settings..")
 	var conf settings.Settings
 
-	err := fig.Load(&conf,
-		fig.File(filepath.Base(path)),
-		fig.Dirs(filepath.Dir(path), dockerFolder),
-	)
+	err := viper.Unmarshal(&conf)
 	if err != nil {
 		log.WithError(err).Fatalf("Couldn't load settings")
 	}
 
-	log.Debugf("Fetched settings from %s", path)
-	cache.Set(Key, &conf, goCache.NoExpiration)
+	validationErr := validator.New().Struct(conf)
+	if validationErr != nil {
+		log.WithError(validationErr).Fatalf("Invalid settings")
+	}
 
 	return &conf
 }
 
-// GetSettings gets settings from cache or reads the settings file if the cached settings are not found.
-func GetSettings(cache *goCache.Cache, settingsPath string) *settings.Settings {
-	cacheSettings, isFound := cache.Get(Key)
-	if isFound {
-		return cacheSettings.(*settings.Settings)
-	}
-
-	return loadSettings(cache, settingsPath)
-}
-
 // loadConnectorFromPath loads a connector from file
-func loadConnectorFromPath(cache *goCache.Cache, name, path string) (*settings.Connector, error) {
+func loadConnectorFromPath(name, path string) (*settings.Connector, error) {
 	// Read the connector settings from the file in the directory
-	var connector settings.Connector
-	err := fig.Load(&connector,
-		fig.File(name),
-		fig.Dirs(dockerFolder+"/connectors", currentFolder, filepath.Dir(path)),
+	var (
+		connectorCfg = viper.New()
+		connector    settings.Connector
 	)
+
+	readConfiguration(connectorCfg, name, "json", path)
+
+	err := connectorCfg.Unmarshal(&connector)
 	if err != nil {
 		log.WithError(err).Errorf("Cannot read connector file")
 		return nil, err
 	}
 
-	log.Tracef("Read connector from %s", path)
-
-	if cache != nil {
-		// Add the connector config file path to cache
-		err = cache.Add(fmt.Sprintf("connectorEvse%dId%dFilePath", connector.EvseId, connector.ConnectorId), path, goCache.NoExpiration)
-		if err != nil {
-			return nil, err
-		}
-
-		// Add the Connector configuration to the cache
-		err = cache.Add(fmt.Sprintf("connectorEvse%dId%dConfiguration", connector.EvseId, connector.ConnectorId), &connector, goCache.NoExpiration)
-		if err != nil {
-			return nil, err
-		}
-	}
+	log.Debugf("Read connector from %s", path)
+	cachePathKey := fmt.Sprintf("connectorEvse%dId%d", connector.EvseId, connector.ConnectorId)
+	ConnectorSettings.Store(cachePathKey, &connector)
 
 	return &connector, nil
 }
 
 // GetConnectors Scan the connectors folder, read all the connectors' settings and cache the settings.
-func GetConnectors(cache *goCache.Cache, connectorsFolderPath string) []*settings.Connector {
+func GetConnectors(connectorsFolderPath string) []*settings.Connector {
 	var (
 		connectors []*settings.Connector
 	)
+
+	log.Debug("Fetching connectors..")
 
 	err := filepath.Walk(connectorsFolderPath, func(path string, info os.FileInfo, err error) error {
 		// Skip directories
@@ -112,7 +149,7 @@ func GetConnectors(cache *goCache.Cache, connectorsFolderPath string) []*setting
 		}
 
 		// Load a connector from the path
-		connector, err := loadConnectorFromPath(cache, info.Name(), path)
+		connector, err := loadConnectorFromPath(info.Name(), path)
 		if err != nil {
 			return err
 		}
@@ -132,35 +169,34 @@ func GetConnectors(cache *goCache.Cache, connectorsFolderPath string) []*setting
 // UpdateConnectorStatus update the Connector's status in the connector configuration file
 func UpdateConnectorStatus(evseId, connectorId int, status core.ChargePointStatus) {
 	var (
-		cachePathKey      = fmt.Sprintf("connectorEvse%dId%dFilePath", evseId, connectorId)
-		connectorSettings settings.Connector
-		err               error
-		logInfo           = log.WithFields(log.Fields{
+		cachePathKey = fmt.Sprintf("connectorEvse%dId%d", evseId, connectorId)
+		connector    settings.Connector
+		err          error
+		logInfo      = log.WithFields(log.Fields{
 			"evseId":      evseId,
 			"connectorId": connectorId,
 			"status":      status,
 		})
 	)
 
-	// Get the file path from cache
-	result, isFound := cache.Cache.Get(cachePathKey)
+	viperCfg, isFound := ConnectorSettings.Load(cachePathKey)
 	if !isFound {
-		logInfo.Debugf("Path of the file not found in cache")
+		logInfo.WithError(err).Errorf("Error updating connector status")
 		return
 	}
 
-	connectorFilePath := result.(string)
-	err = fig.Load(&connectorSettings,
-		fig.File(filepath.Base(connectorFilePath)),
-		fig.Dirs(filepath.Dir(connectorFilePath)))
+	cfg := viperCfg.(*viper.Viper)
+
+	err = cfg.Unmarshal(&connector)
 	if err != nil {
 		logInfo.WithError(err).Errorf("Error updating connector status")
 		return
 	}
 
 	// Replace the connector status
-	connectorSettings.Status = string(status)
-	err = WriteToFile(connectorFilePath, &connectorSettings)
+	cfg.Set("status", status)
+
+	err = cfg.WriteConfig()
 	if err != nil {
 		logInfo.WithError(err).Errorf("Error updating connector status")
 		return
@@ -172,11 +208,10 @@ func UpdateConnectorStatus(evseId, connectorId int, status core.ChargePointStatu
 // UpdateConnectorSessionInfo update the Connector's Session object in the connector configuration file
 func UpdateConnectorSessionInfo(evseId, connectorId int, session *settings.Session) {
 	var (
-		cachePathKey      = fmt.Sprintf("connectorEvse%dId%dFilePath", evseId, connectorId)
-		cacheConnectorKey = fmt.Sprintf("connectorEvse%dId%dConfiguration", evseId, connectorId)
-		connectorSettings *settings.Connector
-		err               error
-		logInfo           = log.WithFields(log.Fields{
+		cachePathKey = fmt.Sprintf("connectorEvse%dId%d", evseId, connectorId)
+		connector    *settings.Connector
+		err          error
+		logInfo      = log.WithFields(log.Fields{
 			"evseId":      evseId,
 			"connectorId": connectorId,
 			"session":     session,
@@ -184,34 +219,37 @@ func UpdateConnectorSessionInfo(evseId, connectorId int, session *settings.Sessi
 	)
 
 	logInfo.Debugf("Updating session info")
-	// Get the file path from cache
-	result, isFound := cache.Cache.Get(cachePathKey)
+	viperCfg, isFound := ConnectorSettings.Load(cachePathKey)
 	if !isFound {
-		logInfo.Errorf("Path of the file not found in cache")
+		logInfo.WithError(err).Errorf("Error updating connector status")
 		return
 	}
-	var connectorFilePath = result.(string)
 
-	// Try to find the connector's settings in the cache, if it fails, get settings from the file
-	cachedSettings, isFound := cache.Cache.Get(cacheConnectorKey)
-	if isFound {
-		connectorSettings = cachedSettings.(*settings.Connector)
-	} else {
-		err = fig.Load(&connectorSettings,
-			fig.File(filepath.Base(connectorFilePath)),
-			fig.Dirs(filepath.Dir(connectorFilePath)))
-		if err != nil {
-			logInfo.WithError(err).Errorf("Error updating session info")
-			return
-		}
+	cfg := viperCfg.(*viper.Viper)
+
+	err = cfg.Unmarshal(&connector)
+	if err != nil {
+		logInfo.WithError(err).Errorf("Error updating connector status")
+		return
 	}
 
-	// Replace the session values
-	connectorSettings.Session = *session
+	connector.Session = *session
 
-	err = WriteToFile(connectorFilePath, &connectorSettings)
+	marshal, err := json.Marshal(connector)
 	if err != nil {
-		logInfo.WithError(err).Errorf("Error updating session info")
+		logInfo.WithError(err).Errorf("Error updating connector status")
+		return
+	}
+
+	err = cfg.ReadConfig(bytes.NewReader(marshal))
+	if err != nil {
+		logInfo.WithError(err).Errorf("Error updating connector status")
+		return
+	}
+
+	err = cfg.WriteConfig()
+	if err != nil {
+		logInfo.WithError(err).Errorf("Error updating connector status")
 		return
 	}
 
