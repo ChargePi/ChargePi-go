@@ -1,15 +1,37 @@
 # 🛠️ Configuration
 
+## 🚩 Flags and environment variables
+
+Available flags:
+
+|        Flag         | Short |           Description           | Default value |
+|:-------------------:|:-----:|:-------------------------------:|:-------------:|
+|     `-settings`     |   /   |   Path to the settings file.    |               |
+| `-connector-folder` |   /   |  Path to the connector folder.  |               |
+|   `-ocpp-config`    |   /   | Path to the OCPP configuration. |               |
+|       `-auth`       |   /   | Path to the authorization file. |               |
+|      `-debug`       | `--d` |           Debug mode            |     false     |
+|       `-api`        | `--a` |         Expose the API          |     false     |
+|   `-api-address`    |   /   |           API address           |  "localhost"  |
+|     `-api-port`     |   /   |            API port             |     4269      |
+
+Environment variables are created automatically thanks to [Viper](https://github.com/spf13/viper) and are prefixed
+with `CHARGEPI`. Only the settings (not the ocpp configuration or connectors) are bound to the env
+variables. Debug mode and API settings flags are also bound to the environment variables.
+
+Example environment variable: `CHARGEPI_CHARGEPOINT_INFO_ID`.
+
+## 🛠 Configuration files
+
 There are three **required** configuration files:
 
 1. [`settings`](../../configs/settings.json)
 2. [`configuration`](../../configs/configuration.json)
 3. [`connector`](../../configs/connectors/connector-1.json)
 
-The settings files are supported in `YAML`, `JSON` or `TOML` format. All files must be only in one format. The format is
-configurable though program flags.
+The settings files are supported in `YAML`, `JSON` or `TOML` format.
 
-## The `settings` file
+### The `settings` file
 
 The `settings` file contains basic information about the charge point and provides connectivity details:
 
@@ -95,7 +117,7 @@ Example settings:
 }
 ```
 
-## 🔌 The `connector` file(s) - EVSEs and connectors
+### 🔌 The `connector` file(s) - EVSEs and connectors
 
 EVSE and connector settings files can be found in the `connectors` folder. To add and configure the connector, simply
 add a new file that contains the structure, defined in [attributes](#attributes) and modify it to your specs. The client
@@ -104,7 +126,7 @@ will scan the folder at boot and configure the connectors from the files if all 
 Note: A Charge point can have multiple EVSEs, each oh which can have multiple connectors, but only one connector of the
 EVSE can charge at a time.
 
-### Attributes
+#### Attributes
 
 `Connector` object contains a connector type and an ID of the connector, which must start with 1 and increment by one.
 The status attribute changes according to the OCPP specification. The `session` represents a Charging session and is

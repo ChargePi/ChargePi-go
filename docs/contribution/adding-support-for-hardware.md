@@ -1,4 +1,4 @@
-# ➡️Adding support for hardware
+# ➡️Adding hardware support
 
 There are four hardware component groups that are included in the project:
 
