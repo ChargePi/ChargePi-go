@@ -1,42 +1,36 @@
-FROM  golang:1.17-alpine as base
+FROM  golang:1.17 as base
 
-RUN apt-get update \
-    apt-get upgrade \
-    apt-get install git \
-    apt-get install cmake \
-
-# Install dependencies
-COPY ../../docs/install-dependencies.sh ~/
-RUN chmod +x /install-dependencies.sh
-RUN ./install-dependencies.sh 0
-
-COPY ../.. /ChargePi/src
+COPY . /ChargePi/src
 WORKDIR /ChargePi/src
 
+ARG READER_CONNECTION_TYPE
+ENV READER_CONNECTION_TYPE=$READER_CONNECTION_TYPE
+
+# Install dependencies
+RUN chmod +x ./scripts/install-dependencies.sh
+RUN ./scripts/install-dependencies.sh $READER_CONNECTION_TYPE 0
+
 # Compile the client
-RUN cd ~
-RUN go build -o ChargePi .
+RUN go mod download
+RUN go mod verify
+RUN go build -tags="rpi" -o ChargePi .
 
 FROM base as dev
-ENTRYPOINT ["go","run","."]
+ENTRYPOINT ["go","run", "-tags=rpi","."]
 
 FROM alpine as chargepi
 
-# Reinstall the dependencies because the image is alpine
-RUN apt-get update \
-    apt-get upgrade \
-    apt-get install git \
-    apt-get install cmake \
+WORKDIR /etc/ChargePi
+
+ARG READER_CONNECTION_TYPE
+ENV READER_CONNECTION_TYPE=$READER_CONNECTION_TYPE
 
 # Install dependencies
-COPY ../../docs/install-dependencies.sh ~/
-RUN chmod +x /install-dependencies.sh
-RUN ./install-dependencies.sh 0
+RUN chmod +x ./scripts/install-dependencies.sh
+RUN ./scripts/install-dependencies.sh $READER_CONNECTION_TYPE 0
 
 COPY --from=base /ChargePi/src/configs /etc/ChargePi/configs
 COPY --from=base /ChargePi/src/ChargePi /usr/bin/ChargePi
-
-WORKDIR /etc/ChargePi
 
 ENTRYPOINT ["./chargepi"]
 
@@ -46,4 +40,4 @@ RUN cp -r configs/ test/  \
     && cd test/  \
     && chmod +x create-test-certs.sh \
     && ./create-test-certs.sh \
-CMD ["go", "test","-v"]
+CMD ["go", "test","-v", "-tags=dev" ,"./..."]
