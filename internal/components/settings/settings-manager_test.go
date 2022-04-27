@@ -1,13 +1,10 @@
 package settings
 
 import (
-	"fmt"
 	"github.com/kkyr/fig"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/suite"
 	settingsData "github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
-	cache2 "github.com/xBlaz3kx/ChargePi-go/pkg/cache"
 	"os/exec"
 	"testing"
 	"time"
@@ -26,7 +23,6 @@ type SettingsManagerTestSuite struct {
 }
 
 func (s *SettingsManagerTestSuite) SetupTest() {
-	cache2.Cache = cache.New(time.Minute*10, time.Minute*10)
 	s.session = settingsData.Session{
 		IsActive:      false,
 		TransactionId: "",
@@ -59,14 +55,6 @@ func (s *SettingsManagerTestSuite) SetupTest() {
 		Relay:       s.relay,
 		PowerMeter:  s.powerMeter,
 	}
-
-	var (
-		cachePathKey      = fmt.Sprintf("connectorEvse%dId%dFilePath", s.connector.EvseId, s.connector.ConnectorId)
-		cacheConnectorKey = fmt.Sprintf("connectorEvse%dId%dConfiguration", s.connector.EvseId, s.connector.ConnectorId)
-	)
-
-	cache2.Cache.Set(cachePathKey, "./"+fileName, cache.DefaultExpiration)
-	cache2.Cache.Set(cacheConnectorKey, &s.connector, cache.DefaultExpiration)
 }
 
 func (s *SettingsManagerTestSuite) TestUpdateSessionInfo() {

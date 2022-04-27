@@ -275,16 +275,15 @@ func (m *managerImpl) AddConnectorFromSettings(maxChargingTime int, c *settings.
 }
 
 func (m *managerImpl) AddConnectorsFromConfiguration(maxChargingTime int, connectors []*settings.Connector) error {
-	var err error
 
 	for _, c := range connectors {
 		addErr := m.AddConnectorFromSettings(maxChargingTime, c)
 		if addErr != nil {
-			err = addErr
+			return addErr
 		}
 	}
 
-	return err
+	return nil
 }
 
 func (m *managerImpl) RestoreConnectorStatus(c *settings.Connector) error {

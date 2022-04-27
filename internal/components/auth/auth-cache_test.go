@@ -3,9 +3,7 @@ package auth
 import (
 	"fmt"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
-	"github.com/patrickmn/go-cache"
 	"github.com/stretchr/testify/suite"
-	cache2 "github.com/xBlaz3kx/ChargePi-go/pkg/cache"
 	"testing"
 	"time"
 )
@@ -19,9 +17,7 @@ type AuthCacheTestSuite struct {
 }
 
 func (s *AuthCacheTestSuite) SetupTest() {
-	cache2.Cache = cache.New(time.Minute*10, time.Minute*10)
-
-	s.authCache = NewAuthCache("")
+	s.authCache = NewAuthCache("./auth.json")
 	s.tag = &types.IdTagInfo{
 		ParentIdTag: "123",
 		ExpiryDate:  types.NewDateTime(time.Now().Add(10 * time.Minute)),

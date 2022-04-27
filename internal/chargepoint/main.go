@@ -16,7 +16,6 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/grpc"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/cache"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/logging"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/scheduler"
 	"github.com/xBlaz3kx/ocppManager-go/configuration"
@@ -54,19 +53,19 @@ func CreateChargePoint(
 	}
 }
 
-func Run(isDebug bool, settingsFilePath, configurationFilePath, connectorsFolderPath, authFilePath string, exposeApi bool, apiAddress string, apiPort int) {
+func Run(isDebug bool, config *settings.Settings, connectors []*settings.Connector, configurationFilePath, authFilePath string) {
 	var (
 		// ChargePoint components
 		handler   chargePoint.ChargePoint
-		config    *settings.Settings
-		mem       = cache.GetCache()
 		authCache = auth.NewAuthCache(authFilePath)
 		logger    = log.StandardLogger()
 		manager   = connectorManager.GetManager()
 		sch       = scheduler.GetScheduler()
-		// Api
-		apiReceiveChannel = make(chan api.Message, 5)
-		apiSendChannel    = make(chan api.Message, 5)
+		// Settings
+		chargePointInfo = config.ChargePoint.Info
+		hardware        = config.ChargePoint.Hardware
+		serverUrl       = util.CreateConnectionUrl(config.ChargePoint)
+		protocolVersion = settings.ProtocolVersion(chargePointInfo.ProtocolVersion)
 		// Execution
 		ctx, cancel = context.WithCancel(context.Background())
 		quitChannel = make(chan os.Signal, 1)
@@ -74,19 +73,11 @@ func Run(isDebug bool, settingsFilePath, configurationFilePath, connectorsFolder
 	defer cancel()
 	signal.Notify(quitChannel, syscall.SIGINT, syscall.SIGTERM)
 
-	// Read settings file and cache it
-	config = s.GetSettings(mem, settingsFilePath)
-	go authCache.LoadAuthFile(authFilePath)
-
 	// Create the logger
 	logging.Setup(logger, config.ChargePoint.Logging, isDebug)
 
-	var (
-		chargePointInfo = config.ChargePoint.Info
-		hardware        = config.ChargePoint.Hardware
-		serverUrl       = util.CreateConnectionUrl(config.ChargePoint)
-		protocolVersion = settings.ProtocolVersion(chargePointInfo.ProtocolVersion)
-	)
+	// Load tags
+	go authCache.LoadAuthFile()
 
 	// Setup OCPP configuration manager
 	s.SetupOcppConfigurationManager(
@@ -95,22 +86,23 @@ func Run(isDebug bool, settingsFilePath, configurationFilePath, connectorsFolder
 		core.ProfileName,
 		reservation.ProfileName)
 
-	handler = CreateChargePoint(ctx, protocolVersion, logger, manager, sch, authCache, hardware)
-
 	// Initialize the client
+	handler = CreateChargePoint(ctx, protocolVersion, logger, manager, sch, authCache, hardware)
 	handler.Init(config)
-
-	// Add connectors from file
-	connectors := s.GetConnectors(mem, connectorsFolderPath)
 	handler.AddConnectors(connectors)
 
 	// Finally, connect to the central system
 	handler.Connect(ctx, serverUrl)
 
-	if exposeApi {
+	if config.Api.Enabled {
+		var (
+			apiReceiveChannel = make(chan api.Message, 5)
+			apiSendChannel    = make(chan api.Message, 5)
+		)
+
 		// Expose the API endpoints
 		go func() {
-			address := fmt.Sprintf("%s:%d", apiAddress, apiPort)
+			address := fmt.Sprintf("%s:%d", config.Api.Address, config.Api.Port)
 			grpc.CreateAndRunGrpcServer(address, apiSendChannel, apiReceiveChannel)
 		}()
 	}

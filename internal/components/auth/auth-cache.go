@@ -38,15 +38,15 @@ func NewAuthCache(filePath string) *Cache {
 }
 
 // LoadAuthFile loads tags from the cache file
-func (c *Cache) LoadAuthFile(authFilePath string) {
+func (c *Cache) LoadAuthFile() {
 	var (
 		auth settingsData.AuthorizationFile
 		err  error
 	)
 
 	err = fig.Load(&auth,
-		fig.File(filepath.Base(authFilePath)),
-		fig.Dirs(filepath.Dir(authFilePath)))
+		fig.File(filepath.Base(c.filePath)),
+		fig.Dirs(filepath.Dir(c.filePath)))
 	if err != nil {
 		//todo temporary fix - tags with ExpiryDate won't unmarshall successfully
 		log.WithError(err).Errorf("Unable to load authorization file")

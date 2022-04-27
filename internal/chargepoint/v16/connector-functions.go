@@ -7,12 +7,13 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/reactivex/rxgo/v2"
-	connector "github.com/xBlaz3kx/ChargePi-go/internal/components/connector"
+	"github.com/spf13/viper"
+	"github.com/xBlaz3kx/ChargePi-go/internal/components/connector"
 	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware/display/i18n"
 	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware/indicator"
+	"github.com/xBlaz3kx/ChargePi-go/internal/components/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models"
 	settingsData "github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/cache"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/util"
 	"time"
 )
@@ -37,18 +38,27 @@ func (cp *ChargePoint) AddConnectors(connectors []*settingsData.Connector) {
 // If the ConnectorStatus was "Preparing" or "Charging", try to resume or start charging. If the charging fails, change the connector status and notify the central system.
 func (cp *ChargePoint) restoreState() {
 	cp.logger.Debugf("Restoring connectors' state")
-	var err error
 
 	for _, c := range cp.connectorManager.GetConnectors() {
-		// Load connector configuration from cache
-		cacheKey := fmt.Sprintf("connectorEvse%dId%dConfiguration", c.GetEvseId(), c.GetConnectorId())
-		connectorSettings, isFound := cache.Cache.Get(cacheKey)
+		var (
+			cacheKey = fmt.Sprintf("connectorEvse%dId%d", c.GetEvseId(), c.GetConnectorId())
+			conn     settingsData.Connector
+		)
+
+		// Fetch the viper configuration
+		connectorCfg, isFound := settings.ConnectorSettings.Load(cacheKey)
 		if !isFound {
 			continue
 		}
-		cachedConnector := connectorSettings.(*settingsData.Connector)
+		cfg := connectorCfg.(*viper.Viper)
 
-		err = cp.connectorManager.RestoreConnectorStatus(cachedConnector)
+		// Unmarshall
+		err := cfg.Unmarshal(&conn)
+		if err != nil {
+			continue
+		}
+
+		err = cp.connectorManager.RestoreConnectorStatus(&conn)
 		switch err {
 		case nil:
 			_, err = cp.scheduler.Every(c.GetMaxChargingTime()-0).Minutes().LimitRunsTo(1).

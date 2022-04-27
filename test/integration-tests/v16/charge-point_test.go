@@ -39,13 +39,7 @@ const (
 )
 
 var chargePointSettings = settings.Settings{ChargePoint: settings.ChargePoint{
-	Info: struct {
-		Id              string            `fig:"Id" validate:"required"`
-		ProtocolVersion string            `fig:"ProtocolVersion" default:"1.6"`
-		ServerUri       string            `fig:"ServerUri" validate:"required"`
-		MaxChargingTime int               `fig:"MaxChargingTime" default:"180"`
-		OCPPInfo        settings.OCPPInfo `fig:"ocpp"`
-	}{
+	Info: settings.Info{
 		Id:              chargePointId,
 		ProtocolVersion: string(protocolVersion),
 		ServerUri:       fmt.Sprintf("ws://%s:%d%s", centralSystemHost, centralSystemPort, centralSystemEndpoint),
