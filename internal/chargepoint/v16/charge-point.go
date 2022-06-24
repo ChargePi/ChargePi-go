@@ -84,8 +84,11 @@ func (cp *ChargePoint) Init(settings *settings.Settings) {
 	var (
 		info      = settings.ChargePoint.Info
 		tlsConfig = settings.ChargePoint.TLS
-		wsClient  = chargePointUtil.CreateClient(tlsConfig)
-		logInfo   = log.WithFields(log.Fields{
+		wsClient  = chargePointUtil.CreateClient(
+			settings.ChargePoint.Info.BasicAuthUsername,
+			settings.ChargePoint.Info.BasicAuthPassword,
+			tlsConfig)
+		logInfo = log.WithFields(log.Fields{
 			"chargePointId": info.Id,
 		})
 	)

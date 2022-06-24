@@ -5,6 +5,8 @@
       "protocolVersion": "1.6",
       "serverUri": "example.com",
       "maxChargingTime": 5,
+      "basicAuthUser": "",
+      "basicAuthPass": "",
       "ocpp": {
         "vendor": "UL FE",
         "model": "ChargePi"

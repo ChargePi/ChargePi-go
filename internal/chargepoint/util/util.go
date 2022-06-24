@@ -2,6 +2,7 @@ package util
 
 import (
 	"fmt"
+	"github.com/agrison/go-commons-lang/stringUtils"
 	ocpp16 "github.com/lorenzodonini/ocpp-go/ocpp1.6"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/firmware"
@@ -35,7 +36,7 @@ func CreateConnectionUrl(point settings.ChargePoint) string {
 }
 
 // CreateClient creates a Websocket client based on the settings.
-func CreateClient(tlsConfig settings.TLS) *ws.Client {
+func CreateClient(basicAuthUser, basicAuthPass string, tlsConfig settings.TLS) *ws.Client {
 	var (
 		client            = ws.NewClient()
 		clientConfig      = ws.NewClientTimeoutConfig()
@@ -52,6 +53,11 @@ func CreateClient(tlsConfig settings.TLS) *ws.Client {
 	// Check if the client has TLS
 	if tlsConfig.IsEnabled {
 		client = tls.GetTLSClient(tlsConfig.CACertificatePath, tlsConfig.ClientCertificatePath, tlsConfig.ClientKeyPath)
+	}
+
+	// If HTTP basic auth is provided, set it in the Websocket client
+	if stringUtils.IsNoneEmpty(basicAuthUser, basicAuthPass) {
+		client.SetBasicAuth(basicAuthUser, basicAuthPass)
 	}
 
 	client.SetTimeoutConfig(clientConfig)
