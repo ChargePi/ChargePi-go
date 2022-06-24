@@ -129,7 +129,7 @@ func loadConnectorFromPath(name, path string) (*settings.Connector, error) {
 
 	log.Debugf("Read connector from %s", path)
 	cachePathKey := fmt.Sprintf("connectorEvse%dId%d", connector.EvseId, connector.ConnectorId)
-	ConnectorSettings.Store(cachePathKey, &connector)
+	ConnectorSettings.Store(cachePathKey, connectorCfg)
 
 	return &connector, nil
 }

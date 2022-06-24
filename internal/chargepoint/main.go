@@ -68,8 +68,9 @@ func Run(isDebug bool, config *settings.Settings, connectors []*settings.Connect
 		protocolVersion = settings.ProtocolVersion(chargePointInfo.ProtocolVersion)
 		// Execution
 		ctx, cancel = context.WithCancel(context.Background())
-		quitChannel = make(chan os.Signal, 1)
+		quitChannel = make(chan os.Signal, 5)
 	)
+
 	defer cancel()
 	signal.Notify(quitChannel, syscall.SIGINT, syscall.SIGTERM)
 

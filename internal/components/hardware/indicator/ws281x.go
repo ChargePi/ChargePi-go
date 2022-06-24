@@ -86,10 +86,11 @@ func (ws *WS281x) Blink(index int, times int, colorHex uint32) error {
 }
 
 // Cleanup turn the LEDs off and terminate the data connection.
-func (ws WS281x) Cleanup() {
+func (ws *WS281x) Cleanup() {
 	var i = 0
 	for ws.numberOfLEDs != i {
 		ws.DisplayColor(i, Off)
+		i++
 	}
 	ws.close()
 }
