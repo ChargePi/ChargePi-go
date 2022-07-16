@@ -36,7 +36,7 @@ func NewTagReader(reader settings.TagReader) (Reader, error) {
 		tagChannel := make(chan string, 5)
 
 		switch reader.ReaderModel {
-		case PN532:
+		case PN532, ACR122, PN533, BR500, R502:
 			return &TagReader{
 				TagChannel:    tagChannel,
 				DeviceAddress: reader.Device,
