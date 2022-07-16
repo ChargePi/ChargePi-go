@@ -1,6 +1,7 @@
 package powerMeter
 
 import (
+	"context"
 	"errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
@@ -19,6 +20,7 @@ var (
 // PowerMeter is an abstraction for measurement hardware.
 type (
 	PowerMeter interface {
+		Init(ctx context.Context) error
 		Reset()
 		GetEnergy() float64
 		GetPower() float64
@@ -36,12 +38,24 @@ func NewPowerMeter(meterSettings settings.PowerMeter) (PowerMeter, error) {
 
 		switch meterSettings.Type {
 		case TypeC5460A:
-			return NewCS5460PowerMeter(
+			powerMeter, err := NewCS5460PowerMeter(
 				meterSettings.PowerMeterPin,
 				meterSettings.SpiBus,
 				meterSettings.ShuntOffset,
 				meterSettings.VoltageDividerOffset,
 			)
+			if err != nil {
+				return nil, err
+			}
+
+			go func() {
+				initErr := powerMeter.Init(context.Background())
+				if initErr != nil {
+					log.WithError(initErr).Fatal("Error initializing power meter")
+				}
+			}()
+
+			return powerMeter, nil
 		default:
 			return nil, ErrPowerMeterUnsupported
 		}
