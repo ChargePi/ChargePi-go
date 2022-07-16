@@ -1,5 +1,5 @@
-//go:build rpi
-// +build rpi
+//go:build linux
+// +build linux
 
 package reader
 
@@ -12,24 +12,37 @@ import (
 	"time"
 )
 
+var (
+	Iso14443A  = nfc.Modulation{Type: nfc.ISO14443a, BaudRate: nfc.Nbr106}
+	ISO14443b  = nfc.Modulation{Type: nfc.ISO14443b, BaudRate: nfc.Nbr106}
+	Felica1    = nfc.Modulation{Type: nfc.Felica, BaudRate: nfc.Nbr212}
+	Felica2    = nfc.Modulation{Type: nfc.Felica, BaudRate: nfc.Nbr424}
+	Jewel      = nfc.Modulation{Type: nfc.Jewel, BaudRate: nfc.Nbr106}
+	ISO14443bi = nfc.Modulation{Type: nfc.ISO14443biClass, BaudRate: nfc.Nbr106}
+
+	modulations = []nfc.Modulation{
+		Iso14443A, ISO14443b, Felica1, Felica2, Jewel, ISO14443bi,
+	}
+)
+
 type TagReader struct {
-	TagChannel       chan string
-	reader           *nfc.Device
-	DeviceConnection string
-	ResetPin         int
+	TagChannel    chan string
+	reader        *nfc.Device
+	DeviceAddress string
+	ResetPin      int
 }
 
 // init Initialize the NFC/RFID tag reader. Establish the connection and set up the reader.
 func (reader *TagReader) init() {
-	dev, err := nfc.Open(reader.DeviceConnection)
+	dev, err := nfc.Open(reader.DeviceAddress)
 	if err != nil {
-		log.Fatalf("Cannot communicate with NFC reader")
+		log.Fatalf("Cannot communicate with reader")
 	}
 
 	reader.reader = &dev
 	err = reader.reader.InitiatorInit()
 	if err != nil {
-		log.Fatal("Failed to initialize")
+		log.Fatal("Failed to initialize reader")
 	}
 }
 
@@ -39,14 +52,6 @@ func (reader *TagReader) init() {
 func (reader *TagReader) ListenForTags(ctx context.Context) {
 	reader.init()
 	var (
-		modulations = []nfc.Modulation{
-			{Type: nfc.ISO14443a, BaudRate: nfc.Nbr106},
-			{Type: nfc.ISO14443b, BaudRate: nfc.Nbr106},
-			{Type: nfc.Felica, BaudRate: nfc.Nbr212},
-			{Type: nfc.Felica, BaudRate: nfc.Nbr424},
-			{Type: nfc.Jewel, BaudRate: nfc.Nbr106},
-			{Type: nfc.ISO14443biClass, BaudRate: nfc.Nbr106},
-		}
 		err    error
 		count  int
 		target nfc.Target
@@ -58,60 +63,55 @@ Listener:
 	for {
 		select {
 		case <-ctx.Done():
-			reader.Cleanup()
 			break Listener
 		default:
 			count, target, err = reader.reader.InitiatorPollTarget(modulations, 1, 300*time.Millisecond)
 			if err != nil {
-				log.Errorf("Error polling the reader %v", err)
+				log.WithError(err).Errorf("Error polling the reader")
 				reader.Reset()
 				continue
 			}
 
 			if count > 0 {
 				switch target.Modulation() {
-				case nfc.Modulation{Type: nfc.ISO14443a, BaudRate: nfc.Nbr106}:
+				case Iso14443A:
 					var card = target.(*nfc.ISO14443aTarget)
 					UIDLen = card.UIDLen
 					var ID = card.UID
 					UID = hex.EncodeToString(ID[:UIDLen])
-					break
-				case nfc.Modulation{Type: nfc.ISO14443b, BaudRate: nfc.Nbr106}:
+
+				case ISO14443b:
 					var card = target.(*nfc.ISO14443bTarget)
 					UIDLen = len(card.ApplicationData)
 					var ID = card.ApplicationData
 					UID = hex.EncodeToString(ID[:UIDLen])
-					break
-				case nfc.Modulation{Type: nfc.Felica, BaudRate: nfc.Nbr212}:
+
+				case Felica1, Felica2:
 					var card = target.(*nfc.FelicaTarget)
 					var UIDLen = card.Len
 					var ID = card.ID
 					UID = hex.EncodeToString(ID[:UIDLen])
-					break
-				case nfc.Modulation{Type: nfc.Felica, BaudRate: nfc.Nbr424}:
-					var card = target.(*nfc.FelicaTarget)
-					var UIDLen = card.Len
-					var ID = card.ID
-					UID = hex.EncodeToString(ID[:UIDLen])
-					break
-				case nfc.Modulation{Type: nfc.Jewel, BaudRate: nfc.Nbr106}:
+
+				case Jewel:
 					var card = target.(*nfc.JewelTarget)
 					var ID = card.ID
-					var UIDLen = len(ID)
+					UIDLen = len(ID)
 					UID = hex.EncodeToString(ID[:UIDLen])
-					break
-				case nfc.Modulation{Type: nfc.ISO14443biClass, BaudRate: nfc.Nbr106}:
+
+				case ISO14443bi:
 					var card = target.(*nfc.ISO14443biClassTarget)
 					var ID = card.UID
-					var UIDLen = len(ID)
+					UIDLen = len(ID)
 					UID = hex.EncodeToString(ID[:UIDLen])
-					break
+				default:
+					log.Warn("NFC modulation unknown")
+					continue
 				}
 
 				reader.TagChannel <- UID
 			}
 
-			time.Sleep(time.Millisecond * 300)
+			time.Sleep(time.Millisecond * 200)
 		}
 	}
 }

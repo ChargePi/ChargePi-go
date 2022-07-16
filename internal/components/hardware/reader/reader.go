@@ -1,6 +1,3 @@
-//go:build rpi || dev
-// +build rpi dev
-
 package reader
 
 import (
@@ -10,9 +7,13 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 )
 
-// Supported readers
+// Supported readers - by libnfc
 const (
-	PN532 = "PN532"
+	PN532  = "PN532"
+	ACR122 = "ACR122"
+	PN533  = "PN533"
+	BR500  = "BR500"
+	R502   = "R502"
 )
 
 var (
@@ -37,9 +38,9 @@ func NewTagReader(reader settings.TagReader) (Reader, error) {
 		switch reader.ReaderModel {
 		case PN532:
 			return &TagReader{
-				TagChannel:       tagChannel,
-				DeviceConnection: reader.Device,
-				ResetPin:         reader.ResetPin,
+				TagChannel:    tagChannel,
+				DeviceAddress: reader.Device,
+				ResetPin:      reader.ResetPin,
 			}, nil
 		default:
 			return nil, ErrReaderUnsupported

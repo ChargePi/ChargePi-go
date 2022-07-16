@@ -1,5 +1,5 @@
-//go:build dev
-// +build dev
+//go:build !linux
+// +build !linux
 
 package reader
 
