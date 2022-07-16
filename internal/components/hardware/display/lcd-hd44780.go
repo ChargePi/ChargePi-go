@@ -5,6 +5,7 @@ import (
 	"github.com/d2r2/go-hd44780"
 	"github.com/d2r2/go-i2c"
 	log "github.com/sirupsen/logrus"
+	"strconv"
 	"time"
 )
 
@@ -18,8 +19,12 @@ type HD44780 struct {
 func NewHD44780(lcdChannel chan LCDMessage, i2cAddress string, i2cBus int) (*HD44780, error) {
 	var display = HD44780{LCDChannel: lcdChannel}
 
-	//todo fix i2c address resolution
-	i2cDev, err := i2c.NewI2C(0x27, i2cBus)
+	decodeString, err := strconv.ParseUint(i2cAddress, 16, 8)
+	if err != nil {
+		return nil, err
+	}
+
+	i2cDev, err := i2c.NewI2C(uint8(decodeString), i2cBus)
 	if err != nil {
 		return nil, err
 	}
@@ -33,8 +38,8 @@ func NewHD44780(lcdChannel chan LCDMessage, i2cAddress string, i2cBus int) (*HD4
 	}
 
 	display.display = lcd2
-	lcd2.BacklightOn()
-	lcd2.Clear()
+	_ = lcd2.BacklightOn()
+	_ = lcd2.Clear()
 	return &display, nil
 }
 
@@ -72,11 +77,11 @@ Listener:
 	}
 }
 
-func (lcd HD44780) GetLcdChannel() chan<- LCDMessage {
+func (lcd *HD44780) GetLcdChannel() chan<- LCDMessage {
 	return lcd.LCDChannel
 }
 
-func (lcd HD44780) Clear() {
+func (lcd *HD44780) Clear() {
 	lcd.display.Clear()
 }
 

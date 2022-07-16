@@ -12,7 +12,7 @@ import (
 )
 
 func (cp *ChargePoint) sendToLCD(messages ...string) {
-	if util.IsNilInterfaceOrPointer(cp.LCD) || cp.LCD.GetLcdChannel() == nil || !cp.Settings.ChargePoint.Hardware.Lcd.IsEnabled {
+	if util.IsNilInterfaceOrPointer(cp.LCD) || cp.LCD.GetLcdChannel() == nil || !cp.Settings.ChargePoint.Hardware.Display.IsEnabled {
 		return
 	}
 

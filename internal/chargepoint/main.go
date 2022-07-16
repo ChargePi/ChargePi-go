@@ -40,7 +40,7 @@ func CreateChargePoint(
 			manager,
 			sch,
 			authCache,
-			v16.WithDisplayFromSettings(ctx, hardware.Lcd),
+			v16.WithDisplayFromSettings(ctx, hardware.Display),
 			v16.WithReaderFromSettings(ctx, hardware.TagReader),
 			v16.WithLogger(logger),
 		)
@@ -68,8 +68,9 @@ func Run(isDebug bool, config *settings.Settings, connectors []*settings.Connect
 		protocolVersion = settings.ProtocolVersion(chargePointInfo.ProtocolVersion)
 		// Execution
 		ctx, cancel = context.WithCancel(context.Background())
-		quitChannel = make(chan os.Signal, 1)
+		quitChannel = make(chan os.Signal, 5)
 	)
+
 	defer cancel()
 	signal.Notify(quitChannel, syscall.SIGINT, syscall.SIGTERM)
 
@@ -82,7 +83,7 @@ func Run(isDebug bool, config *settings.Settings, connectors []*settings.Connect
 	// Setup OCPP configuration manager
 	s.SetupOcppConfigurationManager(
 		configurationFilePath,
-		configuration.ProtocolVersion(config.ChargePoint.Info.ProtocolVersion),
+		configuration.ProtocolVersion(chargePointInfo.ProtocolVersion),
 		core.ProfileName,
 		reservation.ProfileName)
 
@@ -112,11 +113,11 @@ Loop:
 		select {
 		// Capture the terminate signal
 		case <-quitChannel:
-			handler.CleanUp(core.ReasonLocal)
 			break Loop
 		case <-ctx.Done():
-			handler.CleanUp(core.ReasonPowerLoss)
 			break Loop
 		}
 	}
+
+	handler.CleanUp(core.ReasonLocal)
 }

@@ -54,7 +54,7 @@ func WithReader(ctx context.Context, tagReader reader.Reader) Options {
 }
 
 // WithDisplayFromSettings create a LCD based on the provided settings.
-func WithDisplayFromSettings(ctx context.Context, lcdSettings settings.Lcd) Options {
+func WithDisplayFromSettings(ctx context.Context, lcdSettings settings.Display) Options {
 	return func(point *ChargePoint) {
 		if !lcdSettings.IsEnabled {
 			return

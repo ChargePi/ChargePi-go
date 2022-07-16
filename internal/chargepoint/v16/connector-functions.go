@@ -139,7 +139,7 @@ func (cp *ChargePoint) ListenForConnectorStatusChange(ctx context.Context, ch <-
 
 func (cp *ChargePoint) displayConnectorStatus(connectorId int, status core.ChargePointStatus) {
 	var (
-		language = cp.Settings.ChargePoint.Hardware.Lcd.Language
+		language = cp.Settings.ChargePoint.Hardware.Display.Language
 		message  []string
 		err      error
 	)

@@ -192,7 +192,7 @@ func (s *connectorFunctionsTestSuite) TestDisplayConnectorStatus() {
 	s.cp.LCD = lcdMock
 	s.cp.Settings = &settings.Settings{ChargePoint: settings.ChargePoint{
 		Hardware: settings.Hardware{
-			Lcd: settings.Lcd{
+			Display: settings.Display{
 				IsEnabled: true,
 				Language:  "en",
 			},

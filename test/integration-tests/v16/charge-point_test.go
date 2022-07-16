@@ -52,7 +52,7 @@ var chargePointSettings = settings.Settings{ChargePoint: settings.ChargePoint{
 	Logging: settings.Logging{},
 	TLS:     settings.TLS{IsEnabled: false},
 	Hardware: settings.Hardware{
-		Lcd:          settings.Lcd{IsEnabled: false},
+		Display:      settings.Display{IsEnabled: false},
 		TagReader:    settings.TagReader{IsEnabled: true},
 		LedIndicator: settings.LedIndicator{IndicateCardRead: false},
 	},

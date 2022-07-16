@@ -43,7 +43,7 @@ func (s *hardwareTestSuite) TestSendToLCD() {
 	s.cp.LCD = s.lcdMock
 	s.cp.Settings = &settings.Settings{ChargePoint: settings.ChargePoint{
 		Hardware: settings.Hardware{
-			Lcd: settings.Lcd{
+			Display: settings.Display{
 				IsEnabled: true,
 			},
 		},
@@ -83,7 +83,7 @@ func (s *hardwareTestSuite) TestSendToLCDWhenDisabled() {
 	s.cp.LCD = s.lcdMock
 	s.cp.Settings = &settings.Settings{ChargePoint: settings.ChargePoint{
 		Hardware: settings.Hardware{
-			Lcd: settings.Lcd{
+			Display: settings.Display{
 				IsEnabled: false,
 			},
 		},

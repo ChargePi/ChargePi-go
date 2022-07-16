@@ -4,7 +4,7 @@ type (
 	/* ------------- Hardware structs ------------*/
 
 	Hardware struct {
-		Lcd          Lcd          `fig:"lcd" json:"lcd" yaml:"lcd" mapstructure:"lcd"`
+		Display      Display      `fig:"display" json:"display" yaml:"display" mapstructure:"display"`
 		TagReader    TagReader    `fig:"tagReader" json:"tagReader" yaml:"tagReader" mapstructure:"tagReader"`
 		LedIndicator LedIndicator `fig:"ledIndicator" json:"ledIndicator" yaml:"ledIndicator" mapstructure:"ledIndicator"`
 	}
@@ -12,6 +12,10 @@ type (
 	Relay struct {
 		RelayPin     int  `fig:"RelayPin" validate:"required" json:"RelayPin,omitempty" yaml:"RelayPin" mapstructure:"RelayPin"`
 		InverseLogic bool `fig:"InverseLogic" json:"InverseLogic,omitempty" yaml:"InverseLogic" mapstructure:"InverseLogic"`
+	}
+
+	EVCC struct {
+		Type string
 	}
 
 	LedIndicator struct {
@@ -29,7 +33,7 @@ type (
 		ResetPin    int    `fig:"ResetPin" json:"ResetPin,omitempty" yaml:"ResetPin" mapstructure:"ResetPin"`
 	}
 
-	Lcd struct {
+	Display struct {
 		IsEnabled  bool   `fig:"IsEnabled" json:"ResetPin,omitempty" yaml:"ResetPin" mapstructure:"ResetPin"`
 		Driver     string `fig:"Driver" json:"driver,omitempty" yaml:"driver" mapstructure:"driver"`
 		Language   string `fig:"Language" json:"language,omitempty" yaml:"language" mapstructure:"language"`

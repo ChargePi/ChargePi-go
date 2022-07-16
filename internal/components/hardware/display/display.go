@@ -45,7 +45,7 @@ func NewMessage(duration time.Duration, messages []string) LCDMessage {
 
 // NewDisplay returns a concrete implementation of an LCD based on the drivers that are supported.
 // The LCD is built with the settings from the settings file.
-func NewDisplay(lcdSettings settings.Lcd) (LCD, error) {
+func NewDisplay(lcdSettings settings.Display) (LCD, error) {
 	if lcdSettings.IsEnabled {
 		log.Info("Preparing LCD from config")
 

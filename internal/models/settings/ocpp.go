@@ -28,6 +28,7 @@ type (
 		Status      string     `fig:"Status" validation:"required" json:"status,omitempty" yaml:"status" mapstructure:"status"`
 		Session     Session    `fig:"Session" json:"session" yaml:"session" mapstructure:"session"`
 		Relay       Relay      `fig:"Relay" json:"relay" yaml:"relay" mapstructure:"relay"`
+		EVCC        EVCC       `fig:"Evcc" json:"Evcc" yaml:"Evcc" mapstructure:"Evcc"`
 		PowerMeter  PowerMeter `fig:"PowerMeter" json:"PowerMeter" yaml:"PowerMeter" mapstructure:"PowerMeter"`
 	}
 
