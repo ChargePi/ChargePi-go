@@ -66,6 +66,8 @@ Example settings:
       "id": "ChargePi",
       "protocolVersion": "1.6",
       "serverUri": "example.com",
+      "basicAuthUser": "",
+      "basicAuthPass": "",
       "maxChargingTime": 5,
       "ocpp": {
         "vendor": "UL FE",

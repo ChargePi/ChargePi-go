@@ -14,11 +14,13 @@ type (
 	}
 
 	Info struct {
-		Id              string   `fig:"Id" validate:"required" json:"id,omitempty" yaml:"id" mapstructure:"id"`
-		ProtocolVersion string   `fig:"ProtocolVersion" default:"1.6" json:"ProtocolVersion,omitempty" yaml:"ProtocolVersion" mapstructure:"ProtocolVersion"`
-		ServerUri       string   `fig:"ServerUri" validate:"required" json:"ServerUri,omitempty" yaml:"ServerUri" mapstructure:"ServerUri"`
-		MaxChargingTime int      `fig:"MaxChargingTime" default:"180" json:"MaxChargingTime,omitempty" yaml:"MaxChargingTime" mapstructure:"MaxChargingTime"`
-		OCPPInfo        OCPPInfo `fig:"ocpp" json:"ocpp" yaml:"ocpp" mapstructure:"ocpp"`
+		Id                string   `fig:"Id" validate:"required" json:"id,omitempty" yaml:"id" mapstructure:"id"`
+		ProtocolVersion   string   `fig:"ProtocolVersion" default:"1.6" json:"ProtocolVersion,omitempty" yaml:"ProtocolVersion" mapstructure:"ProtocolVersion"`
+		ServerUri         string   `fig:"ServerUri" validate:"required" json:"ServerUri,omitempty" yaml:"ServerUri" mapstructure:"ServerUri"`
+		BasicAuthUsername string   `fig:"basicAuthUser" json:"basicAuthUser,omitempty" yaml:"basicAuthUser" mapstructure:"basicAuthUser"`
+		BasicAuthPassword string   `fig:"basicAuthPass" json:"basicAuthPass,omitempty" yaml:"basicAuthPass" mapstructure:"basicAuthPass"`
+		MaxChargingTime   int      `fig:"MaxChargingTime" default:"180" json:"MaxChargingTime,omitempty" yaml:"MaxChargingTime" mapstructure:"MaxChargingTime"`
+		OCPPInfo          OCPPInfo `fig:"ocpp" json:"ocpp" yaml:"ocpp" mapstructure:"ocpp"`
 	}
 
 	TLS struct {
