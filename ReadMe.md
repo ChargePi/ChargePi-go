@@ -1,11 +1,10 @@
 # ⚡ ChargePi-go
 
-⚡ChargePi is an open-source Raspberry Pi 4 based ⚡Charging Point🔌 project, which supports multiple EVSEs and simple
-connectors🔌. You can also add an RFID/NFC reader and a display to the Charging Point. It is configurable, simple to
-make and uses off-the-shelf hardware.
+⚡ ChargePi is an open-source, simple and a configurable Raspberry Pi 4 based ⚡Charging Point🔌 project. It is made with
+off-the-shelf hardware and supports multiple EVSEs and simple connectors 🔌. 
 
 A connector🔌 consists of an indicator (🚥 RGB LED strip), a relay and a ⚡ power meter. The client is written in Go and
-requires installation of a few C libraries.
+requires installation of a few C libraries. You can also add an RFID/NFC reader and a display to the Charging Point.
 
 ChargePi-go client can be deployed/run in multiple ways:
 

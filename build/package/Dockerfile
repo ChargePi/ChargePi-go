@@ -10,13 +10,17 @@ ENV READER_CONNECTION_TYPE=$READER_CONNECTION_TYPE
 RUN chmod +x ./scripts/install-dependencies.sh
 RUN ./scripts/install-dependencies.sh $READER_CONNECTION_TYPE 0
 
+ENV GOOS=linux
+ENV GOARCH=arm64
+ENV CGO=1
+
 # Compile the client
 RUN go mod download
 RUN go mod verify
-RUN go build -tags="rpi" -o ChargePi .
+RUN go build -o ChargePi .
 
 FROM base as dev
-ENTRYPOINT ["go","run", "-tags=rpi","."]
+ENTRYPOINT ["go","run", "."]
 
 FROM alpine as chargepi
 
@@ -36,8 +40,11 @@ ENTRYPOINT ["./chargepi"]
 
 # Test the client
 FROM base as test
+
+ENV GOARCH=amd64
+
 RUN cp -r configs/ test/  \
     && cd test/  \
     && chmod +x create-test-certs.sh \
     && ./create-test-certs.sh \
-CMD ["go", "test","-v", "-tags=dev" ,"./..."]
+CMD ["go", "test","-v","./..."]

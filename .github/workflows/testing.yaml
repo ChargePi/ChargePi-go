@@ -21,7 +21,10 @@ jobs:
           go-version: "^1.17"
 
       - name: Build
-        run: go build --tags=dev .
+        env:
+          GOOS: linux
+          GOARCH: amd64
+        run: go build .
 
       - name: Test
-        run: go test --short --tags=dev -v ./...
+        run: go test --short -v ./...
