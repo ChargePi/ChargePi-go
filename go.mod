@@ -14,7 +14,7 @@ require (
 	github.com/d2r2/go-logger v0.0.0-20210606094344-60e9d1233e22 // indirect
 	github.com/gemnasium/logrus-graylog-hook/v3 v3.1.0
 	github.com/go-co-op/gocron v1.6.0
-	github.com/go-playground/validator v9.31.0+incompatible // indirect
+	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/kkyr/fig v0.3.0
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/lestrrat-go/strftime v1.0.5 // indirect
@@ -38,4 +38,6 @@ require (
 	google.golang.org/grpc v1.45.0
 	google.golang.org/protobuf v1.28.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
+	periph.io/x/conn/v3 v3.6.10
+	periph.io/x/host/v3 v3.7.2
 )

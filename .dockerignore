@@ -8,8 +8,8 @@
 
 LICENSE.txt
 .idea
+.github/
 build/
 docs/
-deployments/docker-compose.yaml
-deployments/docker-compose.steve.yaml
+deployments/
 ReadMe.md

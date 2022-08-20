@@ -4,24 +4,24 @@ import (
 	"context"
 	"fmt"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware/display"
-	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware/indicator"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/util"
+	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/indicator"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 	"strings"
 	"time"
 )
 
 func (cp *ChargePoint) sendToLCD(messages ...string) {
-	if util.IsNilInterfaceOrPointer(cp.LCD) || cp.LCD.GetLcdChannel() == nil || !cp.Settings.ChargePoint.Hardware.Display.IsEnabled {
+	if util.IsNilInterfaceOrPointer(cp.display) || !cp.settings.ChargePoint.Hardware.Display.IsEnabled {
 		return
 	}
 
-	cp.logger.Debugf("Sending message(s) to LCD: %v", messages)
-	cp.LCD.GetLcdChannel() <- display.NewMessage(time.Second*5, messages)
+	cp.logger.Debugf("Sending message(s) to display: %v", messages)
+	cp.display.DisplayMessage(models.NewMessage(time.Second*5, messages))
 }
 
 func (cp *ChargePoint) displayLEDStatus(connectorIndex int, status core.ChargePointStatus) {
-	if !cp.Settings.ChargePoint.Hardware.LedIndicator.Enabled || util.IsNilInterfaceOrPointer(cp.Indicator) {
+	if !cp.settings.ChargePoint.Hardware.LedIndicator.Enabled || util.IsNilInterfaceOrPointer(cp.indicator) {
 		return
 	}
 
@@ -30,45 +30,37 @@ func (cp *ChargePoint) displayLEDStatus(connectorIndex int, status core.ChargePo
 	switch status {
 	case core.ChargePointStatusFaulted:
 		color = indicator.Red
-		break
 	case core.ChargePointStatusCharging:
 		color = indicator.Blue
-		break
 	case core.ChargePointStatusReserved:
 		color = indicator.Yellow
-		break
 	case core.ChargePointStatusFinishing:
 		color = indicator.Blue
-		break
 	case core.ChargePointStatusAvailable:
 		color = indicator.Green
-		break
 	case core.ChargePointStatusUnavailable:
 		color = indicator.Orange
-		break
 	default:
 		return
 	}
 
 	cp.logger.Debugf("Indicating connector status: %x", color)
 
-	go func() {
-		err := cp.Indicator.DisplayColor(connectorIndex, uint32(color))
-		if err != nil {
-			cp.logger.WithError(err).Errorf("Error indicating status")
-		}
-	}()
+	err := cp.indicator.DisplayColor(connectorIndex, uint32(color))
+	if err != nil {
+		cp.logger.WithError(err).Errorf("Error indicating status")
+	}
 }
 
 // indicateCard Blinks the LED to indicate that the card was read.
 func (cp *ChargePoint) indicateCard(index int, color uint32) {
-	if !cp.Settings.ChargePoint.Hardware.LedIndicator.Enabled || util.IsNilInterfaceOrPointer(cp.Indicator) {
+	if !cp.settings.ChargePoint.Hardware.LedIndicator.Enabled || util.IsNilInterfaceOrPointer(cp.indicator) {
 		return
 	}
 
 	cp.logger.Trace("Indicating tag was read")
 
-	err := cp.Indicator.Blink(index, 3, color)
+	err := cp.indicator.Blink(index, 3, color)
 	if err != nil {
 		cp.logger.WithError(err).Errorf("Could not indicate card was read")
 	}
@@ -87,10 +79,9 @@ Listener:
 	for {
 		select {
 		case tagId := <-tagChannel:
-			go cp.indicateCard(len(cp.connectorManager.GetConnectors()), indicator.White)
+			go cp.indicateCard(len(cp.connectorManager.GetEVSEs()), indicator.White)
 			go cp.sendToLCD("Read tag:", tagId)
 			_, _ = cp.HandleChargingRequest(strings.ToUpper(tagId))
-			break
 		case <-ctx.Done():
 			break Listener
 		default:

@@ -1,13 +1,11 @@
 package v16
 
 import (
-	"context"
 	"errors"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
-	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware/display"
-	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware/indicator"
+	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/indicator"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/test"
 	"testing"
@@ -34,14 +32,8 @@ func (s *hardwareTestSuite) SetupTest() {
 }
 
 func (s *hardwareTestSuite) TestSendToLCD() {
-	var (
-		ctx, cancel = context.WithTimeout(context.Background(), time.Second*10)
-		channel     = make(chan display.LCDMessage)
-	)
-
-	s.lcdMock.On("GetLcdChannel").Return(channel)
-	s.cp.LCD = s.lcdMock
-	s.cp.Settings = &settings.Settings{ChargePoint: settings.ChargePoint{
+	s.cp.display = s.lcdMock
+	s.cp.settings = &settings.Settings{ChargePoint: settings.ChargePoint{
 		Hardware: settings.Hardware{
 			Display: settings.Display{
 				IsEnabled: true,
@@ -49,60 +41,13 @@ func (s *hardwareTestSuite) TestSendToLCD() {
 		},
 	}}
 
-	go s.cp.sendToLCD(exampleMessage, exampleMessage1)
+	s.cp.sendToLCD(exampleMessage, exampleMessage1)
 
-Loop:
-	for {
-		select {
-		case msg := <-channel:
-			log.Debugf("Received message from channel %v", msg)
-			s.Condition(func() (success bool) {
-				if s.Contains(msg.Messages, exampleMessage) &&
-					s.Contains(msg.Messages, exampleMessage1) {
-					return true
-				}
-				return false
-			})
-			cancel()
-			break
-		case <-ctx.Done():
-			break Loop
-		}
-	}
+	// Disable LCD
+	s.cp.settings.ChargePoint.Hardware.Display.IsEnabled = false
+	s.cp.sendToLCD(exampleMessage, exampleMessage1)
 
-	cancel()
-}
-
-func (s *hardwareTestSuite) TestSendToLCDWhenDisabled() {
-	var (
-		ctx, cancel = context.WithTimeout(context.Background(), time.Second*10)
-		channel     = make(chan display.LCDMessage)
-	)
-
-	s.lcdMock.On("GetLcdChannel").Return(channel)
-	s.cp.LCD = s.lcdMock
-	s.cp.Settings = &settings.Settings{ChargePoint: settings.ChargePoint{
-		Hardware: settings.Hardware{
-			Display: settings.Display{
-				IsEnabled: false,
-			},
-		},
-	}}
-
-	go s.cp.sendToLCD("exampleMessage", "exampleMessage2")
-
-Loop:
-	for {
-		select {
-		case <-channel:
-			s.Fail("Shouldn't have received a message")
-			cancel()
-		case <-ctx.Done():
-			break Loop
-		}
-	}
-
-	cancel()
+	s.lcdMock.AssertNumberOfCalls(s.T(), "DisplayMessage", 1)
 }
 
 func (s *hardwareTestSuite) TestDisplayLedStatus() {
@@ -113,8 +58,8 @@ func (s *hardwareTestSuite) TestDisplayLedStatus() {
 	s.indicatorMock.On("DisplayColor", 1, uint32(indicator.Orange)).Return(nil)
 	s.indicatorMock.On("DisplayColor", 1, uint32(indicator.Off)).Return(errors.New("invalid color")).Once()
 
-	s.cp.Indicator = s.indicatorMock
-	s.cp.Settings = &settings.Settings{ChargePoint: settings.ChargePoint{
+	s.cp.indicator = s.indicatorMock
+	s.cp.settings = &settings.Settings{ChargePoint: settings.ChargePoint{
 		Hardware: settings.Hardware{
 			LedIndicator: settings.LedIndicator{
 				Enabled: true,
@@ -141,8 +86,8 @@ func (s *hardwareTestSuite) TestIndicateCard() {
 	s.indicatorMock.On("Blink", 1, 3, uint32(indicator.White)).Return(nil)
 	s.indicatorMock.On("Blink", 1, 3, uint32(123)).Return(errors.New("invalid color"))
 
-	s.cp.Indicator = s.indicatorMock
-	s.cp.Settings = &settings.Settings{ChargePoint: settings.ChargePoint{
+	s.cp.indicator = s.indicatorMock
+	s.cp.settings = &settings.Settings{ChargePoint: settings.ChargePoint{
 		Hardware: settings.Hardware{
 			LedIndicator: settings.LedIndicator{
 				Enabled: true,

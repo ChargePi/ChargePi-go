@@ -30,6 +30,11 @@ or compiling and executing the client:
    docker build -t chargepi .
    ```
 
+   or pull it from Docker Hub:
+   ```bash
+      docker pull xblaz3kx/ChargePi-go:latest 
+   ```
+
 2. Run the container from built image:
 
    ```bash

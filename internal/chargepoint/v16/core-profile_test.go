@@ -6,7 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/scheduler"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/test"
 	ocppManager "github.com/xBlaz3kx/ocppManager-go"
 	v16 "github.com/xBlaz3kx/ocppManager-go/v16"
@@ -87,13 +87,13 @@ func (s *coreTestSuite) TestOnUnlockConnector() {}
 func (s *coreTestSuite) TestOnRemoteStopTransaction() {
 	var (
 		connectorManager = new(test.ManagerMock)
-		connector        = new(test.ConnectorMock)
+		connector        = new(test.EvseMock)
 		transactionId    = 1
 		transactionIdStr = "1"
 	)
 
 	connector.On("IsCharging").Return(true).Once()
-	connectorManager.On("FindConnectorWithTransactionId", transactionIdStr).Return(connector).Once()
+	connectorManager.On("FindEVSEWithTransactionId", transactionIdStr).Return(connector).Once()
 
 	s.cp.connectorManager = connectorManager
 
@@ -106,7 +106,7 @@ func (s *coreTestSuite) TestOnRemoteStopTransaction() {
 	s.cp.scheduler.Clear()
 
 	// No transaction
-	connectorManager.On("FindConnectorWithTransactionId", transactionIdStr).Return(nil).Once()
+	connectorManager.On("FindEVSEWithTransactionId", transactionIdStr).Return(nil).Once()
 	req = core.NewRemoteStopTransactionRequest(transactionId)
 	response, err = s.cp.OnRemoteStopTransaction(req)
 	s.Assert().NoError(err)
@@ -117,7 +117,7 @@ func (s *coreTestSuite) TestOnRemoteStopTransaction() {
 
 	// Connector not charging
 	connector.On("IsCharging").Return(false).Once()
-	connectorManager.On("FindConnectorWithTransactionId", transactionIdStr).Return(connector).Once()
+	connectorManager.On("FindEVSEWithTransactionId", transactionIdStr).Return(connector).Once()
 	req = core.NewRemoteStopTransactionRequest(transactionId)
 	response, err = s.cp.OnRemoteStopTransaction(req)
 	s.Assert().NoError(err)
@@ -128,13 +128,13 @@ func (s *coreTestSuite) TestOnRemoteStopTransaction() {
 func (s *coreTestSuite) TestOnRemoteStartTransaction() {
 	var (
 		connectorManager       = new(test.ManagerMock)
-		connector              = new(test.ConnectorMock)
+		connector              = new(test.EvseMock)
 		connectorId            = 1
 		nonExistingConnectorId = 14
 	)
 
 	connector.On("IsAvailable").Return(true).Twice()
-	connectorManager.On("FindAvailableConnector").Return(connector).Once()
+	connectorManager.On("FindAvailableEVSE").Return(connector).Once()
 
 	s.cp.connectorManager = connectorManager
 
@@ -147,7 +147,7 @@ func (s *coreTestSuite) TestOnRemoteStartTransaction() {
 	s.cp.scheduler.Clear()
 
 	// Start charging a specific connector
-	connectorManager.On("FindConnector", 1, connectorId).Return(connector).Once()
+	connectorManager.On("FindEVSE", connectorId).Return(connector).Once()
 	req = core.NewRemoteStartTransactionRequest(tagId)
 	req.ConnectorId = &connectorId
 	transaction, err = s.cp.OnRemoteStartTransaction(req)
@@ -158,7 +158,7 @@ func (s *coreTestSuite) TestOnRemoteStartTransaction() {
 	s.cp.scheduler.Clear()
 
 	// No such connector exists
-	connectorManager.On("FindConnector", 1, nonExistingConnectorId).Return(nil).Once()
+	connectorManager.On("FindEVSE", nonExistingConnectorId).Return(nil).Once()
 	req = core.NewRemoteStartTransactionRequest(tagId)
 	req.ConnectorId = &nonExistingConnectorId
 	transaction, err = s.cp.OnRemoteStartTransaction(req)
@@ -170,7 +170,7 @@ func (s *coreTestSuite) TestOnRemoteStartTransaction() {
 
 	// Connector not available
 	connector.On("IsAvailable").Return(false).Once()
-	connectorManager.On("FindConnector", 1, connectorId).Return(nil).Once()
+	connectorManager.On("FindEVSE", connectorId).Return(nil).Once()
 	req = core.NewRemoteStartTransactionRequest(tagId)
 	req.ConnectorId = &connectorId
 	transaction, err = s.cp.OnRemoteStartTransaction(req)

@@ -6,50 +6,49 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/components/connector"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/errors"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/util"
+	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 	"strconv"
 	"time"
 )
 
 // startCharging Start charging on the first available Connector. If there is no available Connector, reject the request.
 func (cp *ChargePoint) startCharging(tagId string) error {
-	if c := cp.connectorManager.FindAvailableConnector(); !util.IsNilInterfaceOrPointer(c) {
+	if c := cp.connectorManager.FindAvailableEVSE(); !util.IsNilInterfaceOrPointer(c) {
 		return cp.startChargingConnector(c, tagId)
 	}
 
-	return errors.ErrNoAvailableConnectors
+	return chargePoint.ErrNoAvailableConnectors
 }
 
 // startChargingConnector Start charging a connector with the specified ID.
 // Send the request to the Central System, turn on and update the status of the Connector,
 // start the timer and sample the PowerMeter, if it's enabled.
-func (cp *ChargePoint) startChargingConnector(connector connector.Connector, tagId string) error {
+func (cp *ChargePoint) startChargingConnector(connector evse.EVSE, tagId string) error {
 	if util.IsNilInterfaceOrPointer(connector) {
-		return errors.ErrConnectorNil
+		return chargePoint.ErrConnectorNil
 	}
 
 	logInfo := cp.logger.WithFields(log.Fields{
-		"evseId":      connector.GetEvseId(),
-		"connectorId": connector.GetConnectorId(),
-		"tagId":       tagId,
+		"evseId": connector.GetEvseId(),
+		"tagId":  tagId,
 	})
 
 	if !connector.IsAvailable() {
-		return errors.ErrConnectorUnavailable
+		return chargePoint.ErrConnectorUnavailable
 	}
 
 	if cp.availability != core.AvailabilityTypeOperative {
-		return errors.ErrChargePointUnavailable
+		return chargePoint.ErrChargePointUnavailable
 	}
 
 	if !cp.isTagAuthorized(tagId) {
-		return errors.ErrTagUnauthorized
+		return chargePoint.ErrTagUnauthorized
 	}
 
 	request := core.NewStartTransactionRequest(
-		connector.GetConnectorId(),
+		connector.GetEvseId(),
 		tagId,
 		0,
 		types.NewDateTime(time.Now()),
@@ -66,7 +65,7 @@ func (cp *ChargePoint) startChargingConnector(connector connector.Connector, tag
 		switch startTransactionConf.IdTagInfo.Status {
 		case types.AuthorizationStatusAccepted, types.AuthorizationStatusConcurrentTx:
 			// Attempt to start charging
-			err := connector.StartCharging(strconv.Itoa(startTransactionConf.TransactionId), tagId)
+			err := connector.StartCharging(strconv.Itoa(startTransactionConf.TransactionId), tagId, nil)
 			if err != nil {
 				logInfo.WithError(err).Errorf("Unable to start charging connector")
 				return
@@ -76,7 +75,7 @@ func (cp *ChargePoint) startChargingConnector(connector connector.Connector, tag
 
 			// Schedule timer to stop the transaction at the time limit
 			_, err = cp.scheduler.Every(connector.GetMaxChargingTime()).Minutes().LimitRunsTo(1).
-				Tag(fmt.Sprintf("connector%dTimer", connector.GetConnectorId())).Do(cp.stopChargingConnector, connector, core.ReasonOther)
+				Tag(fmt.Sprintf("evse%dTimer", connector.GetEvseId())).Do(cp.stopChargingConnector, connector, core.ReasonOther)
 			if err != nil {
 				logInfo.WithError(err).Errorf("Cannot schedule stop charging")
 			}

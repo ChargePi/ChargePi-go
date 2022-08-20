@@ -3,11 +3,11 @@ package v16
 import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/remotetrigger"
-	"github.com/reactivex/rxgo/v2"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
-	"github.com/xBlaz3kx/ChargePi-go/internal/components/connector"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/scheduler"
+	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/test"
 	"testing"
 	"time"
@@ -28,13 +28,13 @@ func (s *triggerMessageTestSuite) SetupTest() {
 
 func (s *triggerMessageTestSuite) TestTriggerMessage() {
 	var (
-		connectorMock = new(test.ConnectorMock)
+		connectorMock = new(test.EvseMock)
 		managerMock   = new(test.ManagerMock)
-		connectorChan = make(chan rxgo.Item)
+		connectorChan = make(chan models.StatusNotification, 2)
 	)
 	// Set manager expectations
-	managerMock.On("FindConnector", 1, connectorId).Return(connectorMock).Once()
-	managerMock.On("GetConnectors").Return([]connector.Connector{connectorMock}).Once()
+	managerMock.On("FindEVSE", 1, connectorId).Return(connectorMock).Once()
+	managerMock.On("GetEVSEs").Return([]evse.EVSE{connectorMock}).Once()
 
 	s.cp.connectorManager = managerMock
 	s.cp.connectorChannel = connectorChan

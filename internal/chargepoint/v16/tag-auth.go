@@ -70,7 +70,6 @@ func (cp *ChargePoint) sendAuthorizeRequest(tagId string) (*types.IdTagInfo, err
 	switch authInfo.IdTagInfo.Status {
 	case types.AuthorizationStatusBlocked, types.AuthorizationStatusExpired, types.AuthorizationStatusInvalid:
 		err = cp.stopChargingConnectorWithTagId(tagId, core.ReasonDeAuthorized)
-		break
 	}
 
 	value, err2 := ocppConfigManager.GetConfigurationValue(v16.AuthorizationCacheEnabled.String())

@@ -1,145 +1,143 @@
 {
-  "version": 1,
-  "keys": [
-    {
-      "key": "AllowOfflineTxForUnknownId",
-      "readOnly": false,
-      "value": "false"
-    },
-    {
-      "key": "AuthorizationCacheEnabled",
-      "readOnly": false,
-      "value": "true"
-    },
-    {
-      "key": "AuthorizeRemoteTxRequests",
-      "readOnly": false,
-      "value": "false"
-    },
-    {
-      "key": "ClockAlignedDataInterval",
-      "readOnly": false,
-      "value": "0"
-    },
-    {
-      "key": "ConnectionTimeOut",
-      "readOnly": false,
-      "value": "50"
-    },
-    {
-      "key": "GetConfigurationMaxKeys",
-      "readOnly": false,
-      "value": "30"
-    },
-    {
-      "key": "HeartbeatInterval",
-      "readOnly": false,
-      "value": "60"
-    },
-    {
-      "key": "LocalAuthorizeOffline",
-      "readOnly": false,
-      "value": "true"
-    },
-    {
-      "key": "LocalPreAuthorize",
-      "readOnly": false,
-      "value": "true"
-    },
-    {
-      "key": "MaxEnergyOnInvalidId",
-      "readOnly": false,
-      "value": "0"
-    },
-    {
-      "key": "MeterValuesSampledData",
-      "readOnly": false,
-      "value": "Power.Active.Import"
-    },
-    {
-      "key": "MeterValuesAlignedData",
-      "readOnly": false,
-      "value": "false"
-    },
-    {
-      "key": "NumberOfConnectors",
-      "readOnly": false,
-      "value": "6"
-    },
-    {
-      "key": "MeterValueSampleInterval",
-      "readOnly": false,
-      "value": "60"
-    },
-    {
-      "key": "ResetRetries",
-      "readOnly": false,
-      "value": "3"
-    },
-    {
-      "key": "ConnectorPhaseRotation",
-      "readOnly": false,
-      "value": "0.RST, 1.RST, 2.RTS"
-    },
-    {
-      "key": "StopTransactionOnEVSideDisconnect",
-      "readOnly": false,
-      "value": "true"
-    },
-    {
-      "key": "StopTransactionOnInvalidId",
-      "readOnly": false,
-      "value": "true"
-    },
-    {
-      "key": "StopTxnAlignedData",
-      "readOnly": false,
-      "value": ""
-    },
-    {
-      "key": "StopTxnSampledData",
-      "readOnly": false,
-      "value": ""
-    },
-    {
-      "key": "SupportedFeatureProfiles",
-      "readOnly": false,
-      "value": "Core, LocalAuthListManagement, Reservation, RemoteTrigger"
-    },
-    {
-      "key": "TransactionMessageAttempts",
-      "readOnly": false,
-      "value": "3"
-    },
-    {
-      "key": "TransactionMessageRetryInterval",
-      "readOnly": false,
-      "value": "60"
-    },
-    {
-      "key": "UnlockConnectorOnEVSideDisconnect",
-      "readOnly": false,
-      "value": "true"
-    },
-    {
-      "key": "ReserveConnectorZeroSupported",
-      "readOnly": false,
-      "value": "false"
-    },
-    {
-      "key": "SendLocalListMaxLength",
-      "readOnly": false,
-      "value": "20"
-    },
-    {
-      "key": "LocalAuthListEnabled",
-      "readOnly": false,
-      "value": "true"
-    },
-    {
-      "key": "LocalAuthListMaxLength",
-      "readOnly": false,
-      "value": "20"
-    }
-  ]
+	"Version": 1,
+	"Keys": [
+		{
+			"key": "AllowOfflineTxForUnknownId",
+			"readonly": false,
+			"value": "false"
+		},
+		{
+			"key": "AuthorizationCacheEnabled",
+			"readonly": false,
+			"value": "false"
+		},
+		{
+			"key": "AuthorizeRemoteTxRequests",
+			"readonly": false,
+			"value": "false"
+		},
+		{
+			"key": "ClockAlignedDataInterval",
+			"readonly": false,
+			"value": "0"
+		},
+		{
+			"key": "ConnectionTimeOut",
+			"readonly": false,
+			"value": "50"
+		},
+		{
+			"key": "GetConfigurationMaxKeys",
+			"readonly": false,
+			"value": "30"
+		},
+		{
+			"key": "HeartbeatInterval",
+			"readonly": false,
+			"value": "60"
+		},
+		{
+			"key": "LocalAuthorizeOffline",
+			"readonly": false,
+			"value": "true"
+		},
+		{
+			"key": "LocalPreAuthorize",
+			"readonly": false,
+			"value": "true"
+		},
+		{
+			"key": "MaxEnergyOnInvalidId",
+			"readonly": false,
+			"value": "0"
+		},
+		{
+			"key": "MeterValuesSampledData",
+			"readonly": false,
+			"value": "Power.Active.Import"
+		},
+		{
+			"key": "MeterValuesAlignedData",
+			"readonly": false,
+			"value": "false"
+		},
+		{
+			"key": "NumberOfConnectors",
+			"readonly": false,
+			"value": "6"
+		},
+		{
+			"key": "MeterValueSampleInterval",
+			"readonly": false,
+			"value": "60"
+		},
+		{
+			"key": "ResetRetries",
+			"readonly": false,
+			"value": "3"
+		},
+		{
+			"key": "ConnectorPhaseRotation",
+			"readonly": false,
+			"value": "0.RST, 1.RST, 2.RTS"
+		},
+		{
+			"key": "StopTransactionOnEVSideDisconnect",
+			"readonly": false,
+			"value": "true"
+		},
+		{
+			"key": "StopTransactionOnInvalidId",
+			"readonly": false,
+			"value": "true"
+		},
+		{
+			"key": "StopTxnAlignedData",
+			"readonly": false
+		},
+		{
+			"key": "StopTxnSampledData",
+			"readonly": false
+		},
+		{
+			"key": "SupportedFeatureProfiles",
+			"readonly": false,
+			"value": "Core, LocalAuthListManagement, Reservation, RemoteTrigger"
+		},
+		{
+			"key": "TransactionMessageAttempts",
+			"readonly": false,
+			"value": "3"
+		},
+		{
+			"key": "TransactionMessageRetryInterval",
+			"readonly": false,
+			"value": "60"
+		},
+		{
+			"key": "UnlockConnectorOnEVSideDisconnect",
+			"readonly": false,
+			"value": "true"
+		},
+		{
+			"key": "ReserveConnectorZeroSupported",
+			"readonly": false,
+			"value": "false"
+		},
+		{
+			"key": "SendLocalListMaxLength",
+			"readonly": false,
+			"value": "20"
+		},
+		{
+			"key": "LocalAuthListEnabled",
+			"readonly": false,
+			"value": "true"
+		},
+		{
+			"key": "LocalAuthListMaxLength",
+			"readonly": false,
+			"value": "20"
+		}
+	]
 }

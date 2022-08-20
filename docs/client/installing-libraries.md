@@ -2,13 +2,13 @@
 
 ## Read before continuing
 
-The process of installing the dependencies was automated by creating a [script](../install-dependencies.sh) for
-installing the necessary dependencies. The script has the following arguments:
+The process of installing the dependencies was automated by creating a [script](../../scripts/install-dependencies.sh)
+for installing the necessary dependencies. The script has the following arguments:
 
-| Argument | Default value |                                                    Description                                                    |
-|:--------:|:-------------:|:-----------------------------------------------------------------------------------------------------------------:|
-|    0     |  "pn532_i2c"  | The libnfc configuration for PN532 RFID card reader. Possible values are: `pn532_uart`, `pn532_i2c`, `pn532_spi`. |
-|    1     |   false (0)   |                         Whether or not to install Go on the system using a shell script.                          |
+| Argument | Default value |                                                  Description                                                   |
+|:--------:|:-------------:|:--------------------------------------------------------------------------------------------------------------:|
+|    0     |  "pn532_i2c"  | The libnfc configuration for PN532 RFID card reader. Valid values are: `pn532_uart`, `pn532_i2c`, `pn532_spi`. |
+|    1     |   false (0)   |                        Whether or not to install Go on the system using a shell script.                        |
 
 Example usage:
 

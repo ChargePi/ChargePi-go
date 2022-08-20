@@ -5,8 +5,8 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/components/connector"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/util"
+	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 	ocppManager "github.com/xBlaz3kx/ocppManager-go"
 	v16 "github.com/xBlaz3kx/ocppManager-go/v16"
 	"os/exec"
@@ -150,7 +150,7 @@ func (cp *ChargePoint) OnUnlockConnector(request *core.UnlockConnectorRequest) (
 
 	var (
 		response = core.UnlockStatusNotSupported
-		conn     = cp.connectorManager.FindConnector(1, request.ConnectorId)
+		conn     = cp.connectorManager.FindEVSE(request.ConnectorId)
 	)
 
 	if util.IsNilInterfaceOrPointer(conn) {
@@ -173,7 +173,7 @@ func (cp *ChargePoint) OnRemoteStopTransaction(request *core.RemoteStopTransacti
 	var (
 		response      = types.RemoteStartStopStatusRejected
 		transactionId = fmt.Sprintf("%d", request.TransactionId)
-		conn          = cp.connectorManager.FindConnectorWithTransactionId(transactionId)
+		conn          = cp.connectorManager.FindEVSEWithTransactionId(transactionId)
 	)
 
 	if !util.IsNilInterfaceOrPointer(conn) && conn.IsCharging() {
@@ -195,15 +195,15 @@ func (cp *ChargePoint) OnRemoteStartTransaction(request *core.RemoteStartTransac
 			"tagId":       request.IdTag,
 		})
 		response = types.RemoteStartStopStatusRejected
-		conn     connector.Connector
+		conn     evse.EVSE
 	)
 
 	logInfo.Infof("Received request %s", request.GetFeatureName())
 
 	if request.ConnectorId != nil {
-		conn = cp.connectorManager.FindConnector(1, *request.ConnectorId)
+		conn = cp.connectorManager.FindEVSE(*request.ConnectorId)
 	} else {
-		conn = cp.connectorManager.FindAvailableConnector()
+		conn = cp.connectorManager.FindAvailableEVSE()
 	}
 
 	if !util.IsNilInterfaceOrPointer(conn) && conn.IsAvailable() {

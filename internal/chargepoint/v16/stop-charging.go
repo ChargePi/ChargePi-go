@@ -6,9 +6,9 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/components/connector"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/errors"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/util"
+	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
 	v16 "github.com/xBlaz3kx/ocppManager-go/v16"
 	"strconv"
@@ -16,18 +16,17 @@ import (
 )
 
 // stopChargingConnector Stop charging a connector with the specified ID. Update the status(es), turn off the ConnectorImpl and calculate the energy consumed.
-func (cp *ChargePoint) stopChargingConnector(connector connector.Connector, reason core.Reason) error {
+func (cp *ChargePoint) stopChargingConnector(connector evse.EVSE, reason core.Reason) error {
 	if util.IsNilInterfaceOrPointer(connector) {
-		return errors.ErrConnectorNil
+		return chargePoint.ErrConnectorNil
 	}
 
 	var (
 		stopTransactionOnEVDisconnect, err = ocppConfigManager.GetConfigurationValue(v16.StopTransactionOnEVSideDisconnect.String())
 		transactionId, convErr             = strconv.Atoi(connector.GetTransactionId())
 		logInfo                            = cp.logger.WithFields(log.Fields{
-			"evseId":      connector.GetEvseId(),
-			"connectorId": connector.GetConnectorId(),
-			"reason":      reason,
+			"evseId": connector.GetEvseId(),
+			"reason": reason,
 		})
 	)
 
@@ -40,7 +39,7 @@ func (cp *ChargePoint) stopChargingConnector(connector connector.Connector, reas
 	}
 
 	if !(connector.IsCharging() || connector.IsPreparing()) {
-		return errors.ErrConnectorNotCharging
+		return chargePoint.ErrConnectorNotCharging
 	}
 
 	if stopTransactionOnEVDisconnect != "true" && reason == core.ReasonEVDisconnected {
@@ -67,12 +66,12 @@ func (cp *ChargePoint) stopChargingConnector(connector connector.Connector, reas
 			return
 		}
 
-		schedulerErr := cp.scheduler.RemoveByTag(fmt.Sprintf("connector%dSampling", connector.GetConnectorId()))
+		schedulerErr := cp.scheduler.RemoveByTag(fmt.Sprintf("evse%dSampling", connector.GetEvseId()))
 		if schedulerErr != nil {
 			logInfo.WithError(err).Errorf("Cannot remove sampling schedule")
 		}
 
-		schedulerErr = cp.scheduler.RemoveByTag(fmt.Sprintf("connector%dTimer", connector.GetConnectorId()))
+		schedulerErr = cp.scheduler.RemoveByTag(fmt.Sprintf("evse%dTimer", connector.GetEvseId()))
 		if schedulerErr != nil {
 			logInfo.WithError(err).Errorf("Cannot remove stop charging schedule")
 		}
@@ -85,20 +84,20 @@ func (cp *ChargePoint) stopChargingConnector(connector connector.Connector, reas
 
 // stopChargingConnectorWithTagId Search for a ConnectorImpl that contains the tagId and stop the charging.
 func (cp *ChargePoint) stopChargingConnectorWithTagId(tagId string, reason core.Reason) error {
-	var c = cp.connectorManager.FindConnectorWithTagId(tagId)
+	var c = cp.connectorManager.FindEVSEWithTagId(tagId)
 	if !util.IsNilInterfaceOrPointer(c) {
 		return cp.stopChargingConnector(c, reason)
 	}
 
-	return errors.ErrNoConnectorWithTag
+	return chargePoint.ErrNoConnectorWithTag
 }
 
 // stopChargingConnectorWithTransactionId Search for a ConnectorImpl that contains the transactionId and stop the charging.
 func (cp *ChargePoint) stopChargingConnectorWithTransactionId(transactionId string) error {
-	var c = cp.connectorManager.FindConnectorWithTransactionId(transactionId)
+	var c = cp.connectorManager.FindEVSEWithTransactionId(transactionId)
 	if !util.IsNilInterfaceOrPointer(c) {
 		return cp.stopChargingConnector(c, core.ReasonRemote)
 	}
 
-	return errors.ErrNoConnectorWithTransaction
+	return chargePoint.ErrNoConnectorWithTransaction
 }

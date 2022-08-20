@@ -4,8 +4,7 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/firmware"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/remotetrigger"
-	"github.com/reactivex/rxgo/v2"
-	"github.com/xBlaz3kx/ChargePi-go/internal/components/connector"
+	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
 )
 
 func (cp *ChargePoint) OnTriggerMessage(request *remotetrigger.TriggerMessageRequest) (confirmation *remotetrigger.TriggerMessageConfirmation, err error) {
@@ -20,10 +19,8 @@ func (cp *ChargePoint) OnTriggerMessage(request *remotetrigger.TriggerMessageReq
 		}
 
 		status = remotetrigger.TriggerMessageStatusAccepted
-		break
 	case firmware.DiagnosticsStatusNotificationFeatureName, firmware.FirmwareStatusNotificationFeatureName:
 		status = remotetrigger.TriggerMessageStatusNotImplemented
-		break
 	case core.HeartbeatFeatureName:
 		_, err = cp.scheduler.Every(5).Seconds().LimitRunsTo(1).Do(cp.sendHeartBeat)
 		if err != nil {
@@ -31,17 +28,16 @@ func (cp *ChargePoint) OnTriggerMessage(request *remotetrigger.TriggerMessageReq
 		}
 
 		status = remotetrigger.TriggerMessageStatusAccepted
-		break
 	case core.MeterValuesFeatureName:
 		status = remotetrigger.TriggerMessageStatusNotImplemented
-		break
 	case core.StatusNotificationFeatureName:
 		if request.ConnectorId == nil {
 			// Send the status of all connectors after the response
 			defer func() {
-				for _, c := range cp.connectorManager.GetConnectors() {
+				for _, c := range cp.connectorManager.GetEVSEs() {
 					if cp.connectorChannel != nil {
-						cp.connectorChannel <- rxgo.Of(c)
+						cpStatus, errCode := c.GetStatus()
+						cp.notifyConnectorStatus(c.GetEvseId(), cpStatus, errCode)
 					}
 				}
 			}()
@@ -51,15 +47,15 @@ func (cp *ChargePoint) OnTriggerMessage(request *remotetrigger.TriggerMessageReq
 		}
 
 		connectorID := *request.ConnectorId
-		c := cp.connectorManager.FindConnector(1, connectorID)
+		c := cp.connectorManager.FindEVSE(connectorID)
 		if c != nil {
-			defer func(c connector.Connector) {
-				cp.notifyConnectorStatus(c)
+			defer func(c evse.EVSE) {
+				cpStatus, errCode := c.GetStatus()
+				cp.notifyConnectorStatus(c.GetEvseId(), cpStatus, errCode)
 			}(c)
 
 			status = remotetrigger.TriggerMessageStatusAccepted
 		}
-		break
 	default:
 		return remotetrigger.NewTriggerMessageConfirmation(remotetrigger.TriggerMessageStatusNotImplemented), nil
 	}

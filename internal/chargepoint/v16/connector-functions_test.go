@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
-	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware/display"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/test"
 	ocppManager "github.com/xBlaz3kx/ocppManager-go"
@@ -184,13 +184,13 @@ func (s *connectorFunctionsTestSuite) TestRestoreState() {
 func (s *connectorFunctionsTestSuite) TestDisplayConnectorStatus() {
 	var (
 		ctx, cancel = context.WithTimeout(context.Background(), time.Second*10)
-		channel     = make(chan display.LCDMessage)
+		channel     = make(chan models.Message)
 		lcdMock     = new(test.DisplayMock)
 	)
 
 	lcdMock.On("GetLcdChannel").Return(channel)
-	s.cp.LCD = lcdMock
-	s.cp.Settings = &settings.Settings{ChargePoint: settings.ChargePoint{
+	s.cp.display = lcdMock
+	s.cp.settings = &settings.Settings{ChargePoint: settings.ChargePoint{
 		Hardware: settings.Hardware{
 			Display: settings.Display{
 				IsEnabled: true,
@@ -247,11 +247,11 @@ Loop:
 func (s *connectorFunctionsTestSuite) TestNotifyConnectorStatus() {
 	var (
 		chargePoint   = new(chargePointMock)
-		connectorMock = new(test.ConnectorMock)
+		connectorMock = new(test.EvseMock)
 	)
 
 	connectorMock.On("GetStatus").Return("Available", "NoError")
-	connectorMock.On("GetConnectorId").Return(1)
+	connectorMock.On("GetEvseId").Return(1)
 
 	chargePoint.On("SendRequestAsync", mock.Anything).Run(func(args mock.Arguments) {
 		s.Assert().IsType(&core.StatusNotificationRequest{}, args.Get(0))
@@ -261,8 +261,7 @@ func (s *connectorFunctionsTestSuite) TestNotifyConnectorStatus() {
 	}).Return(core.NewStatusNotificationConfirmation(), nil, nil)
 	s.cp.chargePoint = chargePoint
 
-	s.cp.notifyConnectorStatus(connectorMock)
-	s.cp.notifyConnectorStatus(nil)
+	s.cp.notifyConnectorStatus(1, core.ChargePointStatusAvailable, core.NoError)
 
 	chargePoint.AssertNumberOfCalls(s.T(), "SendRequestAsync", 1)
 }

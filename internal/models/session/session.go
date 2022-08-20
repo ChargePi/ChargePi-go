@@ -5,6 +5,8 @@ import (
 	strUtil "github.com/agrison/go-commons-lang/stringUtils"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
+	settingsModel "github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
 	"strconv"
 	"time"
 )
@@ -31,6 +33,8 @@ type (
 		CalculateAvgPower() float64
 		CalculateEnergyConsumptionWithAvgPower() float64
 		CalculateEnergyConsumption() float64
+		UpdateSessionFile(evseId, connectorId int)
+		ToSessionFile() *settingsModel.Session
 	}
 )
 
@@ -79,6 +83,25 @@ func (session *Session) EndSession() {
 	}
 }
 
+// ToSessionFile transforms session to a session that is stored in a file in case of a failure.
+func (session *Session) ToSessionFile() *settingsModel.Session {
+	return &settingsModel.Session{
+		IsActive:      session.IsActive,
+		TagId:         session.TagId,
+		TransactionId: session.TransactionId,
+		Started:       session.Started,
+		Consumption:   session.Consumption,
+	}
+}
+
+// UpdateSessionFile Updates the session file.
+func (session *Session) UpdateSessionFile(evseId int) {
+	settings.UpdateSession(
+		evseId,
+		session.ToSessionFile(),
+	)
+}
+
 // AddSampledValue Add all the samples taken to the Session.
 func (session *Session) AddSampledValue(samples []types.SampledValue) {
 	if session.IsActive {
@@ -114,11 +137,9 @@ func (session *Session) CalculateAvgPower() float64 {
 			case types.MeasurandCurrentImport:
 				hasCurrent = true
 				current = sampleValue
-				break
 			case types.MeasurandCurrentExport:
 				hasCurrent = true
 				current = -sampleValue
-				break
 			case types.MeasurandPowerActiveImport:
 				hasPower = true
 				isValidSample = true
@@ -126,15 +147,12 @@ func (session *Session) CalculateAvgPower() float64 {
 				switch sampledValue.Unit {
 				case types.UnitOfMeasureKW:
 					powerSum += sampleValue * 1000
-					break
 				case types.UnitOfMeasureW:
 					powerSum += sampleValue
-					break
 				default:
 					powerSum += sampleValue
 				}
 
-				break
 			case types.MeasurandPowerActiveExport:
 				hasPower = true
 				isValidSample = true
@@ -142,19 +160,15 @@ func (session *Session) CalculateAvgPower() float64 {
 				switch sampledValue.Unit {
 				case types.UnitOfMeasureKW:
 					powerSum -= sampleValue * 1000
-					break
 				case types.UnitOfMeasureW:
 					powerSum -= sampleValue
-					break
 				default:
 					powerSum -= sampleValue
 				}
 
-				break
 			case types.MeasurandVoltage:
 				hasVoltage = true
 				voltage = sampleValue
-				break
 			}
 		}
 
@@ -212,15 +226,11 @@ func (session *Session) CalculateEnergyConsumption() float64 {
 				switch sampledValue.Unit {
 				case types.UnitOfMeasureKWh:
 					energySum += energySample * 1000
-					break
 				case types.UnitOfMeasureWh:
 					energySum += energySample
-					break
 				default:
 					energySum += energySample
 				}
-
-				break
 			}
 		}
 	}

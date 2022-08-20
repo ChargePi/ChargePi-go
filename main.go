@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint"
-	"github.com/xBlaz3kx/ChargePi-go/internal/components/settings"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
 	"os"
 )
 
@@ -16,7 +16,7 @@ const (
 	apiPortFlag        = "api-port"
 	apiAddressFlag     = "api-address"
 	settingsFlag       = "settings"
-	connectorsFlag     = "connector-folder"
+	evseFlag           = "connector-folder"
 	authFileFlag       = "auth"
 	ocppConfigPathFlag = "ocpp-config"
 )
@@ -24,7 +24,7 @@ const (
 var (
 	// Basic configuration settings
 	configurationFilePath string
-	connectorsFolderPath  string
+	evseFolderPath        string
 	settingsFilePath      string
 	authFilePath          string
 
@@ -42,22 +42,22 @@ func run(cmd *cobra.Command, args []string) {
 	var (
 		isDebug      = viper.GetBool(settings.Debug)
 		mainSettings = settings.GetSettings()
-		connectors   = settings.GetConnectors(connectorsFolderPath)
+		evses        = settings.GetEVSEs(evseFolderPath)
 	)
 
-	chargepoint.Run(isDebug, mainSettings, connectors, configurationFilePath, authFilePath)
+	chargepoint.Run(isDebug, mainSettings, evses, configurationFilePath, authFilePath)
 }
 
 func setupFlags() {
 	var (
 		workingDirectory, _   = os.Getwd()
-		connectorsFolderName  = fmt.Sprintf("%s/configs/connectors", workingDirectory)
+		evseFolderName        = fmt.Sprintf("%s/configs/evses", workingDirectory)
 		defaultConfigFileName = fmt.Sprintf("%s/configs/configuration.%s", workingDirectory, "json")
 	)
 
 	// Set flags
 	rootCmd.PersistentFlags().StringVar(&settingsFilePath, settingsFlag, "", "config file path")
-	rootCmd.PersistentFlags().StringVar(&connectorsFolderPath, connectorsFlag, connectorsFolderName, "connector folder path")
+	rootCmd.PersistentFlags().StringVar(&evseFolderPath, evseFlag, evseFolderName, "evse folder path")
 	rootCmd.PersistentFlags().StringVar(&configurationFilePath, ocppConfigPathFlag, defaultConfigFileName, "OCPP config file path")
 	rootCmd.PersistentFlags().StringVar(&authFilePath, authFileFlag, "", "authorization file path")
 	rootCmd.PersistentFlags().BoolP(debugFlag, "d", false, "debug mode")

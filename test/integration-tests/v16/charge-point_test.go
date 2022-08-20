@@ -11,14 +11,14 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
+	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/auth"
+	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display"
+	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/reader"
 	v16 "github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/v16"
-	"github.com/xBlaz3kx/ChargePi-go/internal/components/auth"
-	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware/display"
-	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware/reader"
-	setting "github.com/xBlaz3kx/ChargePi-go/internal/components/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/scheduler"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
+	setting "github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
 	"github.com/xBlaz3kx/ChargePi-go/test"
 	"github.com/xBlaz3kx/ocppManager-go/configuration"
 	"net/http"
@@ -165,16 +165,16 @@ func (s *chargePointTestSuite) setupCentralSystemCoreExpectations() {
 	}).Return(core.NewStopTransactionConfirmation(), nil)
 }
 
-func (s *chargePointTestSuite) setupChargePoint(ctx context.Context, lcd display.LCD, reader reader.Reader, connectorManager *test.ManagerMock) chargePoint.ChargePoint {
+func (s *chargePointTestSuite) setupChargePoint(ctx context.Context, lcd display.Display, reader reader.Reader, connectorManager *test.ManagerMock) chargePoint.ChargePoint {
 	cp := v16.NewChargePoint(
 		connectorManager,
 		scheduler.GetScheduler(),
 		auth.NewAuthCache("./auth.json"),
-		v16.WithDisplay(ctx, lcd),
-		v16.WithReader(ctx, reader),
-		v16.WithLogger(log.StandardLogger()),
+		chargePoint.WithDisplay(lcd),
+		chargePoint.WithReader(ctx, reader),
+		chargePoint.WithLogger(log.StandardLogger()),
 	)
-	cp.Init(&chargePointSettings)
+	cp.SetSettings(&chargePointSettings)
 	cp.Connect(ctx, fmt.Sprintf("ws://%s:%d%s", centralSystemHost, centralSystemPort, centralSystemEndpoint))
 	return cp
 }

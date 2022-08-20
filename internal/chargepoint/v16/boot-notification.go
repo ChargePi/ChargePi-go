@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/lorenzodonini/ocpp-go/ocpp"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/scheduler"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/util"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 	configManager "github.com/xBlaz3kx/ocppManager-go"
 	v16 "github.com/xBlaz3kx/ocppManager-go/v16"
 )
@@ -14,7 +14,7 @@ import (
 // If the central system does not accept the charge point, exit the client.
 func (cp *ChargePoint) bootNotification() {
 	var (
-		ocppInfo = cp.Settings.ChargePoint.Info.OCPPInfo
+		ocppInfo = cp.settings.ChargePoint.Info.OCPPInfo
 		request  = core.BootNotificationRequest{
 			ChargeBoxSerialNumber:   ocppInfo.ChargeBoxSerialNumber,
 			ChargePointModel:        ocppInfo.Model,
@@ -31,25 +31,24 @@ func (cp *ChargePoint) bootNotification() {
 
 		switch bootConf.Status {
 		case core.RegistrationStatusAccepted:
-			cp.logger.Info("Notified and accepted from the central system")
+			cp.logger.Info("Accepted from the central system")
 			cp.setHeartbeat(bootConf.Interval)
 			cp.restoreState()
-			break
 		case core.RegistrationStatusPending:
 			cp.logger.Info("Registration status pending")
 			//todo reschedule boot notification
-			break
 		default:
 			cp.logger.Fatal("Denied by the central system.")
 		}
 	}
 
+	cp.logger.Info("Sending a boot notification")
 	err := util.SendRequest(cp.chargePoint, request, callback)
 	util.HandleRequestErr(err, "Error sending BootNotification")
 }
 
 func (cp *ChargePoint) setHeartbeat(interval int) {
-	cp.logger.Infof("Setting a heartbeat schedule")
+	cp.logger.Debug("Setting a heartbeat schedule")
 
 	heartBeatInterval, _ := configManager.GetConfigurationValue(v16.HeartbeatInterval.String())
 	if interval > 0 {

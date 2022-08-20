@@ -8,16 +8,16 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/api"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/util"
+	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/auth"
+	connectorManager "github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
 	v16 "github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/v16"
-	"github.com/xBlaz3kx/ChargePi-go/internal/components/auth"
-	connectorManager "github.com/xBlaz3kx/ChargePi-go/internal/components/connector-manager"
-	s "github.com/xBlaz3kx/ChargePi-go/internal/components/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/grpc"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/logging"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/scheduler"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/logging"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
+	s "github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 	"github.com/xBlaz3kx/ocppManager-go/configuration"
 	"os"
 	"os/signal"
@@ -33,6 +33,13 @@ func CreateChargePoint(
 	authCache *auth.Cache,
 	hardware settings.Hardware,
 ) chargePoint.ChargePoint {
+
+	opts := []chargePoint.Options{
+		chargePoint.WithDisplayFromSettings(hardware.Display),
+		chargePoint.WithReaderFromSettings(ctx, hardware.TagReader),
+		chargePoint.WithLogger(logger),
+	}
+
 	switch protocolVersion {
 	case settings.OCPP16:
 		// Create the client
@@ -40,9 +47,7 @@ func CreateChargePoint(
 			manager,
 			sch,
 			authCache,
-			v16.WithDisplayFromSettings(ctx, hardware.Display),
-			v16.WithReaderFromSettings(ctx, hardware.TagReader),
-			v16.WithLogger(logger),
+			opts...,
 		)
 	case settings.OCPP201:
 		logger.Fatal("Version 2.0.1 is not supported yet.")
@@ -53,7 +58,8 @@ func CreateChargePoint(
 	}
 }
 
-func Run(isDebug bool, config *settings.Settings, connectors []*settings.Connector, configurationFilePath, authFilePath string) {
+// Run is an entrypoint with all the configuration needed. This is a blocking function.
+func Run(isDebug bool, config *settings.Settings, connectors []*settings.EVSE, configurationFilePath, authFilePath string) {
 	var (
 		// ChargePoint components
 		handler   chargePoint.ChargePoint
@@ -89,8 +95,8 @@ func Run(isDebug bool, config *settings.Settings, connectors []*settings.Connect
 
 	// Initialize the client
 	handler = CreateChargePoint(ctx, protocolVersion, logger, manager, sch, authCache, hardware)
-	handler.Init(config)
-	handler.AddConnectors(connectors)
+	handler.SetSettings(config)
+	handler.AddEVSEs(connectors)
 
 	// Finally, connect to the central system
 	handler.Connect(ctx, serverUrl)
@@ -113,7 +119,7 @@ Loop:
 		select {
 		// Capture the terminate signal
 		case <-quitChannel:
-			break Loop
+			cancel()
 		case <-ctx.Done():
 			break Loop
 		}

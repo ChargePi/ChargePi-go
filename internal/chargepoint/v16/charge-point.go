@@ -5,54 +5,41 @@ import (
 	"github.com/go-co-op/gocron"
 	ocpp16 "github.com/lorenzodonini/ocpp-go/ocpp1.6"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	"github.com/reactivex/rxgo/v2"
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/api"
-	chargePointUtil "github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/util"
-	"github.com/xBlaz3kx/ChargePi-go/internal/components/auth"
-	"github.com/xBlaz3kx/ChargePi-go/internal/components/connector"
-	connectorManager "github.com/xBlaz3kx/ChargePi-go/internal/components/connector-manager"
-	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware/display"
-	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware/indicator"
-	"github.com/xBlaz3kx/ChargePi-go/internal/components/hardware/reader"
+	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/auth"
+	connectorManager "github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
+	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display"
+	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/indicator"
+	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/reader"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models"
 	chargePoint "github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/util"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 )
 
 type (
 	ChargePoint struct {
 		chargePoint  ocpp16.ChargePoint
 		availability core.AvailabilityType
-		Settings     *settings.Settings
+		settings     *settings.Settings
 		// Hardware components
-		TagReader reader.Reader
-		Indicator indicator.Indicator
-		LCD       display.LCD
+		tagReader reader.Reader
+		indicator indicator.Indicator
+		display   display.Display
 		// Software components
 		connectorManager   connectorManager.Manager
-		connectorChannel   chan rxgo.Item
-		meterValuesChannel chan rxgo.Item
+		connectorChannel   chan models.StatusNotification
+		meterValuesChannel chan models.MeterValueNotification
 		scheduler          *gocron.Scheduler
 		authCache          *auth.Cache
 		logger             *log.Logger
 	}
-
-	ChargePointV16 interface {
-		chargePoint.ChargePoint
-		notifyConnectorStatus(connector connector.Connector)
-		startChargingConnector(connector connector.Connector, tagId string) error
-		stopChargingConnector(connector connector.Connector, reason core.Reason) error
-		displayConnectorStatus(connectorId int, status core.ChargePointStatus)
-		restoreState()
-	}
-
-	Options func(point *ChargePoint)
 )
 
 // NewChargePoint creates a new ChargePoint for OCPP version 1.6.
-func NewChargePoint(manager connectorManager.Manager, scheduler *gocron.Scheduler, cache *auth.Cache, opts ...Options) *ChargePoint {
-	ch := make(chan rxgo.Item, 5)
+func NewChargePoint(manager connectorManager.Manager, scheduler *gocron.Scheduler, cache *auth.Cache, opts ...chargePoint.Options) *ChargePoint {
+	ch := make(chan models.StatusNotification, 5)
 	// Set the channel
 	manager.SetNotificationChannel(ch)
 
@@ -73,20 +60,14 @@ func NewChargePoint(manager connectorManager.Manager, scheduler *gocron.Schedule
 	return cp
 }
 
-// Init initializes the charge point based on the settings and listens to the Reader.
-func (cp *ChargePoint) Init(settings *settings.Settings) {
-	if settings == nil {
-		log.Fatal("no settings provided")
-	}
-
-	cp.Settings = settings
-
+// Connect to the central system and send a BootNotification
+func (cp *ChargePoint) Connect(ctx context.Context, serverUrl string) {
 	var (
-		info      = settings.ChargePoint.Info
-		tlsConfig = settings.ChargePoint.TLS
-		wsClient  = chargePointUtil.CreateClient(
-			settings.ChargePoint.Info.BasicAuthUsername,
-			settings.ChargePoint.Info.BasicAuthPassword,
+		info      = cp.settings.ChargePoint.Info
+		tlsConfig = cp.settings.ChargePoint.TLS
+		wsClient  = util.CreateClient(
+			cp.settings.ChargePoint.Info.BasicAuthUsername,
+			cp.settings.ChargePoint.Info.BasicAuthPassword,
 			tlsConfig)
 		logInfo = log.WithFields(log.Fields{
 			"chargePointId": info.Id,
@@ -97,13 +78,10 @@ func (cp *ChargePoint) Init(settings *settings.Settings) {
 	cp.chargePoint = ocpp16.NewChargePoint(info.Id, nil, wsClient)
 
 	// Set charging profiles
-	chargePointUtil.SetProfilesFromConfig(cp.chargePoint, cp, cp, cp)
+	util.SetProfilesFromConfig(cp.chargePoint, cp, cp, cp)
 
 	cp.setMaxCachedTags()
-}
 
-// Connect to the central system and send a BootNotification
-func (cp *ChargePoint) Connect(ctx context.Context, serverUrl string) {
 	cp.logger.Infof("Trying to connect to the central system: %s", serverUrl)
 	connectErr := cp.chargePoint.Start(serverUrl)
 
@@ -129,7 +107,7 @@ func (cp *ChargePoint) HandleChargingRequest(tagId string) (*api.HandleChargingR
 	)
 	cp.logger.Infof("Handling request for tag %s", tagId)
 
-	c := cp.connectorManager.FindConnectorWithTagId(tagId)
+	c := cp.connectorManager.FindEVSEWithTagId(tagId)
 	if !util.IsNilInterfaceOrPointer(c) {
 		err = cp.stopChargingConnector(c, core.ReasonLocal)
 		if err != nil {
@@ -137,7 +115,7 @@ func (cp *ChargePoint) HandleChargingRequest(tagId string) (*api.HandleChargingR
 			response.ErrorMessage = err.Error()
 		}
 
-		response.ConnectorId = int32(c.GetConnectorId())
+		response.ConnectorId = int32(c.GetEvseId())
 
 		return nil, err
 	}
@@ -157,32 +135,28 @@ func (cp *ChargePoint) CleanUp(reason core.Reason) {
 
 	switch reason {
 	case core.ReasonRemote, core.ReasonLocal, core.ReasonHardReset, core.ReasonSoftReset:
-		for _, c := range cp.connectorManager.GetConnectors() {
+		for _, c := range cp.connectorManager.GetEVSEs() {
 			// Stop charging the connectors
 			err := cp.stopChargingConnector(c, reason)
 			if err != nil {
 				cp.logger.WithError(err).Errorf("Cannot stop the transaction at cleanup")
 			}
 		}
-		break
 	}
 
-	cp.logger.Infof("Disconnecting the client..")
-	cp.chargePoint.Stop()
-
-	if !util.IsNilInterfaceOrPointer(cp.TagReader) {
+	if !util.IsNilInterfaceOrPointer(cp.tagReader) {
 		cp.logger.Info("Cleaning up the Tag Reader")
-		cp.TagReader.Cleanup()
+		cp.tagReader.Cleanup()
 	}
 
-	if !util.IsNilInterfaceOrPointer(cp.LCD) {
-		cp.logger.Info("Cleaning up LCD")
-		cp.LCD.Cleanup()
+	if !util.IsNilInterfaceOrPointer(cp.display) {
+		cp.logger.Info("Cleaning up display")
+		cp.display.Cleanup()
 	}
 
-	if !util.IsNilInterfaceOrPointer(cp.Indicator) {
+	if !util.IsNilInterfaceOrPointer(cp.indicator) {
 		cp.logger.Info("Cleaning up Indicator")
-		cp.Indicator.Cleanup()
+		cp.indicator.Cleanup()
 	}
 
 	close(cp.connectorChannel)
@@ -191,4 +165,7 @@ func (cp *ChargePoint) CleanUp(reason core.Reason) {
 	cp.scheduler.Clear()
 
 	cp.authCache.DumpTags()
+
+	cp.logger.Infof("Disconnecting the client..")
+	cp.chargePoint.Stop()
 }

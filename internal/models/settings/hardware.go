@@ -16,6 +16,9 @@ type (
 
 	EVCC struct {
 		Type string
+		// Based on the type
+		RelayPin     int  `fig:"RelayPin" json:"RelayPin,omitempty" yaml:"RelayPin" mapstructure:"RelayPin"`
+		InverseLogic bool `fig:"InverseLogic" json:"InverseLogic,omitempty" yaml:"InverseLogic" mapstructure:"InverseLogic"`
 	}
 
 	LedIndicator struct {
@@ -42,17 +45,17 @@ type (
 	}
 
 	PowerMeter struct {
-		Enabled              bool    `fig:"Enabled" json:"enabled,omitempty" yaml:"enabled" mapstructure:"enabled"`
-		Type                 string  `fig:"Type" json:"type,omitempty" yaml:"type" mapstructure:"type"`
+		Enabled bool   `fig:"Enabled" json:"enabled,omitempty" yaml:"enabled" mapstructure:"enabled"`
+		Type    string `fig:"Type" json:"type,omitempty" yaml:"type" mapstructure:"type"`
+
+		// For smarter energy meters, using Modbus RTU or similar based on the device type
+		DeviceAddress string `fig:"deviceAddress" json:"deviceAddress,omitempty" yaml:"deviceAddress" mapstructure:"deviceAddress"`
+		Protocol      string `fig:"protocol" json:"protocol,omitempty" yaml:"protocol" mapstructure:"protocol"`
+
+		// For CS5460
 		PowerMeterPin        int     `fig:"PowerMeterPin" json:"PowerMeterPin,omitempty" yaml:"PowerMeterPin" mapstructure:"PowerMeterPin"`
 		SpiBus               int     `fig:"SpiBus" default:"0" json:"SpiBus,omitempty" yaml:"SpiBus" mapstructure:"SpiBus"`
-		Consumption          float64 `fig:"Consumption" json:"consumption,omitempty" yaml:"consumption" mapstructure:"consumption"`
 		ShuntOffset          float64 `fig:"ShuntOffset" json:"ShuntOffset,omitempty" yaml:"ShuntOffset" mapstructure:"ShuntOffset"`
 		VoltageDividerOffset float64 `fig:"VoltageDividerOffset" json:"VoltageDividerOffset,omitempty" yaml:"VoltageDividerOffset" mapstructure:"VoltageDividerOffset"`
-	}
-
-	PowerMeters struct {
-		MinPower int `fig:"MinPower" default:"20" json:"MinPower,omitempty" yaml:"MinPower" mapstructure:"MinPower"`
-		Retries  int `fig:"Retries" default:"3" json:"retries,omitempty" yaml:"retries" mapstructure:"retries"`
 	}
 )

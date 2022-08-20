@@ -6,7 +6,7 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/mock"
-	"github.com/xBlaz3kx/ChargePi-go/internal/components/connector"
+	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
 	"github.com/xBlaz3kx/ChargePi-go/test"
 	ocppVar "github.com/xBlaz3kx/ocppManager-go/v16"
 	"strings"
@@ -16,7 +16,7 @@ import (
 func (s *chargePointTestSuite) TestStartStopTransaction() {
 	var (
 		ctx, cancel = context.WithTimeout(context.Background(), time.Second*30)
-		conn        = new(test.ConnectorMock)
+		conn        = new(test.EvseMock)
 	)
 
 	// Setup expectations
@@ -39,18 +39,18 @@ func (s *chargePointTestSuite) TestStartStopTransaction() {
 	conn.On("GetMaxChargingTime").Return(15)
 	conn.On("SetNotificationChannel", mock.Anything).Return()
 
-	s.manager.On("GetConnectors").Return([]connector.Connector{conn})
-	s.manager.On("FindConnector", 1, 1).Return(conn)
-	s.manager.On("FindAvailableConnector").Return(conn)
-	s.manager.On("FindConnectorWithTagId", tagId).Return(nil).Once()
-	s.manager.On("FindConnectorWithTransactionId", "1").Return(nil).Once()
-	s.manager.On("StartChargingConnector").Return()
-	s.manager.On("StopChargingConnector").Return()
-	s.manager.On("StopAllConnectors").Return()
-	s.manager.On("AddConnector", conn).Return(nil)
-	s.manager.On("AddConnectorFromSettings", mock.Anything).Return(nil)
-	s.manager.On("AddConnectorsFromConfiguration", mock.Anything).Return(nil)
-	s.manager.On("RestoreConnectorStatus", mock.Anything).Return(nil)
+	s.manager.On("GetEVSEs").Return([]evse.EVSE{conn})
+	s.manager.On("FindEVSE", 1, 1).Return(conn)
+	s.manager.On("FindAvailableEVSE").Return(conn)
+	s.manager.On("FindEVSEWithTagId", tagId).Return(nil).Once()
+	s.manager.On("FindEVSEWithTransactionId", "1").Return(nil).Once()
+	s.manager.On("StartCharging").Return()
+	s.manager.On("StopCharging").Return()
+	s.manager.On("StopAllEVSEs").Return()
+	s.manager.On("AddEVSE", conn).Return(nil)
+	s.manager.On("AddEVSEFromSettings", mock.Anything).Return(nil)
+	s.manager.On("AddEVSEsFromSettings", mock.Anything).Return(nil)
+	s.manager.On("RestoreEVSEStatus", mock.Anything).Return(nil)
 	s.manager.On("SetNotificationChannel").Return()
 
 	// Create and connect the Charge Point
@@ -66,8 +66,8 @@ func (s *chargePointTestSuite) TestStartStopTransaction() {
 		s.Assert().NoError(err)
 
 		// Redeclare expectations
-		s.manager.On("FindConnectorWithTagId", tagId).Return(conn)
-		s.manager.On("FindConnectorWithTransactionId", "1").Return(conn)
+		s.manager.On("FindEVSEWithTagId", tagId).Return(conn)
+		s.manager.On("FindEVSEWithTransactionId", "1").Return(conn)
 
 		conn.On("IsCharging").Return(true).Once()
 		conn.On("IsAvailable").Return(false).Once()
@@ -97,7 +97,7 @@ Loop:
 func (s *chargePointTestSuite) TestStartStopTransactionWithReader() {
 	var (
 		ctx, cancel   = context.WithTimeout(context.Background(), time.Second*30)
-		conn          = new(test.ConnectorMock)
+		conn          = new(test.EvseMock)
 		readerChannel = make(chan string)
 	)
 
@@ -121,18 +121,18 @@ func (s *chargePointTestSuite) TestStartStopTransactionWithReader() {
 	conn.On("GetMaxChargingTime").Return(15)
 	conn.On("SetNotificationChannel", mock.Anything).Return()
 
-	s.manager.On("GetConnectors").Return([]connector.Connector{conn})
-	s.manager.On("FindConnector", 1, 1).Return(conn)
-	s.manager.On("FindAvailableConnector").Return(conn)
-	s.manager.On("FindConnectorWithTagId", strings.ToUpper(tagId)).Return(nil).Once()
-	s.manager.On("FindConnectorWithTransactionId", "1").Return(nil).Once()
-	s.manager.On("StartChargingConnector").Return()
-	s.manager.On("StopChargingConnector").Return()
-	s.manager.On("StopAllConnectors").Return()
-	s.manager.On("AddConnector", conn).Return(nil)
-	s.manager.On("AddConnectorFromSettings", mock.Anything).Return(nil)
-	s.manager.On("AddConnectorsFromConfiguration", mock.Anything).Return(nil)
-	s.manager.On("RestoreConnectorStatus", mock.Anything).Return(nil)
+	s.manager.On("GetEVSEs").Return([]evse.EVSE{conn})
+	s.manager.On("FindEVSE", 1, 1).Return(conn)
+	s.manager.On("FindAvailableEVSE").Return(conn)
+	s.manager.On("FindEVSEWithTagId", strings.ToUpper(tagId)).Return(nil).Once()
+	s.manager.On("FindEVSEWithTransactionId", "1").Return(nil).Once()
+	s.manager.On("StartCharging").Return()
+	s.manager.On("StopCharging").Return()
+	s.manager.On("StopAllEVSEs").Return()
+	s.manager.On("AddEVSE", conn).Return(nil)
+	s.manager.On("AddEVSEFromSettings", mock.Anything).Return(nil)
+	s.manager.On("AddEVSEsFromSettings", mock.Anything).Return(nil)
+	s.manager.On("RestoreEVSEStatus", mock.Anything).Return(nil)
 	s.manager.On("SetNotificationChannel").Return()
 
 	// Mock tagReader
@@ -153,7 +153,7 @@ func (s *chargePointTestSuite) TestStartStopTransactionWithReader() {
 
 		time.Sleep(time.Second * 10)
 
-		s.manager.On("FindConnectorWithTagId", strings.ToUpper(tagId)).Return(conn)
+		s.manager.On("FindEVSEWithTagId", strings.ToUpper(tagId)).Return(conn)
 		conn.On("IsCharging").Return(true).Once()
 		conn.On("IsAvailable").Return(false).Once()
 		conn.On("GetStatus").Return(core.ChargePointStatusCharging, core.NoError)
@@ -182,7 +182,7 @@ Loop:
 func (s *chargePointTestSuite) TestRemoteStartStopTransaction() {
 	var (
 		ctx, cancel = context.WithTimeout(context.Background(), time.Second*30)
-		conn        = new(test.ConnectorMock)
+		conn        = new(test.EvseMock)
 	)
 
 	// Setup expectations
@@ -205,18 +205,18 @@ func (s *chargePointTestSuite) TestRemoteStartStopTransaction() {
 	conn.On("GetMaxChargingTime").Return(15)
 	conn.On("SetNotificationChannel", mock.Anything).Return()
 
-	s.manager.On("GetConnectors").Return([]connector.Connector{conn})
-	s.manager.On("FindConnector", 1, 1).Return(conn)
-	s.manager.On("FindAvailableConnector").Return(conn)
-	s.manager.On("FindConnectorWithTagId", strings.ToUpper(tagId)).Return(nil).Once()
-	s.manager.On("FindConnectorWithTransactionId", "1").Return(nil).Once()
-	s.manager.On("StartChargingConnector").Return()
-	s.manager.On("StopChargingConnector").Return()
-	s.manager.On("StopAllConnectors").Return()
-	s.manager.On("AddConnector", conn).Return(nil)
-	s.manager.On("AddConnectorFromSettings", mock.Anything).Return(nil)
-	s.manager.On("AddConnectorsFromConfiguration", mock.Anything).Return(nil)
-	s.manager.On("RestoreConnectorStatus", mock.Anything).Return(nil)
+	s.manager.On("GetEVSEs").Return([]evse.EVSE{conn})
+	s.manager.On("FindEVSE", 1, 1).Return(conn)
+	s.manager.On("FindAvailableEVSE").Return(conn)
+	s.manager.On("FindEVSEWithTagId", strings.ToUpper(tagId)).Return(nil).Once()
+	s.manager.On("FindEVSEWithTransactionId", "1").Return(nil).Once()
+	s.manager.On("StartCharging").Return()
+	s.manager.On("StopCharging").Return()
+	s.manager.On("StopAllEVSEs").Return()
+	s.manager.On("AddEVSE", conn).Return(nil)
+	s.manager.On("AddEVSEFromSettings", mock.Anything).Return(nil)
+	s.manager.On("AddEVSEsFromSettings", mock.Anything).Return(nil)
+	s.manager.On("RestoreEVSEStatus", mock.Anything).Return(nil)
 	s.manager.On("SetNotificationChannel").Return()
 
 	// Create and connect the Charge Point
@@ -235,7 +235,7 @@ func (s *chargePointTestSuite) TestRemoteStartStopTransaction() {
 
 		time.Sleep(time.Second * 10)
 
-		s.manager.On("FindConnectorWithTagId", strings.ToUpper(tagId)).Return(conn)
+		s.manager.On("FindEVSEWithTagId", strings.ToUpper(tagId)).Return(conn)
 		conn.On("IsCharging").Return(true).Once()
 		conn.On("IsAvailable").Return(false).Once()
 		conn.On("GetStatus").Return(core.ChargePointStatusCharging, core.NoError)
@@ -265,11 +265,11 @@ func (s *chargePointTestSuite) TestGetAndChangeConfiguration() {
 		ctx, cancel = context.WithTimeout(context.Background(), time.Second*30)
 	)
 
-	s.manager.On("GetConnectors").Return([]connector.Connector{})
-	s.manager.On("AddConnector", mock.Anything).Return(nil)
-	s.manager.On("AddConnectorFromSettings", mock.Anything).Return(nil)
-	s.manager.On("AddConnectorsFromConfiguration", mock.Anything).Return(nil)
-	s.manager.On("RestoreConnectorStatus", mock.Anything).Return(nil)
+	s.manager.On("GetEVSEs").Return([]evse.EVSE{})
+	s.manager.On("AddEVSE", mock.Anything).Return(nil)
+	s.manager.On("AddEVSEFromSettings", mock.Anything).Return(nil)
+	s.manager.On("AddEVSEsFromSettings", mock.Anything).Return(nil)
+	s.manager.On("RestoreEVSEStatus", mock.Anything).Return(nil)
 	s.manager.On("SetNotificationChannel").Return()
 
 	// Create and connect the Charge Point
