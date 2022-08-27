@@ -9,11 +9,6 @@ type (
 		LedIndicator LedIndicator `fig:"ledIndicator" json:"ledIndicator" yaml:"ledIndicator" mapstructure:"ledIndicator"`
 	}
 
-	Relay struct {
-		RelayPin     int  `fig:"RelayPin" validate:"required" json:"RelayPin,omitempty" yaml:"RelayPin" mapstructure:"RelayPin"`
-		InverseLogic bool `fig:"InverseLogic" json:"InverseLogic,omitempty" yaml:"InverseLogic" mapstructure:"InverseLogic"`
-	}
-
 	EVCC struct {
 		Type string
 		// Based on the type
@@ -30,14 +25,14 @@ type (
 	}
 
 	TagReader struct {
-		IsEnabled   bool   `fig:"IsEnabled" json:"IsEnabled,omitempty" yaml:"IsEnabled" mapstructure:"IsEnabled"`
+		IsEnabled   bool   `fig:"Enabled" json:"Enabled,omitempty" yaml:"Enabled" mapstructure:"Enabled"`
 		ReaderModel string `fig:"ReaderModel" json:"ReaderModel,omitempty" yaml:"ReaderModel" mapstructure:"ReaderModel"`
-		Device      string `fig:"Device" json:"device,omitempty" yaml:"device" mapstructure:"device"`
+		Device      string `fig:"DeviceAddress" json:"deviceAddress,omitempty" yaml:"deviceAddress" mapstructure:"deviceAddress"`
 		ResetPin    int    `fig:"ResetPin" json:"ResetPin,omitempty" yaml:"ResetPin" mapstructure:"ResetPin"`
 	}
 
 	Display struct {
-		IsEnabled  bool   `fig:"IsEnabled" json:"ResetPin,omitempty" yaml:"ResetPin" mapstructure:"ResetPin"`
+		IsEnabled  bool   `fig:"Enabled" json:"Enabled,omitempty" yaml:"Enabled" mapstructure:"Enabled"`
 		Driver     string `fig:"Driver" json:"driver,omitempty" yaml:"driver" mapstructure:"driver"`
 		Language   string `fig:"Language" json:"language,omitempty" yaml:"language" mapstructure:"language"`
 		I2CAddress string `fig:"I2CAddress" json:"I2CAddress,omitempty" yaml:"I2CAddress" mapstructure:"I2CAddress"`

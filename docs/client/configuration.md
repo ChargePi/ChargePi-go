@@ -16,10 +16,10 @@ Available flags:
 |     `-api-port`     |   /   |            API port             |     4269      |
 
 Environment variables are created automatically thanks to [Viper](https://github.com/spf13/viper) and are prefixed
-with `CHARGEPI`. Only the settings (not the ocpp configuration or connectors) are bound to the env
-variables. Debug mode and API settings flags are also bound to the environment variables.
+with `CHARGEPI`. Only the main settings are bound to the env variables. Debug mode and API settings flags are also bound
+to the environment variables.
 
-Example environment variable: `CHARGEPI_CHARGEPOINT_INFO_ID`.
+Example environment variable: `CHARGEPI_CHARGEPOINT_CONNECTIONSETTINGS_ID`.
 
 ## 🛠 Configuration files
 
@@ -47,15 +47,63 @@ The table represents attributes, their values and descriptions that require more
 self-explanatory. Some attributes can have multiple possible values, if any are empty, they will be treated as disabled
 or might not work properly.
 
-|        Attribute        |                                  Description                                  |                         Possible values                          | 
-|:-----------------------:|:-----------------------------------------------------------------------------:|:----------------------------------------------------------------:|
-|           id            |      ID of the charging point. Must be registered in the Central System       |                        Default:"ChargePi"                        |
-|     protocolVersion     |                         Version of the OCPP protocol.                         |                          "1.6", "2.0.1"                          |
-|        serverUri        |             URI of the Central System with the port and endpoint.             | Default: "172.0.1.121:8080/steve/websocket/CentralSystemService" |
-|  info: maxChargingTime  |          Max charging time allowed on the Charging point in minutes.          |                           Default:180                            |
-| rfidReader: readerModel |                          RFID/NFC reader model used.                          |                           "PN532", ""                            | 
-|   ledIndicator: type    |                          Type of the led indicator.                           |                           "WS281x", ""                           |
-|   hardware: minPower    | Minimum power draw needed to continue charging, if Power meter is configured. |                            Default:20                            |
+#### chargePoint connectionSettings
+
+|    Attribute    |                            Description                             |  Possible values   | 
+|:---------------:|:------------------------------------------------------------------:|:------------------:|
+|       id        | ID of the charging point. Must be registered in the Central System | Default:"ChargePi" |
+| protocolVersion |                   Version of the OCPP protocol.                    |   "1.6", "2.0.1"   |
+|    serverUri    |       URI of the Central System with the port and endpoint.        |         ""         |
+|  basicAuthUser  |      HTTP username for authentication with the Central System      |  Any string value  |
+|  basicAuthPass  |      HTTP username for authentication with the Central System      |  Any string value  |
+|       tls       |                       TLS certificate paths                        |                    |
+
+#### chargePoint connectionSettings tls
+
+|       Attribute       |        Description        | Possible values | 
+|:---------------------:|:-------------------------:|:---------------:|
+|   CACertificatePath   | Root/CA certificate path. | Any valid path  |
+| clientCertificatePath |    Client certificate     | Any valid path  |
+|     clientKeyPath     |    Client private key     | Any valid path  |
+
+#### chargePoint info
+
+|    Attribute    |                            Description                             |   Possible values   | 
+|:---------------:|:------------------------------------------------------------------:|:-------------------:|
+| maxChargingTime | Maxiumum amount of time that a transaction can last (in minutes).  |    Default: 180     |
+|   ocpp.vendor   |                             Vendor ID                              | Default: "xBlaz3k"  |
+|   ocpp.model    |                               Model                                | Default: "ChargePi" |
+
+#### chargePoint hardware
+
+##### chargePoint hardware display
+
+| Attribute  |                      Description                       | Possible values | 
+|:----------:|:------------------------------------------------------:|:---------------:|
+| isEnabled  |               Enable or disable display                |   true, false   |
+|   driver   |                  Display driver type                   |       ""        |
+| i2cAddress | Field specific for any display using I2C communication |       ""        |
+|   i2cBus   | Field specific for any display using I2C communication |    "1", "0"     | 
+|  language  |   Language selection for messages displayed to LCD.    |    "en",sl"     |
+
+##### chargePoint hardware tagReader
+
+|   Attribute   |                         Description                         |                         Possible values                          | 
+|:-------------:|:-----------------------------------------------------------:|:----------------------------------------------------------------:|
+|   isEnabled   |                 Enable or disable tagReader                 |                        Default:"ChargePi"                        |
+|  readerModel  |                Version of the OCPP protocol.                |                          "1.6", "2.0.1"                          |
+|   resetPin    |    URI of the Central System with the port and endpoint.    | Default: "172.0.1.121:8080/steve/websocket/CentralSystemService" |
+| deviceAddress | Max charging time allowed on the Charging point in minutes. |                           Default:180                            |
+
+##### chargePoint hardware ledIndicator
+
+|    Attribute     |                         Description                         |                         Possible values                          | 
+|:----------------:|:-----------------------------------------------------------:|:----------------------------------------------------------------:|
+|    isEnabled     |               Enable or disable ledIndicator                |                        Default:"ChargePi"                        |
+|       type       |                Version of the OCPP protocol.                |                          "1.6", "2.0.1"                          |
+|     dataPin      |    URI of the Central System with the port and endpoint.    | Default: "172.0.1.121:8080/steve/websocket/CentralSystemService" |
+| indicateCardRead | Max charging time allowed on the Charging point in minutes. |                           Default:180                            |
+|      invert      |                 RFID/NFC reader model used.                 |                           "PN532", ""                            | 
 
 Example settings:
 
@@ -121,6 +169,46 @@ EVSE settings files can be found in the `evse` folder. To add and configure the 
 file structure as in the example. The client will scan the folder at boot, validate the configuration files and add the
 EVSE with the provided configuration.
 
+#### Attributes
+
+| Attribute  |                Description                |             Possible values             | 
+|:----------:|:-----------------------------------------:|:---------------------------------------:|
+|   evseId   |              ID of the EVSE               |                   >1                    |
+| connectors | List of available connectors for the EVSE ||
+|    evcc    |            Charging Controller            ||
+|   status   |            Status of the EVSE             | "Available", "Charging", "Faulted",...  |
+|  session   |          Persistent session data          ||
+| powerMeter |    Power Meter configuration for EVSE     || 
+
+#### evcc
+
+|   Attribute   |              Description              |  Possible values   | 
+|:-------------:|:-------------------------------------:|:------------------:|
+|     type      |         Type of the EVCC used         | "Relay", "Phoenix" |
+|   relayPin    |   Attribute specific for the Relay.   |    Any GPIO pin    |
+| inverseLogic  |   Attribute specific for the Relay.   |     true,false     |
+| deviceAddress | Attribute specific for smarter EVCCs. |  Any string value  |
+
+#### powerMeter
+
+|      Attribute       |            Description            | Possible values | 
+|:--------------------:|:---------------------------------:|:---------------:|
+|      isEnabled       | Enable or disable the power meter |   true, false   |
+|         type         |      Type of the power meter      |    "CS5460A"    |
+|    powerMeterPin     |  Attribute specific for CS5460A   |  Any GPIO pin   |
+|        spiBus        |  Attribute specific for CS5460A   |       0,1       |
+|     consumption      |  Attribute specific for CS5460A   |                 |
+|     shuntOffset      |  Attribute specific for CS5460A   |  Default: 1337  |
+| voltageDividerOffset |  Attribute specific for CS5460A   |  Default: 0.01  |
+
+#### connectors
+
+|   Attribute   |       Description       |            Possible values            | 
+|:-------------:|:-----------------------:|:-------------------------------------:|
+|  connectorId  |      connector ID       |          Default:"ChargePi"           |
+|     type      |  type of the connector  | "Schuko", "Type1","Type2", "CCS", ... |
+|    status     | Status of the connector |     "Available", "Charging", ...      |
+
 Example EVSE configuration:
 
 ```json
@@ -151,7 +239,6 @@ Example EVSE configuration:
     "type": "CS5460A",
     "powerMeterPin": 25,
     "spiBus": 0,
-    "powerUnits": "kWh",
     "consumption": 0.0,
     "shuntOffset": 0.055,
     "voltageDividerOffset": 1333

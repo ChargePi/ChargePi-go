@@ -25,14 +25,13 @@ import (
 )
 
 // CreateConnectionUrl creates a connection url from the provided settings
-func CreateConnectionUrl(point settings.ChargePoint) string {
+func CreateConnectionUrl(connectionSettings settings.ConnectionSettings) string {
 	var (
-		chargePointInfo = point.Info
-		serverUrl       = fmt.Sprintf("ws://%s", chargePointInfo.ServerUri)
+		serverUrl = fmt.Sprintf("ws://%s", connectionSettings.ServerUri)
 	)
 
 	// Replace insecure Websockets
-	if point.TLS.IsEnabled {
+	if connectionSettings.TLS.IsEnabled {
 		serverUrl = strings.Replace(serverUrl, "ws", "wss", 1)
 	}
 

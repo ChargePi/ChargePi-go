@@ -68,10 +68,10 @@ func Run(isDebug bool, config *settings.Settings, connectors []*settings.EVSE, c
 		manager   = connectorManager.GetManager()
 		sch       = scheduler.GetScheduler()
 		// Settings
-		chargePointInfo = config.ChargePoint.Info
-		hardware        = config.ChargePoint.Hardware
-		serverUrl       = util.CreateConnectionUrl(config.ChargePoint)
-		protocolVersion = settings.ProtocolVersion(chargePointInfo.ProtocolVersion)
+		hardware           = config.ChargePoint.Hardware
+		connectionSettings = config.ChargePoint.ConnectionSettings
+		serverUrl          = util.CreateConnectionUrl(connectionSettings)
+		protocolVersion    = settings.ProtocolVersion(connectionSettings.ProtocolVersion)
 		// Execution
 		ctx, cancel = context.WithCancel(context.Background())
 		quitChannel = make(chan os.Signal, 5)
@@ -89,7 +89,7 @@ func Run(isDebug bool, config *settings.Settings, connectors []*settings.EVSE, c
 	// Setup OCPP configuration manager
 	s.SetupOcppConfigurationManager(
 		configurationFilePath,
-		configuration.ProtocolVersion(chargePointInfo.ProtocolVersion),
+		configuration.ProtocolVersion(connectionSettings.ProtocolVersion),
 		core.ProfileName,
 		reservation.ProfileName)
 

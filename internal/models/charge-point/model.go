@@ -43,6 +43,7 @@ type (
 		SetDisplay(display display.Display)
 		SetIndicator(indicator indicator.Indicator)
 		SetSettings(settings *settings.Settings)
+
 		// Reader
 		SetReader(reader reader.Reader)
 		ListenForTag(ctx context.Context, tagChannel <-chan string)

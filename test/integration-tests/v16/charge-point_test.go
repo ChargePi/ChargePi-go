@@ -40,17 +40,20 @@ const (
 
 var chargePointSettings = settings.Settings{ChargePoint: settings.ChargePoint{
 	Info: settings.Info{
-		Id:              chargePointId,
-		ProtocolVersion: string(protocolVersion),
-		ServerUri:       fmt.Sprintf("ws://%s:%d%s", centralSystemHost, centralSystemPort, centralSystemEndpoint),
+
 		MaxChargingTime: 15,
 		OCPPInfo: settings.OCPPInfo{
 			Vendor: "exampleVendor",
 			Model:  "exampleModel",
 		},
 	},
+	ConnectionSettings: settings.ConnectionSettings{
+		Id:              chargePointId,
+		ProtocolVersion: string(protocolVersion),
+		ServerUri:       fmt.Sprintf("ws://%s:%d%s", centralSystemHost, centralSystemPort, centralSystemEndpoint),
+		TLS:             settings.TLS{IsEnabled: false},
+	},
 	Logging: settings.Logging{},
-	TLS:     settings.TLS{IsEnabled: false},
 	Hardware: settings.Hardware{
 		Display:      settings.Display{IsEnabled: false},
 		TagReader:    settings.TagReader{IsEnabled: true},

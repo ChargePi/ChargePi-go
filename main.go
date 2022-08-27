@@ -59,7 +59,7 @@ func setupFlags() {
 	rootCmd.PersistentFlags().StringVar(&settingsFilePath, settingsFlag, "", "config file path")
 	rootCmd.PersistentFlags().StringVar(&evseFolderPath, evseFlag, evseFolderName, "evse folder path")
 	rootCmd.PersistentFlags().StringVar(&configurationFilePath, ocppConfigPathFlag, defaultConfigFileName, "OCPP config file path")
-	rootCmd.PersistentFlags().StringVar(&authFilePath, authFileFlag, "", "authorization file path")
+	rootCmd.PersistentFlags().StringVar(&authFilePath, authFileFlag, "./configs/auth.json", "authorization file path")
 	rootCmd.PersistentFlags().BoolP(debugFlag, "d", false, "debug mode")
 
 	// Api flags

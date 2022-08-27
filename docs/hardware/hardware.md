@@ -1,7 +1,8 @@
 # Supported hardware and schematics
 
-The hardware must be configured in [_settings file_](../../configs/settings.json) and [_connectors_](../../configs/evses)
-folder, each connector in a separate file with a predefined structure.
+The hardware, such as Reader, Indicator and a Display must be configured in [_settings
+file_](../../configs/settings.json), and EVSEs should be configured in the [_evses folder_](../../configs/evses), each
+in a separate file.
 
 If you want to add support for any type of hardware, read
 the [contribution guide](../contribution/adding-support-for-hardware.md).

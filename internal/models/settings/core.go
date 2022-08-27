@@ -7,20 +7,24 @@ type (
 	}
 
 	ChargePoint struct {
-		Info     Info     `fig:"info" json:"info" yaml:"info" mapstructure:"info"`
-		Logging  Logging  `fig:"logging" json:"logging" yaml:"logging" mapstructure:"logging"`
-		TLS      TLS      `fig:"tls" json:"tls" yaml:"tls" mapstructure:"tls"`
-		Hardware Hardware `fig:"hardware" json:"hardware" yaml:"hardware" mapstructure:"hardware"`
+		Info               Info               `fig:"info" json:"info" yaml:"info" mapstructure:"info"`
+		ConnectionSettings ConnectionSettings `fig:"connectionSettings" json:"connectionSettings" yaml:"connectionSettings" mapstructure:"connectionSettings"`
+		Logging            Logging            `fig:"logging" json:"logging" yaml:"logging" mapstructure:"logging"`
+		Hardware           Hardware           `fig:"hardware" json:"hardware" yaml:"hardware" mapstructure:"hardware"`
+	}
+
+	ConnectionSettings struct {
+		Id                string `fig:"Id" validate:"required" json:"id,omitempty" yaml:"id" mapstructure:"id"`
+		ProtocolVersion   string `fig:"ProtocolVersion" default:"1.6" json:"ProtocolVersion,omitempty" yaml:"ProtocolVersion" mapstructure:"ProtocolVersion"`
+		ServerUri         string `fig:"ServerUri" validate:"required" json:"ServerUri,omitempty" yaml:"ServerUri" mapstructure:"ServerUri"`
+		BasicAuthUsername string `fig:"basicAuthUser" json:"basicAuthUser,omitempty" yaml:"basicAuthUser" mapstructure:"basicAuthUser"`
+		BasicAuthPassword string `fig:"basicAuthPass" json:"basicAuthPass,omitempty" yaml:"basicAuthPass" mapstructure:"basicAuthPass"`
+		TLS               TLS    `fig:"tls" json:"tls" yaml:"tls" mapstructure:"tls"`
 	}
 
 	Info struct {
-		Id                string   `fig:"Id" validate:"required" json:"id,omitempty" yaml:"id" mapstructure:"id"`
-		ProtocolVersion   string   `fig:"ProtocolVersion" default:"1.6" json:"ProtocolVersion,omitempty" yaml:"ProtocolVersion" mapstructure:"ProtocolVersion"`
-		ServerUri         string   `fig:"ServerUri" validate:"required" json:"ServerUri,omitempty" yaml:"ServerUri" mapstructure:"ServerUri"`
-		BasicAuthUsername string   `fig:"basicAuthUser" json:"basicAuthUser,omitempty" yaml:"basicAuthUser" mapstructure:"basicAuthUser"`
-		BasicAuthPassword string   `fig:"basicAuthPass" json:"basicAuthPass,omitempty" yaml:"basicAuthPass" mapstructure:"basicAuthPass"`
-		MaxChargingTime   int      `fig:"MaxChargingTime" default:"180" json:"MaxChargingTime,omitempty" yaml:"MaxChargingTime" mapstructure:"MaxChargingTime"`
-		OCPPInfo          OCPPInfo `fig:"ocpp" json:"ocpp" yaml:"ocpp" mapstructure:"ocpp"`
+		MaxChargingTime int      `fig:"MaxChargingTime" default:"180" json:"MaxChargingTime,omitempty" yaml:"MaxChargingTime" mapstructure:"MaxChargingTime"`
+		OCPPInfo        OCPPInfo `fig:"ocpp" json:"ocpp" yaml:"ocpp" mapstructure:"ocpp"`
 	}
 
 	TLS struct {

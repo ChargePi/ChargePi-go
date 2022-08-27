@@ -63,19 +63,19 @@ func NewChargePoint(manager connectorManager.Manager, scheduler *gocron.Schedule
 // Connect to the central system and send a BootNotification
 func (cp *ChargePoint) Connect(ctx context.Context, serverUrl string) {
 	var (
-		info      = cp.settings.ChargePoint.Info
-		tlsConfig = cp.settings.ChargePoint.TLS
-		wsClient  = util.CreateClient(
-			cp.settings.ChargePoint.Info.BasicAuthUsername,
-			cp.settings.ChargePoint.Info.BasicAuthPassword,
+		connectionSettings = cp.settings.ChargePoint.ConnectionSettings
+		tlsConfig          = connectionSettings.TLS
+		wsClient           = util.CreateClient(
+			connectionSettings.BasicAuthUsername,
+			connectionSettings.BasicAuthPassword,
 			tlsConfig)
 		logInfo = log.WithFields(log.Fields{
-			"chargePointId": info.Id,
+			"chargePointId": connectionSettings.Id,
 		})
 	)
 
 	logInfo.Debug("Creating charge point")
-	cp.chargePoint = ocpp16.NewChargePoint(info.Id, nil, wsClient)
+	cp.chargePoint = ocpp16.NewChargePoint(connectionSettings.Id, nil, wsClient)
 
 	// Set charging profiles
 	util.SetProfilesFromConfig(cp.chargePoint, cp, cp, cp)
