@@ -9,10 +9,11 @@ import (
 	"github.com/spf13/viper"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display/i18n"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/indicator"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
 	settingsData "github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
+	data "github.com/xBlaz3kx/ChargePi-go/pkg/models/ocpp"
 	"time"
 )
 
@@ -30,10 +31,47 @@ func (cp *ChargePoint) AddEVSEs(connectors []*settingsData.EVSE) {
 
 	// Add an indicator with the length of valid connectors
 	cp.indicator = indicator.NewIndicator(len(cp.connectorManager.GetEVSEs()))
+
+	cp.sendInfo(connectors)
 }
 
-// restoreState After connecting to the central system, try to restore the previous state of each ConnectorImpl and notify the system about its state.
-// If the ConnectorStatus was "Preparing" or "Charging", try to resume or start charging. If the charging fails, change the connector status and notify the central system.
+func (cp *ChargePoint) sendInfo(evses []*settingsData.EVSE) {
+	for _, evse := range evses {
+		cp.sendConnectorInfo(evse)
+	}
+}
+
+// sendConnectorInfo sends the connector type and maximum output power information to the backend.
+func (cp *ChargePoint) sendConnectorInfo(evse *settingsData.EVSE) {
+	dataTransfer := core.NewDataTransferRequest(cp.settings.ChargePoint.Info.OCPPInfo.Vendor)
+
+	var connectors []data.Connector
+	for _, connector := range evse.Connectors {
+		connectors = append(connectors, data.NewConnector(connector.ConnectorId, connector.Type))
+	}
+
+	dataTransfer.Data = data.NewEvseInfo(evse.EvseId, evse.MaxPower, connectors...)
+
+	_ = util.SendRequest(cp.chargePoint,
+		dataTransfer,
+		func(confirmation ocpp.Response, protoError error) {
+			if protoError != nil {
+				cp.logger.Info("Error sending data")
+				return
+			}
+
+			resp := confirmation.(*core.DataTransferConfirmation)
+			if resp.Status == core.DataTransferStatusAccepted {
+				cp.logger.Info("Sent additional charge point information")
+			}
+		})
+}
+
+// restoreState After connecting to the central system, try to restore the previous state of each EVSE and notify
+// the system about its state.
+//
+// If the ConnectorStatus was "Preparing" or "Charging", try to resume or start charging.
+// If the charging fails, change the connector status and notify the central system.
 func (cp *ChargePoint) restoreState() {
 	cp.logger.Info("Restoring evses' state")
 
@@ -89,7 +127,7 @@ func (cp *ChargePoint) notifyConnectorStatus(evseId int, status core.ChargePoint
 }
 
 // ListenForConnectorStatusChange listen for change in connector and notify the central system about the state
-func (cp *ChargePoint) ListenForConnectorStatusChange(ctx context.Context, ch <-chan models.StatusNotification) {
+func (cp *ChargePoint) ListenForConnectorStatusChange(ctx context.Context, ch <-chan chargePoint.StatusNotification) {
 	cp.logger.Debug("Starting to listen for connector status change")
 
 Listener:

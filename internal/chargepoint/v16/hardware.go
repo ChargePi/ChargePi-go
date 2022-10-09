@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/indicator"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 	"strings"
 	"time"
@@ -17,7 +17,7 @@ func (cp *ChargePoint) sendToLCD(messages ...string) {
 	}
 
 	cp.logger.Debugf("Sending message(s) to display: %v", messages)
-	cp.display.DisplayMessage(models.NewMessage(time.Second*5, messages))
+	cp.display.DisplayMessage(chargePoint.NewMessage(time.Second*5, messages))
 }
 
 func (cp *ChargePoint) displayLEDStatus(connectorIndex int, status core.ChargePointStatus) {
