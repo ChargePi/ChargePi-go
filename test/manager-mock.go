@@ -4,7 +4,7 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/stretchr/testify/mock"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 )
 
@@ -91,10 +91,10 @@ func (o *ManagerMock) RestoreEVSEStatus(s *settings.EVSE) error {
 	return o.Called(s).Error(0)
 }
 
-func (o *ManagerMock) SetNotificationChannel(notificationChannel chan models.StatusNotification) {
+func (o *ManagerMock) SetNotificationChannel(notificationChannel chan chargePoint.StatusNotification) {
 	o.Called()
 }
 
-func (o *ManagerMock) SetMeterValuesChannel(notificationChannel chan models.MeterValueNotification) {
+func (o *ManagerMock) SetMeterValuesChannel(notificationChannel chan chargePoint.MeterValueNotification) {
 	o.Called()
 }

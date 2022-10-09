@@ -20,7 +20,7 @@ func (cp *ChargePoint) bootNotification() {
 			ChargePointModel:        ocppInfo.Model,
 			ChargePointSerialNumber: ocppInfo.ChargePointSerialNumber,
 			ChargePointVendor:       ocppInfo.Vendor,
-			FirmwareVersion:         "1.0",
+			FirmwareVersion:         "0.1.0",
 			Iccid:                   ocppInfo.Iccid,
 			Imsi:                    ocppInfo.Imsi,
 		}

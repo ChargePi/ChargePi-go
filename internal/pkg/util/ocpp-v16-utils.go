@@ -85,24 +85,18 @@ func SetProfilesFromConfig(
 		case strings.ToLower(core.ProfileName):
 			chargePoint.SetCoreHandler(coreHandler)
 			log.Debug("Setting core handler")
-			break
 		case strings.ToLower(reservation.ProfileName):
 			chargePoint.SetReservationHandler(reservationHandler)
 			log.Debug("Setting reservation handler")
-			break
 		case strings.ToLower(smartcharging.ProfileName):
 			//chargePoint.SetSmartChargingHandler(cp)
-			break
 		case strings.ToLower(localauth.ProfileName):
 			//chargePoint.SetLocalAuthListHandler(cp)
-			break
 		case strings.ToLower(remotetrigger.ProfileName):
 			log.Debug("Setting remote trigger handler")
 			chargePoint.SetRemoteTriggerHandler(triggerHandler)
-			break
 		case strings.ToLower(firmware.ProfileName):
 			//chargePoint.SetFirmwareManagementHandler(cp)
-			break
 		}
 	}
 }

@@ -8,7 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/evcc"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/power-meter"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/session"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
@@ -40,14 +40,14 @@ type (
 		AddEVSEFromSettings(maxChargingTime int, c *settings.EVSE) error
 		AddEVSEsFromSettings(maxChargingTime int, c []*settings.EVSE) error
 		RestoreEVSEStatus(*settings.EVSE) error
-		SetNotificationChannel(notificationChannel chan models.StatusNotification)
-		SetMeterValuesChannel(notificationChannel chan models.MeterValueNotification)
+		SetNotificationChannel(notificationChannel chan chargePoint.StatusNotification)
+		SetMeterValuesChannel(notificationChannel chan chargePoint.MeterValueNotification)
 	}
 
 	managerImpl struct {
 		connectors          sync.Map
-		notificationChannel chan models.StatusNotification
-		meterValuesChannel  chan models.MeterValueNotification
+		notificationChannel chan chargePoint.StatusNotification
+		meterValuesChannel  chan chargePoint.MeterValueNotification
 	}
 )
 
@@ -66,7 +66,7 @@ func GetManager() Manager {
 	return manager
 }
 
-func NewManager(notificationChannel chan models.StatusNotification) Manager {
+func NewManager(notificationChannel chan chargePoint.StatusNotification) Manager {
 	return &managerImpl{
 		connectors:          sync.Map{},
 		notificationChannel: notificationChannel,
@@ -87,13 +87,13 @@ func (m *managerImpl) GetEVSEs() []EVSE {
 	return connectors
 }
 
-func (m *managerImpl) SetNotificationChannel(notificationChannel chan models.StatusNotification) {
+func (m *managerImpl) SetNotificationChannel(notificationChannel chan chargePoint.StatusNotification) {
 	if notificationChannel != nil {
 		m.notificationChannel = notificationChannel
 	}
 }
 
-func (m *managerImpl) SetMeterValuesChannel(notificationChannel chan models.MeterValueNotification) {
+func (m *managerImpl) SetMeterValuesChannel(notificationChannel chan chargePoint.MeterValueNotification) {
 	if notificationChannel != nil {
 		m.meterValuesChannel = notificationChannel
 	}
@@ -252,8 +252,13 @@ func (m *managerImpl) AddEVSEFromSettings(maxChargingTime int, c *settings.EVSE)
 		meter, powerMeterErr = powerMeter.NewPowerMeter(c.PowerMeter)
 	)
 
-	if powerMeterErr != nil {
-		log.Warnf("Cannot instantiate power meter: %s", powerMeterErr)
+	switch powerMeterErr {
+	case powerMeter.ErrPowerMeterDisabled:
+		log.WithError(powerMeterErr).Warnf("Power meter disabled for evse %d", c.EvseId)
+	case powerMeter.ErrPowerMeterUnsupported, powerMeter.ErrInvalidConnectionSettings:
+		fallthrough
+	default:
+		log.WithError(powerMeterErr).Fatalf("Cannot instantiate power meter for evse %d", c.EvseId)
 	}
 
 	evse, err := NewEvse(c.EvseId, evccFromType, meter, c.PowerMeter.Enabled, maxChargingTime)
@@ -291,7 +296,7 @@ func (m *managerImpl) RestoreEVSEStatus(c *settings.EVSE) error {
 		evse = m.FindEVSE(c.EvseId)
 	)
 
-	if evse == nil {
+	if util.IsNilInterfaceOrPointer(evse) {
 		return ErrConnectorNotFound
 	}
 

@@ -3,6 +3,7 @@ package v16
 import (
 	"fmt"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
+	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 )
 
@@ -12,22 +13,23 @@ func (cp *ChargePoint) OnReserveNow(request *reservation.ReserveNowRequest) (con
 
 	if util.IsNilInterfaceOrPointer(connector) {
 		return reservation.NewReserveNowConfirmation(reservation.ReservationStatusUnavailable), nil
-	} else if !connector.IsAvailable() {
-		return reservation.NewReserveNowConfirmation(reservation.ReservationStatusOccupied), nil
 	}
 
 	err = connector.ReserveEvse(request.ReservationId, request.IdTag)
-	if err != nil {
+	switch err {
+	case nil:
+		timeFormat := fmt.Sprintf("%d:%d", request.ExpiryDate.Hour(), request.ExpiryDate.Minute())
+		_, schedulerErr := cp.scheduler.Every(1).Day().At(timeFormat).LimitRunsTo(1).Do(connector.RemoveReservation)
+		if schedulerErr != nil {
+			return reservation.NewReserveNowConfirmation(reservation.ReservationStatusRejected), nil
+		}
+
+		return reservation.NewReserveNowConfirmation(reservation.ReservationStatusAccepted), nil
+	case evse.ErrConnectorStatusInvalid:
+		return reservation.NewReserveNowConfirmation(reservation.ReservationStatusOccupied), nil
+	default:
 		return reservation.NewReserveNowConfirmation(reservation.ReservationStatusRejected), nil
 	}
-
-	timeFormat := fmt.Sprintf("%d:%d", request.ExpiryDate.Hour(), request.ExpiryDate.Minute())
-	_, schedulerErr := cp.scheduler.Every(1).Day().At(timeFormat).LimitRunsTo(1).Do(connector.RemoveReservation)
-	if schedulerErr != nil {
-		return reservation.NewReserveNowConfirmation(reservation.ReservationStatusRejected), nil
-	}
-
-	return reservation.NewReserveNowConfirmation(reservation.ReservationStatusAccepted), nil
 }
 
 func (cp *ChargePoint) OnCancelReservation(request *reservation.CancelReservationRequest) (confirmation *reservation.CancelReservationConfirmation, err error) {

@@ -5,7 +5,7 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/session"
 	"github.com/xBlaz3kx/ChargePi-go/test"
 	"golang.org/x/net/context"
@@ -19,9 +19,9 @@ const (
 )
 
 type (
-	evseTestSuite struct {
+	EvseTestSuite struct {
 		suite.Suite
-		evse           *evseImpl
+		evse           *EvseImpl
 		evccMock       *test.EvccMock
 		powerMeterMock *test.PowerMeterMock
 	}
@@ -29,11 +29,11 @@ type (
 
 /*---------------------- Test suite ----------------------*/
 
-func NewConnectorTestSuite() *evseTestSuite {
-	return &evseTestSuite{}
+func NewConnectorTestSuite() *EvseTestSuite {
+	return &EvseTestSuite{}
 }
 
-func (s *evseTestSuite) SetupTest() {
+func (s *EvseTestSuite) SetupTest() {
 	cmd := exec.Command("touch", fileName)
 	err := cmd.Run()
 	s.Require().NoError(err)
@@ -57,7 +57,7 @@ func (s *evseTestSuite) SetupTest() {
 	s.evse = evse
 }
 
-func (s *evseTestSuite) TestCreateNewConnector() {
+func (s *EvseTestSuite) TestCreateNewConnector() {
 	s.evccMock.On("DisableCharging").Return()
 	s.evccMock.On("EnableCharging").Return()
 
@@ -82,7 +82,7 @@ func (s *evseTestSuite) TestCreateNewConnector() {
 	s.Require().Error(err)
 }
 
-func (s *evseTestSuite) TestStartCharging() {
+func (s *EvseTestSuite) TestStartCharging() {
 	// Ok case
 	err := s.evse.StartCharging("1234", "exampleTag", nil)
 	s.Require().NoError(err)
@@ -117,7 +117,7 @@ func (s *evseTestSuite) TestStartCharging() {
 	s.Require().Error(err)
 }
 
-func (s *evseTestSuite) TestStopCharging() {
+func (s *EvseTestSuite) TestStopCharging() {
 	// Start charging
 	err := s.evse.StartCharging("1234", "1234", nil)
 	s.Require().NoError(err)
@@ -134,7 +134,7 @@ func (s *evseTestSuite) TestStopCharging() {
 	//s.evccMock.AssertNotCalled(s.T(), "Disable")
 }
 
-func (s *evseTestSuite) TestResumeCharging() {
+func (s *EvseTestSuite) TestResumeCharging() {
 	var (
 		maxChargingTime = s.evse.GetMaxChargingTime()
 		validSession    = session.Session{
@@ -196,7 +196,7 @@ func (s *evseTestSuite) TestResumeCharging() {
 	s.Require().InDelta(maxChargingTime, timeElapsed, 1)
 }
 
-func (s *evseTestSuite) TestReserveConnector() {
+func (s *EvseTestSuite) TestReserveConnector() {
 	// Ok case
 	err := s.evse.ReserveEvse(1, "")
 	s.Require().NoError(err)
@@ -214,7 +214,7 @@ func (s *evseTestSuite) TestReserveConnector() {
 	s.Require().Error(err)
 }
 
-func (s *evseTestSuite) TestRemoveReservation() {
+func (s *EvseTestSuite) TestRemoveReservation() {
 	// Make a reservation
 	err := s.evse.ReserveEvse(1, "")
 	s.Require().NoError(err)
@@ -228,14 +228,14 @@ func (s *evseTestSuite) TestRemoveReservation() {
 	s.Require().Error(err)
 }
 
-func (s *evseTestSuite) TestSamplePowerMeter() {
+func (s *EvseTestSuite) TestSamplePowerMeter() {
 	s.powerMeterMock.On("GetEnergy").Return(1.0)
 	s.powerMeterMock.On("GetCurrent").Return(1.0)
 	s.powerMeterMock.On("GetVoltage").Return(1.0)
 
 	var (
 		ctx, cancel    = context.WithTimeout(context.Background(), time.Second*30)
-		meterValueChan = make(chan models.MeterValueNotification)
+		meterValueChan = make(chan chargePoint.MeterValueNotification)
 	)
 
 	defer cancel()

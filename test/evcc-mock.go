@@ -3,7 +3,8 @@ package test
 import (
 	"context"
 	"github.com/stretchr/testify/mock"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/evcc"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/models/evcc"
 )
 
 type EvccMock struct {
@@ -55,6 +56,6 @@ func (e *EvccMock) GetError() string {
 	return e.Called().String(0)
 }
 
-func (e *EvccMock) GetStatusChangeChannel() <-chan evcc.StateNotification {
-	return e.Called().Get(0).(chan evcc.StateNotification)
+func (e *EvccMock) GetStatusChangeChannel() <-chan chargePoint.StateNotification {
+	return e.Called().Get(0).(chan chargePoint.StateNotification)
 }

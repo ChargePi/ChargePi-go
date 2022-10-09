@@ -2,8 +2,9 @@ package evcc
 
 import (
 	"context"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/evcc"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/models/evcc"
 )
 
 const (
@@ -24,7 +25,7 @@ type (
 		GetError() string
 		Cleanup() error
 		GetType() string
-		GetStatusChangeChannel() <-chan evcc.StateNotification
+		GetStatusChangeChannel() <-chan chargePoint.StateNotification
 	}
 )
 

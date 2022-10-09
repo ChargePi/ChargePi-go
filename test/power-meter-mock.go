@@ -48,3 +48,7 @@ func (p *PowerMeterMock) GetRMSVoltage() float64 {
 	args := p.Called()
 	return args.Get(0).(float64)
 }
+
+func (p *PowerMeterMock) GetType() string {
+	return ""
+}

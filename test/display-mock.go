@@ -3,7 +3,7 @@ package test
 import (
 	"context"
 	"github.com/stretchr/testify/mock"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
 )
 
 type (
@@ -14,7 +14,7 @@ type (
 
 /*------------------ Display mock ------------------*/
 
-func (l *DisplayMock) DisplayMessage(message models.Message) {
+func (l *DisplayMock) DisplayMessage(message chargePoint.Message) {
 	l.Called(message)
 }
 
@@ -30,6 +30,10 @@ func (l *DisplayMock) Clear() {
 	l.Called()
 }
 
-func (l *DisplayMock) GetLcdChannel() chan<- models.Message {
-	return l.Called().Get(0).(chan models.Message)
+func (l *DisplayMock) GetLcdChannel() chan<- chargePoint.Message {
+	return l.Called().Get(0).(chan chargePoint.Message)
+}
+
+func (l *DisplayMock) GetType() string {
+	return ""
 }

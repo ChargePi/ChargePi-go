@@ -280,3 +280,7 @@ func (receiver *C5460A) GetRMSCurrent() float64 {
 func (receiver *C5460A) GetRMSVoltage() float64 {
 	return float64(receiver.readFromRegister(RmsVoltageRegister)) * receiver.voltageMultiplier
 }
+
+func (receiver *C5460A) GetType() string {
+	return TypeC5460A
+}

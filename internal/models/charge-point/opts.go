@@ -23,14 +23,13 @@ func WithLogger(logger *log.Logger) Options {
 // WithReaderFromSettings creates a TagReader based on the settings.
 func WithReaderFromSettings(ctx context.Context, readerSettings settings.TagReader) Options {
 	return func(point ChargePoint) {
-		if !readerSettings.IsEnabled {
-			return
-		}
-
 		// Create reader based on settings
 		tagReader, err := reader.NewTagReader(readerSettings)
-		if err != nil {
+		switch err {
+		case reader.ErrReaderDisabled:
 			return
+		case reader.ErrReaderUnsupported:
+			log.WithError(err).Fatal("Error attaching a display")
 		}
 
 		point.SetReader(tagReader)
@@ -58,17 +57,15 @@ func WithReader(ctx context.Context, tagReader reader.Reader) Options {
 // WithDisplayFromSettings create a Display based on the provided settings.
 func WithDisplayFromSettings(lcdSettings settings.Display) Options {
 	return func(point ChargePoint) {
-		if !lcdSettings.IsEnabled {
-			return
-		}
-
 		lcd, err := display.NewDisplay(lcdSettings)
-		if err != nil {
+		switch err {
+		case display.ErrDisplayDisabled:
 			return
+		case display.ErrDisplayUnsupported, display.ErrInvalidConnectionDetails:
+			log.WithError(err).Fatal("Error attaching a display")
 		}
 
 		point.SetDisplay(lcd)
-
 	}
 }
 

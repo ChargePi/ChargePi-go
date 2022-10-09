@@ -1,4 +1,4 @@
-package models
+package chargePoint
 
 import "github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 

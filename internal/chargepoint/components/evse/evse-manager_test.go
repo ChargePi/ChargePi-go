@@ -64,23 +64,14 @@ func (suite *connectorManagerTestSuite) SetupTest() {
 		EvseId: 1,
 		Status: "Available",
 		Session: settingsModel.Session{
-			IsActive:      false,
-			TransactionId: "",
-			TagId:         "",
-			Started:       "",
-			Consumption:   nil,
+			IsActive: false,
 		},
 		EVCC: settingsModel.EVCC{
 			RelayPin:     14,
 			InverseLogic: false,
 		},
 		PowerMeter: settingsModel.PowerMeter{
-			Enabled:              false,
-			Type:                 "",
-			PowerMeterPin:        0,
-			SpiBus:               0,
-			ShuntOffset:          0,
-			VoltageDividerOffset: 0,
+			Enabled: false,
 		},
 	}
 

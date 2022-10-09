@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/test"
 	ocppManager "github.com/xBlaz3kx/ocppManager-go"
@@ -16,6 +16,10 @@ import (
 	"time"
 )
 
+func newString(s string) *string {
+	return &s
+}
+
 var (
 	ocppConfig = configuration.Config{
 		Version: 1,
@@ -23,92 +27,93 @@ var (
 			{
 				Key:      "AllowOfflineTxForUnknownId",
 				Readonly: false,
-				Value:    "false",
+
+				Value: newString("false"),
 			},
 			{
 				Key:      "AuthorizationCacheEnabled",
 				Readonly: false,
-				Value:    "false",
+				Value:    newString("false"),
 			},
 			{
 				Key:      "AuthorizeRemoteTxRequests",
 				Readonly: false,
-				Value:    "false",
+				Value:    newString("false"),
 			},
 			{
 				Key:      "ClockAlignedDataInterval",
 				Readonly: false,
-				Value:    "0",
+				Value:    newString("0"),
 			},
 			{
 				Key:      "ConnectionTimeOut",
 				Readonly: false,
-				Value:    "50",
+				Value:    newString("50"),
 			},
 			{
 				Key:      "GetConfigurationMaxKeys",
 				Readonly: false,
-				Value:    "30",
+				Value:    newString("30"),
 			},
 			{
 				Key:      "HeartbeatInterval",
 				Readonly: false,
-				Value:    "60",
+				Value:    newString("60"),
 			},
 			{
 				Key:      "LocalAuthorizeOffline",
 				Readonly: false,
-				Value:    "true",
+				Value:    newString("true"),
 			},
 			{
 				Key:      "LocalPreAuthorize",
 				Readonly: false,
-				Value:    "true",
+				Value:    newString("true"),
 			},
 			{
 				Key:      "MaxEnergyOnInvalidId",
 				Readonly: false,
-				Value:    "0",
+				Value:    newString("0"),
 			},
 			{
 				Key:      "MeterValuesSampledData",
 				Readonly: false,
-				Value:    "Power.Active.Import",
+				Value:    newString("Power.Active.Import"),
 			},
 			{
 				Key:      "MeterValuesAlignedData",
 				Readonly: false,
-				Value:    "false",
+				Value:    newString("false"),
 			},
 			{
 				Key:      "NumberOfConnectors",
 				Readonly: false,
-				Value:    "6",
+				Value:    newString("6"),
 			},
 			{
 				Key:      "MeterValueSampleInterval",
 				Readonly: false,
-				Value:    "60",
+				Value:    newString("60"),
 			},
 			{
 				Key:      "ResetRetries",
 				Readonly: false,
-				Value:    "3",
+				Value:    newString("3"),
 			},
 			{
 				Key:      "ConnectorPhaseRotation",
 				Readonly: false,
-				Value:    "0.RST, 1.RST, 2.RTS",
+				Value:    newString("0.RST, 1.RST, 2.RTS"),
 			},
 			{
 				Key:      "StopTransactionOnEVSideDisconnect",
 				Readonly: false,
-				Value:    "true",
+				Value:    newString("true"),
 			},
 			{
 				Key:      "StopTransactionOnInvalidId",
 				Readonly: false,
-				Value:    "true",
+				Value:    newString("true"),
 			},
 			{
 				Key:      "StopTxnAlignedData",
@@ -121,42 +126,42 @@ var (
 			{
 				Key:      "SupportedFeatureProfiles",
 				Readonly: true,
-				Value:    "Core, LocalAuthListManagement, Reservation, RemoteTrigger",
+				Value:    newString("Core, LocalAuthListManagement, Reservation, RemoteTrigger"),
 			},
 			{
 				Key:      "TransactionMessageAttempts",
 				Readonly: false,
-				Value:    "3",
+				Value:    newString("3"),
 			},
 			{
 				Key:      "TransactionMessageRetryInterval",
 				Readonly: false,
-				Value:    "60",
+				Value:    newString("60"),
 			},
 			{
 				Key:      "UnlockConnectorOnEVSideDisconnect",
 				Readonly: false,
-				Value:    "true",
+				Value:    newString("true"),
 			},
 			{
 				Key:      "ReserveConnectorZeroSupported",
 				Readonly: false,
-				Value:    "false",
+				Value:    newString("false"),
 			},
 			{
 				Key:      "SendLocalListMaxLength",
 				Readonly: false,
-				Value:    "20",
+				Value:    newString("20"),
 			},
 			{
 				Key:      "LocalAuthListEnabled",
 				Readonly: false,
-				Value:    "true",
+				Value:    newString("true"),
 			},
 			{
 				Key:      "LocalAuthListMaxLength",
 				Readonly: false,
-				Value:    "20",
+				Value:    newString("20"),
 			},
 		},
 	}
@@ -184,7 +189,7 @@ func (s *connectorFunctionsTestSuite) TestRestoreState() {
 func (s *connectorFunctionsTestSuite) TestDisplayConnectorStatus() {
 	var (
 		ctx, cancel = context.WithTimeout(context.Background(), time.Second*10)
-		channel     = make(chan models.Message)
+		channel     = make(chan chargePoint.Message)
 		lcdMock     = new(test.DisplayMock)
 	)
 
@@ -246,24 +251,24 @@ Loop:
 
 func (s *connectorFunctionsTestSuite) TestNotifyConnectorStatus() {
 	var (
-		chargePoint   = new(chargePointMock)
+		cp            = new(chargePointMock)
 		connectorMock = new(test.EvseMock)
 	)
 
 	connectorMock.On("GetStatus").Return("Available", "NoError")
 	connectorMock.On("GetEvseId").Return(1)
 
-	chargePoint.On("SendRequestAsync", mock.Anything).Run(func(args mock.Arguments) {
+	cp.On("SendRequestAsync", mock.Anything).Run(func(args mock.Arguments) {
 		s.Assert().IsType(&core.StatusNotificationRequest{}, args.Get(0))
 		notification := args.Get(0).(*core.StatusNotificationRequest)
 		s.Assert().EqualValues(connectorId, notification.ConnectorId)
 		s.Assert().EqualValues(core.ChargePointStatusAvailable, notification.Status)
 	}).Return(core.NewStatusNotificationConfirmation(), nil, nil)
-	s.cp.chargePoint = chargePoint
+	s.cp.chargePoint = cp
 
 	s.cp.notifyConnectorStatus(1, core.ChargePointStatusAvailable, core.NoError)
 
-	chargePoint.AssertNumberOfCalls(s.T(), "SendRequestAsync", 1)
+	cp.AssertNumberOfCalls(s.T(), "SendRequestAsync", 1)
 }
 
 func TestConnectorFunctions(t *testing.T) {

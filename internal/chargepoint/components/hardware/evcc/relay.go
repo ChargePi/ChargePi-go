@@ -6,7 +6,8 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	log "github.com/sirupsen/logrus"
 	"github.com/warthog618/gpiod"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/evcc"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/models/evcc"
 )
 
 var (
@@ -15,32 +16,32 @@ var (
 )
 
 type (
-	relayAsEvcc struct {
+	RelayAsEvcc struct {
 		relayPin      int
 		inverseLogic  bool
 		state         evcc.CarState
 		pin           *gpiod.Line
-		statusChannel chan evcc.StateNotification
+		statusChannel chan chargePoint.StateNotification
 	}
 )
 
 // NewRelay creates a new RelayImpl struct that will communicate with the GPIO pin specified.
-func NewRelay(relayPin int, inverseLogic bool) (*relayAsEvcc, error) {
+func NewRelay(relayPin int, inverseLogic bool) (*RelayAsEvcc, error) {
 	if relayPin <= 0 {
 		return nil, ErrInvalidPinNumber
 	}
 
 	log.Debugf("Creating new relay at pin %d", relayPin)
-	relay := relayAsEvcc{
+	relay := RelayAsEvcc{
 		relayPin:      relayPin,
 		inverseLogic:  inverseLogic,
-		statusChannel: make(chan evcc.StateNotification, 10),
+		statusChannel: make(chan chargePoint.StateNotification, 10),
 	}
 
 	return &relay, nil
 }
 
-func (r *relayAsEvcc) Init(ctx context.Context) error {
+func (r *RelayAsEvcc) Init(ctx context.Context) error {
 	// Refer to gpiod docs
 	c, err := gpiod.NewChip("gpiochip0")
 	if err != nil {
@@ -51,66 +52,68 @@ func (r *relayAsEvcc) Init(ctx context.Context) error {
 	return err
 }
 
-func (r *relayAsEvcc) Lock() {
+func (r *RelayAsEvcc) Lock() {
 }
 
-func (r *relayAsEvcc) Unlock() {
+func (r *RelayAsEvcc) Unlock() {
 }
 
-func (r *relayAsEvcc) GetError() string {
+func (r *RelayAsEvcc) GetError() string {
 	return string(core.NoError)
 }
 
-func (r *relayAsEvcc) GetState() evcc.CarState {
+func (r *RelayAsEvcc) GetState() evcc.CarState {
 	return r.state
 }
 
-func (r *relayAsEvcc) EnableCharging() error {
+func (r *RelayAsEvcc) EnableCharging() error {
 	if r.inverseLogic {
 		_ = r.pin.SetValue(0)
 	} else {
 		_ = r.pin.SetValue(1)
 	}
 
+	_ = r.setState(evcc.StateB2, string(core.NoError))
 	return r.setState(evcc.StateC2, string(core.NoError))
 }
 
-func (r *relayAsEvcc) DisableCharging() {
+func (r *RelayAsEvcc) DisableCharging() {
 	if r.inverseLogic {
 		_ = r.pin.SetValue(1)
 	} else {
 		_ = r.pin.SetValue(0)
 	}
 
+	_ = r.setState(evcc.StateB1, string(core.NoError))
 	_ = r.setState(evcc.StateA1, string(core.NoError))
 }
 
-func (r *relayAsEvcc) setState(state evcc.CarState, error string) error {
+func (r *RelayAsEvcc) setState(state evcc.CarState, error string) error {
 	if !evcc.IsStateValid(state) {
 		return nil
 	}
 
 	r.state = state
-	r.statusChannel <- evcc.NewStateNotification(state, error)
+	r.statusChannel <- chargePoint.NewStateNotification(state, error)
 	return nil
 }
 
-func (r *relayAsEvcc) SetMaxChargingCurrent(value float64) error {
+func (r *RelayAsEvcc) SetMaxChargingCurrent(value float64) error {
 	return nil
 }
 
-func (r *relayAsEvcc) GetMaxChargingCurrent() float64 {
+func (r *RelayAsEvcc) GetMaxChargingCurrent() float64 {
 	return 0.0
 }
 
-func (r *relayAsEvcc) Cleanup() error {
+func (r *RelayAsEvcc) Cleanup() error {
 	return r.pin.Close()
 }
 
-func (r *relayAsEvcc) GetType() string {
+func (r *RelayAsEvcc) GetType() string {
 	return Relay
 }
 
-func (r *relayAsEvcc) GetStatusChangeChannel() <-chan evcc.StateNotification {
+func (r *RelayAsEvcc) GetStatusChangeChannel() <-chan chargePoint.StateNotification {
 	return r.statusChannel
 }

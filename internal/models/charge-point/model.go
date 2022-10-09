@@ -9,7 +9,6 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/indicator"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/reader"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 )
 
@@ -36,7 +35,7 @@ type (
 		StopCharging(tagId string, connectorId int) (*api.StopTransactionResponse, error)
 		GetConnectorStatus(evseId, connectorId int) (*api.GetConnectorStatusResponse, error)
 		AddEVSEs(evses []*settings.EVSE)
-		ListenForConnectorStatusChange(ctx context.Context, ch <-chan models.StatusNotification)
+		ListenForConnectorStatusChange(ctx context.Context, ch <-chan StatusNotification)
 
 		// Options
 		SetLogger(logger *log.Logger)

@@ -4,13 +4,13 @@ import (
 	"github.com/d2r2/go-hd44780"
 	"github.com/d2r2/go-i2c"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
 	"strconv"
 	"time"
 )
 
 type HD44780 struct {
-	LCDChannel chan models.Message
+	LCDChannel chan chargePoint.Message
 	i2c        *i2c.I2C
 	display    *hd44780.Lcd
 }
@@ -44,7 +44,7 @@ func NewHD44780(i2cAddress string, i2cBus int) (*HD44780, error) {
 }
 
 // DisplayMessage displays the message on the Display. Pairs of messages will be displayed for the duration set in Message.
-func (lcd *HD44780) DisplayMessage(message models.Message) {
+func (lcd *HD44780) DisplayMessage(message chargePoint.Message) {
 	log.Debugf("Displaying the message to Display: %v", message.Messages)
 
 	// Display lines in pairs. If there are odd number of lines, display the last line by itself.
@@ -71,4 +71,8 @@ func (lcd *HD44780) Cleanup() {
 	lcd.Clear()
 	_ = lcd.display.BacklightOff()
 	_ = lcd.i2c.Close()
+}
+
+func (lcd *HD44780) GetType() string {
+	return DriverHD44780
 }
