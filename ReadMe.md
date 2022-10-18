@@ -21,7 +21,7 @@ ChargePi-go client can be deployed/run in multiple ways:
 
 ### 🛠️ Configuration and settings
 
-To customize and configure the ChargePi client, check out the [configuration guide](/docs/client/configuration.md).
+To customize and configure the ChargePi client, check out the [configuration guide](/docs/client/configuration/configuration.md).
 The client comes with default settings which require minimal configuration.
 
 ### 📑 Logging
@@ -46,7 +46,7 @@ For details, check out the [logging](/docs/logging/logging.md) docs.
 2. Install the [libraries](/docs/client/installing-libraries.md) (if needed).
 
 3. Configure the settings files according to the hardware and desired functionality:
-    - [client configuration](/docs/client/configuration.md)
+    - [client configuration](/docs/client/configuration/configuration.md)
     - [OCPP configuration](/docs/ocpp/ocpp-16.md)
 
 4. Run the client.

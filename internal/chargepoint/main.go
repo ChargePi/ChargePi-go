@@ -14,14 +14,14 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/grpc"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/logging"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
 	s "github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/logging"
 	"github.com/xBlaz3kx/ocppManager-go/configuration"
 	"os"
 	"os/signal"
-	"syscall"
+	"time"
 )
 
 func CreateChargePoint(
@@ -72,13 +72,11 @@ func Run(isDebug bool, config *settings.Settings, connectors []*settings.EVSE, c
 		connectionSettings = config.ChargePoint.ConnectionSettings
 		serverUrl          = util.CreateConnectionUrl(connectionSettings)
 		protocolVersion    = settings.ProtocolVersion(connectionSettings.ProtocolVersion)
-		// Execution
-		ctx, cancel = context.WithCancel(context.Background())
-		quitChannel = make(chan os.Signal, 5)
+
+		ctx, cancel = signal.NotifyContext(context.Background(), os.Interrupt)
 	)
 
 	defer cancel()
-	signal.Notify(quitChannel, syscall.SIGINT, syscall.SIGTERM)
 
 	// Create the logger
 	logging.Setup(logger, config.ChargePoint.Logging, isDebug)
@@ -117,13 +115,10 @@ func Run(isDebug bool, config *settings.Settings, connectors []*settings.EVSE, c
 Loop:
 	for {
 		select {
-		// Capture the terminate signal
-		case <-quitChannel:
-			cancel()
 		case <-ctx.Done():
+			handler.CleanUp(core.ReasonLocal)
+			time.Sleep(time.Millisecond * 500)
 			break Loop
 		}
 	}
-
-	handler.CleanUp(core.ReasonLocal)
 }
