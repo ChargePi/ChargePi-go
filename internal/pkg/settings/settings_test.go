@@ -41,12 +41,8 @@ func (s *SettingsManagerTestSuite) SetupTest() {
 	}
 
 	s.powerMeter = settingsData.PowerMeter{
-		Enabled:              false,
-		Type:                 "",
-		PowerMeterPin:        0,
-		SpiBus:               0,
-		ShuntOffset:          0,
-		VoltageDividerOffset: 0,
+		Enabled: false,
+		Type:    "",
 	}
 
 	s.evse = settingsData.EVSE{

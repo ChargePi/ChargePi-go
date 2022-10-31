@@ -50,7 +50,7 @@ func (s *EvseTestSuite) SetupTest() {
 		s.evccMock,
 		s.powerMeterMock,
 		false,
-		15,
+		nil,
 	)
 	s.Require().NoError(err)
 
@@ -62,7 +62,7 @@ func (s *EvseTestSuite) TestCreateNewConnector() {
 	s.evccMock.On("EnableCharging").Return()
 
 	// Ok case
-	connector1, err := NewEvse(1, s.evccMock, s.powerMeterMock, false, 15)
+	connector1, err := NewEvse(1, s.evccMock, s.powerMeterMock, false, nil)
 
 	s.Require().Equal(1, connector1.evseId)
 	s.Require().Equal(core.ChargePointStatusAvailable, connector1.status)
@@ -70,15 +70,15 @@ func (s *EvseTestSuite) TestCreateNewConnector() {
 	s.Require().False(connector1.powerMeterEnabled)
 
 	// Invalid evseId
-	_, err = NewEvse(1, s.evccMock, s.powerMeterMock, false, 15)
+	_, err = NewEvse(1, s.evccMock, s.powerMeterMock, false, nil)
 	s.Require().Error(err)
 
 	// Invalid evse id
-	_, err = NewEvse(0, s.evccMock, s.powerMeterMock, false, 15)
+	_, err = NewEvse(0, s.evccMock, s.powerMeterMock, false, nil)
 	s.Require().Error(err)
 
 	// Negative evse id
-	_, err = NewEvse(-1, s.evccMock, s.powerMeterMock, false, 15)
+	_, err = NewEvse(-1, s.evccMock, s.powerMeterMock, false, nil)
 	s.Require().Error(err)
 }
 

@@ -11,6 +11,7 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/session"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 	"sync"
 )
@@ -28,17 +29,17 @@ var (
 type (
 	Manager interface {
 		GetEVSEs() []EVSE
-		FindEVSE(evseId int) EVSE
-		FindAvailableEVSE() EVSE
-		FindEVSEWithTagId(tagId string) EVSE
-		FindEVSEWithTransactionId(transactionId string) EVSE
-		FindEVSEWithReservationId(reservationId int) EVSE
+		FindEVSE(evseId int) (EVSE, error)
+		FindAvailableEVSE() (EVSE, error)
+		FindEVSEWithTagId(tagId string) (EVSE, error)
+		FindEVSEWithTransactionId(transactionId string) (EVSE, error)
+		FindEVSEWithReservationId(reservationId int) (EVSE, error)
 		StartCharging(evseId int, tagId, transactionId string) error
 		StopCharging(tagId, transactionId string, reason core.Reason) error
 		StopAllEVSEs(reason core.Reason) error
 		AddEVSE(c EVSE) error
-		AddEVSEFromSettings(maxChargingTime int, c *settings.EVSE) error
-		AddEVSEsFromSettings(maxChargingTime int, c []*settings.EVSE) error
+		AddEVSEFromSettings(maxChargingTime *int, c *settings.EVSE) error
+		AddEVSEsFromSettings(maxChargingTime *int, c []*settings.EVSE) error
 		RestoreEVSEStatus(*settings.EVSE) error
 		SetNotificationChannel(notificationChannel chan chargePoint.StatusNotification)
 		SetMeterValuesChannel(notificationChannel chan chargePoint.MeterValueNotification)
@@ -99,20 +100,20 @@ func (m *managerImpl) SetMeterValuesChannel(notificationChannel chan chargePoint
 	}
 }
 
-func (m *managerImpl) FindEVSE(evseId int) EVSE {
+func (m *managerImpl) FindEVSE(evseId int) (EVSE, error) {
 	var (
 		key        = fmt.Sprintf("Evse%d", evseId)
 		c, isFound = m.connectors.Load(key)
 	)
 
 	if isFound {
-		return c.(EVSE)
+		return c.(EVSE), nil
 	}
 
-	return nil
+	return nil, ErrConnectorNotFound
 }
 
-func (m *managerImpl) FindAvailableEVSE() EVSE {
+func (m *managerImpl) FindAvailableEVSE() (EVSE, error) {
 	var availableConnector EVSE
 
 	m.connectors.Range(func(key, value interface{}) bool {
@@ -125,10 +126,14 @@ func (m *managerImpl) FindAvailableEVSE() EVSE {
 		return true
 	})
 
-	return availableConnector
+	if util.IsNilInterfaceOrPointer(availableConnector) {
+		return nil, ErrConnectorNotFound
+	}
+
+	return availableConnector, nil
 }
 
-func (m *managerImpl) FindEVSEWithTagId(tagId string) EVSE {
+func (m *managerImpl) FindEVSEWithTagId(tagId string) (EVSE, error) {
 	var connectorWithTag EVSE
 
 	m.connectors.Range(func(key, value interface{}) bool {
@@ -141,10 +146,14 @@ func (m *managerImpl) FindEVSEWithTagId(tagId string) EVSE {
 		return true
 	})
 
-	return connectorWithTag
+	if util.IsNilInterfaceOrPointer(connectorWithTag) {
+		return nil, ErrConnectorNotFound
+	}
+
+	return connectorWithTag, nil
 }
 
-func (m *managerImpl) FindEVSEWithTransactionId(transactionId string) EVSE {
+func (m *managerImpl) FindEVSEWithTransactionId(transactionId string) (EVSE, error) {
 	var connectorWithTransaction EVSE
 
 	m.connectors.Range(func(key, value interface{}) bool {
@@ -157,10 +166,14 @@ func (m *managerImpl) FindEVSEWithTransactionId(transactionId string) EVSE {
 		return true
 	})
 
-	return connectorWithTransaction
+	if util.IsNilInterfaceOrPointer(connectorWithTransaction) {
+		return nil, ErrConnectorNotFound
+	}
+
+	return connectorWithTransaction, nil
 }
 
-func (m *managerImpl) FindEVSEWithReservationId(reservationId int) EVSE {
+func (m *managerImpl) FindEVSEWithReservationId(reservationId int) (EVSE, error) {
 	var connectorWithReservation EVSE
 
 	m.connectors.Range(func(key, value interface{}) bool {
@@ -173,11 +186,15 @@ func (m *managerImpl) FindEVSEWithReservationId(reservationId int) EVSE {
 		return true
 	})
 
-	return connectorWithReservation
+	if util.IsNilInterfaceOrPointer(connectorWithReservation) {
+		return nil, ErrConnectorNotFound
+	}
+
+	return connectorWithReservation, nil
 }
 
 func (m *managerImpl) StartCharging(evseId int, tagId, transactionId string) error {
-	c := m.FindEVSE(evseId)
+	c, _ := m.FindEVSE(evseId)
 
 	if c != nil {
 		return c.StartCharging(transactionId, tagId, nil)
@@ -187,7 +204,7 @@ func (m *managerImpl) StartCharging(evseId int, tagId, transactionId string) err
 }
 
 func (m *managerImpl) StopCharging(tagId, transactionId string, reason core.Reason) error {
-	c := m.FindEVSEWithTransactionId(transactionId)
+	c, _ := m.FindEVSEWithTransactionId(transactionId)
 
 	if c != nil {
 		return c.StopCharging(reason)
@@ -221,9 +238,10 @@ func (m *managerImpl) AddEVSE(c EVSE) error {
 			"evseId": c.GetEvseId(),
 		})
 		key = fmt.Sprintf("Evse%d", c.GetEvseId())
+		ctx = context.Background()
 	)
 
-	err := c.Init(context.Background())
+	err := c.Init(ctx)
 	if err != nil {
 		return err
 	}
@@ -233,15 +251,12 @@ func (m *managerImpl) AddEVSE(c EVSE) error {
 	c.SetMeterValuesChannel(m.meterValuesChannel)
 
 	// Add the connector
-	_, isLoaded := m.connectors.LoadOrStore(key, c)
-	if isLoaded {
-		return ErrConnectorAlreadyExists
-	}
+	m.connectors.Store(key, c)
 
 	return nil
 }
 
-func (m *managerImpl) AddEVSEFromSettings(maxChargingTime int, c *settings.EVSE) error {
+func (m *managerImpl) AddEVSEFromSettings(maxChargingTime *int, c *settings.EVSE) error {
 	if util.IsNilInterfaceOrPointer(c) {
 		return ErrConnectorNil
 	}
@@ -269,7 +284,7 @@ func (m *managerImpl) AddEVSEFromSettings(maxChargingTime int, c *settings.EVSE)
 	return m.AddEVSE(evse)
 }
 
-func (m *managerImpl) AddEVSEsFromSettings(maxChargingTime int, connectors []*settings.EVSE) error {
+func (m *managerImpl) AddEVSEsFromSettings(maxChargingTime *int, connectors []*settings.EVSE) error {
 	for _, c := range connectors {
 		addErr := m.AddEVSEFromSettings(maxChargingTime, c)
 		if addErr != nil {
@@ -291,34 +306,18 @@ func (m *managerImpl) RestoreEVSEStatus(c *settings.EVSE) error {
 	})
 	logInfo.Debugf("Attempting to restore connector status")
 
-	var (
-		err  error
-		evse = m.FindEVSE(c.EvseId)
-	)
-
-	if util.IsNilInterfaceOrPointer(evse) {
-		return ErrConnectorNotFound
+	// Current status
+	evse, err := m.FindEVSE(c.EvseId)
+	if err != nil {
+		return err
 	}
 
-	// Set the previous status to determine what action to do
-	connectorPreviousStatus := core.ChargePointStatus(c.Status)
-	evse.SetStatus(connectorPreviousStatus, core.NoError)
-
-	switch connectorPreviousStatus {
+	// Determine what to do based on the previous status
+	switch core.ChargePointStatus(c.Status) {
 	case core.ChargePointStatusAvailable:
 		return nil
-	case core.ChargePointStatusReserved,
-		core.ChargePointStatusFinishing,
-		core.ChargePointStatusSuspendedEV,
-		core.ChargePointStatusSuspendedEVSE:
-		return nil
 	case core.ChargePointStatusPreparing:
-		err = evse.StartCharging(c.Session.TransactionId, c.Session.TagId, nil)
-		if err != nil {
-			evse.SetStatus(core.ChargePointStatusAvailable, core.InternalError)
-		}
-
-		return err
+		return evse.StartCharging(c.Session.TransactionId, c.Session.TagId, nil)
 	case core.ChargePointStatusCharging:
 		timeLeft, err := evse.ResumeCharging(session.Session(c.Session))
 		if err != nil {
@@ -332,13 +331,21 @@ func (m *managerImpl) RestoreEVSEStatus(c *settings.EVSE) error {
 			}
 		}
 
-		//todo figure out what if time left
-		log.Println(timeLeft)
+		// Stop charging
+		_, schedulerErr := scheduler.GetScheduler().Every(*timeLeft).Minutes().At(1).Do(evse.StopCharging(core.ReasonLocal))
+		if schedulerErr != nil {
+			return schedulerErr
+		}
 
 		logInfo.Debugf("Successfully resumed charging")
 		return nil
-	case core.ChargePointStatusFaulted:
-		evse.SetStatus(core.ChargePointStatusFaulted, core.InternalError)
+	case core.ChargePointStatusReserved:
+		//todo
+		return nil
+	case core.ChargePointStatusFaulted,
+		core.ChargePointStatusFinishing,
+		core.ChargePointStatusSuspendedEV,
+		core.ChargePointStatusSuspendedEVSE:
 		return nil
 	default:
 		return ErrConnectorStatusInvalid

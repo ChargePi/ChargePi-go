@@ -6,7 +6,6 @@ import (
 	ocpp16 "github.com/lorenzodonini/ocpp-go/ocpp1.6"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/api"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/auth"
 	connectorManager "github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display"
@@ -31,13 +30,13 @@ type (
 		connectorChannel   chan chargePoint.StatusNotification
 		meterValuesChannel chan chargePoint.MeterValueNotification
 		scheduler          *gocron.Scheduler
-		authCache          *auth.Cache
+		tagManager         auth.TagManager
 		logger             *log.Logger
 	}
 )
 
 // NewChargePoint creates a new ChargePoint for OCPP version 1.6.
-func NewChargePoint(manager connectorManager.Manager, scheduler *gocron.Scheduler, cache *auth.Cache, opts ...chargePoint.Options) *ChargePoint {
+func NewChargePoint(manager connectorManager.Manager, scheduler *gocron.Scheduler, cache auth.TagManager, opts ...chargePoint.Options) *ChargePoint {
 	ch := make(chan chargePoint.StatusNotification, 5)
 	// Set the channel
 	manager.SetNotificationChannel(ch)
@@ -47,14 +46,11 @@ func NewChargePoint(manager connectorManager.Manager, scheduler *gocron.Schedule
 		connectorChannel: ch,
 		scheduler:        scheduler,
 		connectorManager: manager,
-		authCache:        cache,
+		tagManager:       cache,
 		logger:           log.StandardLogger(),
 	}
 
-	// Apply options
-	for _, opt := range opts {
-		opt(cp)
-	}
+	cp.ApplyOpts(opts...)
 
 	return cp
 }
@@ -79,12 +75,8 @@ func (cp *ChargePoint) Connect(ctx context.Context, serverUrl string) {
 	// Set charging profiles
 	util.SetProfilesFromConfig(cp.chargePoint, cp, cp, cp)
 
-	cp.setMaxCachedTags()
-
 	cp.logger.Infof("Trying to connect to the central system: %s", serverUrl)
 	connectErr := cp.chargePoint.Start(serverUrl)
-
-	// Check if the connection was successful
 	if connectErr != nil {
 		//cp.CleanUp(core.ReasonOther)
 		cp.logger.WithError(connectErr).Fatalf("Cannot connect to the central system")
@@ -95,37 +87,6 @@ func (cp *ChargePoint) Connect(ctx context.Context, serverUrl string) {
 
 	go cp.ListenForConnectorStatusChange(ctx, cp.connectorChannel)
 	cp.bootNotification()
-}
-
-// HandleChargingRequest Entry point for determining if the request is to start or stop charging. Trying to find a connector that has the tag stored in the Session; if such a connector exists,
-// execute stopChargingConnector, otherwise startCharging.
-func (cp *ChargePoint) HandleChargingRequest(tagId string) (*api.HandleChargingResponse, error) {
-	var (
-		err      error
-		response = api.HandleChargingResponse{}
-	)
-	cp.logger.Infof("Handling request for tag %s", tagId)
-
-	c := cp.connectorManager.FindEVSEWithTagId(tagId)
-	if !util.IsNilInterfaceOrPointer(c) {
-		err = cp.stopChargingConnector(c, core.ReasonLocal)
-		if err != nil {
-			cp.logger.WithError(err).Errorf("Error stopping charging the connector")
-			response.ErrorMessage = err.Error()
-		}
-
-		response.ConnectorId = int32(c.GetEvseId())
-
-		return nil, err
-	}
-
-	err = cp.startCharging(tagId)
-	if err != nil {
-		cp.logger.WithError(err).Errorf("Cannot start charing the connector")
-		return nil, err
-	}
-
-	return nil, err
 }
 
 // CleanUp When exiting the client, stop all the transactions, clean up all the peripherals and terminate the connection.
@@ -163,7 +124,7 @@ func (cp *ChargePoint) CleanUp(reason core.Reason) {
 	cp.scheduler.Stop()
 	cp.scheduler.Clear()
 
-	cp.authCache.DumpTags()
+	_ = cp.tagManager.WriteLocalAuthList()
 
 	cp.logger.Infof("Disconnecting the client..")
 	cp.chargePoint.Stop()

@@ -26,6 +26,7 @@ type (
 		Cleanup() error
 		GetType() string
 		GetStatusChangeChannel() <-chan chargePoint.StateNotification
+		Reset()
 	}
 )
 

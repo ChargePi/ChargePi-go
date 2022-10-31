@@ -61,9 +61,7 @@ func (s *chargePointTestSuite) TestStartStopTransaction() {
 	go func() {
 		time.Sleep(time.Second * 3)
 
-		// Start charging
-		_, err := chargePoint.HandleChargingRequest(tagId)
-		s.Assert().NoError(err)
+		//todo start charging
 
 		// Redeclare expectations
 		s.manager.On("FindEVSEWithTagId", tagId).Return(conn)
@@ -76,8 +74,6 @@ func (s *chargePointTestSuite) TestStartStopTransaction() {
 		time.Sleep(time.Second * 5)
 
 		// Stop charging
-		_, err = chargePoint.HandleChargingRequest(tagId)
-		s.Assert().NoError(err)
 
 		cancel()
 	}()

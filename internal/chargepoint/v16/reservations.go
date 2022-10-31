@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 )
 
 func (cp *ChargePoint) OnReserveNow(request *reservation.ReserveNowRequest) (confirmation *reservation.ReserveNowConfirmation, err error) {
 	cp.logger.Infof("Received %s for %v", request.GetFeatureName(), request.ConnectorId)
-	connector := cp.connectorManager.FindEVSE(request.ConnectorId)
+	connector, err := cp.connectorManager.FindEVSE(request.ConnectorId)
 
-	if util.IsNilInterfaceOrPointer(connector) {
+	if err != nil {
 		return reservation.NewReserveNowConfirmation(reservation.ReservationStatusUnavailable), nil
 	}
 
@@ -35,11 +34,11 @@ func (cp *ChargePoint) OnReserveNow(request *reservation.ReserveNowRequest) (con
 func (cp *ChargePoint) OnCancelReservation(request *reservation.CancelReservationRequest) (confirmation *reservation.CancelReservationConfirmation, err error) {
 	cp.logger.Infof("Received %s for %v", request.GetFeatureName(), request.ReservationId)
 	var (
-		connector = cp.connectorManager.FindEVSEWithReservationId(request.ReservationId)
-		status    = reservation.CancelReservationStatusAccepted
+		connector, rErr = cp.connectorManager.FindEVSEWithReservationId(request.ReservationId)
+		status          = reservation.CancelReservationStatusAccepted
 	)
 
-	if util.IsNilInterfaceOrPointer(connector) {
+	if rErr != nil {
 		return reservation.NewCancelReservationConfirmation(reservation.CancelReservationStatusRejected), nil
 	}
 

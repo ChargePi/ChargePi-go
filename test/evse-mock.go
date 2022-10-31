@@ -33,9 +33,13 @@ func (m *EvseMock) StartCharging(transactionId, tagId string, connectorId *int) 
 	return args.Error(0)
 }
 
-func (m *EvseMock) ResumeCharging(session session.Session) (int, error) {
+func (m *EvseMock) ResumeCharging(session session.Session) (*int, error) {
 	args := m.Called(session)
-	return args.Int(0), args.Error(1)
+	if args.Get(0) != nil {
+		return args.Get(0).(*int), args.Error(1)
+	}
+
+	return nil, args.Error(1)
 }
 
 func (m *EvseMock) GetConnectors() []evse.Connector {
@@ -137,11 +141,23 @@ func (m *EvseMock) GetPowerMeter() powerMeter.PowerMeter {
 	return args.Get(0).(powerMeter.PowerMeter)
 }
 
-func (m *EvseMock) GetMaxChargingTime() int {
+func (m *EvseMock) GetMaxChargingTime() *int {
 	args := m.Called()
-	return args.Int(0)
+	if args.Get(0) != nil {
+		return args.Get(0).(*int)
+	}
+
+	return nil
 }
 
 func (m *EvseMock) SetAvailability(isAvailable bool) {
 	m.Called(isAvailable)
+}
+
+func (m *EvseMock) Lock() {
+	m.Called()
+}
+
+func (m *EvseMock) Unlock() {
+	m.Called()
 }

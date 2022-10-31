@@ -135,11 +135,11 @@ func (suite *connectorManagerTestSuite) TestAddConnectorFromSettings() {
 	}
 
 	// Try to add duplicate connector
-	err := suite.connectorManager.AddEVSEFromSettings(15, suite.connectorSettings)
+	err := suite.connectorManager.AddEVSEFromSettings(nil, suite.connectorSettings)
 	suite.Require().Error(err)
 
 	// Try to add another connector
-	err = suite.connectorManager.AddEVSEFromSettings(15, &settingsModel.EVSE{
+	err = suite.connectorManager.AddEVSEFromSettings(nil, &settingsModel.EVSE{
 		EvseId:  2,
 		Status:  "Available",
 		Session: settingsModel.Session{},
@@ -152,7 +152,7 @@ func (suite *connectorManagerTestSuite) TestAddConnectorFromSettings() {
 	suite.Require().NoError(err)
 
 	// Try to add another connector
-	err = suite.connectorManager.AddEVSEFromSettings(15, nil)
+	err = suite.connectorManager.AddEVSEFromSettings(nil, nil)
 	suite.Require().Error(err)
 }
 
@@ -172,12 +172,14 @@ func (suite *connectorManagerTestSuite) TestGetConnectors() {
 }
 
 func (suite *connectorManagerTestSuite) TestFindConnectorWithId() {
-	c := suite.connectorManager.FindEVSE(1)
+	c, err := suite.connectorManager.FindEVSE(1)
 	suite.Require().NotNil(c)
+	suite.Assert().NoError(err)
 	suite.Require().Equal(1, c.GetEvseId())
 
-	c = suite.connectorManager.FindEVSE(2)
+	c, err = suite.connectorManager.FindEVSE(2)
 	suite.Require().Nil(c)
+	suite.Assert().Error(err)
 }
 
 func (suite *connectorManagerTestSuite) TestFindConnectorWithTagId() {
@@ -185,12 +187,14 @@ func (suite *connectorManagerTestSuite) TestFindConnectorWithTagId() {
 
 	suite.connector1.On("GetTagId").Return(tagId)
 
-	connectorWithTag := suite.connectorManager.FindEVSEWithTagId(tagId)
+	connectorWithTag, err := suite.connectorManager.FindEVSEWithTagId(tagId)
 	suite.Require().NotNil(connectorWithTag)
 	suite.Require().Equal(1, connectorWithTag.GetEvseId())
+	suite.Assert().NoError(err)
 
-	connectorWithTag = suite.connectorManager.FindEVSEWithTagId("noConnectorWithTag")
+	connectorWithTag, err = suite.connectorManager.FindEVSEWithTagId("noConnectorWithTag")
 	suite.Require().Nil(connectorWithTag)
+	suite.Assert().Error(err)
 }
 
 func (suite *connectorManagerTestSuite) TestFindConnectorWithTransactionId() {
@@ -198,12 +202,14 @@ func (suite *connectorManagerTestSuite) TestFindConnectorWithTransactionId() {
 
 	suite.connector1.On("GetTransactionId").Return(transactionId)
 
-	connectorWithTransaction := suite.connectorManager.FindEVSEWithTransactionId(transactionId)
+	connectorWithTransaction, err := suite.connectorManager.FindEVSEWithTransactionId(transactionId)
 	suite.Require().NotNil(connectorWithTransaction)
 	suite.Require().Equal(1, connectorWithTransaction.GetEvseId())
+	suite.Assert().NoError(err)
 
-	connectorWithTag := suite.connectorManager.FindEVSEWithTransactionId("noTransactionWithThisId")
+	connectorWithTag, err := suite.connectorManager.FindEVSEWithTransactionId("noTransactionWithThisId")
 	suite.Require().Nil(connectorWithTag)
+	suite.Assert().Error(err)
 }
 
 func (suite *connectorManagerTestSuite) TestStopAllConnectors() {

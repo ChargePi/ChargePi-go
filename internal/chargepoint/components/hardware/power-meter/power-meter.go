@@ -3,6 +3,7 @@ package powerMeter
 import (
 	"context"
 	"errors"
+	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
@@ -24,12 +25,12 @@ type (
 	PowerMeter interface {
 		Init(ctx context.Context) error
 		Reset()
-		GetEnergy() float64
-		GetPower() float64
-		GetCurrent() float64
-		GetVoltage() float64
-		GetRMSCurrent() float64
-		GetRMSVoltage() float64
+		GetEnergy() types.SampledValue
+		GetPower() types.SampledValue
+		GetCurrent(phase int) types.SampledValue
+		GetVoltage(phase int) types.SampledValue
+		GetRMSCurrent(phase int) types.SampledValue
+		GetRMSVoltage(phase int) types.SampledValue
 		GetType() string
 	}
 )
@@ -48,8 +49,8 @@ func NewPowerMeter(meterSettings settings.PowerMeter) (PowerMeter, error) {
 			powerMeter, err := NewCS5460PowerMeter(
 				meterSettings.SPI.ChipSelect,
 				meterSettings.SPI.Bus,
-				*meterSettings.ShuntOffset,
-				*meterSettings.VoltageDividerOffset,
+				meterSettings.CS5460.ShuntOffset,
+				meterSettings.CS5460.VoltageDividerOffset,
 			)
 			if err != nil {
 				return nil, err

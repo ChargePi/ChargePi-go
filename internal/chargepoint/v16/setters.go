@@ -5,6 +5,7 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/indicator"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/reader"
+	chargePoint "github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 )
 
@@ -26,4 +27,11 @@ func (cp *ChargePoint) SetIndicator(indicator indicator.Indicator) {
 
 func (cp *ChargePoint) SetSettings(settings *settings.Settings) {
 	cp.settings = settings
+}
+
+func (cp *ChargePoint) ApplyOpts(opts ...chargePoint.Options) {
+	// Apply options
+	for _, opt := range opts {
+		opt(cp)
+	}
 }

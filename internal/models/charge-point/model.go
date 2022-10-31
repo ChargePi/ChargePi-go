@@ -5,7 +5,6 @@ import (
 	"errors"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/api"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/indicator"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/reader"
@@ -25,15 +24,16 @@ var (
 
 type (
 	ChargePoint interface {
-		// Startup of the charge point
+		// Basic info
 		Connect(ctx context.Context, serverUrl string)
 		CleanUp(reason core.Reason)
+		ApplyOpts(opts ...Options)
 
 		// Core functionality
-		HandleChargingRequest(tagId string) (*api.HandleChargingResponse, error)
-		StartCharging(tagId string, connectorId int) (*api.StartTransactionResponse, error)
-		StopCharging(tagId string, connectorId int) (*api.StopTransactionResponse, error)
-		GetConnectorStatus(evseId, connectorId int) (*api.GetConnectorStatusResponse, error)
+		StartCharging(evseId, connectorId int, tagId string) error
+		StopCharging(evseId, connectorId int, reason core.Reason) error
+
+		// Connector API
 		AddEVSEs(evses []*settings.EVSE)
 		ListenForConnectorStatusChange(ctx context.Context, ch <-chan StatusNotification)
 
@@ -45,6 +45,6 @@ type (
 
 		// Reader
 		SetReader(reader reader.Reader)
-		ListenForTag(ctx context.Context, tagChannel <-chan string)
+		ListenForTag(ctx context.Context, tagChannel <-chan string) (*string, error)
 	}
 )

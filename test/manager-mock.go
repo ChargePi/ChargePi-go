@@ -18,49 +18,49 @@ func (o *ManagerMock) GetEVSEs() []evse.EVSE {
 	return o.Called().Get(0).([]evse.EVSE)
 }
 
-func (o *ManagerMock) FindEVSE(evseId int) evse.EVSE {
+func (o *ManagerMock) FindEVSE(evseId int) (evse.EVSE, error) {
 	args := o.Called(evseId)
 	if args.Get(0) != nil {
-		return args.Get(0).(evse.EVSE)
+		return args.Get(0).(evse.EVSE), args.Error(1)
 	}
 
-	return nil
+	return nil, args.Error(1)
 }
 
-func (o *ManagerMock) FindAvailableEVSE() evse.EVSE {
+func (o *ManagerMock) FindAvailableEVSE() (evse.EVSE, error) {
 	args := o.Called()
 	if args.Get(0) != nil {
-		return args.Get(0).(evse.EVSE)
+		return args.Get(0).(evse.EVSE), args.Error(1)
 	}
 
-	return nil
+	return nil, args.Error(1)
 }
 
-func (o *ManagerMock) FindEVSEWithTagId(tagId string) evse.EVSE {
+func (o *ManagerMock) FindEVSEWithTagId(tagId string) (evse.EVSE, error) {
 	args := o.Called(tagId)
 	if args.Get(0) != nil {
-		return args.Get(0).(evse.EVSE)
+		return args.Get(0).(evse.EVSE), args.Error(1)
 	}
 
-	return nil
+	return nil, args.Error(1)
 }
 
-func (o *ManagerMock) FindEVSEWithTransactionId(transactionId string) evse.EVSE {
+func (o *ManagerMock) FindEVSEWithTransactionId(transactionId string) (evse.EVSE, error) {
 	args := o.Called(transactionId)
 	if args.Get(0) != nil {
-		return args.Get(0).(evse.EVSE)
+		return args.Get(0).(evse.EVSE), args.Error(1)
 	}
 
-	return nil
+	return nil, args.Error(1)
 }
 
-func (o *ManagerMock) FindEVSEWithReservationId(reservationId int) evse.EVSE {
+func (o *ManagerMock) FindEVSEWithReservationId(reservationId int) (evse.EVSE, error) {
 	args := o.Called(reservationId)
 	if args.Get(0) != nil {
-		return args.Get(0).(evse.EVSE)
+		return args.Get(0).(evse.EVSE), args.Error(1)
 	}
 
-	return nil
+	return nil, args.Error(1)
 }
 
 func (o *ManagerMock) StartCharging(evseId int, tagId, transactionId string) error {
@@ -79,11 +79,11 @@ func (o *ManagerMock) AddEVSE(c evse.EVSE) error {
 	return o.Called(c).Error(0)
 }
 
-func (o *ManagerMock) AddEVSEFromSettings(maxChargingTime int, c *settings.EVSE) error {
+func (o *ManagerMock) AddEVSEFromSettings(maxChargingTime *int, c *settings.EVSE) error {
 	return o.Called(maxChargingTime, c).Error(0)
 }
 
-func (o *ManagerMock) AddEVSEsFromSettings(maxChargingTime int, c []*settings.EVSE) error {
+func (o *ManagerMock) AddEVSEsFromSettings(maxChargingTime *int, c []*settings.EVSE) error {
 	return o.Called(maxChargingTime, c).Error(0)
 }
 

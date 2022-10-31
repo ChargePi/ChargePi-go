@@ -19,6 +19,7 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
 	setting "github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/models/ocpp"
 	"github.com/xBlaz3kx/ChargePi-go/test"
 	"github.com/xBlaz3kx/ocppManager-go/configuration"
 	"net/http"
@@ -34,14 +35,12 @@ const (
 
 	tagId                     = "exampleTag"
 	chargePointId             = "exampleChargePoint"
-	protocolVersion           = settings.OCPP16
+	protocolVersion           = ocpp.OCPP16
 	ocppConfigurationFilePath = "../../../configs/configuration.json"
 )
 
 var chargePointSettings = settings.Settings{ChargePoint: settings.ChargePoint{
 	Info: settings.Info{
-
-		MaxChargingTime: 15,
 		OCPPInfo: settings.OCPPInfo{
 			Vendor: "exampleVendor",
 			Model:  "exampleModel",
@@ -49,7 +48,7 @@ var chargePointSettings = settings.Settings{ChargePoint: settings.ChargePoint{
 	},
 	ConnectionSettings: settings.ConnectionSettings{
 		Id:              chargePointId,
-		ProtocolVersion: string(protocolVersion),
+		ProtocolVersion: protocolVersion,
 		ServerUri:       fmt.Sprintf("ws://%s:%d%s", centralSystemHost, centralSystemPort, centralSystemEndpoint),
 		TLS:             settings.TLS{IsEnabled: false},
 	},
@@ -172,7 +171,7 @@ func (s *chargePointTestSuite) setupChargePoint(ctx context.Context, lcd display
 	cp := v16.NewChargePoint(
 		connectorManager,
 		scheduler.GetScheduler(),
-		auth.NewAuthCache("./auth.json"),
+		auth.NewTagManager(""),
 		chargePoint.WithDisplay(lcd),
 		chargePoint.WithReader(ctx, reader),
 		chargePoint.WithLogger(log.StandardLogger()),

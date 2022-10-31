@@ -47,8 +47,8 @@ func (cp *ChargePoint) OnTriggerMessage(request *remotetrigger.TriggerMessageReq
 		}
 
 		connectorID := *request.ConnectorId
-		c := cp.connectorManager.FindEVSE(connectorID)
-		if c != nil {
+		c, err := cp.connectorManager.FindEVSE(connectorID)
+		if err == nil {
 			defer func(c evse.EVSE) {
 				cpStatus, errCode := c.GetStatus()
 				cp.notifyConnectorStatus(c.GetEvseId(), cpStatus, errCode)

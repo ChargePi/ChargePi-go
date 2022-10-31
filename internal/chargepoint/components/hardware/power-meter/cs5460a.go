@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/warthog618/gpiod"
 	"periph.io/x/conn/v3/spi"
@@ -262,23 +263,54 @@ func (receiver *C5460A) setCurrentOffset(value int32) {
 	receiver.startConverting()
 }
 
-func (receiver *C5460A) GetEnergy() float64 {
-	return float64(receiver.readFromRegister(TotalEnergyRegister) << 16)
+func (receiver *C5460A) GetEnergy() types.SampledValue {
+	value := float64(receiver.readFromRegister(TotalEnergyRegister) << 16)
+
+	return types.SampledValue{
+		Value:     fmt.Sprintf("%.1f", value),
+		Measurand: types.MeasurandEnergyActiveImportRegister,
+	}
 }
-func (receiver *C5460A) GetPower() float64 {
-	return float64(receiver.readFromRegister(LastPowerRegister)) * receiver.powerMultiplier
+func (receiver *C5460A) GetPower() types.SampledValue {
+	value := float64(receiver.readFromRegister(LastPowerRegister)) * receiver.powerMultiplier
+
+	return types.SampledValue{
+		Value:     fmt.Sprintf("%.1f", value),
+		Measurand: types.MeasurandPowerActiveImport,
+	}
 }
-func (receiver *C5460A) GetCurrent() float64 {
-	return float64(receiver.readFromRegister(LastCurrentRegister)) * receiver.currentMultiplier
+
+func (receiver *C5460A) GetCurrent(phase int) types.SampledValue {
+	value := float64(receiver.readFromRegister(LastCurrentRegister)) * receiver.currentMultiplier
+
+	return types.SampledValue{
+		Value:     fmt.Sprintf("%.1f", value),
+		Measurand: types.MeasurandCurrentImport,
+	}
 }
-func (receiver *C5460A) GetVoltage() float64 {
-	return float64(receiver.readFromRegister(LastVoltageRegister)) * receiver.voltageMultiplier
+
+func (receiver *C5460A) GetVoltage(phase int) types.SampledValue {
+	value := float64(receiver.readFromRegister(LastVoltageRegister)) * receiver.voltageMultiplier
+
+	return types.SampledValue{
+		Value:     fmt.Sprintf("%.1f", value),
+		Measurand: types.MeasurandVoltage,
+	}
 }
-func (receiver *C5460A) GetRMSCurrent() float64 {
-	return float64(receiver.readFromRegister(RmsCurrentRegister)) * receiver.currentMultiplier
+func (receiver *C5460A) GetRMSCurrent(phase int) types.SampledValue {
+	value := float64(receiver.readFromRegister(RmsCurrentRegister)) * receiver.currentMultiplier
+
+	return types.SampledValue{
+		Value:     fmt.Sprintf("%.1f", value),
+		Measurand: types.MeasurandCurrentImport,
+	}
 }
-func (receiver *C5460A) GetRMSVoltage() float64 {
-	return float64(receiver.readFromRegister(RmsVoltageRegister)) * receiver.voltageMultiplier
+func (receiver *C5460A) GetRMSVoltage(phase int) types.SampledValue {
+	value := float64(receiver.readFromRegister(RmsVoltageRegister)) * receiver.voltageMultiplier
+	return types.SampledValue{
+		Value:     fmt.Sprintf("%.1f", value),
+		Measurand: types.MeasurandVoltage,
+	}
 }
 
 func (receiver *C5460A) GetType() string {

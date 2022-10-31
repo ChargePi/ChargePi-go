@@ -32,6 +32,10 @@ func (e *EvccMock) GetMaxChargingCurrent() float64 {
 	panic("implement me")
 }
 
+func (e *EvccMock) Reset() {
+	e.Called()
+}
+
 func (e *EvccMock) Lock() {
 	e.Called()
 }

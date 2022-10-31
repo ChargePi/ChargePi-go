@@ -5,27 +5,32 @@ import (
 	"fmt"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/indicator"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models"
+	chargePoint "github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 	"strings"
 	"time"
 )
 
 func (cp *ChargePoint) sendToLCD(messages ...string) {
-	if util.IsNilInterfaceOrPointer(cp.display) || !cp.settings.ChargePoint.Hardware.Display.IsEnabled {
+	if !cp.settings.ChargePoint.Hardware.Display.IsEnabled || util.IsNilInterfaceOrPointer(cp.display) {
 		return
 	}
 
 	cp.logger.Debugf("Sending message(s) to display: %v", messages)
-	cp.display.DisplayMessage(models.NewMessage(time.Second*5, messages))
+	cp.display.DisplayMessage(chargePoint.NewMessage(time.Second*5, messages))
 }
 
 func (cp *ChargePoint) displayLEDStatus(connectorIndex int, status core.ChargePointStatus) {
-	if !cp.settings.ChargePoint.Hardware.LedIndicator.Enabled || util.IsNilInterfaceOrPointer(cp.indicator) {
+	indicatorSettings := cp.settings.ChargePoint.Hardware.LedIndicator
+	if !indicatorSettings.Enabled ||
+		!indicatorSettings.IndicateCardRead ||
+		util.IsNilInterfaceOrPointer(cp.indicator) {
 		return
 	}
 
 	var color = indicator.Off
+	mappings := indicatorSettings.IndicatorMappings
+	mappings.Error = ""
 
 	switch status {
 	case core.ChargePointStatusFaulted:
@@ -41,6 +46,7 @@ func (cp *ChargePoint) displayLEDStatus(connectorIndex int, status core.ChargePo
 	case core.ChargePointStatusUnavailable:
 		color = indicator.Orange
 	default:
+		cp.logger.Error("Cannot find a color for the status")
 		return
 	}
 
@@ -68,10 +74,12 @@ func (cp *ChargePoint) indicateCard(index int, color uint32) {
 
 // ListenForTag Listen for an RFID/NFC tag on a separate thread. If a tag is detected, call the HandleChargingRequest.
 // Blink the LED if indication is enabled.
-func (cp *ChargePoint) ListenForTag(ctx context.Context, tagChannel <-chan string) {
+func (cp *ChargePoint) ListenForTag(ctx context.Context, tagChannel <-chan string) (*string, error) {
 	if tagChannel == nil {
-		return
+		return nil, nil
 	}
+
+	go cp.tagReader.ListenForTags(ctx)
 
 	cp.logger.Info("Started listening for tags from reader")
 
@@ -79,9 +87,10 @@ Listener:
 	for {
 		select {
 		case tagId := <-tagChannel:
+			tagId = strings.ToUpper(tagId)
 			go cp.indicateCard(len(cp.connectorManager.GetEVSEs()), indicator.White)
 			go cp.sendToLCD("Read tag:", tagId)
-			_, _ = cp.HandleChargingRequest(strings.ToUpper(tagId))
+			return &tagId, nil
 		case <-ctx.Done():
 			break Listener
 		default:
@@ -89,4 +98,6 @@ Listener:
 			time.Sleep(time.Millisecond * 200)
 		}
 	}
+
+	return nil, ctx.Err()
 }
