@@ -32,12 +32,9 @@ func setupFlags() {
 }
 
 func setupApiCfg() {
-	// Api flags
-	rootCmd.PersistentFlags().BoolP(settings.ApiFlag, "a", false, "expose API")
 	rootCmd.PersistentFlags().String(settings.ApiAddressFlag, "localhost", "address of the api")
 	rootCmd.PersistentFlags().Int(settings.ApiPortFlag, 4269, "port for the API")
 
-	_ = viper.BindPFlag(settings.ApiEnabled, rootCmd.PersistentFlags().Lookup(settings.ApiFlag))
 	_ = viper.BindPFlag(settings.ApiAddress, rootCmd.PersistentFlags().Lookup(settings.ApiAddressFlag))
 	_ = viper.BindPFlag(settings.ApiPort, rootCmd.PersistentFlags().Lookup(settings.ApiPortFlag))
 }

@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+import "enums.proto";
+import "hardware.proto";
+import "google/protobuf/timestamp.proto";
+
+package api;
+option go_package = "github.com/xBlaz3kx/ChargePi-go/internal/api/grpc";
+
+message ConnectionSettings{
+  string chargePointId = 1;
+  string url = 2;
+  ProtocolVersion ProtocolVersion = 3;
+  string BasicAuthUsername = 4;
+  string BasicAuthPassword = 5;
+  string TLS_CACertificate = 6;
+  string TLS_ClientCertificate = 7;
+  string TLS_ClientPrivateKey = 8;
+}
+
+message ChargePointInfo{
+  string Type = 1;
+  float MaxPower = 2;
+  string ChargeBoxSerialNumber = 3;
+  OcppInfo OcppInfo = 4;
+  FreeCharging FreeCharging = 5;
+}
+
+message OcppInfo{
+  string Vendor = 1;
+  string Model = 2;
+  string ChargeBoxSerialNumber = 3;
+  string ChargePointSerialNumber = 4;
+}
+
+message FreeCharging{
+  bool Enabled = 1;
+  int32 MaxChargingTime = 2;
+}
+
+message AuthorizedCard{
+  string TagId = 1;
+  string Status = 2;
+  google.protobuf.Timestamp ExpiryDate = 3;
+}

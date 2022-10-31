@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+import "enums.proto";
+import "hardware.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+package api;
+option go_package = "github.com/xBlaz3kx/ChargePi-go/internal/api/grpc";
+
+message EVSE {
+  int32 Id = 1;
+  EVCC EVCC = 2;
+  PowerMeter PowerMeter = 3;
+  ConnectorStatus status = 4;
+  Session Session = 5;
+}
+
+message Session {
+  string transactionId = 1;
+  string tagId = 2;
+  google.protobuf.Timestamp started = 3;
+  string Consumption = 4;
+}

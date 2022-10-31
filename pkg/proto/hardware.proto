@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+import "enums.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+package api;
+option go_package = "github.com/xBlaz3kx/ChargePi-go/internal/api/grpc";
+
+message EVCC {
+  string type = 1;
+  string status = 2;
+  Serial Serial = 3;
+  Modbus ModBus = 4;
+}
+
+message PowerMeter {
+  string type = 1;
+  bool enabled = 2;
+  Modbus modbus = 3;
+  Spi spi = 4;
+}
+
+message Display {
+  string type = 1;
+  bool enabled = 2;
+  string language = 3;
+  I2c i2c = 4;
+}
+
+message TagReader {
+  string type = 1;
+  bool enabled = 2;
+  string deviceAddress = 3;
+  string resetPin = 4;
+}
+
+message Indicator {
+  string type = 1;
+  bool enabled = 2;
+  bool indicateCardRead = 3;
+  string dataPin = 4;
+  bool invert = 5;
+}
+
+message Spi {
+  int32 chipSelect = 1;
+  int32 bus = 2;
+}
+
+message Modbus {
+  string protocol = 1;
+  string deviceAddress = 2 ;
+}
+
+message I2c {
+  string address = 1;
+  int32 bus = 2;
+}
+
+message Serial {
+  string deviceAddress = 1;
+  uint32 baudRate = 2;
+  uint32 parity = 3;
+  uint32 dataBits = 4;
+  uint32 stopBits = 5;
+}

@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package api;
+
+option go_package = "github.com/xBlaz3kx/ChargePi-go/internal/api/grpc";
+
+enum ProtocolVersion{
+  OCPP16 = 0;
+  OCPP201 = 1;
+}
+
+enum ConnectorStatus {
+  Available = 0;
+  Preparing = 1;
+  Charging = 2;
+  Finishing = 3;
+  Unavailable = 4;
+  SuspendedEVSE = 5;
+  SuspendedEV = 6;
+  Reserved = 7;
+  Faulted = 8;
+};
+
+enum ErrorCode {
+  NoError = 0;
+  OtherError = 1;
+  ConnectorLockFailure = 3;
+  EVCommunicationError = 4;
+  GroundFailure = 5;
+  HighTemperature = 6;
+  InternalError = 7;
+  LocalListConflict = 8;
+  OverCurrentFailure = 9;
+  OverVoltage = 10;
+  PowerMeterFailure = 11;
+  PowerSwitchFailure = 12;
+  ReaderFailure = 13;
+  ResetFailure = 14;
+  UnderVoltage = 15;
+  WeakSignal = 16;
+}
+
+enum ConnectorType{
+  TYPE1 = 0;
+  TYPE2 = 1;
+  SCHUKO = 2;
+  CHADEMO = 3;
+};

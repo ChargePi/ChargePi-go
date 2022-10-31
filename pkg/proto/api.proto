@@ -1,0 +1,189 @@
+syntax = "proto3";
+
+package api;
+option go_package = "github.com/xBlaz3kx/ChargePi-go/internal/api/grpc";
+
+import "enums.proto";
+import "connector.proto";
+import "hardware.proto";
+import "charge-point.proto";
+import "google/protobuf/empty.proto";
+
+service ChargePoint {
+  // ----------------- Settings API -----------------
+  // Evse settings
+  rpc GetEVSEs (google.protobuf.Empty) returns (GetEvsesResponse) {}
+  rpc AddEVSE (SetEVCCRequest) returns (AddEvseResponse) {}
+  rpc GetEVSE (GetEvseRequest) returns (GetEvseResponse) {}
+  rpc SetEVCC (SetEVCCRequest) returns (SetEvccResponse) {}
+  rpc SetPowerMeter (SetPowerMeterRequest) returns (SetPowerMeterDetails) {}
+  rpc GetUsageForEVSE (GetUsageForEVSERequest) returns (stream GetUsageForEVSEResponse) {}
+
+  // Display settings
+  rpc SetDisplaySettings (SetDisplaySettingsRequest) returns (SetDisplaySettingsResponse) {}
+  rpc GetDisplaySettings (google.protobuf.Empty) returns (GetDisplaySettingsResponse) {}
+
+  // Reader settings
+  rpc SetReaderSettings (SetReaderSettingsRequest) returns (SetReaderSettingsResponse) {}
+  rpc GetReaderSettings (google.protobuf.Empty) returns (GetReaderSettingsResponse) {}
+
+  // LED indicator
+  rpc SetIndicatorSettings (SetIndicatorSettingsRequest) returns (SetIndicatorSettingsResponse) {}
+  rpc GetIndicatorSettings (google.protobuf.Empty) returns (GetIndicatorSettingsResponse) {}
+
+  // Local auth and cache
+  rpc GetAuthorizedCards (google.protobuf.Empty) returns (GetAuthorizedCardsResponse) {}
+  rpc AddAuthorizedCards (AddAuthorizedCardsRequest) returns (AddAuthorizedCardsResponse) {}
+
+  rpc Restart(RestartRequest) returns (google.protobuf.Empty) {}
+
+  rpc ChangeConnectionDetails(ChangeConnectionDetailsRequest) returns (ChangeConnectionDetailsResponse) {}
+
+  rpc ChangeChargePointDetails(ChangeConnectionDetailsRequest) returns (ChangeConnectionDetailsResponse) {}
+}
+
+/*------------------ ConnectionDetails ------------------------ */
+
+message ChangeConnectionDetailsRequest {
+  ConnectionSettings ConnectionSettings = 1;
+}
+
+message ChangeConnectionDetailsResponse {
+  ConnectionSettings ConnectionSettings = 1;
+  string status = 2;
+}
+
+/*------------------ Restart ------------------------ */
+
+message RestartRequest {
+  string type = 1;
+}
+
+/*------------------GetConnectorStatus ------------------------ */
+
+message GetConnectorStatusRequest {
+  int32 connectorId = 1;
+  int32 evseId = 2;
+}
+
+message GetConnectorStatusResponse {
+  ConnectorType connectorType = 1;
+  ConnectorStatus connectorStatus = 2;
+  ErrorCode errorCode = 3;
+
+  string transactionId = 4;
+  int32 timeElapsed = 5;
+  float energyConsumed = 6;
+  float currentPower = 7;
+}
+
+/*------------------ GetEVSEs ------------------------ */
+
+message GetEvsesResponse {
+  repeated EVSE EVSEs = 1;
+}
+
+/*------------------ GetEVSE ------------------------ */
+
+message GetEvseRequest {
+  int32 evseId = 1;
+}
+
+message GetEvseResponse {
+  EVSE EVSE = 1;
+}
+
+message AddEvseRequest {
+  int32 evseId = 1;
+  EVCC EVCC = 2;
+  PowerMeter PowerMeter = 3;
+}
+
+message AddEvseResponse {
+  string status = 1;
+  EVSE EVSE = 2;
+}
+
+/*------------------ Evcc ------------------------ */
+
+message SetEVCCRequest {
+  int32 evseId = 1;
+  EVCC EVCC = 2;
+}
+
+message SetEvccResponse {
+  string type = 1;
+}
+
+message SetPowerMeterRequest {
+  int32 evseId = 1;
+  PowerMeter PowerMeter = 2;
+}
+
+message SetPowerMeterDetails {
+  string type = 1;
+}
+
+message GetUsageForEVSERequest {
+  int32 evseId = 1;
+}
+
+message GetUsageForEVSEResponse {
+  int32 evseId = 1;
+}
+
+/*------------------ Display ------------------------ */
+
+message SetDisplaySettingsRequest {
+  Display Display = 1;
+}
+
+message SetDisplaySettingsResponse {
+  string status = 1;
+}
+
+message GetDisplaySettingsResponse {
+  Display Display = 1;
+}
+
+/*------------------ Reader ------------------------ */
+
+message SetReaderSettingsRequest {
+  TagReader Reader = 1;
+}
+
+message SetReaderSettingsResponse {
+  string status = 1;
+}
+
+message GetReaderSettingsResponse {
+  TagReader Reader = 1;
+}
+
+/*------------------ Indication ------------------------ */
+
+message SetIndicatorSettingsRequest {
+  Indicator Indicator = 1;
+}
+
+message SetIndicatorSettingsResponse {
+  string status = 1;
+}
+
+message GetIndicatorSettingsResponse {
+  Indicator Indicator = 1;
+}
+
+/*------------------ Tags ------------------------ */
+
+message AddAuthorizedCardsRequest {
+  repeated AuthorizedCard AuthorizedCards = 1;
+}
+
+message AddAuthorizedCardsResponse {
+  repeated string status = 1;
+}
+
+message GetAuthorizedCardsResponse {
+  repeated AuthorizedCard AuthorizedCards = 1;
+}

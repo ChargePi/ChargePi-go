@@ -10,6 +10,8 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
 	log "github.com/sirupsen/logrus"
+	"github.com/xBlaz3kx/ChargePi-go/internal/api/grpc"
+	"github.com/xBlaz3kx/ChargePi-go/internal/api/http"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/auth"
 	connectorManager "github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/indicator"
@@ -119,6 +121,14 @@ func Run(isDebug bool, config *settings.Settings, connectors []*settings.EVSE, c
 	handler.SetSettings(chargePointInfo)
 	handler.SetConnectionSettings(connectionSettings)
 	go handler.Connect(parentCtxForOcpp, serverUrl)
+
+	// Expose the API endpoints
+	server := grpc.NewServer(config.Api, handler, tagManager)
+	go server.Run()
+
+	// Expose the ui at http://localhost:4269/
+	ui := http.NewUi()
+	go ui.Serve("0.0.0.0:4269")
 
 	<-ctx.Done()
 	handler.CleanUp(core.ReasonLocal)
