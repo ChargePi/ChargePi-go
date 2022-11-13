@@ -10,7 +10,7 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display/i18n"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/indicator"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models/notifications"
 	settingsData "github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
@@ -88,7 +88,7 @@ func (cp *ChargePoint) notifyConnectorStatus(evseId int, status core.ChargePoint
 }
 
 // ListenForConnectorStatusChange listen for change in connector and notify the central system about the state
-func (cp *ChargePoint) ListenForConnectorStatusChange(ctx context.Context, ch <-chan chargePoint.StatusNotification) {
+func (cp *ChargePoint) ListenForConnectorStatusChange(ctx context.Context, ch <-chan notifications.StatusNotification) {
 	cp.logger.Debug("Starting to listen for connector status change")
 
 Listener:

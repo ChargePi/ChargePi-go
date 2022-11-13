@@ -17,8 +17,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/tls"
-	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
-	v16 "github.com/xBlaz3kx/ocppManager-go/v16"
+	ocppManager "github.com/xBlaz3kx/ocppManager-go"
+	"github.com/xBlaz3kx/ocppManager-go/configuration"
 	"strconv"
 	"strings"
 	"time"
@@ -43,7 +43,7 @@ func CreateClient(basicAuthUser, basicAuthPass string, tlsConfig settings.TLS) *
 	var (
 		client            = ws.NewClient()
 		clientConfig      = ws.NewClientTimeoutConfig()
-		pingInterval, err = ocppConfigManager.GetConfigurationValue(v16.WebSocketPingInterval.String())
+		pingInterval, err = ocppManager.GetConfigurationValue(configuration.WebSocketPingInterval.String())
 	)
 
 	if err == nil {
@@ -75,12 +75,12 @@ func SetProfilesFromConfig(
 	triggerHandler remotetrigger.ChargePointHandler,
 ) {
 	// Set handlers based on configuration
-	profiles, err := ocppConfigManager.GetConfigurationValue(v16.SupportedFeatureProfiles.String())
+	profiles, err := ocppManager.GetConfigurationValue(configuration.SupportedFeatureProfiles.String())
 	if err != nil {
 		log.WithError(err).Fatalf("No supported profiles specified")
 	}
 
-	for _, profile := range strings.Split(profiles, ", ") {
+	for _, profile := range strings.Split(*profiles, ", ") {
 		switch strings.ToLower(profile) {
 		case strings.ToLower(core.ProfileName):
 			chargePoint.SetCoreHandler(coreHandler)
@@ -106,14 +106,14 @@ func GetTypesToSample() []types.Measurand {
 	var (
 		measurands []types.Measurand
 		// Get the types to sample
-		measurandsString, err = ocppConfigManager.GetConfigurationValue(v16.MeterValuesSampledData.String())
+		measurandsString, err = ocppManager.GetConfigurationValue(configuration.MeterValuesSampledData.String())
 	)
 
 	if err != nil {
 		return measurands
 	}
 
-	for _, measurand := range strings.Split(measurandsString, ",") {
+	for _, measurand := range strings.Split(*measurandsString, ",") {
 		measurands = append(measurands, types.Measurand(measurand))
 	}
 
@@ -123,10 +123,10 @@ func GetTypesToSample() []types.Measurand {
 // SendRequest is a middleware function that implements a retry mechanism for sending requests. If the max attempts is reached, return an error
 func SendRequest(chargePoint ocpp16.ChargePoint, request ocpp.Request, callback func(confirmation ocpp.Response, protoError error)) error {
 	var (
-		maxMessageAttempts, attemptErr  = ocppConfigManager.GetConfigurationValue(v16.TransactionMessageAttempts.String())
-		retryIntervalValue, intervalErr = ocppConfigManager.GetConfigurationValue(v16.TransactionMessageRetryInterval.String())
-		maxRetries, convError           = strconv.Atoi(maxMessageAttempts)
-		retryInterval, convError2       = strconv.Atoi(retryIntervalValue)
+		maxMessageAttempts, attemptErr  = ocppManager.GetConfigurationValue(configuration.TransactionMessageAttempts.String())
+		retryIntervalValue, intervalErr = ocppManager.GetConfigurationValue(configuration.TransactionMessageRetryInterval.String())
+		maxRetries, convError           = strconv.Atoi(*maxMessageAttempts)
+		retryInterval, convError2       = strconv.Atoi(*retryIntervalValue)
 	)
 
 	if attemptErr != nil || convError != nil {

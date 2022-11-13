@@ -6,7 +6,7 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
 	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
-	v16 "github.com/xBlaz3kx/ocppManager-go/v16"
+	"github.com/xBlaz3kx/ocppManager-go/configuration"
 	"strconv"
 )
 
@@ -37,18 +37,18 @@ type (
 )
 
 func NewTagManager(filePath string) *TagManagerImpl {
-	authCacheEnabled, cacheErr := ocppConfigManager.GetConfigurationValue(v16.AuthorizationCacheEnabled.String())
-	localListLength, err := ocppConfigManager.GetConfigurationValue(v16.LocalAuthListMaxLength.String())
+	authCacheEnabled, cacheErr := ocppConfigManager.GetConfigurationValue(configuration.AuthorizationCacheEnabled.String())
+	localListLength, err := ocppConfigManager.GetConfigurationValue(configuration.LocalAuthListMaxLength.String())
 
 	if cacheErr != nil {
-		authCacheEnabled = "false"
 	}
 
 	if err != nil {
-		localListLength = "0"
+		length := "0"
+		localListLength = &length
 	}
 
-	maxTags, err := strconv.Atoi(localListLength)
+	maxTags, err := strconv.Atoi(*localListLength)
 	if err != nil {
 		maxTags = 0
 	}
@@ -57,7 +57,7 @@ func NewTagManager(filePath string) *TagManagerImpl {
 	authList := NewLocalAuthList(filePath, maxTags)
 
 	return &TagManagerImpl{
-		authCacheEnabled: authCacheEnabled == "true",
+		authCacheEnabled: authCacheEnabled != nil && *authCacheEnabled == "true",
 		cache:            cache,
 		authList:         authList,
 	}

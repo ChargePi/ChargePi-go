@@ -4,7 +4,7 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
-	v16 "github.com/xBlaz3kx/ocppManager-go/v16"
+	v16 "github.com/xBlaz3kx/ocppManager-go/configuration"
 	"time"
 )
 
@@ -13,15 +13,11 @@ import (
 // If cache is not enabled, it will just execute sendAuthorizeRequest and retrieve the status from the request.
 func (cp *ChargePoint) isTagAuthorized(tagId string) bool {
 	var (
-		response                      = false
-		localPreAuthorize, preAuthErr = ocppConfigManager.GetConfigurationValue(v16.LocalPreAuthorize.String())
+		response             = false
+		localPreAuthorize, _ = ocppConfigManager.GetConfigurationValue(v16.LocalPreAuthorize.String())
 	)
 
-	if preAuthErr != nil {
-		localPreAuthorize = "false"
-	}
-
-	if localPreAuthorize == "true" {
+	if localPreAuthorize != nil && *localPreAuthorize == "true" {
 		cp.logger.Infof("Authorizing tag %s with cache", tagId)
 
 		tag, err := cp.tagManager.GetTag(tagId)

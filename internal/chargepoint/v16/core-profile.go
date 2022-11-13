@@ -7,7 +7,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
 	ocppManager "github.com/xBlaz3kx/ocppManager-go"
-	v16 "github.com/xBlaz3kx/ocppManager-go/v16"
+	"github.com/xBlaz3kx/ocppManager-go/configuration"
 	"os/exec"
 )
 
@@ -30,7 +30,7 @@ func (cp *ChargePoint) OnChangeConfiguration(request *core.ChangeConfigurationRe
 
 	cp.logger.Infof("Received request %s", request.GetFeatureName())
 
-	err = ocppManager.UpdateKey(request.Key, request.Value)
+	err = ocppManager.UpdateKey(request.Key, &request.Value)
 	if err == nil {
 		response = core.ConfigurationStatusAccepted
 	}
@@ -48,15 +48,15 @@ func (cp *ChargePoint) OnClearCache(request *core.ClearCacheRequest) (confirmati
 
 	var (
 		response                  = core.ClearCacheStatusRejected
-		authCacheEnabled, confErr = ocppManager.GetConfigurationValue(v16.AuthorizationCacheEnabled.String())
+		authCacheEnabled, confErr = ocppManager.GetConfigurationValue(configuration.AuthorizationCacheEnabled.String())
 	)
 
-	if confErr != nil || authCacheEnabled == "false" {
+	if confErr != nil {
 		cp.logger.WithError(confErr).Errorf("Cannot clear cache")
 		return core.NewClearCacheConfirmation(response), nil
 	}
 
-	if authCacheEnabled == "true" {
+	if authCacheEnabled != nil && *authCacheEnabled == "true" {
 		cp.tagManager.ClearCache()
 		response = core.ClearCacheStatusAccepted
 	}

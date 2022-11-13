@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
 	"github.com/xBlaz3kx/ChargePi-go/test"
-	ocppVar "github.com/xBlaz3kx/ocppManager-go/v16"
+	ocppVar "github.com/xBlaz3kx/ocppManager-go/configuration"
 	"strings"
 	"time"
 )

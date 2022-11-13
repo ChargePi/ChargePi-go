@@ -12,6 +12,7 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/indicator"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/reader"
 	chargePoint "github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 )
@@ -27,8 +28,8 @@ type (
 		display   display.Display
 		// Software components
 		connectorManager   connectorManager.Manager
-		connectorChannel   chan chargePoint.StatusNotification
-		meterValuesChannel chan chargePoint.MeterValueNotification
+		connectorChannel   chan notifications.StatusNotification
+		meterValuesChannel chan notifications.MeterValueNotification
 		scheduler          *gocron.Scheduler
 		tagManager         auth.TagManager
 		logger             *log.Logger
@@ -37,7 +38,7 @@ type (
 
 // NewChargePoint creates a new ChargePoint for OCPP version 1.6.
 func NewChargePoint(manager connectorManager.Manager, scheduler *gocron.Scheduler, cache auth.TagManager, opts ...chargePoint.Options) *ChargePoint {
-	ch := make(chan chargePoint.StatusNotification, 5)
+	ch := make(chan notifications.StatusNotification, 5)
 	// Set the channel
 	manager.SetNotificationChannel(ch)
 

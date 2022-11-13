@@ -8,7 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/evcc"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/power-meter"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/session"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
@@ -41,14 +41,14 @@ type (
 		AddEVSEFromSettings(maxChargingTime *int, c *settings.EVSE) error
 		AddEVSEsFromSettings(maxChargingTime *int, c []*settings.EVSE) error
 		RestoreEVSEStatus(*settings.EVSE) error
-		SetNotificationChannel(notificationChannel chan chargePoint.StatusNotification)
-		SetMeterValuesChannel(notificationChannel chan chargePoint.MeterValueNotification)
+		SetNotificationChannel(notificationChannel chan notifications.StatusNotification)
+		SetMeterValuesChannel(notificationChannel chan notifications.MeterValueNotification)
 	}
 
 	managerImpl struct {
 		connectors          sync.Map
-		notificationChannel chan chargePoint.StatusNotification
-		meterValuesChannel  chan chargePoint.MeterValueNotification
+		notificationChannel chan notifications.StatusNotification
+		meterValuesChannel  chan notifications.MeterValueNotification
 	}
 )
 
@@ -67,7 +67,7 @@ func GetManager() Manager {
 	return manager
 }
 
-func NewManager(notificationChannel chan chargePoint.StatusNotification) Manager {
+func NewManager(notificationChannel chan notifications.StatusNotification) Manager {
 	return &managerImpl{
 		connectors:          sync.Map{},
 		notificationChannel: notificationChannel,
@@ -88,13 +88,13 @@ func (m *managerImpl) GetEVSEs() []EVSE {
 	return connectors
 }
 
-func (m *managerImpl) SetNotificationChannel(notificationChannel chan chargePoint.StatusNotification) {
+func (m *managerImpl) SetNotificationChannel(notificationChannel chan notifications.StatusNotification) {
 	if notificationChannel != nil {
 		m.notificationChannel = notificationChannel
 	}
 }
 
-func (m *managerImpl) SetMeterValuesChannel(notificationChannel chan chargePoint.MeterValueNotification) {
+func (m *managerImpl) SetMeterValuesChannel(notificationChannel chan notifications.MeterValueNotification) {
 	if notificationChannel != nil {
 		m.meterValuesChannel = notificationChannel
 	}

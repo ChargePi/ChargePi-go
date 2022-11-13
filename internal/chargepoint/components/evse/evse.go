@@ -8,14 +8,14 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/evcc"
 	powerMeter "github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/power-meter"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/session"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 	carState "github.com/xBlaz3kx/ChargePi-go/pkg/models/evcc"
 	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
-	v16 "github.com/xBlaz3kx/ocppManager-go/v16"
+	"github.com/xBlaz3kx/ocppManager-go/configuration"
 	"golang.org/x/net/context"
 	"sync"
 	"time"
@@ -57,8 +57,8 @@ type (
 		IsUnavailable() bool
 		GetMaxChargingTime() *int
 
-		SetNotificationChannel(notificationChannel chan<- chargePoint.StatusNotification)
-		SetMeterValuesChannel(notificationChannel chan<- chargePoint.MeterValueNotification)
+		SetNotificationChannel(notificationChannel chan<- notifications.StatusNotification)
+		SetMeterValuesChannel(notificationChannel chan<- notifications.MeterValueNotification)
 
 		ReserveEvse(reservationId int, tagId string) error
 		RemoveReservation() error
@@ -78,8 +78,8 @@ type (
 		reservationId   *int
 
 		// Notification channels
-		meterValuesChannel  chan<- chargePoint.MeterValueNotification
-		notificationChannel chan<- chargePoint.StatusNotification
+		meterValuesChannel  chan<- notifications.MeterValueNotification
+		notificationChannel chan<- notifications.StatusNotification
 		mu                  sync.Mutex
 
 		// Hardware
@@ -344,7 +344,7 @@ func (evse *EvseImpl) SamplePowerMeter(measurands []types.Measurand) {
 	meterValues.SampledValue = samples
 
 	if evse.meterValuesChannel != nil {
-		evse.meterValuesChannel <- chargePoint.NewMeterValueNotification(evse.evseId, nil, nil, meterValues)
+		evse.meterValuesChannel <- notifications.NewMeterValueNotification(evse.evseId, nil, nil, meterValues)
 	}
 
 	evse.session.AddSampledValue(samples)
@@ -355,14 +355,14 @@ func (evse *EvseImpl) preparePowerMeterAtConnector() error {
 	var (
 		measurands          = util.GetTypesToSample()
 		sampleTime          = "10s"
-		sampleInterval, err = ocppConfigManager.GetConfigurationValue(v16.MeterValueSampleInterval.String())
+		sampleInterval, err = ocppConfigManager.GetConfigurationValue(configuration.MeterValueSampleInterval.String())
 		jobTag              = fmt.Sprintf("Evse%dSampling", evse.evseId)
 	)
-	if err != nil {
-		sampleInterval = "10"
+
+	if err == nil && sampleInterval != nil {
+		sampleTime = fmt.Sprintf("%ss", *sampleInterval)
 	}
 
-	sampleTime = fmt.Sprintf("%ss", sampleInterval)
 	// Schedule the sampling
 	_, err = scheduler.GetScheduler().Every(sampleTime).
 		Tag(jobTag).
@@ -415,7 +415,7 @@ func (evse *EvseImpl) SetStatus(status core.ChargePointStatus, errCode core.Char
 	settings.UpdateEVSEStatus(evse.evseId, status)
 
 	if evse.notificationChannel != nil {
-		evse.notificationChannel <- chargePoint.NewStatusNotification(evse.evseId, string(status), string(errCode))
+		evse.notificationChannel <- notifications.NewStatusNotification(evse.evseId, string(status), string(errCode))
 	}
 }
 
@@ -486,11 +486,11 @@ func (evse *EvseImpl) GetStatus() (core.ChargePointStatus, core.ChargePointError
 	return evse.status, evse.errorCode
 }
 
-func (evse *EvseImpl) SetNotificationChannel(notificationChannel chan<- chargePoint.StatusNotification) {
+func (evse *EvseImpl) SetNotificationChannel(notificationChannel chan<- notifications.StatusNotification) {
 	evse.notificationChannel = notificationChannel
 }
 
-func (evse *EvseImpl) SetMeterValuesChannel(notificationChannel chan<- chargePoint.MeterValueNotification) {
+func (evse *EvseImpl) SetMeterValuesChannel(notificationChannel chan<- notifications.MeterValueNotification) {
 	evse.meterValuesChannel = notificationChannel
 }
 

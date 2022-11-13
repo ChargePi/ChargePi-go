@@ -1,4 +1,4 @@
-package chargePoint
+package notifications
 
 import "time"
 

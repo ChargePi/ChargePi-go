@@ -6,7 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/test"
 	"testing"
@@ -30,7 +30,7 @@ func (s *triggerMessageTestSuite) TestTriggerMessage() {
 	var (
 		connectorMock = new(test.EvseMock)
 		managerMock   = new(test.ManagerMock)
-		connectorChan = make(chan chargePoint.StatusNotification, 2)
+		connectorChan = make(chan notifications.StatusNotification, 2)
 	)
 
 	// Set manager expectations

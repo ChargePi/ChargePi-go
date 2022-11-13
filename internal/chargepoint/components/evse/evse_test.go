@@ -5,7 +5,7 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/session"
 	"github.com/xBlaz3kx/ChargePi-go/test"
 	"golang.org/x/net/context"
@@ -235,7 +235,7 @@ func (s *EvseTestSuite) TestSamplePowerMeter() {
 
 	var (
 		ctx, cancel    = context.WithTimeout(context.Background(), time.Second*30)
-		meterValueChan = make(chan chargePoint.MeterValueNotification)
+		meterValueChan = make(chan notifications.MeterValueNotification)
 	)
 
 	defer cancel()

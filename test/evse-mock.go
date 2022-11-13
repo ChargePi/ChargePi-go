@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/power-meter"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/session"
 )
 
@@ -50,11 +50,11 @@ func (m *EvseMock) ReserveEvse(reservationId int, tagId string) error {
 	return m.Called(reservationId, tagId, tagId).Error(0)
 }
 
-func (m *EvseMock) SetMeterValuesChannel(notificationChannel chan<- chargePoint.MeterValueNotification) {
+func (m *EvseMock) SetMeterValuesChannel(notificationChannel chan<- notifications.MeterValueNotification) {
 	m.Called(notificationChannel)
 }
 
-func (m *EvseMock) SetNotificationChannel(notificationChannel chan<- chargePoint.StatusNotification) {
+func (m *EvseMock) SetNotificationChannel(notificationChannel chan<- notifications.StatusNotification) {
 	m.Called(notificationChannel)
 }
 

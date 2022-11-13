@@ -9,7 +9,7 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
-	v16 "github.com/xBlaz3kx/ocppManager-go/v16"
+	"github.com/xBlaz3kx/ocppManager-go/configuration"
 	"strconv"
 	"time"
 )
@@ -25,7 +25,7 @@ func (cp *ChargePoint) stopChargingConnector(connector evse.EVSE, reason core.Re
 	}
 
 	var (
-		stopTransactionOnEVDisconnect, err = ocppConfigManager.GetConfigurationValue(v16.StopTransactionOnEVSideDisconnect.String())
+		stopTransactionOnEVDisconnect, err = ocppConfigManager.GetConfigurationValue(configuration.StopTransactionOnEVSideDisconnect.String())
 		transactionId, convErr             = strconv.Atoi(connector.GetTransactionId())
 		logInfo                            = cp.logger.WithFields(log.Fields{
 			"evseId": connector.GetEvseId(),
@@ -33,15 +33,11 @@ func (cp *ChargePoint) stopChargingConnector(connector evse.EVSE, reason core.Re
 		})
 	)
 
-	if err != nil {
-		stopTransactionOnEVDisconnect = "true"
-	}
-
 	if convErr != nil {
 		return convErr
 	}
 
-	if stopTransactionOnEVDisconnect != "true" && reason == core.ReasonEVDisconnected {
+	if stopTransactionOnEVDisconnect != nil && *stopTransactionOnEVDisconnect != "true" && reason == core.ReasonEVDisconnected {
 		logInfo.Info("The charging without stopping the transaction")
 		return connector.StopCharging(reason)
 	}
