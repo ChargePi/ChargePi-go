@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/test"
 	ocppManager "github.com/xBlaz3kx/ocppManager-go"
@@ -189,7 +189,7 @@ func (s *connectorFunctionsTestSuite) TestRestoreState() {
 func (s *connectorFunctionsTestSuite) TestDisplayConnectorStatus() {
 	var (
 		ctx, cancel = context.WithTimeout(context.Background(), time.Second*10)
-		channel     = make(chan chargePoint.Message)
+		channel     = make(chan notifications.Message)
 		lcdMock     = new(test.DisplayMock)
 	)
 

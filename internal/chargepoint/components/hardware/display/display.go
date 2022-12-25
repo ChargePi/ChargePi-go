@@ -3,7 +3,7 @@ package display
 import (
 	"errors"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 )
@@ -21,7 +21,7 @@ var (
 type (
 	// Display is an abstraction layer for concrete implementation of a display.
 	Display interface {
-		DisplayMessage(message chargePoint.Message)
+		DisplayMessage(message notifications.Message)
 		Cleanup()
 		Clear()
 		GetType() string

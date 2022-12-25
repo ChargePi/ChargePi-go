@@ -6,9 +6,8 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 	ocppManager "github.com/xBlaz3kx/ocppManager-go"
-	v16 "github.com/xBlaz3kx/ocppManager-go/v16"
+	"github.com/xBlaz3kx/ocppManager-go/configuration"
 	"os/exec"
 )
 
@@ -31,7 +30,7 @@ func (cp *ChargePoint) OnChangeConfiguration(request *core.ChangeConfigurationRe
 
 	cp.logger.Infof("Received request %s", request.GetFeatureName())
 
-	err = ocppManager.UpdateKey(request.Key, request.Value)
+	err = ocppManager.UpdateKey(request.Key, &request.Value)
 	if err == nil {
 		response = core.ConfigurationStatusAccepted
 	}
@@ -49,16 +48,16 @@ func (cp *ChargePoint) OnClearCache(request *core.ClearCacheRequest) (confirmati
 
 	var (
 		response                  = core.ClearCacheStatusRejected
-		authCacheEnabled, confErr = ocppManager.GetConfigurationValue(v16.AuthorizationCacheEnabled.String())
+		authCacheEnabled, confErr = ocppManager.GetConfigurationValue(configuration.AuthorizationCacheEnabled.String())
 	)
 
-	if confErr != nil || authCacheEnabled == "false" {
+	if confErr != nil {
 		cp.logger.WithError(confErr).Errorf("Cannot clear cache")
 		return core.NewClearCacheConfirmation(response), nil
 	}
 
-	if authCacheEnabled == "true" {
-		cp.authCache.RemoveCachedTags()
+	if authCacheEnabled != nil && *authCacheEnabled == "true" {
+		cp.tagManager.ClearCache()
 		response = core.ClearCacheStatusAccepted
 	}
 
@@ -149,18 +148,18 @@ func (cp *ChargePoint) OnUnlockConnector(request *core.UnlockConnectorRequest) (
 	cp.logger.Infof("Received request %s", request.GetFeatureName())
 
 	var (
-		response = core.UnlockStatusNotSupported
-		conn     = cp.connectorManager.FindEVSE(request.ConnectorId)
+		response   = core.UnlockStatusNotSupported
+		conn, fErr = cp.connectorManager.FindEVSE(request.ConnectorId)
 	)
 
-	if util.IsNilInterfaceOrPointer(conn) {
+	if fErr != nil {
 		return core.NewUnlockConnectorConfirmation(core.UnlockStatusUnlockFailed), nil
 	}
 
 	response = core.UnlockStatusUnlocked
 
-	_, err = cp.scheduler.Every(1).Seconds().LimitRunsTo(1).Do(cp.stopChargingConnector, conn, core.ReasonUnlockCommand)
-	if err != nil {
+	_, schedulerErr := cp.scheduler.Every(1).Seconds().LimitRunsTo(1).Do(cp.stopChargingConnector, conn, core.ReasonUnlockCommand)
+	if schedulerErr != nil {
 		response = core.UnlockStatusUnlockFailed
 	}
 
@@ -173,10 +172,10 @@ func (cp *ChargePoint) OnRemoteStopTransaction(request *core.RemoteStopTransacti
 	var (
 		response      = types.RemoteStartStopStatusRejected
 		transactionId = fmt.Sprintf("%d", request.TransactionId)
-		conn          = cp.connectorManager.FindEVSEWithTransactionId(transactionId)
+		conn, fErr    = cp.connectorManager.FindEVSEWithTransactionId(transactionId)
 	)
 
-	if !util.IsNilInterfaceOrPointer(conn) && conn.IsCharging() {
+	if fErr == nil && conn.IsCharging() {
 		response = types.RemoteStartStopStatusAccepted
 		// Delay stopping the transaction by 3 seconds
 		_, schedulerErr := cp.scheduler.Every(3).Seconds().LimitRunsTo(1).Do(cp.stopChargingConnectorWithTransactionId, transactionId)
@@ -201,15 +200,15 @@ func (cp *ChargePoint) OnRemoteStartTransaction(request *core.RemoteStartTransac
 	logInfo.Infof("Received request %s", request.GetFeatureName())
 
 	if request.ConnectorId != nil {
-		conn = cp.connectorManager.FindEVSE(*request.ConnectorId)
+		conn, err = cp.connectorManager.FindEVSE(*request.ConnectorId)
 	} else {
-		conn = cp.connectorManager.FindAvailableEVSE()
+		conn, err = cp.connectorManager.FindAvailableEVSE()
 	}
 
-	if !util.IsNilInterfaceOrPointer(conn) && conn.IsAvailable() {
+	if err == nil && conn.IsAvailable() {
 		// Delay the charging by 3 seconds
 		response = types.RemoteStartStopStatusAccepted
-		_, schedulerErr := cp.scheduler.Every(3).Seconds().LimitRunsTo(1).Do(cp.startChargingConnector, conn, request.IdTag)
+		_, schedulerErr := cp.scheduler.Every(3).Seconds().LimitRunsTo(1).Do(cp.StartCharging, conn, 1, request.IdTag)
 		if schedulerErr != nil {
 			response = types.RemoteStartStopStatusRejected
 		}

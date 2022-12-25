@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/power-meter"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/session"
 )
 
@@ -33,9 +33,13 @@ func (m *EvseMock) StartCharging(transactionId, tagId string, connectorId *int) 
 	return args.Error(0)
 }
 
-func (m *EvseMock) ResumeCharging(session session.Session) (int, error) {
+func (m *EvseMock) ResumeCharging(session session.Session) (*int, error) {
 	args := m.Called(session)
-	return args.Int(0), args.Error(1)
+	if args.Get(0) != nil {
+		return args.Get(0).(*int), args.Error(1)
+	}
+
+	return nil, args.Error(1)
 }
 
 func (m *EvseMock) GetConnectors() []evse.Connector {
@@ -46,11 +50,11 @@ func (m *EvseMock) ReserveEvse(reservationId int, tagId string) error {
 	return m.Called(reservationId, tagId, tagId).Error(0)
 }
 
-func (m *EvseMock) SetMeterValuesChannel(notificationChannel chan<- chargePoint.MeterValueNotification) {
+func (m *EvseMock) SetMeterValuesChannel(notificationChannel chan<- notifications.MeterValueNotification) {
 	m.Called(notificationChannel)
 }
 
-func (m *EvseMock) SetNotificationChannel(notificationChannel chan<- chargePoint.StatusNotification) {
+func (m *EvseMock) SetNotificationChannel(notificationChannel chan<- notifications.StatusNotification) {
 	m.Called(notificationChannel)
 }
 
@@ -137,11 +141,23 @@ func (m *EvseMock) GetPowerMeter() powerMeter.PowerMeter {
 	return args.Get(0).(powerMeter.PowerMeter)
 }
 
-func (m *EvseMock) GetMaxChargingTime() int {
+func (m *EvseMock) GetMaxChargingTime() *int {
 	args := m.Called()
-	return args.Int(0)
+	if args.Get(0) != nil {
+		return args.Get(0).(*int)
+	}
+
+	return nil
 }
 
 func (m *EvseMock) SetAvailability(isAvailable bool) {
 	m.Called(isAvailable)
+}
+
+func (m *EvseMock) Lock() {
+	m.Called()
+}
+
+func (m *EvseMock) Unlock() {
+	m.Called()
 }

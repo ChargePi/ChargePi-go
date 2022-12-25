@@ -8,14 +8,14 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/evcc"
 	powerMeter "github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/power-meter"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/session"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 	carState "github.com/xBlaz3kx/ChargePi-go/pkg/models/evcc"
 	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
-	v16 "github.com/xBlaz3kx/ocppManager-go/v16"
+	"github.com/xBlaz3kx/ocppManager-go/configuration"
 	"golang.org/x/net/context"
 	"sync"
 	"time"
@@ -34,14 +34,20 @@ type (
 	EVSE interface {
 		Init(ctx context.Context) error
 		StartCharging(transactionId, tagId string, connectorId *int) error
-		ResumeCharging(session session.Session) (int, error)
+		ResumeCharging(session session.Session) (chargingTimeElapsed *int, err error)
 		StopCharging(reason core.Reason) error
+		Lock()
+		Unlock()
+
+		//GetSession() session.Session
+		//GetPowerMeter() powerMeter.PowerMeter
+		//GetEvcc() evcc.EVCC
+
 		GetTagId() string
 		GetTransactionId() string
 		GetEvseId() int
 		GetConnectors() []Connector
 		SetAvailability(isAvailable bool)
-
 		SetStatus(status core.ChargePointStatus, errCode core.ChargePointErrorCode)
 		GetStatus() (core.ChargePointStatus, core.ChargePointErrorCode)
 		IsAvailable() bool
@@ -49,10 +55,10 @@ type (
 		IsCharging() bool
 		IsReserved() bool
 		IsUnavailable() bool
-		GetMaxChargingTime() int
+		GetMaxChargingTime() *int
 
-		SetNotificationChannel(notificationChannel chan<- chargePoint.StatusNotification)
-		SetMeterValuesChannel(notificationChannel chan<- chargePoint.MeterValueNotification)
+		SetNotificationChannel(notificationChannel chan<- notifications.StatusNotification)
+		SetMeterValuesChannel(notificationChannel chan<- notifications.MeterValueNotification)
 
 		ReserveEvse(reservationId int, tagId string) error
 		RemoveReservation() error
@@ -64,7 +70,7 @@ type (
 
 	EvseImpl struct {
 		evseId          int
-		maxChargingTime int
+		maxChargingTime *int
 		availability    core.AvailabilityType
 		status          core.ChargePointStatus
 		errorCode       core.ChargePointErrorCode
@@ -72,8 +78,8 @@ type (
 		reservationId   *int
 
 		// Notification channels
-		meterValuesChannel  chan<- chargePoint.MeterValueNotification
-		notificationChannel chan<- chargePoint.StatusNotification
+		meterValuesChannel  chan<- notifications.MeterValueNotification
+		notificationChannel chan<- notifications.StatusNotification
 		mu                  sync.Mutex
 
 		// Hardware
@@ -85,16 +91,12 @@ type (
 
 // NewEvse Create a new evse object from the provided arguments. evseId, connectorId and maxChargingTime must be greater than zero.
 // When created, it makes an empty session, turns off the relay and defaults the status to Available.
-func NewEvse(evseId int, evcc evcc.EVCC, powerMeter powerMeter.PowerMeter, powerMeterEnabled bool, maxChargingTime int) (*EvseImpl, error) {
+func NewEvse(evseId int, evcc evcc.EVCC, powerMeter powerMeter.PowerMeter, powerMeterEnabled bool, maxChargingTime *int) (*EvseImpl, error) {
 	log.WithFields(log.Fields{
 		"evseId":          evseId,
 		"maxChargingTime": maxChargingTime,
 		"hasPowerMeter":   powerMeterEnabled,
 	}).Info("Creating a new evse")
-
-	if maxChargingTime <= 0 {
-		maxChargingTime = 180
-	}
 
 	if evseId <= 0 {
 		return nil, ErrInvalidEvseId
@@ -220,6 +222,7 @@ func (evse *EvseImpl) StartCharging(transactionId, tagId string, connectorId *in
 		return err
 	}
 
+	evse.evcc.Lock()
 	evse.session.UpdateSessionFile(evse.evseId)
 
 	if evse.powerMeterEnabled && !util.IsNilInterfaceOrPointer(evse.powerMeter) {
@@ -233,46 +236,47 @@ func (evse *EvseImpl) StartCharging(transactionId, tagId string, connectorId *in
 }
 
 // ResumeCharging Resumes or restores the charging state after boot if a charging session was active.
-func (evse *EvseImpl) ResumeCharging(session session.Session) (chargingTimeElapsed int, err error) {
-	// Set the transaction id so evse is able to stop the transaction if charging fails
+func (evse *EvseImpl) ResumeCharging(session session.Session) (chargingTimeElapsed *int, err error) {
 	logInfo := log.WithFields(log.Fields{
 		"evseId":  evse.evseId,
 		"session": session,
 	})
 	logInfo.Debugf("Trying to resume charging on evse")
 
-	chargingTimeElapsed = evse.maxChargingTime
+	// Set the transaction id so evse is able to stop the transaction if charging fails
 	evse.session.TransactionId = session.TransactionId
 
-	startedChargingTime, err := time.Parse(time.RFC3339, session.Started)
-	if err != nil {
-		return
+	sessionErr := evse.session.StartSession(session.TransactionId, session.TagId)
+	if sessionErr != nil {
+		return evse.maxChargingTime, fmt.Errorf("cannot resume session: %v", sessionErr)
 	}
 
-	chargingTimeElapsed = int(time.Now().Sub(startedChargingTime).Minutes())
-	if evse.maxChargingTime <= chargingTimeElapsed {
-		chargingTimeElapsed = evse.maxChargingTime
-		err = ErrSessionTimeLimitExceeded
-		return
-	}
-
-	if evse.IsCharging() || evse.IsPreparing() {
-		sessionErr := evse.session.StartSession(session.TransactionId, session.TagId)
-		if sessionErr != nil {
-			return evse.maxChargingTime, fmt.Errorf("cannot resume session: %v", sessionErr)
-		}
-
+	if evse.IsPreparing() || evse.IsCharging() {
 		err = evse.evcc.EnableCharging()
 		if err != nil {
 			return
 		}
 
 		evse.session.Started = session.Started
-		evse.session.Consumption = append(evse.session.Consumption, session.Consumption...)
-		return chargingTimeElapsed, nil
+		evse.session.Consumption = session.Consumption
 	}
 
-	return evse.maxChargingTime, ErrInvalidStatus
+	startedChargingTime, err := time.Parse(time.RFC3339, session.Started)
+	if err != nil {
+		return
+	}
+
+	if evse.maxChargingTime != nil {
+		timeElapsed := int(time.Now().Sub(startedChargingTime).Minutes())
+		if *evse.maxChargingTime <= timeElapsed {
+			chargingTimeElapsed = &timeElapsed
+		}
+
+		err = ErrSessionTimeLimitExceeded
+		return
+	}
+
+	return nil, nil
 }
 
 // StopCharging Stops charging the evse by turning the relay off and ending the session.
@@ -286,8 +290,16 @@ func (evse *EvseImpl) StopCharging(reason core.Reason) error {
 		logInfo.Debugf("Stopping charging")
 
 		evse.evcc.DisableCharging()
+		evse.evcc.Unlock()
 		evse.session.EndSession()
 		evse.session.UpdateSessionFile(evse.evseId)
+
+		// Remove the sampling of the power meter
+		sched := scheduler.GetScheduler()
+		schedulerErr := sched.RemoveByTag(fmt.Sprintf("evse%dSampling", evse.GetEvseId()))
+		if schedulerErr != nil {
+			logInfo.WithError(schedulerErr).Errorf("Cannot remove sampling schedule")
+		}
 		return nil
 	}
 
@@ -305,39 +317,34 @@ func (evse *EvseImpl) SamplePowerMeter(measurands []types.Measurand) {
 		return
 	}
 
-	logInfo.Debugf("Sampling evse %v", measurands)
+	logInfo.Debugf("Sampling EVSE with: %v", measurands)
 	var (
-		meterValues []types.MeterValue
+		meterValues = types.MeterValue{SampledValue: []types.SampledValue{}, Timestamp: types.NewDateTime(time.Now())}
 		samples     []types.SampledValue
-		value       = 0.0
 	)
 
 	for _, measurand := range measurands {
-
 		switch measurand {
+		case types.MeasurandPowerActiveImport, types.MeasurandPowerActiveExport:
+			samples = append(samples, evse.powerMeter.GetPower())
 		case types.MeasurandEnergyActiveImportInterval, types.MeasurandEnergyActiveImportRegister,
 			types.MeasurandEnergyActiveExportInterval, types.MeasurandEnergyActiveExportRegister:
-			value = evse.powerMeter.GetEnergy()
+			samples = append(samples, evse.powerMeter.GetEnergy())
 		case types.MeasurandCurrentImport, types.MeasurandCurrentExport:
-			value = evse.powerMeter.GetCurrent()
-		case types.MeasurandPowerActiveImport, types.MeasurandPowerActiveExport:
-			value = evse.powerMeter.GetPower()
+			samples = append(samples, evse.powerMeter.GetCurrent(1))
+			samples = append(samples, evse.powerMeter.GetCurrent(2))
+			samples = append(samples, evse.powerMeter.GetCurrent(3))
 		case types.MeasurandVoltage:
-			value = evse.powerMeter.GetVoltage()
-		}
-
-		if value != 0.0 {
-			sample := types.SampledValue{
-				Value:     fmt.Sprintf("%.3f", value),
-				Measurand: measurand,
-			}
-
-			meterValues = append(meterValues, types.MeterValue{SampledValue: []types.SampledValue{sample}, Timestamp: types.NewDateTime(time.Now())})
+			samples = append(samples, evse.powerMeter.GetVoltage(1))
+			samples = append(samples, evse.powerMeter.GetVoltage(2))
+			samples = append(samples, evse.powerMeter.GetVoltage(3))
 		}
 	}
 
+	meterValues.SampledValue = samples
+
 	if evse.meterValuesChannel != nil {
-		evse.meterValuesChannel <- chargePoint.NewMeterValueNotification(evse.evseId, nil, nil, meterValues...)
+		evse.meterValuesChannel <- notifications.NewMeterValueNotification(evse.evseId, nil, nil, meterValues)
 	}
 
 	evse.session.AddSampledValue(samples)
@@ -348,14 +355,14 @@ func (evse *EvseImpl) preparePowerMeterAtConnector() error {
 	var (
 		measurands          = util.GetTypesToSample()
 		sampleTime          = "10s"
-		sampleInterval, err = ocppConfigManager.GetConfigurationValue(v16.MeterValueSampleInterval.String())
+		sampleInterval, err = ocppConfigManager.GetConfigurationValue(configuration.MeterValueSampleInterval.String())
 		jobTag              = fmt.Sprintf("Evse%dSampling", evse.evseId)
 	)
-	if err != nil {
-		sampleInterval = "10"
+
+	if err == nil && sampleInterval != nil {
+		sampleTime = fmt.Sprintf("%ss", *sampleInterval)
 	}
 
-	sampleTime = fmt.Sprintf("%ss", sampleInterval)
 	// Schedule the sampling
 	_, err = scheduler.GetScheduler().Every(sampleTime).
 		Tag(jobTag).
@@ -408,7 +415,7 @@ func (evse *EvseImpl) SetStatus(status core.ChargePointStatus, errCode core.Char
 	settings.UpdateEVSEStatus(evse.evseId, status)
 
 	if evse.notificationChannel != nil {
-		evse.notificationChannel <- chargePoint.NewStatusNotification(evse.evseId, string(status), string(errCode))
+		evse.notificationChannel <- notifications.NewStatusNotification(evse.evseId, string(status), string(errCode))
 	}
 }
 
@@ -471,7 +478,7 @@ func (evse *EvseImpl) CalculateSessionAvgEnergyConsumption() float64 {
 	return evse.session.CalculateEnergyConsumptionWithAvgPower()
 }
 
-func (evse *EvseImpl) GetMaxChargingTime() int {
+func (evse *EvseImpl) GetMaxChargingTime() *int {
 	return evse.maxChargingTime
 }
 
@@ -479,11 +486,11 @@ func (evse *EvseImpl) GetStatus() (core.ChargePointStatus, core.ChargePointError
 	return evse.status, evse.errorCode
 }
 
-func (evse *EvseImpl) SetNotificationChannel(notificationChannel chan<- chargePoint.StatusNotification) {
+func (evse *EvseImpl) SetNotificationChannel(notificationChannel chan<- notifications.StatusNotification) {
 	evse.notificationChannel = notificationChannel
 }
 
-func (evse *EvseImpl) SetMeterValuesChannel(notificationChannel chan<- chargePoint.MeterValueNotification) {
+func (evse *EvseImpl) SetMeterValuesChannel(notificationChannel chan<- notifications.MeterValueNotification) {
 	evse.meterValuesChannel = notificationChannel
 }
 
@@ -498,4 +505,12 @@ func (evse *EvseImpl) SetAvailability(isAvailable bool) {
 	}
 
 	evse.availability = core.AvailabilityTypeInoperative
+}
+
+func (evse *EvseImpl) Lock() {
+	evse.evcc.Lock()
+}
+
+func (evse *EvseImpl) Unlock() {
+	evse.evcc.Unlock()
 }

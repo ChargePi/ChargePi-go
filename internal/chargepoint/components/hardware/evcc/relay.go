@@ -117,3 +117,6 @@ func (r *RelayAsEvcc) GetType() string {
 func (r *RelayAsEvcc) GetStatusChangeChannel() <-chan chargePoint.StateNotification {
 	return r.statusChannel
 }
+
+func (r *RelayAsEvcc) Reset() {
+}

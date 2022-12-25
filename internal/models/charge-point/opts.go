@@ -33,10 +33,6 @@ func WithReaderFromSettings(ctx context.Context, readerSettings settings.TagRead
 		}
 
 		point.SetReader(tagReader)
-
-		// Listen for incoming tags
-		go tagReader.ListenForTags(ctx)
-		go point.ListenForTag(ctx, tagReader.GetTagChannel())
 	}
 }
 
@@ -47,10 +43,6 @@ func WithReader(ctx context.Context, tagReader reader.Reader) Options {
 			return
 		}
 		point.SetReader(tagReader)
-
-		// Listen for incoming tags
-		go tagReader.ListenForTags(ctx)
-		go point.ListenForTag(ctx, tagReader.GetTagChannel())
 	}
 }
 

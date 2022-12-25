@@ -7,9 +7,10 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/spf13/viper"
+	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display/i18n"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/indicator"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models/notifications"
 	settingsData "github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
@@ -24,7 +25,7 @@ func (cp *ChargePoint) AddEVSEs(connectors []*settingsData.EVSE) {
 	}
 
 	cp.logger.Info("Adding evses")
-	err := cp.connectorManager.AddEVSEsFromSettings(cp.settings.ChargePoint.Info.MaxChargingTime, connectors)
+	err := cp.connectorManager.AddEVSEsFromSettings(cp.settings.ChargePoint.Info.FreeChargingMode.MaxChargingTime, connectors)
 	if err != nil {
 		cp.logger.WithError(err).Fatalf("Unable to add evses from configuration")
 	}
@@ -97,8 +98,6 @@ func (cp *ChargePoint) restoreState() {
 		err = cp.connectorManager.RestoreEVSEStatus(&conn)
 		switch err {
 		case nil:
-			_, err = cp.scheduler.Every(c.GetMaxChargingTime()-0).Minutes().LimitRunsTo(1).
-				Tag(fmt.Sprintf("evse%dTimer", c.GetEvseId())).Do(cp.stopChargingConnector, c, core.ReasonLocal)
 		default:
 			// Attempt to stop charging
 			err = cp.stopChargingConnector(c, core.ReasonDeAuthorized)
@@ -127,13 +126,12 @@ func (cp *ChargePoint) notifyConnectorStatus(evseId int, status core.ChargePoint
 }
 
 // ListenForConnectorStatusChange listen for change in connector and notify the central system about the state
-func (cp *ChargePoint) ListenForConnectorStatusChange(ctx context.Context, ch <-chan chargePoint.StatusNotification) {
+func (cp *ChargePoint) ListenForConnectorStatusChange(ctx context.Context, ch <-chan notifications.StatusNotification) {
 	cp.logger.Debug("Starting to listen for connector status change")
 
 Listener:
 	for {
 		select {
-		// Start observing the connector for changes in status
 		case c := <-ch:
 			// Connector starts with index 1
 			connectorIndex := c.EvseId - 1
@@ -142,13 +140,14 @@ Listener:
 
 			go cp.displayLEDStatus(connectorIndex, status)
 			go cp.displayConnectorStatus(c.EvseId, status)
+			go cp.handleStatusUpdate(ctx, c.EvseId, status)
 
 			// Send a status notification to the Central System
 			cp.notifyConnectorStatus(c.EvseId, status, errCode)
 
 		case meterVal := <-cp.meterValuesChannel:
 			// Send a meter value notification to the Central System
-			values := core.NewMeterValuesRequest(*meterVal.ConnectorId, meterVal.MeterValues)
+			values := core.NewMeterValuesRequest(meterVal.EvseId, meterVal.MeterValues)
 			err := util.SendRequest(cp.chargePoint, values, func(confirmation ocpp.Response, protoError error) {})
 			if err != nil {
 				cp.logger.WithError(err).Errorf("Cannot send meter values")
@@ -167,17 +166,23 @@ func (cp *ChargePoint) displayConnectorStatus(connectorId int, status core.Charg
 		err      error
 	)
 
-	switch status {
-	case core.ChargePointStatusAvailable:
-		message, err = i18n.TranslateConnectorAvailableMessage(language, connectorId)
-	case core.ChargePointStatusFinishing:
-		message, err = i18n.TranslateConnectorFinishingMessage(language, connectorId)
-	case core.ChargePointStatusCharging:
-		message, err = i18n.TranslateConnectorChargingMessage(language, connectorId)
-	case core.ChargePointStatusFaulted:
-		message, err = i18n.TranslateConnectorFaultedMessage(language, connectorId)
+	switch cp.settings.ChargePoint.Hardware.Display.Driver {
+	case display.DriverHD44780:
+		switch status {
+		case core.ChargePointStatusAvailable:
+			message, err = i18n.TranslateConnectorAvailableMessage(language, connectorId)
+		case core.ChargePointStatusFinishing:
+			message, err = i18n.TranslateConnectorFinishingMessage(language, connectorId)
+		case core.ChargePointStatusCharging:
+			message, err = i18n.TranslateConnectorChargingMessage(language, connectorId)
+		case core.ChargePointStatusFaulted:
+			message, err = i18n.TranslateConnectorFaultedMessage(language, connectorId)
+		default:
+			err = display.ErrDisplayUnsupported
+			return
+		}
 	default:
-		return
+		err = display.ErrDisplayUnsupported
 	}
 
 	if err != nil {
@@ -186,4 +191,32 @@ func (cp *ChargePoint) displayConnectorStatus(connectorId int, status core.Charg
 	}
 
 	cp.sendToLCD(message...)
+}
+
+// handleStatusUpdate if an EV is connected, ask for authentication, if it was disconnected, stop the transaction.
+func (cp *ChargePoint) handleStatusUpdate(ctx context.Context, evseId int, status core.ChargePointStatus) {
+	switch status {
+	case core.ChargePointStatusPreparing:
+		// Listen for a tag for a minute. If the tag is presented, request charging
+		listenCtx, cancel := context.WithTimeout(ctx, time.Minute)
+		tag, err := cp.ListenForTag(listenCtx, cp.tagReader.GetTagChannel())
+		if err == nil {
+			err = cp.StartCharging(evseId, 1, *tag)
+			if err != nil {
+				cp.logger.WithError(err).Error("Cannot start charging")
+			}
+		}
+
+		cancel()
+	case core.ChargePointStatusSuspendedEV, core.ChargePointStatusSuspendedEVSE:
+		err := cp.StopCharging(evseId, 1, core.ReasonEVDisconnected)
+		if err != nil {
+			cp.logger.WithError(err).Error("Cannot stop charging")
+		}
+	case core.ChargePointStatusFaulted:
+		err := cp.StopCharging(evseId, 1, core.ReasonEmergencyStop)
+		if err != nil {
+			cp.logger.WithError(err).Error("Cannot stop charging")
+		}
+	}
 }

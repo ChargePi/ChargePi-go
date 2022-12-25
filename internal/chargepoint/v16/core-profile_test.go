@@ -9,7 +9,7 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/test"
 	ocppManager "github.com/xBlaz3kx/ocppManager-go"
-	v16 "github.com/xBlaz3kx/ocppManager-go/v16"
+	"github.com/xBlaz3kx/ocppManager-go/configuration"
 	"testing"
 )
 
@@ -38,7 +38,7 @@ func (s *coreTestSuite) TestChangeAvailability() {
 
 func (s *coreTestSuite) TestOnChangeConfiguration() {
 	// Ok case
-	resp, err := s.cp.OnChangeConfiguration(core.NewChangeConfigurationRequest(v16.AuthorizationCacheEnabled.String(), "false"))
+	resp, err := s.cp.OnChangeConfiguration(core.NewChangeConfigurationRequest(configuration.AuthorizationCacheEnabled.String(), "false"))
 	s.Assert().NoError(err)
 	s.Assert().EqualValues(core.ConfigurationStatusAccepted, resp.Status)
 
@@ -48,7 +48,7 @@ func (s *coreTestSuite) TestOnChangeConfiguration() {
 	s.Assert().EqualValues(core.ConfigurationStatusRejected, resp.Status)
 
 	// Readonly key
-	resp, err = s.cp.OnChangeConfiguration(core.NewChangeConfigurationRequest(v16.SupportedFeatureProfiles.String(), ""))
+	resp, err = s.cp.OnChangeConfiguration(core.NewChangeConfigurationRequest(configuration.SupportedFeatureProfiles.String(), ""))
 	s.Assert().NoError(err)
 	s.Assert().EqualValues(core.ConfigurationStatusRejected, resp.Status)
 }
@@ -68,7 +68,7 @@ func (s *coreTestSuite) TestGetConfiguration() {
 	s.Assert().Len(resp.UnknownKey, 0)
 
 	// Get only specific keys
-	resp, err = s.cp.OnGetConfiguration(core.NewGetConfigurationRequest([]string{v16.SupportedFeatureProfiles.String()}))
+	resp, err = s.cp.OnGetConfiguration(core.NewGetConfigurationRequest([]string{configuration.SupportedFeatureProfiles.String()}))
 	s.Assert().NoError(err)
 	s.Assert().Len(resp.ConfigurationKey, 1)
 	s.Assert().Len(resp.UnknownKey, 0)

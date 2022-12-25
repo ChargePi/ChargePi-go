@@ -1,13 +1,6 @@
 package settings
 
-const (
-	OCPP16  = ProtocolVersion("1.6")
-	OCPP201 = ProtocolVersion("2.0.1")
-)
-
 type (
-	ProtocolVersion string
-
 	OCPPInfo struct {
 		Vendor                  string `fig:"Vendor" default:"UL FE" json:"vendor,omitempty" yaml:"vendor" mapstructure:"vendor"`
 		Model                   string `fig:"Model" default:"ChargePi" json:"model,omitempty" yaml:"model" mapstructure:"model"`

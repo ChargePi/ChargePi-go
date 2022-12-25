@@ -18,23 +18,23 @@ var (
 )
 
 type (
+	SessionInterface interface {
+		StartSession(transactionId string, tagId string) error
+		EndSession()
+		AddSampledValue(samples []types.SampledValue)
+		GetSessionConsumption() []types.MeterValue
+		CalculateAvgPower() float64
+		CalculateEnergyConsumptionWithAvgPower() float64
+		UpdateSessionFile(evseId, connectorId int)
+		ToSessionFile() *settingsModel.Session
+	}
+
 	Session struct {
 		IsActive      bool
 		TransactionId string
 		TagId         string
 		Started       string
 		Consumption   []types.MeterValue
-	}
-
-	SessionInterface interface {
-		StartSession(transactionId string, tagId string) error
-		EndSession()
-		AddSampledValue(samples []types.SampledValue)
-		CalculateAvgPower() float64
-		CalculateEnergyConsumptionWithAvgPower() float64
-		CalculateEnergyConsumption() float64
-		UpdateSessionFile(evseId, connectorId int)
-		ToSessionFile() *settingsModel.Session
 	}
 )
 
@@ -108,6 +108,11 @@ func (session *Session) AddSampledValue(samples []types.SampledValue) {
 		log.Tracef("Added meter sample for session %s", session.TransactionId)
 		session.Consumption = append(session.Consumption, types.MeterValue{SampledValue: samples})
 	}
+}
+
+// GetSessionConsumption Get the consumption
+func (session *Session) GetSessionConsumption() []types.MeterValue {
+	return session.Consumption
 }
 
 // CalculateAvgPower calculate the average power for a session based on sampled values
@@ -205,35 +210,4 @@ func (session *Session) CalculateEnergyConsumptionWithAvgPower() float64 {
 	}
 
 	return session.CalculateAvgPower() * duration
-}
-
-// CalculateEnergyConsumption calculate the total energy consumption for a session that was active only with energy measurments
-func (session *Session) CalculateEnergyConsumption() float64 {
-	var (
-		energySum = 0.0
-	)
-
-	for _, meterValue := range session.Consumption {
-		for _, sampledValue := range meterValue.SampledValue {
-			energySample, err := strconv.ParseFloat(sampledValue.Value, 32)
-			if err != nil {
-				continue
-			}
-
-			switch sampledValue.Measurand {
-			case types.MeasurandEnergyActiveImportInterval, types.MeasurandEnergyActiveImportRegister:
-
-				switch sampledValue.Unit {
-				case types.UnitOfMeasureKWh:
-					energySum += energySample * 1000
-				case types.UnitOfMeasureWh:
-					energySum += energySample
-				default:
-					energySum += energySample
-				}
-			}
-		}
-	}
-
-	return energySum
 }

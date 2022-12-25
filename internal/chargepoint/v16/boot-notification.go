@@ -8,7 +8,7 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 	data "github.com/xBlaz3kx/ChargePi-go/pkg/models/ocpp"
 	configManager "github.com/xBlaz3kx/ocppManager-go"
-	v16 "github.com/xBlaz3kx/ocppManager-go/v16"
+	"github.com/xBlaz3kx/ocppManager-go/configuration"
 )
 
 // bootNotification Notify the central system that the charging point is online. Set the setHeartbeat interval and call restoreState.
@@ -52,13 +52,13 @@ func (cp *ChargePoint) bootNotification() {
 func (cp *ChargePoint) setHeartbeat(interval int) {
 	cp.logger.Debug("Setting a heartbeat schedule")
 
-	heartBeatInterval, _ := configManager.GetConfigurationValue(v16.HeartbeatInterval.String())
+	heartBeatInterval, _ := configManager.GetConfigurationValue(configuration.HeartbeatInterval.String())
 	if interval > 0 {
-		heartBeatInterval = fmt.Sprintf("%d", interval)
+		interVal := fmt.Sprintf("%d", interval)
+		heartBeatInterval = &interVal
 	}
 
-	heartBeatInterval = fmt.Sprintf("%ss", heartBeatInterval)
-	_, err := scheduler.GetScheduler().Every(heartBeatInterval).Tag("heartbeat").Do(cp.sendHeartBeat)
+	_, err := scheduler.GetScheduler().Every(fmt.Sprintf("%ss", *heartBeatInterval)).Tag("heartbeat").Do(cp.sendHeartBeat)
 	if err != nil {
 		cp.logger.WithError(err).Errorf("Error scheduling heartbeat")
 	}

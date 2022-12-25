@@ -6,10 +6,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
 	"github.com/xBlaz3kx/ocppManager-go/configuration"
-	"path/filepath"
 	"strings"
 	"sync"
 )
@@ -58,12 +56,8 @@ func setDefaults() {
 }
 
 func SetupOcppConfigurationManager(filePath string, version configuration.ProtocolVersion, supportedProfiles ...string) {
-	fileName := strings.TrimSuffix(filePath, filepath.Ext(filePath))
-
-	ocppConfigManager.SetFileFormat(util.JSON)
+	ocppConfigManager.SetFilePath(filePath)
 	ocppConfigManager.SetVersion(version)
-	ocppConfigManager.SetFileName(filepath.Base(fileName))
-	ocppConfigManager.SetFilePath(filepath.Dir(filePath))
 	ocppConfigManager.SetSupportedProfiles(supportedProfiles...)
 
 	// Load the configuration

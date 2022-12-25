@@ -5,7 +5,7 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
+	"github.com/xBlaz3kx/ChargePi-go/internal/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/session"
 	"github.com/xBlaz3kx/ChargePi-go/test"
 	"golang.org/x/net/context"
@@ -50,7 +50,7 @@ func (s *EvseTestSuite) SetupTest() {
 		s.evccMock,
 		s.powerMeterMock,
 		false,
-		15,
+		nil,
 	)
 	s.Require().NoError(err)
 
@@ -62,7 +62,7 @@ func (s *EvseTestSuite) TestCreateNewConnector() {
 	s.evccMock.On("EnableCharging").Return()
 
 	// Ok case
-	connector1, err := NewEvse(1, s.evccMock, s.powerMeterMock, false, 15)
+	connector1, err := NewEvse(1, s.evccMock, s.powerMeterMock, false, nil)
 
 	s.Require().Equal(1, connector1.evseId)
 	s.Require().Equal(core.ChargePointStatusAvailable, connector1.status)
@@ -70,15 +70,15 @@ func (s *EvseTestSuite) TestCreateNewConnector() {
 	s.Require().False(connector1.powerMeterEnabled)
 
 	// Invalid evseId
-	_, err = NewEvse(1, s.evccMock, s.powerMeterMock, false, 15)
+	_, err = NewEvse(1, s.evccMock, s.powerMeterMock, false, nil)
 	s.Require().Error(err)
 
 	// Invalid evse id
-	_, err = NewEvse(0, s.evccMock, s.powerMeterMock, false, 15)
+	_, err = NewEvse(0, s.evccMock, s.powerMeterMock, false, nil)
 	s.Require().Error(err)
 
 	// Negative evse id
-	_, err = NewEvse(-1, s.evccMock, s.powerMeterMock, false, 15)
+	_, err = NewEvse(-1, s.evccMock, s.powerMeterMock, false, nil)
 	s.Require().Error(err)
 }
 
@@ -235,7 +235,7 @@ func (s *EvseTestSuite) TestSamplePowerMeter() {
 
 	var (
 		ctx, cancel    = context.WithTimeout(context.Background(), time.Second*30)
-		meterValueChan = make(chan chargePoint.MeterValueNotification)
+		meterValueChan = make(chan notifications.MeterValueNotification)
 	)
 
 	defer cancel()

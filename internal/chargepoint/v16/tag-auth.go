@@ -4,8 +4,8 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
-	v16 "github.com/xBlaz3kx/ocppManager-go/v16"
-	"strconv"
+	v16 "github.com/xBlaz3kx/ocppManager-go/configuration"
+	"time"
 )
 
 // isTagAuthorized Check if the tag is authorized for charging. If the authentication cache is enabled and if it can preauthorize from cache,
@@ -13,35 +13,37 @@ import (
 // If cache is not enabled, it will just execute sendAuthorizeRequest and retrieve the status from the request.
 func (cp *ChargePoint) isTagAuthorized(tagId string) bool {
 	var (
-		response                      = false
-		authCacheEnabled, cacheErr    = ocppConfigManager.GetConfigurationValue(v16.AuthorizationCacheEnabled.String())
-		localPreAuthorize, preAuthErr = ocppConfigManager.GetConfigurationValue(v16.LocalPreAuthorize.String())
+		response             = false
+		localPreAuthorize, _ = ocppConfigManager.GetConfigurationValue(v16.LocalPreAuthorize.String())
 	)
 
-	if cacheErr != nil {
-		authCacheEnabled = "false"
-	}
-
-	if preAuthErr != nil {
-		localPreAuthorize = "false"
-	}
-
-	if authCacheEnabled == "true" && localPreAuthorize == "true" {
+	if localPreAuthorize != nil && *localPreAuthorize == "true" {
 		cp.logger.Infof("Authorizing tag %s with cache", tagId)
 
-		// Check if the tag exists in cache and is valid.
-		if cp.authCache.IsTagAuthorized(tagId) {
-			// Reauthorize in 10 seconds
-			_, schedulerErr := cp.scheduler.Every(10).Seconds().LimitRunsTo(1).Do(cp.sendAuthorizeRequest, tagId)
-			if schedulerErr != nil {
-				cp.logger.WithError(schedulerErr).Errorf("Cannot schedule tag authorization with central system")
+		tag, err := cp.tagManager.GetTag(tagId)
+		if err != nil {
+			goto Skip
+		}
+
+		switch tag.Status {
+		case types.AuthorizationStatusAccepted,
+			types.AuthorizationStatusConcurrentTx:
+			if tag.ExpiryDate != nil && tag.ExpiryDate.Before(time.Now()) {
+				return false
 			}
 
 			return true
+		case types.AuthorizationStatusInvalid,
+			types.AuthorizationStatusBlocked,
+			types.AuthorizationStatusExpired:
+			return false
+		default:
+			return false
 		}
 	}
 
 	// If the card is not in cache or is not authorized, (re)authorize it with the central system
+Skip:
 	cp.logger.Infof("Authorizing tag %s with central system", tagId)
 	tagInfo, err := cp.sendAuthorizeRequest(tagId)
 	if err != nil {
@@ -72,21 +74,7 @@ func (cp *ChargePoint) sendAuthorizeRequest(tagId string) (*types.IdTagInfo, err
 		err = cp.stopChargingConnectorWithTagId(tagId, core.ReasonDeAuthorized)
 	}
 
-	value, err2 := ocppConfigManager.GetConfigurationValue(v16.AuthorizationCacheEnabled.String())
-	if err2 == nil && value == "true" {
-		cp.authCache.AddTag(tagId, authInfo.IdTagInfo)
-	}
+	_ = cp.tagManager.AddTag(tagId, authInfo.IdTagInfo)
 
 	return authInfo.IdTagInfo, err
-}
-
-func (cp *ChargePoint) setMaxCachedTags() {
-	var (
-		maxCachedTagsString, confErr = ocppConfigManager.GetConfigurationValue(v16.LocalAuthListMaxLength.String())
-		maxCachedTags, convErr       = strconv.Atoi(maxCachedTagsString)
-	)
-
-	if confErr == nil && convErr == nil {
-		cp.authCache.SetMaxCachedTags(maxCachedTags)
-	}
 }
