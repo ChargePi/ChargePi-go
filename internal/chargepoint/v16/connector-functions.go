@@ -25,7 +25,7 @@ func (cp *ChargePoint) AddEVSEs(connectors []*settingsData.EVSE) {
 	}
 
 	cp.logger.Info("Adding evses")
-	err := cp.connectorManager.AddEVSEsFromSettings(cp.settings.ChargePoint.Info.FreeChargingMode.MaxChargingTime, connectors)
+	err := cp.connectorManager.AddEVSEsFromSettings(cp.settings.ChargePoint.Info.MaxChargingTime, connectors)
 	if err != nil {
 		cp.logger.WithError(err).Fatalf("Unable to add evses from configuration")
 	}

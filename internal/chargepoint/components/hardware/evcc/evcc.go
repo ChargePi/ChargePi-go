@@ -3,7 +3,6 @@ package evcc
 import (
 	"context"
 
-	evccLib "github.com/GLCharge/evcc-library-go"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/models/evcc"
@@ -38,13 +37,6 @@ func NewEVCCFromType(evccSettings settings.EVCC) (EVCC, error) {
 	switch evccSettings.Type {
 	case Relay:
 		return NewRelay(evccSettings.RelayPin, evccSettings.InverseLogic)
-	case Western:
-		controller, err := evccLib.NewWesternController(1, evccSettings.Serial.DeviceAddress)
-		if err != nil {
-			return nil, err
-		}
-
-		return NewWesternController(controller), nil
 	default:
 		return nil, nil
 	}

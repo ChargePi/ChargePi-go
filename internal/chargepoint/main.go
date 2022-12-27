@@ -11,7 +11,6 @@ import (
 	v16 "github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/v16"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/grpc"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
 	s "github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
@@ -107,7 +106,6 @@ func Run(isDebug bool, config *settings.Settings, connectors []*settings.EVSE, c
 
 	// Finally, connect to the central system
 	handler.Connect(ctx, serverUrl)
-
 
 	<-ctx.Done()
 	handler.CleanUp(core.ReasonLocal)
