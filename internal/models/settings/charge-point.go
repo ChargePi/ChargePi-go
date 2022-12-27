@@ -9,8 +9,8 @@ type (
 	}
 
 	ChargePoint struct {
-		ConnectionSettings ConnectionSettings `fig:"connectionSettings" json:"connectionSettings" yaml:"connectionSettings" mapstructure:"connectionSettings"`
 		Info               Info               `fig:"info" json:"info" yaml:"info" mapstructure:"info"`
+		ConnectionSettings ConnectionSettings `fig:"connectionSettings" json:"connectionSettings" yaml:"connectionSettings" mapstructure:"connectionSettings"`
 		Logging            Logging            `fig:"logging" json:"logging" yaml:"logging" mapstructure:"logging"`
 		Hardware           Hardware           `fig:"hardware" json:"hardware" yaml:"hardware" mapstructure:"hardware"`
 	}
@@ -25,12 +25,13 @@ type (
 	}
 
 	Info struct {
-		FreeChargingMode FreeChargingMode `fig:"freeChargingMode" default:"180" json:"freeChargingMode,omitempty" yaml:"freeChargingMode" mapstructure:"freeChargingMode"`
-		OCPPInfo         OCPPInfo         `fig:"ocpp" json:"ocpp" yaml:"ocpp" mapstructure:"ocpp"`
-	}
-
-	FreeChargingMode struct {
-		Enabled         bool `fig:"enabled" default:"180" json:"enabled,omitempty" yaml:"enabled" mapstructure:"enabled"`
-		MaxChargingTime *int `fig:"MaxChargingTime" json:"MaxChargingTime,omitempty" yaml:"MaxChargingTime" mapstructure:"MaxChargingTime"`
+		// Maximum time allowed if free mode is enabled
+		MaxChargingTime *int `fig:"MaxChargingTime" default:"180" json:"MaxChargingTime,omitempty" yaml:"MaxChargingTime" mapstructure:"MaxChargingTime"`
+		FreeMode        bool `fig:"freeMode" json:"freeMode,omitempty" yaml:"freeMode" mapstructure:"freeMode"`
+		// AC or DC
+		Type string `fig:"type" default:"180" json:"type,omitempty" yaml:"type" mapstructure:"type"`
+		// in kW
+		MaxPower float32  `fig:"maxPower" default:"180" json:"maxPower,omitempty" yaml:"maxPower" mapstructure:"maxPower"`
+		OCPPInfo OCPPInfo `fig:"ocpp" json:"ocpp" yaml:"ocpp" mapstructure:"ocpp"`
 	}
 )

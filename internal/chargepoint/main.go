@@ -107,13 +107,7 @@ func Run(isDebug bool, config *settings.Settings, connectors []*settings.EVSE, c
 	// Finally, connect to the central system
 	handler.Connect(ctx, serverUrl)
 
-Loop:
-	for {
-		select {
-		case <-ctx.Done():
-			handler.CleanUp(core.ReasonLocal)
-			time.Sleep(time.Millisecond * 500)
-			break Loop
-		}
-	}
+	<-ctx.Done()
+	handler.CleanUp(core.ReasonLocal)
+	time.Sleep(time.Millisecond * 500)
 }

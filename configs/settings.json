@@ -1,56 +1,53 @@
 {
   "chargePoint": {
-    "info": {
+    "connectionSetings": {
       "id": "ChargePi",
       "protocolVersion": "1.6",
       "serverUri": "example.com",
+      "tls": {
+        "isEnabled": false,
+        "CACertificatePath": "/usr/share/certs/rootCA.crt",
+        "clientCertificatePath": "/usr/share/certs/charge-point.crt",
+        "clientKeyPath": "/usr/share/certs/charge-point.key"
+      }
+    },
+    "info": {
       "maxChargingTime": 5,
-      "basicAuthUser": "",
-      "basicAuthPass": "",
+      "freeMode": false,
+      "type": "AC",
+      "maxPower": 3.3,
       "ocpp": {
-        "vendor": "UL FE",
+        "vendor": "xblaz3kx",
         "model": "ChargePi"
       }
     },
     "logging": {
       "type": [
-        "remote",
         "file"
-      ],
-      "format": "gelf",
-      "host": "logging.example.com",
-      "port": 12201
-    },
-    "tls": {
-      "isEnabled": false,
-      "CACertificatePath": "/usr/share/certs/rootCA.crt",
-      "clientCertificatePath": "/usr/share/certs/charge-point.crt",
-      "clientKeyPath": "/usr/share/certs/charge-point.key"
+      ]
     },
     "hardware": {
       "lcd": {
-        "isEnabled": true,
+        "isEnabled": false,
         "driver": "hd44780",
         "language": "en",
-        "i2cAddress": "0x27",
-        "i2cBus": 1
+        "i2c": {
+          "address": "0x27",
+          "bus": 1
+        }
       },
       "tagReader": {
-        "isEnabled": true,
+        "isEnabled": false,
         "readerModel": "PN532",
         "device": "/dev/ttyS0",
         "resetPin": 19
       },
       "ledIndicator": {
-        "enabled": true,
+        "enabled": false,
         "dataPin": 18,
         "indicateCardRead": true,
         "type": "WS281x",
         "invert": false
-      },
-      "powerMeters": {
-        "minPower": 20,
-        "retries": 3
       }
     }
   }

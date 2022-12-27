@@ -48,7 +48,7 @@ var chargePointSettings = settings.Settings{ChargePoint: settings.ChargePoint{
 	},
 	ConnectionSettings: settings.ConnectionSettings{
 		Id:              chargePointId,
-		ProtocolVersion: protocolVersion,
+		ProtocolVersion: string(protocolVersion),
 		ServerUri:       fmt.Sprintf("ws://%s:%d%s", centralSystemHost, centralSystemPort, centralSystemEndpoint),
 		TLS:             settings.TLS{IsEnabled: false},
 	},

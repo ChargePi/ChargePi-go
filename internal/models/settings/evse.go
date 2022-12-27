@@ -5,6 +5,7 @@ import "github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 type (
 	EVSE struct {
 		EvseId     int         `fig:"evseId" validate:"required" json:"evseId,omitempty" yaml:"evseId" mapstructure:"evseId"`
+		MaxPower   float32     `fig:"maxPower" json:"maxPower,omitempty" yaml:"maxPower" mapstructure:"maxPower"`
 		EVCC       EVCC        `fig:"evcc" json:"evcc" yaml:"evcc" mapstructure:"evcc"`
 		PowerMeter PowerMeter  `fig:"PowerMeter" json:"PowerMeter" yaml:"PowerMeter" mapstructure:"PowerMeter"`
 		Session    Session     `fig:"Session" json:"session" yaml:"session" mapstructure:"session"`

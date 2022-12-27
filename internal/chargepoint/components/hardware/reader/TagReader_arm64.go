@@ -1,5 +1,5 @@
-//go:build linux && arm64 && cgo
-// +build linux,arm64,cgo
+//go:build linux
+// +build linux
 
 package reader
 

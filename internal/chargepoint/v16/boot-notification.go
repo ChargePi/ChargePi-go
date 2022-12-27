@@ -6,6 +6,7 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
+	data "github.com/xBlaz3kx/ChargePi-go/pkg/models/ocpp"
 	configManager "github.com/xBlaz3kx/ocppManager-go"
 	"github.com/xBlaz3kx/ocppManager-go/configuration"
 )
@@ -34,6 +35,7 @@ func (cp *ChargePoint) bootNotification() {
 			cp.logger.Info("Accepted from the central system")
 			cp.setHeartbeat(bootConf.Interval)
 			cp.restoreState()
+			_ = cp.sendChargePointInfo()
 		case core.RegistrationStatusPending:
 			cp.logger.Info("Registration status pending")
 			//todo reschedule boot notification
@@ -67,6 +69,32 @@ func (cp *ChargePoint) sendHeartBeat() error {
 	return util.SendRequest(cp.chargePoint,
 		core.NewHeartbeatRequest(),
 		func(confirmation ocpp.Response, protoError error) {
+			if protoError != nil {
+				return
+			}
+
 			cp.logger.Info("Sent heartbeat")
+		})
+}
+
+// sendHeartBeat Send a setHeartbeat to the central system.
+func (cp *ChargePoint) sendChargePointInfo() error {
+	cpInfo := cp.settings.ChargePoint.Info
+	dataTransfer := core.NewDataTransferRequest(cpInfo.OCPPInfo.Vendor)
+	dataTransfer.Data = data.NewChargePointInfo(cpInfo.Type, cpInfo.MaxPower)
+	//dataTransfer.MessageId
+
+	return util.SendRequest(cp.chargePoint,
+		dataTransfer,
+		func(confirmation ocpp.Response, protoError error) {
+			if protoError != nil {
+				cp.logger.Info("Error sending data")
+				return
+			}
+
+			resp := confirmation.(*core.DataTransferConfirmation)
+			if resp.Status == core.DataTransferStatusAccepted {
+				cp.logger.Info("Sent additional charge point information")
+			}
 		})
 }
