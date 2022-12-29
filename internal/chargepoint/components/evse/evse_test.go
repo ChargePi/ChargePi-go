@@ -1,6 +1,10 @@
 package evse
 
 import (
+	"os/exec"
+	"testing"
+	"time"
+
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
@@ -9,9 +13,6 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/session"
 	"github.com/xBlaz3kx/ChargePi-go/test"
 	"golang.org/x/net/context"
-	"os/exec"
-	"testing"
-	"time"
 )
 
 const (
@@ -21,7 +22,7 @@ const (
 type (
 	EvseTestSuite struct {
 		suite.Suite
-		evse           *EvseImpl
+		evse           *Impl
 		evccMock       *test.EvccMock
 		powerMeterMock *test.PowerMeterMock
 	}
@@ -50,6 +51,7 @@ func (s *EvseTestSuite) SetupTest() {
 		s.evccMock,
 		s.powerMeterMock,
 		false,
+		11,
 		nil,
 	)
 	s.Require().NoError(err)
@@ -62,7 +64,7 @@ func (s *EvseTestSuite) TestCreateNewConnector() {
 	s.evccMock.On("EnableCharging").Return()
 
 	// Ok case
-	connector1, err := NewEvse(1, s.evccMock, s.powerMeterMock, false, nil)
+	connector1, err := NewEvse(1, s.evccMock, s.powerMeterMock, false, 11, nil)
 
 	s.Require().Equal(1, connector1.evseId)
 	s.Require().Equal(core.ChargePointStatusAvailable, connector1.status)
@@ -70,15 +72,15 @@ func (s *EvseTestSuite) TestCreateNewConnector() {
 	s.Require().False(connector1.powerMeterEnabled)
 
 	// Invalid evseId
-	_, err = NewEvse(1, s.evccMock, s.powerMeterMock, false, nil)
+	_, err = NewEvse(1, s.evccMock, s.powerMeterMock, false, 11, nil)
 	s.Require().Error(err)
 
 	// Invalid evse id
-	_, err = NewEvse(0, s.evccMock, s.powerMeterMock, false, nil)
+	_, err = NewEvse(0, s.evccMock, s.powerMeterMock, false, 11, nil)
 	s.Require().Error(err)
 
 	// Negative evse id
-	_, err = NewEvse(-1, s.evccMock, s.powerMeterMock, false, nil)
+	_, err = NewEvse(-1, s.evccMock, s.powerMeterMock, false, 11, nil)
 	s.Require().Error(err)
 }
 
@@ -91,7 +93,7 @@ func (s *EvseTestSuite) TestStartCharging() {
 	// Cannot start new session on a evse that is already charging
 	err = s.evse.StartCharging("1234a", "exampleTag1", nil)
 	s.Require().Error(err)
-	//s.evccMock.AssertNotCalled(s.T(), "Enable")
+	// s.evccMock.AssertNotCalled(s.T(), "Enable")
 
 	err = s.evse.StopCharging(core.ReasonLocal)
 	s.Require().NoError(err)
@@ -99,17 +101,17 @@ func (s *EvseTestSuite) TestStartCharging() {
 	// Invalid transaction and tag id
 	err = s.evse.StartCharging("@1234asd", "~ˇˇ3123", nil)
 	s.Require().Error(err)
-	//s.evccMock.AssertNotCalled(s.T(), "Enable")
+	// s.evccMock.AssertNotCalled(s.T(), "Enable")
 
 	// Invalid transaction id
 	err = s.evse.StartCharging("", "1234", nil)
 	s.Require().Error(err)
-	//s.evccMock.AssertNotCalled(s.T(), "Enable")
+	// s.evccMock.AssertNotCalled(s.T(), "Enable")
 
 	// Invalid tag id
 	err = s.evse.StartCharging("1234", "", nil)
 	s.Require().Error(err)
-	//s.evccMock.AssertNotCalled(s.T(), "Enable")
+	// s.evccMock.AssertNotCalled(s.T(), "Enable")
 
 	// Invalid evse status
 	s.evse.SetStatus(core.ChargePointStatusUnavailable, core.InternalError)
@@ -131,7 +133,7 @@ func (s *EvseTestSuite) TestStopCharging() {
 	// Cannot stop charging if the evse is available
 	err = s.evse.StopCharging(core.ReasonLocal)
 	s.Require().Error(err)
-	//s.evccMock.AssertNotCalled(s.T(), "Disable")
+	// s.evccMock.AssertNotCalled(s.T(), "Disable")
 }
 
 func (s *EvseTestSuite) TestResumeCharging() {
@@ -198,11 +200,11 @@ func (s *EvseTestSuite) TestResumeCharging() {
 
 func (s *EvseTestSuite) TestReserveConnector() {
 	// Ok case
-	err := s.evse.ReserveEvse(1, "")
+	err := s.evse.Reserve(1, "")
 	s.Require().NoError(err)
 
 	// EVSE already reserved
-	err = s.evse.ReserveEvse(2, "")
+	err = s.evse.Reserve(2, "")
 	s.Require().Error(err)
 
 	err = s.evse.RemoveReservation()
@@ -210,13 +212,13 @@ func (s *EvseTestSuite) TestReserveConnector() {
 
 	// Invalid evse status
 	s.evse.SetStatus(core.ChargePointStatusCharging, core.NoError)
-	err = s.evse.ReserveEvse(2, "")
+	err = s.evse.Reserve(2, "")
 	s.Require().Error(err)
 }
 
 func (s *EvseTestSuite) TestRemoveReservation() {
 	// Make a reservation
-	err := s.evse.ReserveEvse(1, "")
+	err := s.evse.Reserve(1, "")
 	s.Require().NoError(err)
 
 	// Ok case

@@ -4,7 +4,12 @@
 package indicator
 
 import (
-	"github.com/rpi-ws281x/rpi-ws281x-go"
+	"encoding/binary"
+	"encoding/hex"
+	ws2811 "github.com/rpi-ws281x/rpi-ws281x-go"
+	ocppManager "github.com/xBlaz3kx/ocppManager-go"
+	"github.com/xBlaz3kx/ocppManager-go/configuration"
+	"strconv"
 	"time"
 )
 
@@ -12,6 +17,17 @@ const (
 	brightness = 128
 	freq       = 800000
 	sleepTime  = 500
+)
+
+// color constants
+const (
+	wS281xOff    = uint32(0x0)
+	wS281xWhite  = uint32(0xFFFFFF)
+	wS281xRed    = uint32(0xff0000)
+	wS281xGreen  = uint32(0x00ff00)
+	wS281xBlue   = uint32(0x000ff)
+	wS281xYellow = uint32(0xeeff00)
+	wS281xOrange = uint32(0xff7b00)
 )
 
 type WS281x struct {
@@ -31,57 +47,63 @@ func NewWS281xStrip(numberOfLEDs int, dataPin int) (*WS281x, error) {
 		return nil, ErrInvalidPin
 	}
 
-	ledStrip := &WS281x{dataPin: dataPin, numberOfLEDs: numberOfLEDs, ws2811: nil}
-	err := ledStrip.init()
+	opt := ws2811.DefaultOptions
+	opt.Channels[0].Brightness = brightness
+	opt.Channels[0].LedCount = numberOfLEDs
+	opt.Channels[0].GpioPin = dataPin
+	opt.Frequency = freq
+
+	setLightIntensity(opt)
+
+	// Create a led strip
+	ledStrip, err := ws2811.MakeWS2811(&opt)
 	if err != nil {
 		return nil, err
 	}
 
-	return ledStrip, nil
-}
-
-// init initialize the LED strip.
-func (ws *WS281x) init() error {
-	opt := ws2811.DefaultOptions
-	opt.Channels[0].Brightness = brightness
-	opt.Channels[0].LedCount = ws.numberOfLEDs
-	opt.Channels[0].GpioPin = ws.dataPin
-	opt.Frequency = freq
-
-	ledStrip, err := ws2811.MakeWS2811(&opt)
+	// Initialize the strip
+	err = ledStrip.Init()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	ws.ws2811 = ledStrip
-	return ws.ws2811.Init()
+	return &WS281x{
+		dataPin:      dataPin,
+		numberOfLEDs: numberOfLEDs,
+		ws2811:       ledStrip,
+	}, nil
 }
 
 // DisplayColor change the color of the LED at specified index to the specified color.
 // The index must be greater than 0 and less than the length of the LED strip.
-func (ws *WS281x) DisplayColor(index int, colorHex uint32) error {
+func (ws *WS281x) DisplayColor(index int, color Color) error {
 	if index < 0 || index > len(ws.ws2811.Leds(0)) {
 		return ErrInvalidIndex
 	}
 
-	ws.ws2811.Leds(0)[index] = colorHex
+	ws.ws2811.Leds(0)[index] = getColorAsHex(color)
 	return ws.ws2811.Render()
 }
 
 // Blink the LED at index a certain number of times with the specified color. If the number of times the LED is supposed to blink is even, it will stay turned off after the blinking,
 // otherwise it will stay on after the blinking.
-func (ws *WS281x) Blink(index int, times int, colorHex uint32) error {
+func (ws *WS281x) Blink(index int, times int, color Color) error {
 	if index < 0 || index > len(ws.ws2811.Leds(0)) {
 		return ErrInvalidIndex
 	}
 
 	for i := 0; i < times; i++ {
 		if i%2 == 0 {
-			ws.ws2811.Leds(0)[index] = Off
+			ws.ws2811.Leds(0)[index] = wS281xOff
 		} else {
-			ws.ws2811.Leds(0)[index] = colorHex
+			ws.ws2811.Leds(0)[index] = getColorAsHex(color)
 		}
-		ws.ws2811.Render()
+
+		err := ws.ws2811.Render()
+		if err != nil {
+			return err
+		}
+
 		time.Sleep(time.Millisecond * sleepTime)
 	}
 
@@ -91,12 +113,58 @@ func (ws *WS281x) Blink(index int, times int, colorHex uint32) error {
 // Cleanup turn the LEDs off and terminate the data connection.
 func (ws *WS281x) Cleanup() {
 	var i = 0
+
 	for ws.numberOfLEDs != i {
-		ws.DisplayColor(i, Off)
+		_ = ws.DisplayColor(i, Off)
+		i++
 	}
+
 	ws.close()
 }
 
 func (ws *WS281x) close() {
 	ws.ws2811.Fini()
+}
+
+func (ws *WS281x) GetType() string {
+	return TypeWS281x
+}
+
+func getColorAsHex(color Color) uint32 {
+	switch color {
+	case White:
+		return wS281xWhite
+	case Off:
+		return wS281xOff
+	case Blue:
+		return wS281xBlue
+	case Green:
+		return wS281xGreen
+	case Orange:
+		return wS281xOrange
+	case Red:
+		return wS281xRed
+	case Yellow:
+		return wS281xYellow
+	default:
+		customColor, err := hex.DecodeString(string(color))
+		if err != nil {
+			return wS281xOff
+		}
+
+		return binary.LittleEndian.Uint32(customColor)
+	}
+}
+
+func setLightIntensity(opts ws2811.Option) {
+	lightIntensity, confErr := ocppManager.GetConfigurationValue(configuration.LightIntensity.String())
+	if confErr == nil {
+		intensity, err := strconv.ParseFloat(*lightIntensity, 32)
+		if err != nil {
+			return
+		}
+
+		// Light intensity is in percent
+		opts.Channels[0].Brightness = int(intensity / 100 * 255)
+	}
 }

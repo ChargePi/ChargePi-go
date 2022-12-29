@@ -10,8 +10,6 @@ type PowerMeterMock struct {
 	mock.Mock
 }
 
-/*---------------------- Power Meter Mock ----------------------*/
-
 func (p *PowerMeterMock) Init(ctx context.Context) error {
 	return p.Called().Error(0)
 }
@@ -51,5 +49,5 @@ func (p *PowerMeterMock) GetRMSVoltage(phase int) types.SampledValue {
 }
 
 func (p *PowerMeterMock) GetType() string {
-	return ""
+	return p.Called().String(0)
 }

@@ -3,7 +3,7 @@ package test
 import (
 	"context"
 	"github.com/stretchr/testify/mock"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
+	evcc2 "github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/evcc"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/models/evcc"
 )
 
@@ -28,8 +28,7 @@ func (e *EvccMock) SetMaxChargingCurrent(value float64) error {
 }
 
 func (e *EvccMock) GetMaxChargingCurrent() float64 {
-	//TODO implement me
-	panic("implement me")
+	return e.Called().Get(0).(float64)
 }
 
 func (e *EvccMock) Reset() {
@@ -60,6 +59,6 @@ func (e *EvccMock) GetError() string {
 	return e.Called().String(0)
 }
 
-func (e *EvccMock) GetStatusChangeChannel() <-chan chargePoint.StateNotification {
-	return e.Called().Get(0).(chan chargePoint.StateNotification)
+func (e *EvccMock) GetStatusChangeChannel() <-chan evcc2.StateNotification {
+	return e.Called().Get(0).(chan evcc2.StateNotification)
 }

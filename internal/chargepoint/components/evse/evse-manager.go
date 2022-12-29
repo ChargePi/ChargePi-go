@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
+
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/evcc"
@@ -13,7 +15,6 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
-	"sync"
 )
 
 var (
@@ -37,9 +38,10 @@ type (
 		StartCharging(evseId int, tagId, transactionId string) error
 		StopCharging(tagId, transactionId string, reason core.Reason) error
 		StopAllEVSEs(reason core.Reason) error
-		AddEVSE(c EVSE) error
-		AddEVSEFromSettings(maxChargingTime *int, c *settings.EVSE) error
-		AddEVSEsFromSettings(maxChargingTime *int, c []*settings.EVSE) error
+		AddEVSE(ctx context.Context, c EVSE) error
+		AddEVSEFromSettings(ctx context.Context, maxChargingTime *int, c *settings.EVSE) error
+		AddEVSEsFromSettings(ctx context.Context, maxChargingTime *int, c []*settings.EVSE) error
+		// RemoveEVSE(evseId int) error
 		RestoreEVSEStatus(*settings.EVSE) error
 		SetNotificationChannel(notificationChannel chan notifications.StatusNotification)
 		SetMeterValuesChannel(notificationChannel chan notifications.MeterValueNotification)
@@ -228,7 +230,7 @@ func (m *managerImpl) StopAllEVSEs(reason core.Reason) error {
 	return err
 }
 
-func (m *managerImpl) AddEVSE(c EVSE) error {
+func (m *managerImpl) AddEVSE(ctx context.Context, c EVSE) error {
 	if util.IsNilInterfaceOrPointer(c) {
 		return ErrConnectorNil
 	}
@@ -238,7 +240,6 @@ func (m *managerImpl) AddEVSE(c EVSE) error {
 			"evseId": c.GetEvseId(),
 		})
 		key = fmt.Sprintf("Evse%d", c.GetEvseId())
-		ctx = context.Background()
 	)
 
 	err := c.Init(ctx)
@@ -256,7 +257,7 @@ func (m *managerImpl) AddEVSE(c EVSE) error {
 	return nil
 }
 
-func (m *managerImpl) AddEVSEFromSettings(maxChargingTime *int, c *settings.EVSE) error {
+func (m *managerImpl) AddEVSEFromSettings(ctx context.Context, maxChargingTime *int, c *settings.EVSE) error {
 	if util.IsNilInterfaceOrPointer(c) {
 		return ErrConnectorNil
 	}
@@ -276,17 +277,17 @@ func (m *managerImpl) AddEVSEFromSettings(maxChargingTime *int, c *settings.EVSE
 		log.WithError(powerMeterErr).Fatalf("Cannot instantiate power meter for evse %d", c.EvseId)
 	}
 
-	evse, err := NewEvse(c.EvseId, evccFromType, meter, c.PowerMeter.Enabled, maxChargingTime)
+	evse, err := NewEvse(c.EvseId, evccFromType, meter, c.PowerMeter.Enabled, float64(c.MaxPower), maxChargingTime)
 	if err != nil {
 		return err
 	}
 
-	return m.AddEVSE(evse)
+	return m.AddEVSE(ctx, evse)
 }
 
-func (m *managerImpl) AddEVSEsFromSettings(maxChargingTime *int, connectors []*settings.EVSE) error {
+func (m *managerImpl) AddEVSEsFromSettings(ctx context.Context, maxChargingTime *int, connectors []*settings.EVSE) error {
 	for _, c := range connectors {
-		addErr := m.AddEVSEFromSettings(maxChargingTime, c)
+		addErr := m.AddEVSEFromSettings(ctx, maxChargingTime, c)
 		if addErr != nil {
 			return addErr
 		}
@@ -340,7 +341,7 @@ func (m *managerImpl) RestoreEVSEStatus(c *settings.EVSE) error {
 		logInfo.Debugf("Successfully resumed charging")
 		return nil
 	case core.ChargePointStatusReserved:
-		//todo
+		// todo
 		return nil
 	case core.ChargePointStatusFaulted,
 		core.ChargePointStatusFinishing,

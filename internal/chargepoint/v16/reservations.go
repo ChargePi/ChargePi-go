@@ -2,19 +2,20 @@ package v16
 
 import (
 	"fmt"
+
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
 )
 
 func (cp *ChargePoint) OnReserveNow(request *reservation.ReserveNowRequest) (confirmation *reservation.ReserveNowConfirmation, err error) {
 	cp.logger.Infof("Received %s for %v", request.GetFeatureName(), request.ConnectorId)
-	connector, err := cp.connectorManager.FindEVSE(request.ConnectorId)
 
+	connector, err := cp.connectorManager.FindEVSE(request.ConnectorId)
 	if err != nil {
 		return reservation.NewReserveNowConfirmation(reservation.ReservationStatusUnavailable), nil
 	}
 
-	err = connector.ReserveEvse(request.ReservationId, request.IdTag)
+	err = connector.Reserve(request.ReservationId, request.IdTag)
 	switch err {
 	case nil:
 		timeFormat := fmt.Sprintf("%d:%d", request.ExpiryDate.Hour(), request.ExpiryDate.Minute())

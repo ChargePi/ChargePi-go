@@ -35,3 +35,7 @@ func (reader *TagReader) Cleanup() {
 // Reset Implements the hardware reset by pulling the ResetPin low and then releasing.
 func (reader *TagReader) Reset() {
 }
+
+func (reader *TagReader) GetType() string {
+	return ""
+}

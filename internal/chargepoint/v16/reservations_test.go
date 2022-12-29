@@ -2,14 +2,15 @@ package v16
 
 import (
 	"errors"
+	"testing"
+	"time"
+
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/test"
-	"testing"
-	"time"
 )
 
 const (
@@ -38,7 +39,7 @@ func (s *reservationTestSuite) TestReservation() {
 	)
 
 	// Set connector expectations
-	connectorMock.On("ReserveEvse", reservationId, tagId).Return(nil).Once()
+	connectorMock.On("Reserve", reservationId, tagId).Return(nil).Once()
 	connectorMock.On("IsAvailable").Return(true).Once()
 	connectorMock.On("RemoveReservation").Return()
 
@@ -61,7 +62,7 @@ func (s *reservationTestSuite) TestReservation() {
 
 	// Unable to reserve for whatever reason
 	connectorMock.On("IsAvailable").Return(true).Once()
-	connectorMock.On("ReserveEvse", 2, tagId).Return(errors.New("unable to reserve the connector")).Once()
+	connectorMock.On("Reserve", 2, tagId).Return(errors.New("unable to reserve the connector")).Once()
 	response, err = s.cp.OnReserveNow(reservation.NewReserveNowRequest(connectorId, expiryDate, tagId, 2))
 	s.Assert().NoError(err)
 	s.Assert().NotNil(response)

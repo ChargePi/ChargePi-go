@@ -145,7 +145,7 @@ func (l *LocalAuthListImpl) SetMaxTags(number int) {
 // LoadFromFile loads tags from the cache file
 func (l *LocalAuthListImpl) LoadFromFile() error {
 	var (
-		auth settingsData.AuthorizationFile
+		auth settingsData.LocalAuthListFile
 		err  error
 	)
 
@@ -163,12 +163,12 @@ func (l *LocalAuthListImpl) LoadFromFile() error {
 	loadTags(&l.tags, auth.Tags)
 	l.numTags = len(auth.Tags)
 
-	log.Infof("Read auth file version %d with Tags %s", auth.Version, auth.Tags)
+	log.WithField("version", auth.Version).Infof("Read local authorization file")
 	return nil
 }
 
 func (l *LocalAuthListImpl) WriteToFile() error {
-	log.Debug("Writing tags to file..")
+	log.Debug("Writing local authorization list to a file")
 	var (
 		authTags                []settingsData.Tag
 		version, isVersionFound = l.tags.Load(VersionKey)
@@ -190,12 +190,12 @@ func (l *LocalAuthListImpl) WriteToFile() error {
 		return false
 	})
 
-	err := util.WriteToFile(l.filePath, settingsData.AuthorizationFile{
+	err := util.WriteToFile(l.filePath, settingsData.LocalAuthListFile{
 		Version: version.(int),
 		Tags:    authTags,
 	})
 	if err != nil {
-		log.WithError(err).Errorf("Error updating auth cache file")
+		log.WithError(err).Errorf("Error updating local auth list file")
 	}
 
 	return err

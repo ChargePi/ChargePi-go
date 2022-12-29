@@ -3,72 +3,70 @@ package v16
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/indicator"
 	chargePoint "github.com/xBlaz3kx/ChargePi-go/internal/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
-	"strings"
-	"time"
 )
 
 func (cp *ChargePoint) sendToLCD(messages ...string) {
-	if !cp.settings.ChargePoint.Hardware.Display.IsEnabled || util.IsNilInterfaceOrPointer(cp.display) {
+	if util.IsNilInterfaceOrPointer(cp.display) {
+		cp.logger.Warn("Cannot send message to display, it is disabled or not configured")
 		return
 	}
 
 	cp.logger.Debugf("Sending message(s) to display: %v", messages)
-	cp.display.DisplayMessage(chargePoint.NewMessage(time.Second*5, messages))
+	go cp.display.DisplayMessage(chargePoint.NewMessage(time.Second*5, messages))
 }
 
-func (cp *ChargePoint) displayLEDStatus(connectorIndex int, status core.ChargePointStatus) {
-	indicatorSettings := cp.settings.ChargePoint.Hardware.LedIndicator
-	if !indicatorSettings.Enabled ||
-		!indicatorSettings.IndicateCardRead ||
-		util.IsNilInterfaceOrPointer(cp.indicator) {
+func (cp *ChargePoint) displayStatusChangeOnIndicator(connectorIndex int, status core.ChargePointStatus) {
+	logInfo := cp.logger.WithField("connector", connectorIndex+1)
+	if util.IsNilInterfaceOrPointer(cp.indicator) {
+		logInfo.Warn("Cannot indicate status change, indicator disabled or not configured")
 		return
 	}
 
 	var color = indicator.Off
-	mappings := indicatorSettings.IndicatorMappings
-	mappings.Error = ""
-
 	switch status {
 	case core.ChargePointStatusFaulted:
-		color = indicator.Red
+		color = indicator.Color(cp.indicatorMapping.Error)
 	case core.ChargePointStatusCharging:
-		color = indicator.Blue
+		color = indicator.Color(cp.indicatorMapping.Charging)
 	case core.ChargePointStatusReserved:
-		color = indicator.Yellow
+		color = indicator.Color(cp.indicatorMapping.Reserved)
 	case core.ChargePointStatusFinishing:
-		color = indicator.Blue
+		color = indicator.Color(cp.indicatorMapping.Finishing)
 	case core.ChargePointStatusAvailable:
-		color = indicator.Green
+		color = indicator.Color(cp.indicatorMapping.Available)
 	case core.ChargePointStatusUnavailable:
-		color = indicator.Orange
+		color = indicator.Color(cp.indicatorMapping.Fault)
 	default:
-		cp.logger.Error("Cannot find a color for the status")
+		logInfo.Error("Cannot find a color for the status")
 		return
 	}
 
-	cp.logger.Debugf("Indicating connector status: %x", color)
-
-	err := cp.indicator.DisplayColor(connectorIndex, uint32(color))
+	logInfo.Debugf("Indicating connector status: %x", color)
+	err := cp.indicator.DisplayColor(connectorIndex, color)
 	if err != nil {
-		cp.logger.WithError(err).Errorf("Error indicating status")
+		logInfo.WithError(err).Errorf("Error indicating status")
 	}
 }
 
 // indicateCard Blinks the LED to indicate that the card was read.
-func (cp *ChargePoint) indicateCard(index int, color uint32) {
-	if !cp.settings.ChargePoint.Hardware.LedIndicator.Enabled || util.IsNilInterfaceOrPointer(cp.indicator) {
+func (cp *ChargePoint) indicateCard(index int, color indicator.Color) {
+	logInfo := cp.logger.WithField("connector", index+1)
+	if util.IsNilInterfaceOrPointer(cp.indicator) {
+		logInfo.Warn("Cannot indicate card read, disabled or not configured")
 		return
 	}
 
-	cp.logger.Trace("Indicating tag was read")
-
+	logInfo.Debug("Indicating a tag was read")
 	err := cp.indicator.Blink(index, 3, color)
 	if err != nil {
-		cp.logger.WithError(err).Errorf("Could not indicate card was read")
+		logInfo.WithError(err).Errorf("Could not indicate a tag was read")
 	}
 }
 
@@ -88,8 +86,12 @@ Listener:
 		select {
 		case tagId := <-tagChannel:
 			tagId = strings.ToUpper(tagId)
-			go cp.indicateCard(len(cp.connectorManager.GetEVSEs()), indicator.White)
-			go cp.sendToLCD("Read tag:", tagId)
+
+			go func() {
+				cp.sendToLCD("Read tag:", tagId)
+				cp.indicateCard(len(cp.connectorManager.GetEVSEs()), indicator.White)
+			}()
+
 			return &tagId, nil
 		case <-ctx.Done():
 			break Listener

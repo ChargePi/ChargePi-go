@@ -3,8 +3,10 @@ package chargePoint
 import (
 	"context"
 	"errors"
+
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	log "github.com/sirupsen/logrus"
+	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/indicator"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/reader"
@@ -28,6 +30,7 @@ type (
 		// Basic info
 		Connect(ctx context.Context, serverUrl string)
 		CleanUp(reason core.Reason)
+		Reset(resetType string) error
 		ApplyOpts(opts ...Options)
 
 		// Core functionality
@@ -35,17 +38,24 @@ type (
 		StopCharging(evseId, connectorId int, reason core.Reason) error
 
 		// Connector API
-		AddEVSEs(evses []*settings.EVSE)
+		SendEVSEsDetails(evses ...evse.EVSE)
 		ListenForConnectorStatusChange(ctx context.Context, ch <-chan notifications.StatusNotification)
 
 		// Options
 		SetLogger(logger *log.Logger)
-		SetDisplay(display display.Display)
-		SetIndicator(indicator indicator.Indicator)
-		SetSettings(settings *settings.Settings)
+		SetDisplay(display display.Display) error
+		SetIndicator(indicator indicator.Indicator) error
+
+		// Settings
+		SetSettings(settings settings.Info)
+		GetSettings() settings.Info
+		SetConnectionSettings(settings settings.ConnectionSettings)
+		GetConnectionSettings() settings.ConnectionSettings
+		SetIndicatorSettings(settings settings.IndicatorStatusMapping)
+		GetIndicatorSettings() settings.IndicatorStatusMapping
 
 		// Reader
-		SetReader(reader reader.Reader)
+		SetReader(reader reader.Reader) error
 		ListenForTag(ctx context.Context, tagChannel <-chan string) (*string, error)
 	}
 )

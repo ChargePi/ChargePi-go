@@ -9,8 +9,6 @@ type ReaderMock struct {
 	mock.Mock
 }
 
-/*------------------ Reader mock ------------------*/
-
 func (r *ReaderMock) ListenForTags(ctx context.Context) {
 	r.Called()
 }

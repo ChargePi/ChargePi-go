@@ -3,16 +3,15 @@ package evcc
 import (
 	"context"
 	"errors"
+
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	log "github.com/sirupsen/logrus"
 	"github.com/warthog618/gpiod"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/models/evcc"
 )
 
 var (
 	ErrInvalidPinNumber = errors.New("pin number must be greater than 0")
-	ErrInitFailed       = errors.New("init failed")
 )
 
 type (
@@ -21,7 +20,7 @@ type (
 		inverseLogic  bool
 		state         evcc.CarState
 		pin           *gpiod.Line
-		statusChannel chan chargePoint.StateNotification
+		statusChannel chan StateNotification
 	}
 )
 
@@ -35,7 +34,7 @@ func NewRelay(relayPin int, inverseLogic bool) (*RelayAsEvcc, error) {
 	relay := RelayAsEvcc{
 		relayPin:      relayPin,
 		inverseLogic:  inverseLogic,
-		statusChannel: make(chan chargePoint.StateNotification, 10),
+		statusChannel: make(chan StateNotification, 10),
 	}
 
 	return &relay, nil
@@ -94,7 +93,7 @@ func (r *RelayAsEvcc) setState(state evcc.CarState, error string) error {
 	}
 
 	r.state = state
-	r.statusChannel <- chargePoint.NewStateNotification(state, error)
+	r.statusChannel <- NewStateNotification(state, error)
 	return nil
 }
 
@@ -114,7 +113,7 @@ func (r *RelayAsEvcc) GetType() string {
 	return Relay
 }
 
-func (r *RelayAsEvcc) GetStatusChangeChannel() <-chan chargePoint.StateNotification {
+func (r *RelayAsEvcc) GetStatusChangeChannel() <-chan StateNotification {
 	return r.statusChannel
 }
 

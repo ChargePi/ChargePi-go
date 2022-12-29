@@ -9,6 +9,10 @@ type (
 	}
 
 	AuthorizationFile struct {
+		Tags []Tag `fig:"tags" json:"tags,omitempty" yaml:"tags"`
+	}
+
+	LocalAuthListFile struct {
 		Version int   `fig:"Version" validation:"required" json:"version" yaml:"version"`
 		Tags    []Tag `fig:"tags" json:"tags,omitempty" yaml:"tags"`
 	}

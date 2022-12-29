@@ -79,21 +79,21 @@ func (suite *connectorManagerTestSuite) SetupTest() {
 	suite.connector2 = CreateNewConnectorMock(1, 2, suite.chSession)
 	suite.connector3 = CreateNewConnectorMock(1, 3, suite.chSession)
 
-	err := suite.connectorManager.AddEVSE(suite.connector1)
+	err := suite.connectorManager.AddEVSE(nil, suite.connector1)
 	suite.Require().NoError(err)
 
 }
 
 func (suite *connectorManagerTestSuite) TestAddConnector() {
 	// Duplicate connector
-	err := suite.connectorManager.AddEVSE(suite.connector1)
+	err := suite.connectorManager.AddEVSE(nil, suite.connector1)
 	suite.Require().Error(err)
 
-	err = suite.connectorManager.AddEVSE(suite.connector2)
+	err = suite.connectorManager.AddEVSE(nil, suite.connector2)
 	suite.Require().NoError(err)
 
 	// Nil connector not allowed
-	err = suite.connectorManager.AddEVSE(nil)
+	err = suite.connectorManager.AddEVSE(nil, nil)
 	suite.Require().Error(err)
 
 	suite.Require().Contains(suite.connectorManager.GetEVSEs(), suite.connector1)
@@ -112,7 +112,7 @@ func (suite *connectorManagerTestSuite) TestStartChargingConnector() {
 	newConn.On("GetConnectorId").Return(4)
 	newConn.On("SetNotificationChannel", mock.Anything).Return()
 	newConn.On("SetMeterValuesChannel", mock.Anything).Return()
-	err = suite.connectorManager.AddEVSE(newConn)
+	err = suite.connectorManager.AddEVSE(nil, newConn)
 	suite.Require().NoError(err)
 
 	// Start charging returns an error
@@ -135,11 +135,11 @@ func (suite *connectorManagerTestSuite) TestAddConnectorFromSettings() {
 	}
 
 	// Try to add duplicate connector
-	err := suite.connectorManager.AddEVSEFromSettings(nil, suite.connectorSettings)
+	err := suite.connectorManager.AddEVSEFromSettings(nil, nil, suite.connectorSettings)
 	suite.Require().Error(err)
 
 	// Try to add another connector
-	err = suite.connectorManager.AddEVSEFromSettings(nil, &settingsModel.EVSE{
+	err = suite.connectorManager.AddEVSEFromSettings(nil, nil, &settingsModel.EVSE{
 		EvseId:  2,
 		Status:  "Available",
 		Session: settingsModel.Session{},
@@ -152,7 +152,7 @@ func (suite *connectorManagerTestSuite) TestAddConnectorFromSettings() {
 	suite.Require().NoError(err)
 
 	// Try to add another connector
-	err = suite.connectorManager.AddEVSEFromSettings(nil, nil)
+	err = suite.connectorManager.AddEVSEFromSettings(nil, nil, nil)
 	suite.Require().Error(err)
 }
 
@@ -161,7 +161,7 @@ func (suite *connectorManagerTestSuite) TestGetConnectors() {
 	suite.Require().Len(connectors, 1)
 
 	// Try to add another connector
-	err := suite.connectorManager.AddEVSE(suite.connector3)
+	err := suite.connectorManager.AddEVSE(nil, suite.connector3)
 	suite.Require().NoError(err)
 
 	connectors = suite.connectorManager.GetEVSEs()
@@ -225,7 +225,7 @@ func (suite *connectorManagerTestSuite) TestStopAllConnectors() {
 	newConn.On("StopCharging", core.ReasonLocal).Return(errors.New("something happened"))
 
 	// Add another connector
-	err := suite.connectorManager.AddEVSE(suite.connector3)
+	err := suite.connectorManager.AddEVSE(nil, suite.connector3)
 	suite.Require().NoError(err)
 
 	// Stop all
@@ -233,7 +233,7 @@ func (suite *connectorManagerTestSuite) TestStopAllConnectors() {
 	suite.Require().NoError(err)
 
 	// Add another "faulty" connector
-	err = suite.connectorManager.AddEVSE(newConn)
+	err = suite.connectorManager.AddEVSE(nil, newConn)
 	suite.Require().NoError(err)
 
 	// Stop causes an error

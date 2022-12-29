@@ -2,10 +2,12 @@ package test
 
 import (
 	"context"
+
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/stretchr/testify/mock"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
+	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/evcc"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/power-meter"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/session"
@@ -16,8 +18,6 @@ type (
 		mock.Mock
 	}
 )
-
-/*------------------ EVSE mock ------------------*/
 
 func (m *EvseMock) Init(ctx context.Context) error {
 	return m.Called().Error(0)
@@ -46,7 +46,7 @@ func (m *EvseMock) GetConnectors() []evse.Connector {
 	return m.Called().Get(0).([]evse.Connector)
 }
 
-func (m *EvseMock) ReserveEvse(reservationId int, tagId string) error {
+func (m *EvseMock) Reserve(reservationId int, tagId string) error {
 	return m.Called(reservationId, tagId, tagId).Error(0)
 }
 
@@ -160,4 +160,42 @@ func (m *EvseMock) Lock() {
 
 func (m *EvseMock) Unlock() {
 	m.Called()
+}
+
+func (m *EvseMock) AddConnector(connector evse.Connector) error {
+	args := m.Called(connector)
+	return args.Error(0)
+}
+
+func (m *EvseMock) SetMaxChargingTime(time *int) {
+	m.Called(time)
+}
+
+func (m *EvseMock) GetMaxChargingPower() float64 {
+	args := m.Called()
+	if args.Get(0) != nil {
+		return args.Get(0).(*int)
+	}
+}
+
+func (m *EvseMock) GetSession() session.Session {
+	args := m.Called()
+	if args.Get(0) != nil {
+		return args.Get(0).(*int)
+	}
+}
+
+func (m *EvseMock) SetPowerMeter(meter powerMeter.PowerMeter) error {
+	// TODO implement me
+	panic("implement me")
+}
+
+func (m *EvseMock) GetEvcc() evcc.EVCC {
+	// TODO implement me
+	panic("implement me")
+}
+
+func (m *EvseMock) SetEvcc(evcc evcc.EVCC) {
+	// TODO implement me
+	panic("implement me")
 }

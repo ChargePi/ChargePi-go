@@ -8,14 +8,17 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
-	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
-	"github.com/xBlaz3kx/ocppManager-go/configuration"
 	"strconv"
 	"time"
 )
 
 func (cp *ChargePoint) StopCharging(evseId, connectorId int, reason core.Reason) error {
-	return nil
+	cpEvse, err := cp.connectorManager.FindEVSE(evseId)
+	if err != nil {
+		return err
+	}
+
+	return cp.stopChargingConnector(cpEvse, reason)
 }
 
 // stopChargingConnector Stop charging a connector with the specified ID. Update the status(es), turn off the ConnectorImpl and calculate the energy consumed.
@@ -25,9 +28,8 @@ func (cp *ChargePoint) stopChargingConnector(connector evse.EVSE, reason core.Re
 	}
 
 	var (
-		stopTransactionOnEVDisconnect, err = ocppConfigManager.GetConfigurationValue(configuration.StopTransactionOnEVSideDisconnect.String())
-		transactionId, convErr             = strconv.Atoi(connector.GetTransactionId())
-		logInfo                            = cp.logger.WithFields(log.Fields{
+		transactionId, convErr = strconv.Atoi(connector.GetTransactionId())
+		logInfo                = cp.logger.WithFields(log.Fields{
 			"evseId": connector.GetEvseId(),
 			"reason": reason,
 		})
@@ -35,11 +37,6 @@ func (cp *ChargePoint) stopChargingConnector(connector evse.EVSE, reason core.Re
 
 	if convErr != nil {
 		return convErr
-	}
-
-	if stopTransactionOnEVDisconnect != nil && *stopTransactionOnEVDisconnect != "true" && reason == core.ReasonEVDisconnected {
-		logInfo.Info("The charging without stopping the transaction")
-		return connector.StopCharging(reason)
 	}
 
 	request := core.NewStopTransactionRequest(
@@ -56,7 +53,7 @@ func (cp *ChargePoint) stopChargingConnector(connector evse.EVSE, reason core.Re
 		}
 
 		logInfo.Info("Stopping transaction")
-		err = connector.StopCharging(reason)
+		err := connector.StopCharging(reason)
 		if err != nil {
 			logInfo.WithError(err).Errorf("Unable to stop charging")
 			return

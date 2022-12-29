@@ -41,14 +41,14 @@ const (
 
 var chargePointSettings = settings.Settings{ChargePoint: settings.ChargePoint{
 	Info: settings.Info{
-		OCPPInfo: settings.OCPPInfo{
+		OCPPDetails: settings.OCPPDetails{
 			Vendor: "exampleVendor",
 			Model:  "exampleModel",
 		},
 	},
 	ConnectionSettings: settings.ConnectionSettings{
 		Id:              chargePointId,
-		ProtocolVersion: string(protocolVersion),
+		ProtocolVersion: protocolVersion,
 		ServerUri:       fmt.Sprintf("ws://%s:%d%s", centralSystemHost, centralSystemPort, centralSystemEndpoint),
 		TLS:             settings.TLS{IsEnabled: false},
 	},
@@ -176,7 +176,8 @@ func (s *chargePointTestSuite) setupChargePoint(ctx context.Context, lcd display
 		chargePoint.WithReader(ctx, reader),
 		chargePoint.WithLogger(log.StandardLogger()),
 	)
-	cp.SetSettings(&chargePointSettings)
+	cp.SetSettings(chargePointSettings.ChargePoint.Info)
+	cp.SetConnectionSettings(chargePointSettings.ChargePoint.ConnectionSettings)
 	cp.Connect(ctx, fmt.Sprintf("ws://%s:%d%s", centralSystemHost, centralSystemPort, centralSystemEndpoint))
 	return cp
 }

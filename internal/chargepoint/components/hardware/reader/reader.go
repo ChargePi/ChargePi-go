@@ -27,6 +27,7 @@ type Reader interface {
 	Cleanup()
 	Reset()
 	GetTagChannel() <-chan string
+	GetType() string
 }
 
 // NewTagReader creates an instance of the Reader interface based on the provided configuration.

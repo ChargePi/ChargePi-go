@@ -12,6 +12,12 @@ import (
 )
 
 func (cp *ChargePoint) StartCharging(evseId, connectorId int, tagId string) error {
+	logInfo := cp.logger.WithFields(log.Fields{
+		"evseId":      evseId,
+		"connectorId": connectorId,
+		"tagId":       tagId,
+	})
+
 	if cp.availability != core.AvailabilityTypeOperative {
 		return chargePoint.ErrChargePointUnavailable
 	}
@@ -28,13 +34,8 @@ func (cp *ChargePoint) StartCharging(evseId, connectorId int, tagId string) erro
 	)
 
 	callback := func(confirmation ocpp.Response, protoError error) {
-		logInfo := cp.logger.WithFields(log.Fields{
-			"evseId": evseId,
-			"tagId":  tagId,
-		})
-
 		if protoError != nil {
-			logInfo.WithError(protoError).Errorf("Server responded with error when starting a transaction")
+			logInfo.WithError(protoError).Errorf("Central system responded with an error for %s", confirmation.GetFeatureName())
 			return
 		}
 
@@ -42,6 +43,7 @@ func (cp *ChargePoint) StartCharging(evseId, connectorId int, tagId string) erro
 
 		switch startTransactionConf.IdTagInfo.Status {
 		case types.AuthorizationStatusAccepted, types.AuthorizationStatusConcurrentTx:
+
 			// Attempt to start charging
 			err := cp.connectorManager.StartCharging(evseId, tagId, strconv.Itoa(startTransactionConf.TransactionId))
 			if err != nil {
@@ -50,7 +52,6 @@ func (cp *ChargePoint) StartCharging(evseId, connectorId int, tagId string) erro
 			}
 
 			logInfo.Infof("Started charging connector at %s", time.Now())
-
 		case types.AuthorizationStatusBlocked, types.AuthorizationStatusInvalid, types.AuthorizationStatusExpired:
 			fallthrough
 		default:

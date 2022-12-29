@@ -76,7 +76,9 @@ func (t *TagManagerImpl) AddTag(tagId string, tagInfo *types.IdTagInfo) error {
 }
 
 func (t *TagManagerImpl) ClearCache() {
-	t.cache.RemoveCachedTags()
+	if t.authCacheEnabled {
+		t.cache.RemoveCachedTags()
+	}
 }
 
 func (t *TagManagerImpl) SetMaxTags(number int) {
@@ -85,9 +87,11 @@ func (t *TagManagerImpl) SetMaxTags(number int) {
 }
 
 func (t *TagManagerImpl) GetTag(tagId string) (*types.IdTagInfo, error) {
+	logInfo := log.WithField("tagId", tagId)
+
 	// Check the localAuthList first
 	if t.localAuthListEnabled {
-		log.Infof("Getting the tag from localAuthList")
+		logInfo.Infof("Getting the tag from localAuthList")
 		tag, err := t.authList.GetTag(tagId)
 		if err != nil {
 			goto CheckCache
@@ -99,7 +103,7 @@ func (t *TagManagerImpl) GetTag(tagId string) (*types.IdTagInfo, error) {
 CheckCache:
 	// Check the cache
 	if t.authCacheEnabled {
-		log.Infof("Getting the tag from authCache")
+		logInfo.Infof("Getting the tag from authCache")
 		return t.authList.GetTag(tagId)
 	}
 
@@ -131,7 +135,10 @@ func (t *TagManagerImpl) UpdateLocalAuthList(version int, updateType localauth.U
 	case localauth.UpdateTypeDifferential:
 
 		for _, tag := range tags {
-			t.authList.UpdateTag(tag.IdTag, tag.IdTagInfo)
+			err := t.authList.UpdateTag(tag.IdTag, tag.IdTagInfo)
+			if err != nil {
+				return err
+			}
 		}
 
 	case localauth.UpdateTypeFull:

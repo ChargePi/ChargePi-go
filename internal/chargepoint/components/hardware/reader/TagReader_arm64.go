@@ -120,6 +120,10 @@ func (reader *TagReader) GetTagChannel() <-chan string {
 	return reader.TagChannel
 }
 
+func (reader *TagReader) GetType() string {
+	return PN532
+}
+
 // Cleanup Close the reader device connection.
 func (reader *TagReader) Cleanup() {
 	close(reader.TagChannel)

@@ -1,11 +1,10 @@
 # ⚡ ChargePi-go
 
-⚡ChargePi is an open-source Raspberry Pi 4 based ⚡Charging Point🔌 project, which supports multiple EVSEs and simple
-connectors🔌. You can also add an RFID/NFC reader and a display to the Charging Point. It is configurable, simple to
-make and uses off-the-shelf hardware.
+ChargePi is an open-source Linux based OCPP-enabled ⚡Charging Point🔌 project. It is configurable, simple to make and
+uses off-the-shelf hardware.
 
-A connector🔌 consists of an indicator (🚥 RGB LED strip), a relay and a ⚡ power meter. The client is written in Go and
-requires installation of a few C libraries.
+It supports multiple connectors🔌, which consist of an indicator (🚥 RGB LED strip), a EV Charge Controller and a ⚡ power
+meter. Optionally, the charge point supports an RFID/NFC reader and a display as an user interface.
 
 ChargePi-go client can be deployed/run in multiple ways:
 
@@ -14,30 +13,10 @@ ChargePi-go client can be deployed/run in multiple ways:
 
 ## 🔌 Charge point specifications
 
-| OCPP version  | Core functionalities |  Offline charging   | Local authorization | Smart Charging |
-|:-------------:|:--------------------:|:-------------------:|:-------------------:|:--------------:|
-|  1.6 JSON/WS  |          ✔️          |     ✔️(partial)     |         ✔️          |       ❌        |
-| 2.0.1 JSON/WS | Will be implemented  | Will be implemented | Will be implemented |       ❌        |
-
-### 🛠️ Configuration and settings
-
-To customize and configure the ChargePi client, check out the [configuration guide](/docs/client/configuration/configuration.md).
-The client comes with default settings which require minimal configuration.
-
-### 📑 Logging
-
-Debugging and insight of the charge point made simple. ChargePi supports multiple logging outputs specifying the format
-the [settings](/configs/settings.json) file.
-
-Supported formats:
-
-|            Logging type             | Supported |
-|:-----------------------------------:|:---------:|
-| [Graylog](https://www.graylog.org/) |     ✔     |
-|               Syslog                |     ✔     |
-|                File                 |     ✔     |
-
-For details, check out the [logging](/docs/logging/logging.md) docs.
+| OCPP version  | Core functionalities |    Reservations     |    LocalAuthList    | SmartCharging | FirmwareUpdate |
+|:-------------:|:--------------------:|:-------------------:|:-------------------:|:-------------:|:--------------:|
+|  1.6 JSON/WS  |          ✔️          |     ✔️(partial)     |         ✔️          |       ❌       |       ❌        |
+| 2.0.1 JSON/WS | Will be implemented  | Will be implemented | Will be implemented |       ❌       |                |
 
 ## ⚡ Quickstart
 
@@ -46,12 +25,18 @@ For details, check out the [logging](/docs/logging/logging.md) docs.
 2. Install the [libraries](/docs/client/installing-libraries.md) (if needed).
 
 3. Configure the settings files according to the hardware and desired functionality:
-    - [client configuration](/docs/client/configuration/configuration.md)
+    - [client configuration](/docs/client/configuration.md)
     - [OCPP configuration](/docs/ocpp/ocpp-16.md)
 
 4. Run the client.
 
 Details on how to run the client are described in the [client startup guide](docs/client/running-the-client.md).
+
+### 🛠️ Configuration and settings
+
+To configure the ChargePi client, check out the [configuration guide](/docs/client/configuration.md). Client comes with
+default settings which require minimal configuration.
+
 
 ## Note
 

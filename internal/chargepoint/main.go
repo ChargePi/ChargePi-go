@@ -2,12 +2,17 @@ package chargepoint
 
 import (
 	"context"
+	"os"
+	"os/signal"
+	"time"
+
 	"github.com/go-co-op/gocron"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/auth"
 	connectorManager "github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
+	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/indicator"
 	v16 "github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/v16"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
@@ -17,9 +22,6 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/pkg/logging"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/models/ocpp"
 	"github.com/xBlaz3kx/ocppManager-go/configuration"
-	"os"
-	"os/signal"
-	"time"
 )
 
 func CreateChargePoint(
@@ -32,10 +34,15 @@ func CreateChargePoint(
 	hardware settings.Hardware,
 ) chargePoint.ChargePoint {
 
+	// Create a status indicator if enabled
+	statusIndicator := indicator.NewIndicator(len(manager.GetEVSEs()), hardware.LedIndicator)
+
+	// Create additional components based on the configuration
 	opts := []chargePoint.Options{
 		chargePoint.WithDisplayFromSettings(hardware.Display),
 		chargePoint.WithReaderFromSettings(ctx, hardware.TagReader),
 		chargePoint.WithLogger(logger),
+		chargePoint.WithIndicator(statusIndicator),
 	}
 
 	switch protocolVersion {
@@ -61,15 +68,17 @@ func Run(isDebug bool, config *settings.Settings, connectors []*settings.EVSE, c
 	var (
 		// ChargePoint components
 		handler    chargePoint.ChargePoint
-		tagManager = auth.NewTagManager(localAuthListFilePath)
 		logger     = log.StandardLogger()
+		tagManager = auth.NewTagManager(localAuthListFilePath)
 		manager    = connectorManager.GetManager()
 		sch        = scheduler.GetScheduler()
+
 		// Settings
 		hardware           = config.ChargePoint.Hardware
 		connectionSettings = config.ChargePoint.ConnectionSettings
-		serverUrl          = util.CreateConnectionUrl(connectionSettings)
+		chargePointInfo    = config.ChargePoint.Info
 		protocolVersion    = connectionSettings.ProtocolVersion
+		serverUrl          = util.CreateConnectionUrl(connectionSettings)
 
 		ctx, cancel = signal.NotifyContext(context.Background(), os.Interrupt)
 	)
@@ -79,7 +88,7 @@ func Run(isDebug bool, config *settings.Settings, connectors []*settings.EVSE, c
 	// Create the logger
 	logging.Setup(logger, config.ChargePoint.Logging, isDebug)
 
-	// Setup OCPP configuration manager
+	// Setup OCPP configuration variables manager
 	s.SetupOcppConfigurationManager(
 		configurationFilePath,
 		configuration.ProtocolVersion(connectionSettings.ProtocolVersion),
@@ -87,25 +96,29 @@ func Run(isDebug bool, config *settings.Settings, connectors []*settings.EVSE, c
 		reservation.ProfileName,
 	)
 
-	// Load tags
+	// Load the local auth list of tags
 	go func() {
 		err := tagManager.ReadLocalAuthList()
 		if err != nil {
-
+			logger.WithError(err).Error("Cannot read local auth list")
 		}
 	}()
+
+	// Add EVSEs, they will run standalone
+	err := manager.AddEVSEsFromSettings(ctx, chargePointInfo.MaxChargingTime, connectors)
+	if err != nil {
+		logger.WithError(err).Fatal("Cannot add EVSEs")
+	}
 
 	// Create a new context just for the OCPP connection, so it can be dynamically rebooted
 	parentCtxForOcpp, parentCancel := context.WithCancel(ctx)
 	defer parentCancel()
 
-	// Initialize the client
+	// Create an OCPP client and connect
 	handler = CreateChargePoint(parentCtxForOcpp, protocolVersion, logger, manager, sch, tagManager, hardware)
-	handler.SetSettings(config)
-	handler.AddEVSEs(connectors)
-
-	// Finally, connect to the central system
-	handler.Connect(ctx, serverUrl)
+	handler.SetSettings(chargePointInfo)
+	handler.SetConnectionSettings(connectionSettings)
+	go handler.Connect(parentCtxForOcpp, serverUrl)
 
 	<-ctx.Done()
 	handler.CleanUp(core.ReasonLocal)

@@ -1,4 +1,4 @@
-package chargePoint
+package evcc
 
 import "github.com/xBlaz3kx/ChargePi-go/pkg/models/evcc"
 

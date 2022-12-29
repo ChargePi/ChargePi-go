@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/notifications"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/test"
 	ocppManager "github.com/xBlaz3kx/ocppManager-go"
 	"github.com/xBlaz3kx/ocppManager-go/configuration"
@@ -195,24 +194,16 @@ func (s *connectorFunctionsTestSuite) TestDisplayConnectorStatus() {
 
 	lcdMock.On("GetLcdChannel").Return(channel)
 	s.cp.display = lcdMock
-	s.cp.settings = &settings.Settings{ChargePoint: settings.ChargePoint{
-		Hardware: settings.Hardware{
-			Display: settings.Display{
-				IsEnabled: true,
-				Language:  "en",
-			},
-		},
-	}}
 
 	go func() {
 		time.Sleep(time.Millisecond * 100)
-		s.cp.displayConnectorStatus(connectorId, core.ChargePointStatusAvailable)
+		s.cp.displayStatusChangeOnDisplay(connectorId, core.ChargePointStatusAvailable)
 
 		time.Sleep(time.Millisecond * 100)
-		s.cp.displayConnectorStatus(connectorId, core.ChargePointStatusCharging)
+		s.cp.displayStatusChangeOnDisplay(connectorId, core.ChargePointStatusCharging)
 
 		time.Sleep(time.Millisecond * 100)
-		s.cp.displayConnectorStatus(connectorId, core.ChargePointStatusFinishing)
+		s.cp.displayStatusChangeOnDisplay(connectorId, core.ChargePointStatusFinishing)
 	}()
 
 	numMessages := 0

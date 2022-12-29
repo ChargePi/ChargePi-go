@@ -1,6 +1,7 @@
 package test
 
 import (
+	"context"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/stretchr/testify/mock"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
@@ -11,8 +12,6 @@ import (
 type ManagerMock struct {
 	mock.Mock
 }
-
-/*------------------ Manager mock ------------------*/
 
 func (o *ManagerMock) GetEVSEs() []evse.EVSE {
 	return o.Called().Get(0).([]evse.EVSE)
@@ -75,15 +74,15 @@ func (o *ManagerMock) StopAllEVSEs(reason core.Reason) error {
 	return o.Called(reason).Error(0)
 }
 
-func (o *ManagerMock) AddEVSE(c evse.EVSE) error {
+func (o *ManagerMock) AddEVSE(ctx context.Context, c evse.EVSE) error {
 	return o.Called(c).Error(0)
 }
 
-func (o *ManagerMock) AddEVSEFromSettings(maxChargingTime *int, c *settings.EVSE) error {
+func (o *ManagerMock) AddEVSEFromSettings(ctx context.Context, maxChargingTime *int, c *settings.EVSE) error {
 	return o.Called(maxChargingTime, c).Error(0)
 }
 
-func (o *ManagerMock) AddEVSEsFromSettings(maxChargingTime *int, c []*settings.EVSE) error {
+func (o *ManagerMock) AddEVSEsFromSettings(ctx context.Context, maxChargingTime *int, c []*settings.EVSE) error {
 	return o.Called(maxChargingTime, c).Error(0)
 }
 

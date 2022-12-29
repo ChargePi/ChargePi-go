@@ -31,7 +31,7 @@ type (
 		// AC or DC
 		Type string `fig:"type" default:"180" json:"type,omitempty" yaml:"type" mapstructure:"type"`
 		// in kW
-		MaxPower float32  `fig:"maxPower" default:"180" json:"maxPower,omitempty" yaml:"maxPower" mapstructure:"maxPower"`
-		OCPPInfo OCPPInfo `fig:"ocpp" json:"ocpp" yaml:"ocpp" mapstructure:"ocpp"`
+		MaxPower    float32     `fig:"maxPower" default:"180" json:"maxPower,omitempty" yaml:"maxPower" mapstructure:"maxPower"`
+		OCPPDetails OCPPDetails `fig:"ocpp" json:"ocpp" yaml:"ocpp" mapstructure:"ocpp"`
 	}
 )

@@ -3,7 +3,6 @@ package evcc
 import (
 	"context"
 
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/models/evcc"
 )
@@ -27,12 +26,12 @@ type (
 		GetError() string
 		Cleanup() error
 		GetType() string
-		GetStatusChangeChannel() <-chan chargePoint.StateNotification
+		GetStatusChangeChannel() <-chan StateNotification
 		Reset()
 	}
 )
 
-// NewPowerMeter creates a new power meter based on the connector settings.
+// NewEVCCFromType creates a new EVCC instance based on the provided type.
 func NewEVCCFromType(evccSettings settings.EVCC) (EVCC, error) {
 	switch evccSettings.Type {
 	case Relay:

@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"github.com/lorenzodonini/ocpp-go/ocpp"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
+	chargePoint "github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
-	data "github.com/xBlaz3kx/ChargePi-go/pkg/models/ocpp"
 	configManager "github.com/xBlaz3kx/ocppManager-go"
 	"github.com/xBlaz3kx/ocppManager-go/configuration"
 )
@@ -15,32 +14,45 @@ import (
 // If the central system does not accept the charge point, exit the client.
 func (cp *ChargePoint) bootNotification() {
 	var (
-		ocppInfo = cp.settings.ChargePoint.Info.OCPPInfo
+		ocppInfo = cp.info.OCPPDetails
 		request  = core.BootNotificationRequest{
-			ChargeBoxSerialNumber:   ocppInfo.ChargeBoxSerialNumber,
+			ChargePointVendor:       ocppInfo.Vendor,
 			ChargePointModel:        ocppInfo.Model,
 			ChargePointSerialNumber: ocppInfo.ChargePointSerialNumber,
-			ChargePointVendor:       ocppInfo.Vendor,
-			FirmwareVersion:         "0.1.0",
-			Iccid:                   ocppInfo.Iccid,
-			Imsi:                    ocppInfo.Imsi,
+			ChargeBoxSerialNumber:   ocppInfo.ChargeBoxSerialNumber,
+			FirmwareVersion:         chargePoint.FirmwareVersion,
+			// Todo fetch from 4G/LTE/SIM module
+			Iccid: ocppInfo.Iccid,
+			Imsi:  ocppInfo.Imsi,
 		}
 	)
+
+	rescheduleBootNotification := func() {
+		_, err := cp.scheduler.Every(60).Seconds().LimitRunsTo(1).Tag("bootNotification").Do(cp.bootNotification)
+		if err != nil {
+			cp.logger.WithError(err).Errorf("Error scheduling heartbeat")
+		}
+	}
 
 	callback := func(confirmation ocpp.Response, protoError error) {
 		bootConf := confirmation.(*core.BootNotificationConfirmation)
 
 		switch bootConf.Status {
 		case core.RegistrationStatusAccepted:
-			cp.logger.Info("Accepted from the central system")
+			cp.logger.Info("Accepted by the central system")
 			cp.setHeartbeat(bootConf.Interval)
 			cp.restoreState()
+
+			// Send details about the charge point and it's connectors
 			_ = cp.sendChargePointInfo()
+			cp.SendEVSEsDetails(cp.connectorManager.GetEVSEs()...)
+
 		case core.RegistrationStatusPending:
 			cp.logger.Info("Registration status pending")
-			//todo reschedule boot notification
-		default:
-			cp.logger.Fatal("Denied by the central system.")
+			rescheduleBootNotification()
+		case core.RegistrationStatusRejected:
+			cp.logger.Warn("Rejected by the central system")
+			rescheduleBootNotification()
 		}
 	}
 
@@ -58,7 +70,7 @@ func (cp *ChargePoint) setHeartbeat(interval int) {
 		heartBeatInterval = &interVal
 	}
 
-	_, err := scheduler.GetScheduler().Every(fmt.Sprintf("%ss", *heartBeatInterval)).Tag("heartbeat").Do(cp.sendHeartBeat)
+	_, err := cp.scheduler.Every(fmt.Sprintf("%ss", *heartBeatInterval)).Tag("heartbeat").Do(cp.sendHeartBeat)
 	if err != nil {
 		cp.logger.WithError(err).Errorf("Error scheduling heartbeat")
 	}
@@ -74,27 +86,5 @@ func (cp *ChargePoint) sendHeartBeat() error {
 			}
 
 			cp.logger.Info("Sent heartbeat")
-		})
-}
-
-// sendHeartBeat Send a setHeartbeat to the central system.
-func (cp *ChargePoint) sendChargePointInfo() error {
-	cpInfo := cp.settings.ChargePoint.Info
-	dataTransfer := core.NewDataTransferRequest(cpInfo.OCPPInfo.Vendor)
-	dataTransfer.Data = data.NewChargePointInfo(cpInfo.Type, cpInfo.MaxPower)
-	//dataTransfer.MessageId
-
-	return util.SendRequest(cp.chargePoint,
-		dataTransfer,
-		func(confirmation ocpp.Response, protoError error) {
-			if protoError != nil {
-				cp.logger.Info("Error sending data")
-				return
-			}
-
-			resp := confirmation.(*core.DataTransferConfirmation)
-			if resp.Status == core.DataTransferStatusAccepted {
-				cp.logger.Info("Sent additional charge point information")
-			}
 		})
 }

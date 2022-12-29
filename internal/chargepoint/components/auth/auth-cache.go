@@ -14,6 +14,8 @@ type (
 		GetTag(tagId string) (*types.IdTagInfo, error)
 		SetMaxCachedTags(number int)
 		RemoveCachedTags()
+		LoadFromFile() error
+		WriteToFile() error
 	}
 
 	CacheImpl struct {
@@ -24,18 +26,21 @@ type (
 
 func NewAuthCache() *CacheImpl {
 	return &CacheImpl{
-		cache:   goCache.New(time.Minute*10, time.Minute*10),
+		cache:   goCache.New(goCache.NoExpiration, time.Minute*3),
 		maxTags: 0,
 	}
 }
 
 // AddTag Add a tag to the authorization cache.
 func (c *CacheImpl) AddTag(tagId string, tagInfo *types.IdTagInfo) {
-	var (
-		expirationTime = time.Minute * 10
-	)
+	logInfo := log.WithFields(log.Fields{
+		"tagId":      tagId,
+		"tagDetails": tagInfo,
+	})
+	expirationTime := goCache.NoExpiration
 
-	if c.cache.ItemCount() >= c.maxTags+2 {
+	// Check if the cache is not full
+	if c.cache.ItemCount() >= c.maxTags {
 		return
 	}
 
@@ -44,21 +49,42 @@ func (c *CacheImpl) AddTag(tagId string, tagInfo *types.IdTagInfo) {
 	}
 
 	// Add a tag if it doesn't exist in the cache already
+	logInfo.Debug("Adding a tag to cache")
 	err := c.cache.Add(fmt.Sprintf("AuthTag%s", tagId), *tagInfo, expirationTime)
 	if err != nil {
-		log.WithError(err).Errorf("Error adding tag to cache")
+		logInfo.WithError(err).Errorf("Error adding tag to cache")
+		return
 	}
+
+	defer func(c *CacheImpl) {
+		err := c.WriteToFile()
+		if err != nil {
+
+		}
+	}(c)
 }
 
 // RemoveTag Remove a tag from the authorization cache.
 func (c *CacheImpl) RemoveTag(tagId string) {
+	log.WithField("tagId", tagId).Debug("Removing a tag from cache")
 	c.cache.Delete(fmt.Sprintf("AuthTag%s", tagId))
+	defer func(c *CacheImpl) {
+		err := c.WriteToFile()
+		if err != nil {
+
+		}
+	}(c)
 }
 
 // RemoveCachedTags Remove all Tags from the authorization cache.
 func (c *CacheImpl) RemoveCachedTags() {
 	log.Debugf("Flushing auth cache")
 	c.cache.Flush()
+
+	err := c.WriteToFile()
+	if err != nil {
+
+	}
 }
 
 // SetMaxCachedTags Set the maximum number of Tags allowed in the authorization cache.
@@ -71,7 +97,7 @@ func (c *CacheImpl) SetMaxCachedTags(number int) {
 
 // GetTag Get a tag from cache
 func (c *CacheImpl) GetTag(tagId string) (*types.IdTagInfo, error) {
-	log.Infof("Fetching the tag", tagId)
+	log.WithField("tagId", tagId).Info("Getting a tag from cache")
 
 	tagObject, isFound := c.cache.Get(fmt.Sprintf("AuthTag%s", tagId))
 	if isFound {
@@ -80,4 +106,14 @@ func (c *CacheImpl) GetTag(tagId string) (*types.IdTagInfo, error) {
 	}
 
 	return nil, ErrTagNotFound
+}
+
+func (c *CacheImpl) LoadFromFile() error {
+	log.Info("Loading auth cache from file")
+	return nil
+}
+
+func (c *CacheImpl) WriteToFile() error {
+	log.Debug("Writing auth cache to a file")
+	return nil
 }
