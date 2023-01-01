@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/suite"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/evcc"
-	settingsData "github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	"os/exec"
 	"testing"
 	"time"
@@ -21,14 +21,14 @@ const (
 
 type SettingsManagerTestSuite struct {
 	suite.Suite
-	evse       settingsData.EVSE
-	session    settingsData.Session
-	evcc       settingsData.EVCC
-	powerMeter settingsData.PowerMeter
+	evse       settings.EVSE
+	session    settings.Session
+	evcc       settings.EVCC
+	powerMeter settings.PowerMeter
 }
 
 func (s *SettingsManagerTestSuite) SetupTest() {
-	s.session = settingsData.Session{
+	s.session = settings.Session{
 		IsActive:      false,
 		TransactionId: "",
 		TagId:         "",
@@ -36,16 +36,16 @@ func (s *SettingsManagerTestSuite) SetupTest() {
 		Consumption:   nil,
 	}
 
-	s.evcc = settingsData.EVCC{
+	s.evcc = settings.EVCC{
 		Type: evcc.Relay,
 	}
 
-	s.powerMeter = settingsData.PowerMeter{
+	s.powerMeter = settings.PowerMeter{
 		Enabled: false,
 		Type:    "",
 	}
 
-	s.evse = settingsData.EVSE{
+	s.evse = settings.EVSE{
 		EvseId:     1,
 		Status:     "Available",
 		Session:    s.session,
@@ -67,8 +67,8 @@ func (s *SettingsManagerTestSuite) SetupTest() {
 
 func (s *SettingsManagerTestSuite) TestUpdateSessionInfo() {
 	var (
-		evseFromFile settingsData.EVSE
-		newSession   = settingsData.Session{
+		evseFromFile settings.EVSE
+		newSession   = settings.Session{
 			IsActive:      true,
 			TransactionId: "Transaction1234",
 			TagId:         "Tag1234",
@@ -98,7 +98,7 @@ func (s *SettingsManagerTestSuite) TestUpdateConnectorStatus() {
 	err := cmd.Run()
 	s.Require().NoError(err)
 
-	var evseFromFile settingsData.EVSE
+	var evseFromFile settings.EVSE
 
 	UpdateEVSEStatus(s.evse.EvseId, core.ChargePointStatusCharging)
 

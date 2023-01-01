@@ -1,22 +1,56 @@
 # ⚡ ChargePi-go
 
-ChargePi is an open-source Linux based OCPP-enabled ⚡Charging Point🔌 project. It is configurable, simple to make and
-uses off-the-shelf hardware.
+ChargePi is an open-source, Linux based ⚡Charging Point🔌 project with OCPP support.
+It is highly customizable, simple to make and supports both off-the-shelf and commercial hardware.
 
-It supports multiple connectors🔌, which consist of an indicator (🚥 RGB LED strip), a EV Charge Controller and a ⚡ power
-meter. Optionally, the charge point supports an RFID/NFC reader and a display as an user interface.
-
-ChargePi-go client can be deployed/run in multiple ways:
-
-- standalone
-- Docker 🐳 and docker-compose
+Multiple connectors/EVSEs🔌 can be configured for the Charge point, which consist of an indicator (🚥 RGB LED strip),
+an EV Charge Controller and a ⚡Power Meter. Optionally, the charge point supports an RFID/NFC reader and a display as an
+user interface.
 
 ## 🔌 Charge point specifications
 
-| OCPP version  | Core functionalities |    Reservations     |    LocalAuthList    | SmartCharging | FirmwareUpdate |
-|:-------------:|:--------------------:|:-------------------:|:-------------------:|:-------------:|:--------------:|
-|  1.6 JSON/WS  |          ✔️          |     ✔️(partial)     |         ✔️          |       ❌       |       ❌        |
-| 2.0.1 JSON/WS | Will be implemented  | Will be implemented | Will be implemented |       ❌       |                |
+| OCPP version  | Core functionalities | Reservations | LocalAuthList | SmartCharging | FirmwareUpdate |
+|:-------------:|:--------------------:|:------------:|:-------------:|:-------------:|:--------------:|
+|  1.6 JSON/WS  |          ✔️          |      ✔️      |      ✔️       |    Planned    |       ❌        |
+| 2.0.1 JSON/WS |       Planned        |   Planned    |    Planned    |    Planned    |    Planned     |
+
+## 🔌 Hardware support
+
+### RFID/NFC readers
+
+| Reader | Is supported | 
+|:------:|:------------:|
+| PN532  |      ✔       |
+
+### Display
+
+| Display | Is supported | 
+|:-------:|:------------:|
+| HD44780 |      ✔       |
+
+### Power Meters
+
+| Power meter | Is supported | 
+|:-----------:|:------------:|
+|   CS5460A   |      ✔       |
+|     ETI     |   Planned    |
+
+### EVCC
+
+EV charging controller (EVCC) controls the communication with the EV and allows or denies the charging. It can also set
+the charging current limit.
+
+|         EVCC          | Is supported | 
+|:---------------------:|:------------:|
+|         Relay         |      ✔       |
+| Phoenix Contact EVSEs |   Planned    |
+
+### LED indicators
+
+| Indicator | Is supported | 
+|:---------:|:------------:|
+|  WS2812b  |      ✔       |
+|  WS2811   |      ✔       |
 
 ## ⚡ Quickstart
 
@@ -25,18 +59,20 @@ ChargePi-go client can be deployed/run in multiple ways:
 2. Install the [libraries](/docs/client/installing-libraries.md) (if needed).
 
 3. Configure the settings files according to the hardware and desired functionality:
-    - [client configuration](/docs/client/configuration.md)
+    - [client configuration](/docs/client/configuration/configuration.md)
     - [OCPP configuration](/docs/ocpp/ocpp-16.md)
 
-4. Run the client.
+4. Run the client. ChargePi-go can be deployed/run in multiple ways:
+
+    - standalone
+    - Docker 🐳 and docker-compose
 
 Details on how to run the client are described in the [client startup guide](docs/client/running-the-client.md).
 
 ### 🛠️ Configuration and settings
 
-To configure the ChargePi client, check out the [configuration guide](/docs/client/configuration.md). Client comes with
-default settings which require minimal configuration.
-
+To configure the ChargePi client, check out the [configuration guide](/docs/client/configuration/configuration.md).
+Client comes with default settings which require minimal configuration.
 
 ## Note
 

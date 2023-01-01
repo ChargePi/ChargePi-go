@@ -19,5 +19,6 @@ type (
 		Enabled bool   `fig:"enabled" json:"enabled,omitempty" yaml:"enabled" mapstructure:"enabled"`
 		Address string `fig:"address" json:"address,omitempty" yaml:"address" mapstructure:"address"`
 		Port    int    `fig:"port" json:"port,omitempty" yaml:"port" mapstructure:"port"`
+		TLS     TLS    `fig:"tls" json:"tls,omitempty" yaml:"tls" mapstructure:"tls"`
 	}
 )

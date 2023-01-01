@@ -5,7 +5,7 @@ import (
 	strUtil "github.com/agrison/go-commons-lang/stringUtils"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
-	settingsModel "github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
+	settingsModel "github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
 	"strconv"
 	"time"

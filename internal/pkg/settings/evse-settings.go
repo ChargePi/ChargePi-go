@@ -7,7 +7,7 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	"os"
 	"path/filepath"
 )

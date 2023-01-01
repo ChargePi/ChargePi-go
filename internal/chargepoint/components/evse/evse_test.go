@@ -1,6 +1,8 @@
 package evse
 
 import (
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/session"
 	"os/exec"
 	"testing"
 	"time"
@@ -9,8 +11,6 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/notifications"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/session"
 	"github.com/xBlaz3kx/ChargePi-go/test"
 	"golang.org/x/net/context"
 )

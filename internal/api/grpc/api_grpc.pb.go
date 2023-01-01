@@ -19,14 +19,6 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ChargePointClient interface {
-	// ----------------- Settings API -----------------
-	// Evse settings
-	GetEVSEs(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*GetEvsesResponse, error)
-	AddEVSE(ctx context.Context, in *SetEVCCRequest, opts ...grpc.CallOption) (*AddEvseResponse, error)
-	GetEVSE(ctx context.Context, in *GetEvseRequest, opts ...grpc.CallOption) (*GetEvseResponse, error)
-	SetEVCC(ctx context.Context, in *SetEVCCRequest, opts ...grpc.CallOption) (*SetEvccResponse, error)
-	SetPowerMeter(ctx context.Context, in *SetPowerMeterRequest, opts ...grpc.CallOption) (*SetPowerMeterDetails, error)
-	GetUsageForEVSE(ctx context.Context, in *GetUsageForEVSERequest, opts ...grpc.CallOption) (ChargePoint_GetUsageForEVSEClient, error)
 	// Display settings
 	SetDisplaySettings(ctx context.Context, in *SetDisplaySettingsRequest, opts ...grpc.CallOption) (*SetDisplaySettingsResponse, error)
 	GetDisplaySettings(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*GetDisplaySettingsResponse, error)
@@ -36,12 +28,13 @@ type ChargePointClient interface {
 	// LED indicator
 	SetIndicatorSettings(ctx context.Context, in *SetIndicatorSettingsRequest, opts ...grpc.CallOption) (*SetIndicatorSettingsResponse, error)
 	GetIndicatorSettings(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*GetIndicatorSettingsResponse, error)
-	// Local auth and cache
-	GetAuthorizedCards(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*GetAuthorizedCardsResponse, error)
-	AddAuthorizedCards(ctx context.Context, in *AddAuthorizedCardsRequest, opts ...grpc.CallOption) (*AddAuthorizedCardsResponse, error)
-	Restart(ctx context.Context, in *RestartRequest, opts ...grpc.CallOption) (*empty.Empty, error)
+	// Connection settings
 	ChangeConnectionDetails(ctx context.Context, in *ChangeConnectionDetailsRequest, opts ...grpc.CallOption) (*ChangeConnectionDetailsResponse, error)
-	ChangeChargePointDetails(ctx context.Context, in *ChangeConnectionDetailsRequest, opts ...grpc.CallOption) (*ChangeConnectionDetailsResponse, error)
+	// Charge point details
+	ChangeChargePointDetails(ctx context.Context, in *ChangeChargePointDetailsRequest, opts ...grpc.CallOption) (*ChangeChargePointDetailsResponse, error)
+	// OCPP configuration variable management
+	GetOCPPVariables(ctx context.Context, in *ChangeChargePointDetailsRequest, opts ...grpc.CallOption) (*ChangeChargePointDetailsResponse, error)
+	Restart(ctx context.Context, in *RestartRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 }
 
 type chargePointClient struct {
@@ -50,83 +43,6 @@ type chargePointClient struct {
 
 func NewChargePointClient(cc grpc.ClientConnInterface) ChargePointClient {
 	return &chargePointClient{cc}
-}
-
-func (c *chargePointClient) GetEVSEs(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*GetEvsesResponse, error) {
-	out := new(GetEvsesResponse)
-	err := c.cc.Invoke(ctx, "/api.ChargePoint/GetEVSEs", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *chargePointClient) AddEVSE(ctx context.Context, in *SetEVCCRequest, opts ...grpc.CallOption) (*AddEvseResponse, error) {
-	out := new(AddEvseResponse)
-	err := c.cc.Invoke(ctx, "/api.ChargePoint/AddEVSE", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *chargePointClient) GetEVSE(ctx context.Context, in *GetEvseRequest, opts ...grpc.CallOption) (*GetEvseResponse, error) {
-	out := new(GetEvseResponse)
-	err := c.cc.Invoke(ctx, "/api.ChargePoint/GetEVSE", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *chargePointClient) SetEVCC(ctx context.Context, in *SetEVCCRequest, opts ...grpc.CallOption) (*SetEvccResponse, error) {
-	out := new(SetEvccResponse)
-	err := c.cc.Invoke(ctx, "/api.ChargePoint/SetEVCC", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *chargePointClient) SetPowerMeter(ctx context.Context, in *SetPowerMeterRequest, opts ...grpc.CallOption) (*SetPowerMeterDetails, error) {
-	out := new(SetPowerMeterDetails)
-	err := c.cc.Invoke(ctx, "/api.ChargePoint/SetPowerMeter", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *chargePointClient) GetUsageForEVSE(ctx context.Context, in *GetUsageForEVSERequest, opts ...grpc.CallOption) (ChargePoint_GetUsageForEVSEClient, error) {
-	stream, err := c.cc.NewStream(ctx, &ChargePoint_ServiceDesc.Streams[0], "/api.ChargePoint/GetUsageForEVSE", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &chargePointGetUsageForEVSEClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
-}
-
-type ChargePoint_GetUsageForEVSEClient interface {
-	Recv() (*GetUsageForEVSEResponse, error)
-	grpc.ClientStream
-}
-
-type chargePointGetUsageForEVSEClient struct {
-	grpc.ClientStream
-}
-
-func (x *chargePointGetUsageForEVSEClient) Recv() (*GetUsageForEVSEResponse, error) {
-	m := new(GetUsageForEVSEResponse)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
 }
 
 func (c *chargePointClient) SetDisplaySettings(ctx context.Context, in *SetDisplaySettingsRequest, opts ...grpc.CallOption) (*SetDisplaySettingsResponse, error) {
@@ -183,18 +99,27 @@ func (c *chargePointClient) GetIndicatorSettings(ctx context.Context, in *empty.
 	return out, nil
 }
 
-func (c *chargePointClient) GetAuthorizedCards(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*GetAuthorizedCardsResponse, error) {
-	out := new(GetAuthorizedCardsResponse)
-	err := c.cc.Invoke(ctx, "/api.ChargePoint/GetAuthorizedCards", in, out, opts...)
+func (c *chargePointClient) ChangeConnectionDetails(ctx context.Context, in *ChangeConnectionDetailsRequest, opts ...grpc.CallOption) (*ChangeConnectionDetailsResponse, error) {
+	out := new(ChangeConnectionDetailsResponse)
+	err := c.cc.Invoke(ctx, "/api.ChargePoint/ChangeConnectionDetails", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *chargePointClient) AddAuthorizedCards(ctx context.Context, in *AddAuthorizedCardsRequest, opts ...grpc.CallOption) (*AddAuthorizedCardsResponse, error) {
-	out := new(AddAuthorizedCardsResponse)
-	err := c.cc.Invoke(ctx, "/api.ChargePoint/AddAuthorizedCards", in, out, opts...)
+func (c *chargePointClient) ChangeChargePointDetails(ctx context.Context, in *ChangeChargePointDetailsRequest, opts ...grpc.CallOption) (*ChangeChargePointDetailsResponse, error) {
+	out := new(ChangeChargePointDetailsResponse)
+	err := c.cc.Invoke(ctx, "/api.ChargePoint/ChangeChargePointDetails", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *chargePointClient) GetOCPPVariables(ctx context.Context, in *ChangeChargePointDetailsRequest, opts ...grpc.CallOption) (*ChangeChargePointDetailsResponse, error) {
+	out := new(ChangeChargePointDetailsResponse)
+	err := c.cc.Invoke(ctx, "/api.ChargePoint/GetOCPPVariables", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -210,36 +135,10 @@ func (c *chargePointClient) Restart(ctx context.Context, in *RestartRequest, opt
 	return out, nil
 }
 
-func (c *chargePointClient) ChangeConnectionDetails(ctx context.Context, in *ChangeConnectionDetailsRequest, opts ...grpc.CallOption) (*ChangeConnectionDetailsResponse, error) {
-	out := new(ChangeConnectionDetailsResponse)
-	err := c.cc.Invoke(ctx, "/api.ChargePoint/ChangeConnectionDetails", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *chargePointClient) ChangeChargePointDetails(ctx context.Context, in *ChangeConnectionDetailsRequest, opts ...grpc.CallOption) (*ChangeConnectionDetailsResponse, error) {
-	out := new(ChangeConnectionDetailsResponse)
-	err := c.cc.Invoke(ctx, "/api.ChargePoint/ChangeChargePointDetails", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // ChargePointServer is the server API for ChargePoint service.
 // All implementations must embed UnimplementedChargePointServer
 // for forward compatibility
 type ChargePointServer interface {
-	// ----------------- Settings API -----------------
-	// Evse settings
-	GetEVSEs(context.Context, *empty.Empty) (*GetEvsesResponse, error)
-	AddEVSE(context.Context, *SetEVCCRequest) (*AddEvseResponse, error)
-	GetEVSE(context.Context, *GetEvseRequest) (*GetEvseResponse, error)
-	SetEVCC(context.Context, *SetEVCCRequest) (*SetEvccResponse, error)
-	SetPowerMeter(context.Context, *SetPowerMeterRequest) (*SetPowerMeterDetails, error)
-	GetUsageForEVSE(*GetUsageForEVSERequest, ChargePoint_GetUsageForEVSEServer) error
 	// Display settings
 	SetDisplaySettings(context.Context, *SetDisplaySettingsRequest) (*SetDisplaySettingsResponse, error)
 	GetDisplaySettings(context.Context, *empty.Empty) (*GetDisplaySettingsResponse, error)
@@ -249,12 +148,13 @@ type ChargePointServer interface {
 	// LED indicator
 	SetIndicatorSettings(context.Context, *SetIndicatorSettingsRequest) (*SetIndicatorSettingsResponse, error)
 	GetIndicatorSettings(context.Context, *empty.Empty) (*GetIndicatorSettingsResponse, error)
-	// Local auth and cache
-	GetAuthorizedCards(context.Context, *empty.Empty) (*GetAuthorizedCardsResponse, error)
-	AddAuthorizedCards(context.Context, *AddAuthorizedCardsRequest) (*AddAuthorizedCardsResponse, error)
-	Restart(context.Context, *RestartRequest) (*empty.Empty, error)
+	// Connection settings
 	ChangeConnectionDetails(context.Context, *ChangeConnectionDetailsRequest) (*ChangeConnectionDetailsResponse, error)
-	ChangeChargePointDetails(context.Context, *ChangeConnectionDetailsRequest) (*ChangeConnectionDetailsResponse, error)
+	// Charge point details
+	ChangeChargePointDetails(context.Context, *ChangeChargePointDetailsRequest) (*ChangeChargePointDetailsResponse, error)
+	// OCPP configuration variable management
+	GetOCPPVariables(context.Context, *ChangeChargePointDetailsRequest) (*ChangeChargePointDetailsResponse, error)
+	Restart(context.Context, *RestartRequest) (*empty.Empty, error)
 	mustEmbedUnimplementedChargePointServer()
 }
 
@@ -262,24 +162,6 @@ type ChargePointServer interface {
 type UnimplementedChargePointServer struct {
 }
 
-func (UnimplementedChargePointServer) GetEVSEs(context.Context, *empty.Empty) (*GetEvsesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetEVSEs not implemented")
-}
-func (UnimplementedChargePointServer) AddEVSE(context.Context, *SetEVCCRequest) (*AddEvseResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AddEVSE not implemented")
-}
-func (UnimplementedChargePointServer) GetEVSE(context.Context, *GetEvseRequest) (*GetEvseResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetEVSE not implemented")
-}
-func (UnimplementedChargePointServer) SetEVCC(context.Context, *SetEVCCRequest) (*SetEvccResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SetEVCC not implemented")
-}
-func (UnimplementedChargePointServer) SetPowerMeter(context.Context, *SetPowerMeterRequest) (*SetPowerMeterDetails, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SetPowerMeter not implemented")
-}
-func (UnimplementedChargePointServer) GetUsageForEVSE(*GetUsageForEVSERequest, ChargePoint_GetUsageForEVSEServer) error {
-	return status.Errorf(codes.Unimplemented, "method GetUsageForEVSE not implemented")
-}
 func (UnimplementedChargePointServer) SetDisplaySettings(context.Context, *SetDisplaySettingsRequest) (*SetDisplaySettingsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetDisplaySettings not implemented")
 }
@@ -298,20 +180,17 @@ func (UnimplementedChargePointServer) SetIndicatorSettings(context.Context, *Set
 func (UnimplementedChargePointServer) GetIndicatorSettings(context.Context, *empty.Empty) (*GetIndicatorSettingsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetIndicatorSettings not implemented")
 }
-func (UnimplementedChargePointServer) GetAuthorizedCards(context.Context, *empty.Empty) (*GetAuthorizedCardsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetAuthorizedCards not implemented")
-}
-func (UnimplementedChargePointServer) AddAuthorizedCards(context.Context, *AddAuthorizedCardsRequest) (*AddAuthorizedCardsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AddAuthorizedCards not implemented")
-}
-func (UnimplementedChargePointServer) Restart(context.Context, *RestartRequest) (*empty.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Restart not implemented")
-}
 func (UnimplementedChargePointServer) ChangeConnectionDetails(context.Context, *ChangeConnectionDetailsRequest) (*ChangeConnectionDetailsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ChangeConnectionDetails not implemented")
 }
-func (UnimplementedChargePointServer) ChangeChargePointDetails(context.Context, *ChangeConnectionDetailsRequest) (*ChangeConnectionDetailsResponse, error) {
+func (UnimplementedChargePointServer) ChangeChargePointDetails(context.Context, *ChangeChargePointDetailsRequest) (*ChangeChargePointDetailsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ChangeChargePointDetails not implemented")
+}
+func (UnimplementedChargePointServer) GetOCPPVariables(context.Context, *ChangeChargePointDetailsRequest) (*ChangeChargePointDetailsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetOCPPVariables not implemented")
+}
+func (UnimplementedChargePointServer) Restart(context.Context, *RestartRequest) (*empty.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Restart not implemented")
 }
 func (UnimplementedChargePointServer) mustEmbedUnimplementedChargePointServer() {}
 
@@ -324,117 +203,6 @@ type UnsafeChargePointServer interface {
 
 func RegisterChargePointServer(s grpc.ServiceRegistrar, srv ChargePointServer) {
 	s.RegisterService(&ChargePoint_ServiceDesc, srv)
-}
-
-func _ChargePoint_GetEVSEs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(empty.Empty)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ChargePointServer).GetEVSEs(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/api.ChargePoint/GetEVSEs",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ChargePointServer).GetEVSEs(ctx, req.(*empty.Empty))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ChargePoint_AddEVSE_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SetEVCCRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ChargePointServer).AddEVSE(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/api.ChargePoint/AddEVSE",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ChargePointServer).AddEVSE(ctx, req.(*SetEVCCRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ChargePoint_GetEVSE_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetEvseRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ChargePointServer).GetEVSE(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/api.ChargePoint/GetEVSE",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ChargePointServer).GetEVSE(ctx, req.(*GetEvseRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ChargePoint_SetEVCC_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SetEVCCRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ChargePointServer).SetEVCC(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/api.ChargePoint/SetEVCC",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ChargePointServer).SetEVCC(ctx, req.(*SetEVCCRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ChargePoint_SetPowerMeter_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SetPowerMeterRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ChargePointServer).SetPowerMeter(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/api.ChargePoint/SetPowerMeter",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ChargePointServer).SetPowerMeter(ctx, req.(*SetPowerMeterRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ChargePoint_GetUsageForEVSE_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(GetUsageForEVSERequest)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(ChargePointServer).GetUsageForEVSE(m, &chargePointGetUsageForEVSEServer{stream})
-}
-
-type ChargePoint_GetUsageForEVSEServer interface {
-	Send(*GetUsageForEVSEResponse) error
-	grpc.ServerStream
-}
-
-type chargePointGetUsageForEVSEServer struct {
-	grpc.ServerStream
-}
-
-func (x *chargePointGetUsageForEVSEServer) Send(m *GetUsageForEVSEResponse) error {
-	return x.ServerStream.SendMsg(m)
 }
 
 func _ChargePoint_SetDisplaySettings_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -545,38 +313,56 @@ func _ChargePoint_GetIndicatorSettings_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ChargePoint_GetAuthorizedCards_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(empty.Empty)
+func _ChargePoint_ChangeConnectionDetails_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ChangeConnectionDetailsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ChargePointServer).GetAuthorizedCards(ctx, in)
+		return srv.(ChargePointServer).ChangeConnectionDetails(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.ChargePoint/GetAuthorizedCards",
+		FullMethod: "/api.ChargePoint/ChangeConnectionDetails",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ChargePointServer).GetAuthorizedCards(ctx, req.(*empty.Empty))
+		return srv.(ChargePointServer).ChangeConnectionDetails(ctx, req.(*ChangeConnectionDetailsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ChargePoint_AddAuthorizedCards_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AddAuthorizedCardsRequest)
+func _ChargePoint_ChangeChargePointDetails_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ChangeChargePointDetailsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ChargePointServer).AddAuthorizedCards(ctx, in)
+		return srv.(ChargePointServer).ChangeChargePointDetails(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/api.ChargePoint/AddAuthorizedCards",
+		FullMethod: "/api.ChargePoint/ChangeChargePointDetails",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ChargePointServer).AddAuthorizedCards(ctx, req.(*AddAuthorizedCardsRequest))
+		return srv.(ChargePointServer).ChangeChargePointDetails(ctx, req.(*ChangeChargePointDetailsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ChargePoint_GetOCPPVariables_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ChangeChargePointDetailsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChargePointServer).GetOCPPVariables(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.ChargePoint/GetOCPPVariables",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChargePointServer).GetOCPPVariables(ctx, req.(*ChangeChargePointDetailsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -599,42 +385,6 @@ func _ChargePoint_Restart_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ChargePoint_ChangeConnectionDetails_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ChangeConnectionDetailsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ChargePointServer).ChangeConnectionDetails(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/api.ChargePoint/ChangeConnectionDetails",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ChargePointServer).ChangeConnectionDetails(ctx, req.(*ChangeConnectionDetailsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ChargePoint_ChangeChargePointDetails_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ChangeConnectionDetailsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ChargePointServer).ChangeChargePointDetails(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/api.ChargePoint/ChangeChargePointDetails",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ChargePointServer).ChangeChargePointDetails(ctx, req.(*ChangeConnectionDetailsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // ChargePoint_ServiceDesc is the grpc.ServiceDesc for ChargePoint service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -642,26 +392,6 @@ var ChargePoint_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "api.ChargePoint",
 	HandlerType: (*ChargePointServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "GetEVSEs",
-			Handler:    _ChargePoint_GetEVSEs_Handler,
-		},
-		{
-			MethodName: "AddEVSE",
-			Handler:    _ChargePoint_AddEVSE_Handler,
-		},
-		{
-			MethodName: "GetEVSE",
-			Handler:    _ChargePoint_GetEVSE_Handler,
-		},
-		{
-			MethodName: "SetEVCC",
-			Handler:    _ChargePoint_SetEVCC_Handler,
-		},
-		{
-			MethodName: "SetPowerMeter",
-			Handler:    _ChargePoint_SetPowerMeter_Handler,
-		},
 		{
 			MethodName: "SetDisplaySettings",
 			Handler:    _ChargePoint_SetDisplaySettings_Handler,
@@ -687,18 +417,6 @@ var ChargePoint_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ChargePoint_GetIndicatorSettings_Handler,
 		},
 		{
-			MethodName: "GetAuthorizedCards",
-			Handler:    _ChargePoint_GetAuthorizedCards_Handler,
-		},
-		{
-			MethodName: "AddAuthorizedCards",
-			Handler:    _ChargePoint_AddAuthorizedCards_Handler,
-		},
-		{
-			MethodName: "Restart",
-			Handler:    _ChargePoint_Restart_Handler,
-		},
-		{
 			MethodName: "ChangeConnectionDetails",
 			Handler:    _ChargePoint_ChangeConnectionDetails_Handler,
 		},
@@ -706,13 +424,15 @@ var ChargePoint_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "ChangeChargePointDetails",
 			Handler:    _ChargePoint_ChangeChargePointDetails_Handler,
 		},
-	},
-	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "GetUsageForEVSE",
-			Handler:       _ChargePoint_GetUsageForEVSE_Handler,
-			ServerStreams: true,
+			MethodName: "GetOCPPVariables",
+			Handler:    _ChargePoint_GetOCPPVariables_Handler,
+		},
+		{
+			MethodName: "Restart",
+			Handler:    _ChargePoint_Restart_Handler,
 		},
 	},
+	Streams:  []grpc.StreamDesc{},
 	Metadata: "api.proto",
 }

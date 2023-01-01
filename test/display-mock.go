@@ -2,7 +2,7 @@ package test
 
 import (
 	"github.com/stretchr/testify/mock"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/notifications"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
 )
 
 type (

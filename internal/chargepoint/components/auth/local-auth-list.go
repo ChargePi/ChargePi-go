@@ -7,7 +7,7 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/localauth"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
-	settingsData "github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
+	settingsData "github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 	"path/filepath"
 	"strings"

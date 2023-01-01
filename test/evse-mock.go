@@ -2,6 +2,8 @@ package test
 
 import (
 	"context"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/session"
 
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
@@ -9,8 +11,6 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/evcc"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/power-meter"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/notifications"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/session"
 )
 
 type (
@@ -173,29 +173,27 @@ func (m *EvseMock) SetMaxChargingTime(time *int) {
 
 func (m *EvseMock) GetMaxChargingPower() float64 {
 	args := m.Called()
-	if args.Get(0) != nil {
-		return args.Get(0).(*int)
-	}
+	return args.Get(0).(float64)
 }
 
 func (m *EvseMock) GetSession() session.Session {
 	args := m.Called()
-	if args.Get(0) != nil {
-		return args.Get(0).(*int)
-	}
+	return args.Get(0).(session.Session)
 }
 
 func (m *EvseMock) SetPowerMeter(meter powerMeter.PowerMeter) error {
-	// TODO implement me
-	panic("implement me")
+	return m.Called(meter).Error(0)
 }
 
 func (m *EvseMock) GetEvcc() evcc.EVCC {
-	// TODO implement me
-	panic("implement me")
+	args := m.Called()
+	if args.Get(0) != nil {
+		return args.Get(0).(evcc.EVCC)
+	}
+
+	return nil
 }
 
 func (m *EvseMock) SetEvcc(evcc evcc.EVCC) {
-	// TODO implement me
-	panic("implement me")
+	m.Called(evcc)
 }

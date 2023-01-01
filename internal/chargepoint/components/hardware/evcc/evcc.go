@@ -2,8 +2,8 @@ package evcc
 
 import (
 	"context"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/models/evcc"
 )
 

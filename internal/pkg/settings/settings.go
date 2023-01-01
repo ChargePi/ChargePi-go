@@ -5,7 +5,7 @@ import (
 	"github.com/go-playground/validator"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
 	"github.com/xBlaz3kx/ocppManager-go/configuration"
 	"strings"

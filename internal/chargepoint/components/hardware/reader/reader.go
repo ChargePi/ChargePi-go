@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 )
 
 // Supported readers - by libnfc

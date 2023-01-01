@@ -2,7 +2,6 @@ syntax = "proto3";
 
 import "enums.proto";
 import "hardware.proto";
-import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 
 package api;
@@ -13,7 +12,7 @@ message EVSE {
   EVCC EVCC = 2;
   PowerMeter PowerMeter = 3;
   ConnectorStatus status = 4;
-  Session Session = 5;
+  optional Session Session = 5;
 }
 
 message Session {

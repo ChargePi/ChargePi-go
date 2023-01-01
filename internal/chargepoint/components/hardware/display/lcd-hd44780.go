@@ -4,7 +4,7 @@ import (
 	"github.com/d2r2/go-hd44780"
 	"github.com/d2r2/go-i2c"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/notifications"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
 	"strconv"
 	"time"
 )

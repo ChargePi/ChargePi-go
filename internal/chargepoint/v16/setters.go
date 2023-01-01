@@ -5,8 +5,8 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/indicator"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/reader"
-	chargePoint "github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
+	settings2 "github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 )
 
@@ -41,27 +41,27 @@ func (cp *ChargePoint) SetIndicator(indicator indicator.Indicator) error {
 	return nil
 }
 
-func (cp *ChargePoint) SetSettings(settings settings.Info) {
+func (cp *ChargePoint) SetSettings(settings settings2.Info) {
 	cp.info = settings
 }
 
-func (cp *ChargePoint) SetIndicatorSettings(settings settings.IndicatorStatusMapping) {
+func (cp *ChargePoint) SetIndicatorSettings(settings settings2.IndicatorStatusMapping) {
 	cp.indicatorMapping = settings
 }
 
-func (cp *ChargePoint) SetConnectionSettings(settings settings.ConnectionSettings) {
+func (cp *ChargePoint) SetConnectionSettings(settings settings2.ConnectionSettings) {
 	cp.connectionSettings = settings
 }
 
-func (cp *ChargePoint) GetSettings() settings.Info {
+func (cp *ChargePoint) GetSettings() settings2.Info {
 	return cp.info
 }
 
-func (cp *ChargePoint) GetIndicatorSettings() settings.IndicatorStatusMapping {
+func (cp *ChargePoint) GetIndicatorSettings() settings2.IndicatorStatusMapping {
 	return cp.indicatorMapping
 }
 
-func (cp *ChargePoint) GetConnectionSettings() settings.ConnectionSettings {
+func (cp *ChargePoint) GetConnectionSettings() settings2.ConnectionSettings {
 	return cp.connectionSettings
 }
 

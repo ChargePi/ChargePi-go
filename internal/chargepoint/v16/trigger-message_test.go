@@ -6,7 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/notifications"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/test"
 	"testing"
@@ -38,7 +38,6 @@ func (s *triggerMessageTestSuite) TestTriggerMessage() {
 	managerMock.On("GetEVSEs").Return([]evse.EVSE{connectorMock}).Once()
 
 	s.cp.connectorManager = managerMock
-	s.cp.connectorChannel = connectorChan
 
 	numMessages := 0
 	go func() {

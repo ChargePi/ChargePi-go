@@ -3,6 +3,8 @@ package v16
 import (
 	"context"
 	"fmt"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
+	settingsData "github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
 	"github.com/xBlaz3kx/ocppManager-go/configuration"
 	"time"
@@ -14,8 +16,6 @@ import (
 	"github.com/spf13/viper"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display/i18n"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/notifications"
-	settingsData "github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 )

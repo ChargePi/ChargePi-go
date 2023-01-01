@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package api;
+option go_package = "github.com/xBlaz3kx/ChargePi-go/internal/api/grpc";
+
+import "google/protobuf/empty.proto";
+
+// Log API
+service Log {
+  rpc GetLogs(google.protobuf.Empty) returns (stream LogResponse) {}
+}
+
+message LogResponse {
+  // repeated AuthorizedCard AuthorizedCards = 1;
+}

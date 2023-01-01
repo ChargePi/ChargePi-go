@@ -3,12 +3,12 @@ package v16
 import (
 	"context"
 	"fmt"
+	chargePoint "github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
 	"strings"
 	"time"
 
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/indicator"
-	chargePoint "github.com/xBlaz3kx/ChargePi-go/internal/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 )
 

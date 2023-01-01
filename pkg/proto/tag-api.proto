@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package api;
+option go_package = "github.com/xBlaz3kx/ChargePi-go/internal/api/grpc";
+
+import "google/protobuf/empty.proto";
+import "charge-point.proto";
+
+// Local auth and cache
+service Tag {
+  rpc GetAuthorizedCards (google.protobuf.Empty) returns (GetAuthorizedCardsResponse) {}
+  rpc AddAuthorizedCards (AddAuthorizedCardsRequest) returns (AddAuthorizedCardsResponse) {}
+  rpc RemoveAuthorizedCard (AddAuthorizedCardsRequest) returns (AddAuthorizedCardsResponse) {}
+}
+
+message AddAuthorizedCardsRequest {
+  repeated AuthorizedCard AuthorizedCards = 1;
+}
+
+message AddAuthorizedCardsResponse {
+  repeated string status = 1;
+}
+
+message GetAuthorizedCardsResponse {
+  repeated AuthorizedCard AuthorizedCards = 1;
+}

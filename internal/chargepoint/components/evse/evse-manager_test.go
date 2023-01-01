@@ -5,8 +5,8 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/session"
-	settingsModel "github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/session"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/test"
 	"testing"
 	"time"
@@ -20,7 +20,7 @@ type (
 		connector2        *test.EvseMock
 		connector3        *test.EvseMock
 		chSession         session.Session
-		connectorSettings *settingsModel.EVSE
+		connectorSettings *settings.EVSE
 	}
 )
 
@@ -60,17 +60,17 @@ func (suite *connectorManagerTestSuite) SetupTest() {
 		Consumption:   nil,
 	}
 
-	suite.connectorSettings = &settingsModel.EVSE{
+	suite.connectorSettings = &settings.EVSE{
 		EvseId: 1,
 		Status: "Available",
-		Session: settingsModel.Session{
+		Session: settings.Session{
 			IsActive: false,
 		},
-		EVCC: settingsModel.EVCC{
+		EVCC: settings.EVCC{
 			RelayPin:     14,
 			InverseLogic: false,
 		},
-		PowerMeter: settingsModel.PowerMeter{
+		PowerMeter: settings.PowerMeter{
 			Enabled: false,
 		},
 	}
@@ -139,15 +139,15 @@ func (suite *connectorManagerTestSuite) TestAddConnectorFromSettings() {
 	suite.Require().Error(err)
 
 	// Try to add another connector
-	err = suite.connectorManager.AddEVSEFromSettings(nil, nil, &settingsModel.EVSE{
+	err = suite.connectorManager.AddEVSEFromSettings(nil, nil, &settings.EVSE{
 		EvseId:  2,
 		Status:  "Available",
-		Session: settingsModel.Session{},
-		EVCC: settingsModel.EVCC{
+		Session: settings.Session{},
+		EVCC: settings.EVCC{
 			RelayPin:     23,
 			InverseLogic: false,
 		},
-		PowerMeter: settingsModel.PowerMeter{},
+		PowerMeter: settings.PowerMeter{},
 	})
 	suite.Require().NoError(err)
 

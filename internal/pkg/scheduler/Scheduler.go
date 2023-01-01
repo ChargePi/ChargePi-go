@@ -12,7 +12,7 @@ var scheduler *gocron.Scheduler
 func init() {
 	once := sync.Once{}
 	once.Do(func() {
-		log.Info("Initializing scheduler")
+		log.Debug("Initializing scheduler")
 		GetScheduler()
 	})
 }

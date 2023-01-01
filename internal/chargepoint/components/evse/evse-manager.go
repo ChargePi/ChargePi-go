@@ -4,15 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/session"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	"sync"
 
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/evcc"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/power-meter"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/notifications"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/session"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 )
@@ -44,6 +44,7 @@ type (
 		// RemoveEVSE(evseId int) error
 		RestoreEVSEStatus(*settings.EVSE) error
 		SetNotificationChannel(notificationChannel chan notifications.StatusNotification)
+		GetNotificationChannel() chan notifications.StatusNotification
 		SetMeterValuesChannel(notificationChannel chan notifications.MeterValueNotification)
 	}
 
@@ -63,7 +64,7 @@ func init() {
 func GetManager() Manager {
 	if manager == nil {
 		log.Debug("Creating connector manager")
-		manager = NewManager(nil)
+		manager = NewManager(make(chan notifications.StatusNotification, 20))
 	}
 
 	return manager
@@ -94,6 +95,10 @@ func (m *managerImpl) SetNotificationChannel(notificationChannel chan notificati
 	if notificationChannel != nil {
 		m.notificationChannel = notificationChannel
 	}
+}
+
+func (m *managerImpl) GetNotificationChannel() chan notifications.StatusNotification {
+	return m.notificationChannel
 }
 
 func (m *managerImpl) SetMeterValuesChannel(notificationChannel chan notifications.MeterValueNotification) {

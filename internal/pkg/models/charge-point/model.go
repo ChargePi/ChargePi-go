@@ -3,6 +3,8 @@ package chargePoint
 import (
 	"context"
 	"errors"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
+	settings2 "github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	log "github.com/sirupsen/logrus"
@@ -10,8 +12,6 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/indicator"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/reader"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/notifications"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 )
 
 var (
@@ -47,12 +47,12 @@ type (
 		SetIndicator(indicator indicator.Indicator) error
 
 		// Settings
-		SetSettings(settings settings.Info)
-		GetSettings() settings.Info
-		SetConnectionSettings(settings settings.ConnectionSettings)
-		GetConnectionSettings() settings.ConnectionSettings
-		SetIndicatorSettings(settings settings.IndicatorStatusMapping)
-		GetIndicatorSettings() settings.IndicatorStatusMapping
+		SetSettings(settings settings2.Info)
+		GetSettings() settings2.Info
+		SetConnectionSettings(settings settings2.ConnectionSettings)
+		GetConnectionSettings() settings2.ConnectionSettings
+		SetIndicatorSettings(settings settings2.IndicatorStatusMapping)
+		GetIndicatorSettings() settings2.IndicatorStatusMapping
 
 		// Reader
 		SetReader(reader reader.Reader) error

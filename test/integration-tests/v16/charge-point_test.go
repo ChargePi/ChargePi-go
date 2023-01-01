@@ -15,8 +15,8 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/reader"
 	v16 "github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/v16"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
+	settings2 "github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
 	setting "github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/models/ocpp"
@@ -39,24 +39,24 @@ const (
 	ocppConfigurationFilePath = "../../../configs/configuration.json"
 )
 
-var chargePointSettings = settings.Settings{ChargePoint: settings.ChargePoint{
-	Info: settings.Info{
-		OCPPDetails: settings.OCPPDetails{
+var chargePointSettings = settings2.Settings{ChargePoint: settings2.ChargePoint{
+	Info: settings2.Info{
+		OCPPDetails: settings2.OCPPDetails{
 			Vendor: "exampleVendor",
 			Model:  "exampleModel",
 		},
 	},
-	ConnectionSettings: settings.ConnectionSettings{
+	ConnectionSettings: settings2.ConnectionSettings{
 		Id:              chargePointId,
 		ProtocolVersion: protocolVersion,
 		ServerUri:       fmt.Sprintf("ws://%s:%d%s", centralSystemHost, centralSystemPort, centralSystemEndpoint),
-		TLS:             settings.TLS{IsEnabled: false},
+		TLS:             settings2.TLS{IsEnabled: false},
 	},
-	Logging: settings.Logging{},
-	Hardware: settings.Hardware{
-		Display:      settings.Display{IsEnabled: false},
-		TagReader:    settings.TagReader{IsEnabled: true},
-		LedIndicator: settings.LedIndicator{IndicateCardRead: false},
+	Logging: settings2.Logging{},
+	Hardware: settings2.Hardware{
+		Display:      settings2.Display{IsEnabled: false},
+		TagReader:    settings2.TagReader{IsEnabled: true},
+		LedIndicator: settings2.LedIndicator{IndicateCardRead: false},
 	},
 },
 }

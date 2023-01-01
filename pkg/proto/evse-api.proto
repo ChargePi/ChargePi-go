@@ -1,0 +1,92 @@
+syntax = "proto3";
+
+package api;
+option go_package = "github.com/xBlaz3kx/ChargePi-go/internal/api/grpc";
+
+import "enums.proto";
+import "connector.proto";
+import "hardware.proto";
+import "google/protobuf/empty.proto";
+
+service Evse {
+  // Evse settings
+  rpc GetEVSEs (google.protobuf.Empty) returns (GetEvsesResponse) {}
+  rpc AddEVSE (SetEVCCRequest) returns (AddEvseResponse) {}
+  rpc GetEVSE (GetEvseRequest) returns (GetEvseResponse) {}
+  rpc SetEVCC (SetEVCCRequest) returns (SetEvccResponse) {}
+  rpc SetPowerMeter (SetPowerMeterRequest) returns (SetPowerMeterDetails) {}
+  rpc GetUsageForEVSE (GetUsageForEVSERequest) returns (stream GetUsageForEVSEResponse) {}
+}
+
+/*------------------GetConnectorStatus ------------------------ */
+
+message GetConnectorStatusRequest {
+  int32 connectorId = 1;
+  int32 evseId = 2;
+}
+
+message GetConnectorStatusResponse {
+  ConnectorType connectorType = 1;
+  ConnectorStatus connectorStatus = 2;
+  ErrorCode errorCode = 3;
+
+  string transactionId = 4;
+  int32 timeElapsed = 5;
+  float energyConsumed = 6;
+  float currentPower = 7;
+}
+
+/*------------------ GetEVSEs ------------------------ */
+
+message GetEvsesResponse {
+  repeated EVSE EVSEs = 1;
+}
+
+/*------------------ GetEVSE ------------------------ */
+
+message GetEvseRequest {
+  int32 evseId = 1;
+}
+
+message GetEvseResponse {
+  EVSE EVSE = 1;
+}
+
+message AddEvseRequest {
+  int32 evseId = 1;
+  EVCC EVCC = 2;
+  PowerMeter PowerMeter = 3;
+}
+
+message AddEvseResponse {
+  string status = 1;
+  EVSE EVSE = 2;
+}
+
+/*------------------ Evcc ------------------------ */
+
+message SetEVCCRequest {
+  int32 evseId = 1;
+  EVCC EVCC = 2;
+}
+
+message SetEvccResponse {
+  string type = 1;
+}
+
+message SetPowerMeterRequest {
+  int32 evseId = 1;
+  PowerMeter PowerMeter = 2;
+}
+
+message SetPowerMeterDetails {
+  string type = 1;
+}
+
+message GetUsageForEVSERequest {
+  int32 evseId = 1;
+}
+
+message GetUsageForEVSEResponse {
+  int32 evseId = 1;
+}

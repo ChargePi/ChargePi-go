@@ -3,6 +3,8 @@ package evse
 import (
 	"errors"
 	"fmt"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/session"
 	"sync"
 	"time"
 
@@ -11,8 +13,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/evcc"
 	powerMeter "github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/power-meter"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/notifications"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/session"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 	carState "github.com/xBlaz3kx/ChargePi-go/pkg/models/evcc"

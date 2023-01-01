@@ -5,8 +5,8 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/stretchr/testify/mock"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/notifications"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 )
 
 type ManagerMock struct {
@@ -96,4 +96,9 @@ func (o *ManagerMock) SetNotificationChannel(notificationChannel chan notificati
 
 func (o *ManagerMock) SetMeterValuesChannel(notificationChannel chan notifications.MeterValueNotification) {
 	o.Called()
+}
+
+func (o *ManagerMock) GetNotificationChannel() chan notifications.StatusNotification {
+	args := o.Called()
+	return args.Get(0).(chan notifications.StatusNotification)
 }

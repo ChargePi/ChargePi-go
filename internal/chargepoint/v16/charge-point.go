@@ -11,9 +11,9 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/indicator"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/reader"
-	chargePoint "github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/notifications"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
+	settings2 "github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 	"os/exec"
 )
@@ -22,16 +22,16 @@ type (
 	ChargePoint struct {
 		chargePoint        ocpp16.ChargePoint
 		availability       core.AvailabilityType
-		info               settings.Info
-		connectionSettings settings.ConnectionSettings
+		info               settings2.Info
+		connectionSettings settings2.ConnectionSettings
 		// Hardware components
 		tagReader        reader.Reader
 		indicator        indicator.Indicator
 		display          display.Display
-		indicatorMapping settings.IndicatorStatusMapping
+		indicatorMapping settings2.IndicatorStatusMapping
 		// Software components
-		connectorManager   connectorManager.Manager
-		connectorChannel   chan notifications.StatusNotification
+		connectorManager connectorManager.Manager
+
 		meterValuesChannel chan notifications.MeterValueNotification
 		scheduler          *gocron.Scheduler
 		tagManager         auth.TagManager
@@ -41,13 +41,8 @@ type (
 
 // NewChargePoint creates a new ChargePoint for OCPP version 1.6.
 func NewChargePoint(manager connectorManager.Manager, scheduler *gocron.Scheduler, cache auth.TagManager, opts ...chargePoint.Options) *ChargePoint {
-	ch := make(chan notifications.StatusNotification, 5)
-	// Set the channel
-	manager.SetNotificationChannel(ch)
-
 	cp := &ChargePoint{
 		availability:     core.AvailabilityTypeInoperative,
-		connectorChannel: ch,
 		scheduler:        scheduler,
 		connectorManager: manager,
 		tagManager:       cache,
@@ -90,7 +85,6 @@ func (cp *ChargePoint) Connect(ctx context.Context, serverUrl string) {
 	cp.availability = core.AvailabilityTypeOperative
 
 	cp.bootNotification()
-	cp.ListenForConnectorStatusChange(ctx, cp.connectorChannel)
 }
 
 // CleanUp When exiting the client, stop all the transactions, clean up all the peripherals and terminate the connection.
@@ -122,8 +116,6 @@ func (cp *ChargePoint) CleanUp(reason core.Reason) {
 		cp.logger.Info("Cleaning up Indicator")
 		cp.indicator.Cleanup()
 	}
-
-	defer close(cp.connectorChannel)
 
 	cp.logger.Info("Clearing the scheduler...")
 	cp.scheduler.Stop()

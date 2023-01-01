@@ -2,6 +2,11 @@ package chargepoint
 
 import (
 	"context"
+	"github.com/lorenzodonini/ocpp-go/ocpp1.6/localauth"
+	"github.com/lorenzodonini/ocpp-go/ocpp1.6/remotetrigger"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
+	settings2 "github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
+	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
 	"os"
 	"os/signal"
 	"time"
@@ -16,8 +21,6 @@ import (
 	connectorManager "github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/indicator"
 	v16 "github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/v16"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/charge-point"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
 	s "github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
@@ -33,7 +36,7 @@ func CreateChargePoint(
 	manager connectorManager.Manager,
 	sch *gocron.Scheduler,
 	tagManager auth.TagManager,
-	hardware settings.Hardware,
+	hardware settings2.Hardware,
 ) chargePoint.ChargePoint {
 
 	// Create a status indicator if enabled
@@ -66,7 +69,7 @@ func CreateChargePoint(
 }
 
 // Run is an entrypoint with all the configuration needed. This is a blocking function.
-func Run(isDebug bool, config *settings.Settings, connectors []*settings.EVSE, configurationFilePath, localAuthListFilePath string) {
+func Run(isDebug bool, config *settings2.Settings, connectors []*settings2.EVSE, configurationFilePath, localAuthListFilePath string) {
 	var (
 		// ChargePoint components
 		handler    chargePoint.ChargePoint
@@ -96,6 +99,8 @@ func Run(isDebug bool, config *settings.Settings, connectors []*settings.EVSE, c
 		configuration.ProtocolVersion(connectionSettings.ProtocolVersion),
 		core.ProfileName,
 		reservation.ProfileName,
+		remotetrigger.ProfileName,
+		localauth.ProfileName,
 	)
 
 	// Load the local auth list of tags
@@ -120,10 +125,11 @@ func Run(isDebug bool, config *settings.Settings, connectors []*settings.EVSE, c
 	handler = CreateChargePoint(parentCtxForOcpp, protocolVersion, logger, manager, sch, tagManager, hardware)
 	handler.SetSettings(chargePointInfo)
 	handler.SetConnectionSettings(connectionSettings)
+	go handler.ListenForConnectorStatusChange(ctx, manager.GetNotificationChannel())
 	go handler.Connect(parentCtxForOcpp, serverUrl)
 
 	// Expose the API endpoints
-	server := grpc.NewServer(config.Api, handler, tagManager)
+	server := grpc.NewServer(config.Api, handler, tagManager, manager, ocppConfigManager.GetManager(), nil)
 	go server.Run()
 
 	// Expose the ui at http://localhost:4269/

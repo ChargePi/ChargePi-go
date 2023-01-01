@@ -15,7 +15,7 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/lorenzodonini/ocpp-go/ws"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/models/settings"
+	settings2 "github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/tls"
 	ocppManager "github.com/xBlaz3kx/ocppManager-go"
 	"github.com/xBlaz3kx/ocppManager-go/configuration"
@@ -25,7 +25,7 @@ import (
 )
 
 // CreateConnectionUrl creates a connection url from the provided settings
-func CreateConnectionUrl(connectionSettings settings.ConnectionSettings) string {
+func CreateConnectionUrl(connectionSettings settings2.ConnectionSettings) string {
 	var (
 		serverUrl = fmt.Sprintf("ws://%s", connectionSettings.ServerUri)
 	)
@@ -39,7 +39,7 @@ func CreateConnectionUrl(connectionSettings settings.ConnectionSettings) string 
 }
 
 // CreateClient creates a Websocket client based on the settings.
-func CreateClient(basicAuthUser, basicAuthPass string, tlsConfig settings.TLS) *ws.Client {
+func CreateClient(basicAuthUser, basicAuthPass string, tlsConfig settings2.TLS) *ws.Client {
 	var (
 		client            = ws.NewClient()
 		clientConfig      = ws.NewClientTimeoutConfig()
