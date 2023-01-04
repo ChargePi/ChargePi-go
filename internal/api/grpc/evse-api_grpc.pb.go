@@ -19,9 +19,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type EvseClient interface {
-	// Evse settings
-	GetEVSEs(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*GetEvsesResponse, error)
 	AddEVSE(ctx context.Context, in *SetEVCCRequest, opts ...grpc.CallOption) (*AddEvseResponse, error)
+	GetEVSEs(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*GetEvsesResponse, error)
 	GetEVSE(ctx context.Context, in *GetEvseRequest, opts ...grpc.CallOption) (*GetEvseResponse, error)
 	SetEVCC(ctx context.Context, in *SetEVCCRequest, opts ...grpc.CallOption) (*SetEvccResponse, error)
 	SetPowerMeter(ctx context.Context, in *SetPowerMeterRequest, opts ...grpc.CallOption) (*SetPowerMeterDetails, error)
@@ -36,18 +35,18 @@ func NewEvseClient(cc grpc.ClientConnInterface) EvseClient {
 	return &evseClient{cc}
 }
 
-func (c *evseClient) GetEVSEs(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*GetEvsesResponse, error) {
-	out := new(GetEvsesResponse)
-	err := c.cc.Invoke(ctx, "/api.Evse/GetEVSEs", in, out, opts...)
+func (c *evseClient) AddEVSE(ctx context.Context, in *SetEVCCRequest, opts ...grpc.CallOption) (*AddEvseResponse, error) {
+	out := new(AddEvseResponse)
+	err := c.cc.Invoke(ctx, "/api.Evse/AddEVSE", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *evseClient) AddEVSE(ctx context.Context, in *SetEVCCRequest, opts ...grpc.CallOption) (*AddEvseResponse, error) {
-	out := new(AddEvseResponse)
-	err := c.cc.Invoke(ctx, "/api.Evse/AddEVSE", in, out, opts...)
+func (c *evseClient) GetEVSEs(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*GetEvsesResponse, error) {
+	out := new(GetEvsesResponse)
+	err := c.cc.Invoke(ctx, "/api.Evse/GetEVSEs", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -117,9 +116,8 @@ func (x *evseGetUsageForEVSEClient) Recv() (*GetUsageForEVSEResponse, error) {
 // All implementations must embed UnimplementedEvseServer
 // for forward compatibility
 type EvseServer interface {
-	// Evse settings
-	GetEVSEs(context.Context, *empty.Empty) (*GetEvsesResponse, error)
 	AddEVSE(context.Context, *SetEVCCRequest) (*AddEvseResponse, error)
+	GetEVSEs(context.Context, *empty.Empty) (*GetEvsesResponse, error)
 	GetEVSE(context.Context, *GetEvseRequest) (*GetEvseResponse, error)
 	SetEVCC(context.Context, *SetEVCCRequest) (*SetEvccResponse, error)
 	SetPowerMeter(context.Context, *SetPowerMeterRequest) (*SetPowerMeterDetails, error)
@@ -131,11 +129,11 @@ type EvseServer interface {
 type UnimplementedEvseServer struct {
 }
 
-func (UnimplementedEvseServer) GetEVSEs(context.Context, *empty.Empty) (*GetEvsesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetEVSEs not implemented")
-}
 func (UnimplementedEvseServer) AddEVSE(context.Context, *SetEVCCRequest) (*AddEvseResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddEVSE not implemented")
+}
+func (UnimplementedEvseServer) GetEVSEs(context.Context, *empty.Empty) (*GetEvsesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetEVSEs not implemented")
 }
 func (UnimplementedEvseServer) GetEVSE(context.Context, *GetEvseRequest) (*GetEvseResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetEVSE not implemented")
@@ -162,24 +160,6 @@ func RegisterEvseServer(s grpc.ServiceRegistrar, srv EvseServer) {
 	s.RegisterService(&Evse_ServiceDesc, srv)
 }
 
-func _Evse_GetEVSEs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(empty.Empty)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(EvseServer).GetEVSEs(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/api.Evse/GetEVSEs",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(EvseServer).GetEVSEs(ctx, req.(*empty.Empty))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _Evse_AddEVSE_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SetEVCCRequest)
 	if err := dec(in); err != nil {
@@ -194,6 +174,24 @@ func _Evse_AddEVSE_Handler(srv interface{}, ctx context.Context, dec func(interf
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(EvseServer).AddEVSE(ctx, req.(*SetEVCCRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Evse_GetEVSEs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(empty.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(EvseServer).GetEVSEs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Evse/GetEVSEs",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(EvseServer).GetEVSEs(ctx, req.(*empty.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -281,12 +279,12 @@ var Evse_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*EvseServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetEVSEs",
-			Handler:    _Evse_GetEVSEs_Handler,
-		},
-		{
 			MethodName: "AddEVSE",
 			Handler:    _Evse_AddEVSE_Handler,
+		},
+		{
+			MethodName: "GetEVSEs",
+			Handler:    _Evse_GetEVSEs_Handler,
 		},
 		{
 			MethodName: "GetEVSE",

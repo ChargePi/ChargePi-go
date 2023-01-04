@@ -4,15 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
+
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/session"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
-	"sync"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/evcc"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/power-meter"
 
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/evcc"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/power-meter"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 )

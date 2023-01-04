@@ -2,11 +2,11 @@ package settings
 
 type (
 	OCPPDetails struct {
-		Vendor                  string `fig:"Vendor" default:"UL FE" json:"vendor,omitempty" yaml:"vendor" mapstructure:"vendor"`
-		Model                   string `fig:"Model" default:"ChargePi" json:"model,omitempty" yaml:"model" mapstructure:"model"`
-		ChargeBoxSerialNumber   string `fig:"ChargeBoxSerialNumber" default:"" json:"charge_box_serial_number,omitempty" yaml:"charge_box_serial_number" mapstructure:"charge_box_serial_number"`
-		ChargePointSerialNumber string `fig:"ChargePointSerialNumber" default:"" json:"charge_point_serial_number,omitempty" yaml:"charge_point_serial_number" mapstructure:"charge_point_serial_number"`
-		Iccid                   string `fig:"Iccid" default:"" json:"iccid,omitempty" yaml:"iccid" mapstructure:"iccid"`
-		Imsi                    string `fig:"Imsi" default:"" json:"imsi,omitempty" yaml:"imsi" mapstructure:"imsi"`
+		Vendor                  string `json:"vendor" yaml:"vendor" mapstructure:"vendor" validate:"required"`
+		Model                   string `json:"model" yaml:"model" mapstructure:"model" validate:"required"`
+		ChargeBoxSerialNumber   string `json:"chargeBoxSerialNumber,omitempty" yaml:"chargeBoxSerialNumber,omitempty" mapstructure:"chargeBoxSerialNumber,omitempty"`
+		ChargePointSerialNumber string `json:"pointSerialNumber" yaml:"pointSerialNumber" mapstructure:"pointSerialNumber"`
+		Iccid                   string `json:"iccid,omitempty" yaml:"iccid,omitempty" mapstructure:"iccid"`
+		Imsi                    string `json:"imsi,omitempty" yaml:"imsi,omitempty" mapstructure:"imsi"`
 	}
 )

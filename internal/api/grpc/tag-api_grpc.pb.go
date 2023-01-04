@@ -21,7 +21,7 @@ const _ = grpc.SupportPackageIsVersion7
 type TagClient interface {
 	GetAuthorizedCards(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*GetAuthorizedCardsResponse, error)
 	AddAuthorizedCards(ctx context.Context, in *AddAuthorizedCardsRequest, opts ...grpc.CallOption) (*AddAuthorizedCardsResponse, error)
-	RemoveAuthorizedCard(ctx context.Context, in *AddAuthorizedCardsRequest, opts ...grpc.CallOption) (*AddAuthorizedCardsResponse, error)
+	RemoveAuthorizedCard(ctx context.Context, in *RemoveCardRequest, opts ...grpc.CallOption) (*RemoveCardResponse, error)
 }
 
 type tagClient struct {
@@ -50,8 +50,8 @@ func (c *tagClient) AddAuthorizedCards(ctx context.Context, in *AddAuthorizedCar
 	return out, nil
 }
 
-func (c *tagClient) RemoveAuthorizedCard(ctx context.Context, in *AddAuthorizedCardsRequest, opts ...grpc.CallOption) (*AddAuthorizedCardsResponse, error) {
-	out := new(AddAuthorizedCardsResponse)
+func (c *tagClient) RemoveAuthorizedCard(ctx context.Context, in *RemoveCardRequest, opts ...grpc.CallOption) (*RemoveCardResponse, error) {
+	out := new(RemoveCardResponse)
 	err := c.cc.Invoke(ctx, "/api.Tag/RemoveAuthorizedCard", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -65,7 +65,7 @@ func (c *tagClient) RemoveAuthorizedCard(ctx context.Context, in *AddAuthorizedC
 type TagServer interface {
 	GetAuthorizedCards(context.Context, *empty.Empty) (*GetAuthorizedCardsResponse, error)
 	AddAuthorizedCards(context.Context, *AddAuthorizedCardsRequest) (*AddAuthorizedCardsResponse, error)
-	RemoveAuthorizedCard(context.Context, *AddAuthorizedCardsRequest) (*AddAuthorizedCardsResponse, error)
+	RemoveAuthorizedCard(context.Context, *RemoveCardRequest) (*RemoveCardResponse, error)
 	mustEmbedUnimplementedTagServer()
 }
 
@@ -79,7 +79,7 @@ func (UnimplementedTagServer) GetAuthorizedCards(context.Context, *empty.Empty) 
 func (UnimplementedTagServer) AddAuthorizedCards(context.Context, *AddAuthorizedCardsRequest) (*AddAuthorizedCardsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddAuthorizedCards not implemented")
 }
-func (UnimplementedTagServer) RemoveAuthorizedCard(context.Context, *AddAuthorizedCardsRequest) (*AddAuthorizedCardsResponse, error) {
+func (UnimplementedTagServer) RemoveAuthorizedCard(context.Context, *RemoveCardRequest) (*RemoveCardResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RemoveAuthorizedCard not implemented")
 }
 func (UnimplementedTagServer) mustEmbedUnimplementedTagServer() {}
@@ -132,7 +132,7 @@ func _Tag_AddAuthorizedCards_Handler(srv interface{}, ctx context.Context, dec f
 }
 
 func _Tag_RemoveAuthorizedCard_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AddAuthorizedCardsRequest)
+	in := new(RemoveCardRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -144,7 +144,7 @@ func _Tag_RemoveAuthorizedCard_Handler(srv interface{}, ctx context.Context, dec
 		FullMethod: "/api.Tag/RemoveAuthorizedCard",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TagServer).RemoveAuthorizedCard(ctx, req.(*AddAuthorizedCardsRequest))
+		return srv.(TagServer).RemoveAuthorizedCard(ctx, req.(*RemoveCardRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

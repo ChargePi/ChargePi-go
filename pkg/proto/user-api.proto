@@ -6,37 +6,35 @@ option go_package = "github.com/xBlaz3kx/ChargePi-go/internal/api/grpc";
 import "google/protobuf/empty.proto";
 
 // User management API
-service User {
-  rpc AddUser(AddUserRequest) returns (AddUserResponse) {}
+service Users {
+  rpc AddUser(User) returns (AddUserResponse) {}
   rpc GetUsers(google.protobuf.Empty) returns (GetUsersResponse) {}
-  rpc GetUser(GetUserRequest) returns (GetUserResponse) {}
+  rpc GetUser(GetUserRequest) returns (User) {}
   rpc RemoveUser(RemoveUserRequest) returns (RemoveUserResponse) {}
 }
 
-message AddUserRequest {
-  // repeated AuthorizedCard AuthorizedCards = 1;
+message User{
+  string Username = 1;
+  string Password = 2;
+  string Role = 3;
 }
 
 message AddUserResponse {
-  // repeated AuthorizedCard AuthorizedCards = 1;
+  string Status = 1;
 }
 
 message GetUsersResponse {
-  // repeated AuthorizedCard AuthorizedCards = 1;
+  repeated User Users = 1;
 }
 
 message GetUserRequest {
-  // repeated AuthorizedCard AuthorizedCards = 1;
-}
-
-message GetUserResponse {
-  // repeated AuthorizedCard AuthorizedCards = 1;
+  string Username = 1;
 }
 
 message RemoveUserRequest {
-  // repeated AuthorizedCard AuthorizedCards = 1;
+  string Username = 1;
 }
 
 message RemoveUserResponse {
-  // repeated AuthorizedCard AuthorizedCards = 1;
+  string Status = 1;
 }

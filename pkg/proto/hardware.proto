@@ -6,8 +6,9 @@ option go_package = "github.com/xBlaz3kx/ChargePi-go/internal/api/grpc";
 message EVCC {
   string type = 1;
   string status = 2;
-  optional Serial Serial = 3;
-  optional Modbus ModBus = 4;
+  string error = 3;
+  optional Serial Serial = 4;
+  optional Modbus ModBus = 5;
 }
 
 message PowerMeter {

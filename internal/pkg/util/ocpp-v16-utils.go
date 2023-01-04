@@ -2,6 +2,10 @@ package util
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/agrison/go-commons-lang/stringUtils"
 	"github.com/avast/retry-go"
 	"github.com/lorenzodonini/ocpp-go/ocpp"
@@ -19,9 +23,6 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/tls"
 	ocppManager "github.com/xBlaz3kx/ocppManager-go"
 	"github.com/xBlaz3kx/ocppManager-go/configuration"
-	"strconv"
-	"strings"
-	"time"
 )
 
 // CreateConnectionUrl creates a connection url from the provided settings
@@ -55,7 +56,7 @@ func CreateClient(basicAuthUser, basicAuthPass string, tlsConfig settings2.TLS) 
 
 	// Check if the client has TLS
 	if tlsConfig.IsEnabled {
-		client = tls.CreateWssClient(tlsConfig.CACertificatePath, tlsConfig.ClientCertificatePath, tlsConfig.ClientKeyPath)
+		client = tls.CreateWssClient(tlsConfig.CACertificatePath, tlsConfig.ClientCertificatePath, tlsConfig.PrivateKeyPath)
 	}
 
 	// If HTTP basic auth is provided, set it in the Websocket client
@@ -73,30 +74,34 @@ func SetProfilesFromConfig(
 	coreHandler core.ChargePointHandler,
 	reservationHandler reservation.ChargePointHandler,
 	triggerHandler remotetrigger.ChargePointHandler,
+	localAuth localauth.ChargePointHandler,
 ) {
+	chargePoint.SetCoreHandler(coreHandler)
+
 	// Set handlers based on configuration
 	profiles, err := ocppManager.GetConfigurationValue(configuration.SupportedFeatureProfiles.String())
 	if err != nil {
-		log.WithError(err).Fatalf("No supported profiles specified")
+		log.WithError(err).Panic("No supported profiles specified")
 	}
+
+	logInfo := log.WithField("profiles", profiles)
 
 	for _, profile := range strings.Split(*profiles, ", ") {
 		switch strings.ToLower(profile) {
-		case strings.ToLower(core.ProfileName):
-			chargePoint.SetCoreHandler(coreHandler)
-			log.Debug("Setting core handler")
 		case strings.ToLower(reservation.ProfileName):
 			chargePoint.SetReservationHandler(reservationHandler)
-			log.Debug("Setting reservation handler")
+			logInfo.Debug("Setting reservation handler")
 		case strings.ToLower(smartcharging.ProfileName):
-			//chargePoint.SetSmartChargingHandler(cp)
+			logInfo.Debug("Setting local auth handler")
+			// chargePoint.SetSmartChargingHandler(cp)
 		case strings.ToLower(localauth.ProfileName):
-			//chargePoint.SetLocalAuthListHandler(cp)
+			logInfo.Debug("Setting local auth handler")
+			chargePoint.SetLocalAuthListHandler(localAuth)
 		case strings.ToLower(remotetrigger.ProfileName):
-			log.Debug("Setting remote trigger handler")
+			logInfo.Debug("Setting remote trigger handler")
 			chargePoint.SetRemoteTriggerHandler(triggerHandler)
 		case strings.ToLower(firmware.ProfileName):
-			//chargePoint.SetFirmwareManagementHandler(cp)
+			// chargePoint.SetFirmwareManagementHandler(cp)
 		}
 	}
 }
@@ -139,10 +144,7 @@ func SendRequest(chargePoint ocpp16.ChargePoint, request ocpp.Request, callback 
 
 	return retry.Do(
 		func() error {
-			return chargePoint.SendRequestAsync(
-				request,
-				callback,
-			)
+			return chargePoint.SendRequestAsync(request, callback)
 		},
 		retry.Attempts(uint(maxRetries)),
 		retry.Delay(time.Duration(retryInterval)),

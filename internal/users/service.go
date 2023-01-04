@@ -1,6 +1,7 @@
 package users
 
 import (
+	"github.com/casbin/casbin/v2"
 	"github.com/xBlaz3kx/ChargePi-go/internal/users/database"
 	"github.com/xBlaz3kx/ChargePi-go/internal/users/pkg/models"
 )
@@ -17,45 +18,104 @@ type (
 
 type UserService struct {
 	database database.Database
+	enforcer *casbin.Enforcer
 }
 
-func NewUserService(db database.Database) *UserService {
+func NewUserService(db database.Database, enforcer *casbin.Enforcer) *UserService {
+	/*opts := badgerhold.DefaultOptions
+	store, err := badgerhold.Open(opts)
+	if err != nil {
+
+	}
+
+	a, err := badgeradapter.NewAdapter(store, "")
+	if err != nil {
+
+	}
+
+	e, err := casbin.NewEnforcer("path/to/model.conf", a)
+	if err != nil {
+
+	}
+
+	e.EnableEnforce(true)
+	e.EnableLog(true)
+	e.EnableAutoSave(true)*/
+
 	return &UserService{
 		database: db,
+		enforcer: enforcer,
 	}
 }
 
 func (u *UserService) GetUser(username string) (*models.User, error) {
-	_, err := u.database.GetUser(username)
+	// todo check for access
+
+	/*enforce, err := u.enforcer.Enforce(username)
+	if err != nil {
+		return nil, err
+	}*/
+
+	user, err := u.database.GetUser(username)
 	if err != nil {
 		return nil, err
 	}
 
-	return nil, nil
+	return user, nil
 }
 
 func (u *UserService) GetUsers() ([]models.User, error) {
-	return u.database.GetUsers(), nil
-}
+	// todo check for access
 
-func (u *UserService) AddUser(username, password, role string) error {
-	/*err := u.database.AddUser()
-	if err != nil {
-		return err
-	}*/
-
-	return nil
-}
-
-func (u *UserService) UpdateUser(username string, password, role *string) (*models.User, error) {
-	/*_, err := u.database.UpdateUser()
+	/*enforce, err := u.enforcer.Enforce(username)
 	if err != nil {
 		return nil, err
 	}*/
 
-	return nil, nil
+	return u.database.GetUsers(), nil
+}
+
+func (u *UserService) AddUser(username, password, role string) error {
+	user := models.User{
+		Username: username,
+		Password: password,
+		Role:     role,
+	}
+
+	// todo check for access
+
+	/*enforce, err := u.enforcer.Enforce(username)
+	if err != nil {
+		return nil, err
+	}*/
+
+	return u.database.AddUser(user)
+}
+
+func (u *UserService) UpdateUser(username string, password, role *string) (*models.User, error) {
+	// todo check for access
+
+	/*enforce, err := u.enforcer.Enforce(username)
+	if err != nil {
+		return nil, err
+	}*/
+
+	iUser := models.User{Username: username, Password: *password, Role: *role}
+	user, err := u.database.UpdateUser(iUser)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
 
 func (u *UserService) DeleteUser(username string) error {
-	return nil
+	// todo check for access
+
+	/*enforce, err := u.enforcer.Enforce(username)
+	if err != nil {
+		return nil, err
+	}*/
+
+	return u.database.DeleteUser(username)
 }

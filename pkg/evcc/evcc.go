@@ -3,8 +3,6 @@ package evcc
 import (
 	"context"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
-
-	"github.com/xBlaz3kx/ChargePi-go/pkg/models/evcc"
 )
 
 const (
@@ -22,7 +20,7 @@ type (
 		GetMaxChargingCurrent() float64
 		Lock()
 		Unlock()
-		GetState() evcc.CarState
+		GetState() CarState
 		GetError() string
 		Cleanup() error
 		GetType() string

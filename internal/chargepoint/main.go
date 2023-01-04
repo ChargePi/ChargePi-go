@@ -2,20 +2,26 @@ package chargepoint
 
 import (
 	"context"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/localauth"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/remotetrigger"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
-	settings2 "github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
-	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
 	"os"
 	"os/signal"
 	"time"
+
+	"github.com/casbin/casbin/v2"
+	badgerhold "github.com/inits/badgerholdv2"
+	badgeradapter "github.com/inits/casbin-badgerdb-adapter"
+	"github.com/lorenzodonini/ocpp-go/ocpp1.6/localauth"
+	"github.com/lorenzodonini/ocpp-go/ocpp1.6/remotetrigger"
+	"github.com/xBlaz3kx/ChargePi-go/internal/api/service"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
+	"github.com/xBlaz3kx/ChargePi-go/internal/users"
+	"github.com/xBlaz3kx/ChargePi-go/internal/users/database"
+	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
 
 	"github.com/go-co-op/gocron"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/api/grpc"
 	"github.com/xBlaz3kx/ChargePi-go/internal/api/http"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/auth"
 	connectorManager "github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
@@ -36,7 +42,7 @@ func CreateChargePoint(
 	manager connectorManager.Manager,
 	sch *gocron.Scheduler,
 	tagManager auth.TagManager,
-	hardware settings2.Hardware,
+	hardware settings.Hardware,
 ) chargePoint.ChargePoint {
 
 	// Create a status indicator if enabled
@@ -68,15 +74,50 @@ func CreateChargePoint(
 	}
 }
 
+func SetupUserApi(api settings.Api, handler chargePoint.ChargePoint, tagManager auth.TagManager, manager connectorManager.Manager, ocppVariableManager ocppConfigManager.Manager) {
+	db := database.NewBadgerDb()
+
+	opts := badgerhold.DefaultOptions
+	store, err := badgerhold.Open(opts)
+	if err != nil {
+
+	}
+
+	a, err := badgeradapter.NewAdapter(store, "")
+	if err != nil {
+
+	}
+
+	e, err := casbin.NewEnforcer("path/to/model.conf", a)
+	if err != nil {
+
+	}
+
+	e.EnableEnforce(true)
+	e.EnableLog(true)
+	e.EnableAutoSave(true)
+
+	userService := users.NewUserService(db, e)
+
+	// Expose the API endpoints
+	server := service.NewServer(api, handler, tagManager, manager, ocppVariableManager, userService)
+	go server.Run()
+
+	// Expose the ui at http://localhost:4269/
+	ui := http.NewUi()
+	go ui.Serve("0.0.0.0:4269")
+}
+
 // Run is an entrypoint with all the configuration needed. This is a blocking function.
-func Run(isDebug bool, config *settings2.Settings, connectors []*settings2.EVSE, configurationFilePath, localAuthListFilePath string) {
+func Run(isDebug bool, config *settings.Settings, connectors []*settings.EVSE, configurationFilePath, localAuthListFilePath string) {
 	var (
 		// ChargePoint components
-		handler    chargePoint.ChargePoint
-		logger     = log.StandardLogger()
-		tagManager = auth.NewTagManager(localAuthListFilePath)
-		manager    = connectorManager.GetManager()
-		sch        = scheduler.GetScheduler()
+		handler             chargePoint.ChargePoint
+		logger              = log.StandardLogger()
+		tagManager          = auth.NewTagManager(localAuthListFilePath)
+		manager             = connectorManager.GetManager()
+		sch                 = scheduler.GetScheduler()
+		ocppVariableManager = ocppConfigManager.GetManager()
 
 		// Settings
 		hardware           = config.ChargePoint.Hardware
@@ -128,13 +169,8 @@ func Run(isDebug bool, config *settings2.Settings, connectors []*settings2.EVSE,
 	go handler.ListenForConnectorStatusChange(ctx, manager.GetNotificationChannel())
 	go handler.Connect(parentCtxForOcpp, serverUrl)
 
-	// Expose the API endpoints
-	server := grpc.NewServer(config.Api, handler, tagManager, manager, ocppConfigManager.GetManager(), nil)
-	go server.Run()
-
-	// Expose the ui at http://localhost:4269/
-	ui := http.NewUi()
-	go ui.Serve("0.0.0.0:4269")
+	// Setup User API
+	SetupUserApi(config.Api, handler, tagManager, manager, ocppVariableManager)
 
 	<-ctx.Done()
 	handler.CleanUp(core.ReasonLocal)

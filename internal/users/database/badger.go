@@ -1,12 +1,12 @@
 package database
 
 import (
-	badger "github.com/dgraph-io/badger/v3"
+	"github.com/dgraph-io/badger/v3"
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/users/pkg/models"
 )
 
-const databasePath = "/tmp/badger"
+const databasePath = "/tmp/chargepi"
 
 type BadgerDb struct {
 	db *badger.DB
@@ -14,6 +14,17 @@ type BadgerDb struct {
 
 func NewBadgerDb() *BadgerDb {
 	db, err := badger.Open(badger.DefaultOptions(databasePath))
+	if err != nil {
+		log.WithError(err).Panic("Cannot open database")
+	}
+
+	return &BadgerDb{
+		db: db,
+	}
+}
+
+func NewBadgerDbWithPath(path string) *BadgerDb {
+	db, err := badger.Open(badger.DefaultOptions(path))
 	if err != nil {
 		log.WithError(err).Panic("Cannot open database")
 	}

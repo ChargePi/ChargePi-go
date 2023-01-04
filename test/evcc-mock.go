@@ -3,8 +3,7 @@ package test
 import (
 	"context"
 	"github.com/stretchr/testify/mock"
-	evcc2 "github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/evcc"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/models/evcc"
+	evcc2 "github.com/xBlaz3kx/ChargePi-go/pkg/evcc"
 )
 
 type EvccMock struct {
@@ -43,8 +42,8 @@ func (e *EvccMock) Unlock() {
 	e.Called()
 }
 
-func (e *EvccMock) GetState() evcc.CarState {
-	return evcc.CarState(e.Called().String(0))
+func (e *EvccMock) GetState() evcc2.CarState {
+	return evcc2.CarState(e.Called().String(0))
 }
 
 func (e *EvccMock) Cleanup() error {

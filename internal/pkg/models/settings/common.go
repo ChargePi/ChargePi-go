@@ -2,23 +2,22 @@ package settings
 
 type (
 	TLS struct {
-		IsEnabled             bool   `fig:"isEnabled"  json:"isEnabled,omitempty" yaml:"isEnabled" mapstructure:"isEnabled"`
-		CACertificatePath     string `fig:"CACertificatePath" json:"CACertificatePath,omitempty" yaml:"CACertificatePath" mapstructure:"CACertificatePath"`
-		ClientCertificatePath string `fig:"ClientCertificatePath" json:"ClientCertificatePath,omitempty" yaml:"ClientCertificatePath" mapstructure:"ClientCertificatePath"`
-		ClientKeyPath         string `fig:"ClientKeyPath" json:"ClientKeyPath,omitempty" yaml:"ClientKeyPath" mapstructure:"ClientKeyPath"`
+		IsEnabled             bool   `json:"isEnabled,omitempty" yaml:"isEnabled" mapstructure:"isEnabled"`
+		CACertificatePath     string `json:"CACertificatePath,omitempty" yaml:"CACertificatePath" mapstructure:"CACertificatePath"`
+		ClientCertificatePath string `json:"ClientCertificatePath,omitempty" yaml:"ClientCertificatePath" mapstructure:"ClientCertificatePath"`
+		PrivateKeyPath        string `json:"PrivateKeyPath,omitempty" yaml:"PrivateKeyPath" mapstructure:"PrivateKeyPath"`
 	}
 
 	Logging struct {
-		Type   []string `fig:"type" validate:"required" json:"type,omitempty" yaml:"type" mapstructure:"type"`      // file, remote, console
-		Format string   `fig:"format" default:"syslog" json:"format,omitempty" yaml:"format" mapstructure:"format"` // gelf, syslog, json, etc
-		Host   string   `fig:"host" json:"host,omitempty" yaml:"host" mapstructure:"host"`
-		Port   int      `fig:"port" default:"1514" json:"port,omitempty" yaml:"port" mapstructure:"port"`
+		Type   []string `validate:"required" json:"type,omitempty" yaml:"type" mapstructure:"type"` // file, remote, console
+		Format string   `json:"format,omitempty" yaml:"format" mapstructure:"format"`               // gelf, syslog, json, etc
+		Host   string   `json:"host,omitempty" yaml:"host" mapstructure:"host"`
+		Port   int      `json:"port,omitempty" yaml:"port" mapstructure:"port"`
 	}
 
 	Api struct {
-		Enabled bool   `fig:"enabled" json:"enabled,omitempty" yaml:"enabled" mapstructure:"enabled"`
-		Address string `fig:"address" json:"address,omitempty" yaml:"address" mapstructure:"address"`
-		Port    int    `fig:"port" json:"port,omitempty" yaml:"port" mapstructure:"port"`
-		TLS     TLS    `fig:"tls" json:"tls,omitempty" yaml:"tls" mapstructure:"tls"`
+		Enabled bool   `json:"enabled,omitempty" yaml:"enabled" mapstructure:"enabled"`
+		Address string `validate:"hostname_port" json:"address,omitempty" yaml:"address" mapstructure:"address"`
+		TLS     TLS    `json:"tls,omitempty" yaml:"tls" mapstructure:"tls"`
 	}
 )

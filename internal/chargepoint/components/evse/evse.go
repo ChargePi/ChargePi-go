@@ -5,17 +5,16 @@ import (
 	"fmt"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/session"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/evcc"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/power-meter"
 	"sync"
 	"time"
 
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/evcc"
-	powerMeter "github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/power-meter"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
-	carState "github.com/xBlaz3kx/ChargePi-go/pkg/models/evcc"
 	"golang.org/x/net/context"
 )
 
@@ -165,7 +164,7 @@ Loop:
 			case core.ChargePointStatusAvailable:
 
 				switch msg.State {
-				case carState.StateB1:
+				case evcc.StateB1:
 					state = core.ChargePointStatusPreparing
 				}
 
@@ -173,18 +172,18 @@ Loop:
 
 				// Determine new state based on the previous state
 				switch msg.State {
-				case carState.StateA1, carState.StateA2:
+				case evcc.StateA1, evcc.StateA2:
 					state = core.ChargePointStatusAvailable
-				case carState.StateC2, carState.StateD2:
+				case evcc.StateC2, evcc.StateD2:
 					state = core.ChargePointStatusCharging
 				}
 
 			case core.ChargePointStatusCharging:
 
 				switch msg.State {
-				case carState.StateC1:
+				case evcc.StateC1:
 					state = core.ChargePointStatusFinishing
-				case carState.StateD1:
+				case evcc.StateD1:
 					state = core.ChargePointStatusSuspendedEV
 				}
 
@@ -194,7 +193,7 @@ Loop:
 			}
 
 			switch msg.State {
-			case carState.StateE, carState.StateF:
+			case evcc.StateE, evcc.StateF:
 				state = core.ChargePointStatusFaulted
 			}
 

@@ -2,15 +2,16 @@ package test
 
 import (
 	"context"
+
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/session"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/evcc"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/power-meter"
 
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/stretchr/testify/mock"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/evcc"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/power-meter"
 )
 
 type (

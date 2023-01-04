@@ -5,13 +5,14 @@ import "hardware.proto";
 import "google/protobuf/timestamp.proto";
 
 package api;
+
 option go_package = "github.com/xBlaz3kx/ChargePi-go/internal/api/grpc";
 
 message EVSE {
   int32 Id = 1;
   EVCC EVCC = 2;
   PowerMeter PowerMeter = 3;
-  ConnectorStatus status = 4;
+  ConnectorStatus Status = 4;
   optional Session Session = 5;
 }
 
@@ -20,4 +21,15 @@ message Session {
   string tagId = 2;
   google.protobuf.Timestamp started = 3;
   string Consumption = 4;
+}
+
+message Sample{
+  Consumption Consumption = 1;
+  string Measureand = 2;
+  google.protobuf.Timestamp Timestamp = 3;
+}
+
+message Consumption{
+  string Unit = 1;
+  float Value = 2;
 }

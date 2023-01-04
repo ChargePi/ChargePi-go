@@ -7,7 +7,6 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	log "github.com/sirupsen/logrus"
 	"github.com/warthog618/gpiod"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/models/evcc"
 )
 
 var (
@@ -18,7 +17,7 @@ type (
 	RelayAsEvcc struct {
 		relayPin      int
 		inverseLogic  bool
-		state         evcc.CarState
+		state         CarState
 		pin           *gpiod.Line
 		statusChannel chan StateNotification
 	}
@@ -61,7 +60,7 @@ func (r *RelayAsEvcc) GetError() string {
 	return string(core.NoError)
 }
 
-func (r *RelayAsEvcc) GetState() evcc.CarState {
+func (r *RelayAsEvcc) GetState() CarState {
 	return r.state
 }
 
@@ -72,8 +71,8 @@ func (r *RelayAsEvcc) EnableCharging() error {
 		_ = r.pin.SetValue(1)
 	}
 
-	_ = r.setState(evcc.StateB2, string(core.NoError))
-	return r.setState(evcc.StateC2, string(core.NoError))
+	_ = r.setState(StateB2, string(core.NoError))
+	return r.setState(StateC2, string(core.NoError))
 }
 
 func (r *RelayAsEvcc) DisableCharging() {
@@ -83,12 +82,12 @@ func (r *RelayAsEvcc) DisableCharging() {
 		_ = r.pin.SetValue(0)
 	}
 
-	_ = r.setState(evcc.StateB1, string(core.NoError))
-	_ = r.setState(evcc.StateA1, string(core.NoError))
+	_ = r.setState(StateB1, string(core.NoError))
+	_ = r.setState(StateA1, string(core.NoError))
 }
 
-func (r *RelayAsEvcc) setState(state evcc.CarState, error string) error {
-	if !evcc.IsStateValid(state) {
+func (r *RelayAsEvcc) setState(state CarState, error string) error {
+	if !IsStateValid(state) {
 		return nil
 	}
 

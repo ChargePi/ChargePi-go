@@ -2,22 +2,22 @@ package settings
 
 type (
 	LedIndicator struct {
-		Enabled          bool   `fig:"Enabled" json:"Enabled,omitempty" yaml:"Enabled" mapstructure:"Enabled"`
-		IndicateCardRead bool   `fig:"IndicateCardRead" json:"IndicateCardRead,omitempty" yaml:"IndicateCardRead" mapstructure:"IndicateCardRead"`
-		Type             string `fig:"Type" json:"type,omitempty" yaml:"type" mapstructure:"type"`
+		Enabled          bool   `json:"enabled" yaml:"enabled" mapstructure:"enabled"`
+		IndicateCardRead bool   `json:"indicateCardRead,omitempty" yaml:"indicateCardRead,omitempty" mapstructure:"indicateCardRead,omitempty"`
+		Type             string `json:"type,omitempty" yaml:"type" mapstructure:"type"`
 		// Based on the type, get the connection details
-		DataPin           int                    `fig:"DataPin" json:"DataPin,omitempty" yaml:"DataPin" mapstructure:"DataPin"`
-		Invert            bool                   `fig:"Invert" json:"invert,omitempty" yaml:"invert" mapstructure:"invert"`
-		IndicatorMappings IndicatorStatusMapping `fig:"statuses" json:"statuses,omitempty" yaml:"statuses" mapstructure:"statuses"`
+		DataPin           *int                    `json:"dataPin,omitempty" yaml:"dataPin,omitempty" mapstructure:"dataPin,omitempty"`
+		Invert            *bool                   `json:"invert,omitempty" yaml:"invert,omitempty" mapstructure:"invert,omitempty"`
+		IndicatorMappings *IndicatorStatusMapping `json:"statuses,omitempty" yaml:"statuses,omitempty" mapstructure:"statuses,omitempty"`
 	}
 
 	IndicatorStatusMapping struct {
-		Available string `json:"available,omitempty" yaml:"available" mapstructure:"available"`
-		Reserved  string `json:"reserved,omitempty" yaml:"reserved" mapstructure:"reserved"`
-		Preparing string `json:"preparing,omitempty" yaml:"preparing" mapstructure:"preparing"`
-		Charging  string `json:"charging,omitempty" yaml:"charging" mapstructure:"charging"`
-		Finishing string `json:"finishing,omitempty" yaml:"finishing" mapstructure:"finishing"`
-		Fault     string `json:"fault,omitempty" yaml:"fault" mapstructure:"fault"`
-		Error     string `json:"error,omitempty" yaml:"error" mapstructure:"error"`
+		Available string `json:"available,omitempty" yaml:"available,omitempty" mapstructure:"available,omitempty" validate:"hexcolor"`
+		Reserved  string `json:"reserved,omitempty" yaml:"reserved,omitempty" mapstructure:"reserved,omitempty" validate:"hexcolor"`
+		Preparing string `json:"preparing,omitempty" yaml:"preparing,omitempty" mapstructure:"preparing,omitempty" validate:"hexcolor"`
+		Charging  string `json:"charging,omitempty" yaml:"charging,omitempty" mapstructure:"charging,omitempty" validate:"hexcolor"`
+		Finishing string `json:"finishing,omitempty" yaml:"finishing,omitempty" mapstructure:"finishing,omitempty" validate:"hexcolor"`
+		Fault     string `json:"fault,omitempty" yaml:"fault,omitempty" mapstructure:"fault,omitempty" validate:"hexcolor"`
+		Error     string `json:"error,omitempty" yaml:"error,omitempty" mapstructure:"error,omitempty" validate:"hexcolor"`
 	}
 )

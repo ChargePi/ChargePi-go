@@ -2,6 +2,8 @@ package v16
 
 import (
 	"context"
+	"os/exec"
+
 	"github.com/go-co-op/gocron"
 	ocpp16 "github.com/lorenzodonini/ocpp-go/ocpp1.6"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
@@ -13,22 +15,22 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/reader"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
-	settings2 "github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
-	"os/exec"
 )
 
 type (
 	ChargePoint struct {
 		chargePoint        ocpp16.ChargePoint
 		availability       core.AvailabilityType
-		info               settings2.Info
-		connectionSettings settings2.ConnectionSettings
+		isConnected        bool
+		info               settings.Info
+		connectionSettings settings.ConnectionSettings
 		// Hardware components
 		tagReader        reader.Reader
 		indicator        indicator.Indicator
 		display          display.Display
-		indicatorMapping settings2.IndicatorStatusMapping
+		indicatorMapping settings.IndicatorStatusMapping
 		// Software components
 		connectorManager connectorManager.Manager
 
@@ -48,6 +50,9 @@ func NewChargePoint(manager connectorManager.Manager, scheduler *gocron.Schedule
 		tagManager:       cache,
 		logger:           log.StandardLogger(),
 	}
+
+	// Set profiles
+	util.SetProfilesFromConfig(cp.chargePoint, cp, cp, cp, cp)
 
 	cp.ApplyOpts(opts...)
 
@@ -71,14 +76,12 @@ func (cp *ChargePoint) Connect(ctx context.Context, serverUrl string) {
 	logInfo.Debug("Creating an ocpp connection")
 	cp.chargePoint = ocpp16.NewChargePoint(connectionSettings.Id, nil, wsClient)
 
-	// Set charging profiles
-	util.SetProfilesFromConfig(cp.chargePoint, cp, cp, cp)
-
 	cp.logger.Infof("Trying to connect to the central system: %s", serverUrl)
 	connectErr := cp.chargePoint.Start(serverUrl)
 	if connectErr != nil {
 		// cp.CleanUp(core.ReasonOther)
-		cp.logger.WithError(connectErr).Fatalf("Cannot connect to the central system")
+		cp.isConnected = false
+		cp.logger.WithError(connectErr).Panic("Cannot connect to the central system")
 	}
 
 	cp.logger.Infof("Successfully connected to: %s", serverUrl)
@@ -133,21 +136,34 @@ func (cp *ChargePoint) Reset(resetType string) error {
 	cp.logger.Infof("Resetting the charge point")
 
 	// Todo check if conditions are met
+	var err error
 
 	switch resetType {
 	case string(core.ResetTypeHard):
-		_, err := cp.scheduler.Every(3).Seconds().LimitRunsTo(1).Do(cp.CleanUp, core.ReasonHardReset)
+		_, err = cp.scheduler.Every(3).Seconds().LimitRunsTo(1).Do(cp.CleanUp, core.ReasonHardReset)
 		if err != nil {
 			return err
 		}
 
 		_, err = cp.scheduler.Every(30).Seconds().LimitRunsTo(1).Do(exec.Command, "sudo reboot")
 	case string(core.ResetTypeSoft):
-		_, err := cp.scheduler.Every(3).Seconds().LimitRunsTo(1).Do(cp.CleanUp, core.ReasonSoftReset)
-		if err != nil {
-			return err
-		}
+		_, err = cp.scheduler.Every(3).Seconds().LimitRunsTo(1).Do(cp.CleanUp, core.ReasonSoftReset)
 	}
 
-	return nil
+	return err
+}
+
+// GetVersion get the firmware version of the charge point
+func (cp *ChargePoint) GetVersion() string {
+	return chargePoint.FirmwareVersion
+}
+
+// GetStatus of the charge point
+func (cp *ChargePoint) GetStatus() string {
+	return string(cp.availability)
+}
+
+// IsConnected of the charge point
+func (cp *ChargePoint) IsConnected() bool {
+	return cp.isConnected
 }

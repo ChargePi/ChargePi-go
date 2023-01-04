@@ -2,6 +2,7 @@ package v16
 
 import (
 	"fmt"
+
 	"github.com/lorenzodonini/ocpp-go/ocpp"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
@@ -40,10 +41,11 @@ func (cp *ChargePoint) bootNotification() {
 		switch bootConf.Status {
 		case core.RegistrationStatusAccepted:
 			cp.logger.Info("Accepted by the central system")
+			cp.isConnected = true
 			cp.setHeartbeat(bootConf.Interval)
 			cp.restoreState()
 
-			// Send details about the charge point and it's connectors
+			// Send details about the charge point and its connectors
 			_ = cp.sendChargePointInfo()
 			cp.SendEVSEsDetails(cp.connectorManager.GetEVSEs()...)
 

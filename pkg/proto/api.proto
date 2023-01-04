@@ -27,7 +27,13 @@ service ChargePoint {
   rpc ChangeChargePointDetails(ChangeChargePointDetailsRequest) returns (ChangeChargePointDetailsResponse) {}
 
   // OCPP configuration variable management
-  rpc GetOCPPVariables(ChangeChargePointDetailsRequest) returns (ChangeChargePointDetailsResponse) {}
+  rpc GetOCPPVariables(google.protobuf.Empty) returns (GetVariablesResponse) {}
+  rpc SetOCPPVariables(SetVariablesRequest) returns (SetVariablesResponse) {}
+  rpc GetOCPPVariable(GetVariableRequest) returns (GetVariablesResponse) {}
+
+  // Details
+  rpc GetVersion(google.protobuf.Empty) returns (GetVersionResponse) {}
+  rpc GetStatus(google.protobuf.Empty) returns (GetStatusResponse) {}
 
   rpc Restart(RestartRequest) returns (google.protobuf.Empty) {}
 }
@@ -51,6 +57,17 @@ message ChangeChargePointDetailsRequest {
 
 message ChangeChargePointDetailsResponse {
   string status = 2;
+}
+
+/*------------------ ChargePointDetails ------------------------ */
+
+message GetVersionResponse {
+  string Version = 1;
+}
+
+message GetStatusResponse {
+  bool Connected = 1;
+  string Status = 2;
 }
 
 /*------------------ Restart ------------------------ */
@@ -100,3 +117,22 @@ message SetIndicatorSettingsResponse {
 message GetIndicatorSettingsResponse {
   Indicator Indicator = 1;
 }
+
+/*------------------ OCPP variables ------------------------ */
+
+message GetVariableRequest {
+  Indicator Indicator = 1;
+}
+
+message GetVariablesResponse {
+  repeated OcppVariable Variables = 1;
+}
+
+message SetVariablesRequest {
+  repeated OcppVariable Variables = 1;
+}
+
+message SetVariablesResponse {
+  repeated string Statuses = 1;
+}
+

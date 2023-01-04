@@ -25,7 +25,18 @@ const (
 	StateF = CarState("F")
 )
 
-type CarState string
+type (
+	CarState string
+
+	StateNotification struct {
+		State CarState
+		Error string
+	}
+)
+
+func NewStateNotification(state CarState, error string) StateNotification {
+	return StateNotification{State: state, Error: error}
+}
 
 func IsStateValid(state CarState) bool {
 	switch state {

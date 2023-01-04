@@ -1,6 +1,8 @@
 package evse
 
-import "github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/evcc"
+import (
+	"github.com/xBlaz3kx/ChargePi-go/pkg/evcc"
+)
 
 func (evse *Impl) Lock() {
 	evse.evcc.Lock()

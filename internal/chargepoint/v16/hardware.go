@@ -3,9 +3,10 @@ package v16
 import (
 	"context"
 	"fmt"
-	chargePoint "github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
 	"strings"
 	"time"
+
+	chargePoint "github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
 
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/indicator"
@@ -73,7 +74,7 @@ func (cp *ChargePoint) indicateCard(index int, color indicator.Color) {
 // ListenForTag Listen for an RFID/NFC tag on a separate thread. If a tag is detected, call the HandleChargingRequest.
 // Blink the LED if indication is enabled.
 func (cp *ChargePoint) ListenForTag(ctx context.Context, tagChannel <-chan string) (*string, error) {
-	if tagChannel == nil {
+	if util.IsNilInterfaceOrPointer(tagChannel) {
 		return nil, nil
 	}
 

@@ -7,8 +7,8 @@ package api;
 option go_package = "github.com/xBlaz3kx/ChargePi-go/internal/api/grpc";
 
 message ConnectionSettings{
-  string chargePointId = 1;
-  string url = 2;
+  optional string chargePointId = 1;
+  optional string url = 2;
   ProtocolVersion ProtocolVersion = 3;
   optional string BasicAuthUsername = 4;
   optional string BasicAuthPassword = 5;
@@ -27,8 +27,10 @@ message ChargePointInfo{
 message OcppInfo{
   string Vendor = 1;
   string Model = 2;
-  optional string ChargeBoxSerialNumber = 3;
-  optional string ChargePointSerialNumber = 4;
+  optional string Iccid = 3;
+  optional string Imsi = 4;
+  optional string ChargeBoxSerialNumber = 5;
+  optional string ChargePointSerialNumber = 6;
 }
 
 message FreeCharging{
@@ -40,4 +42,10 @@ message AuthorizedCard{
   string TagId = 1;
   string Status = 2;
   optional google.protobuf.Timestamp ExpiryDate = 3;
+}
+
+message OcppVariable{
+  string Key = 1;
+  bool Readonly = 2;
+  optional string Value = 3;
 }

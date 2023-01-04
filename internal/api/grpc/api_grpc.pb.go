@@ -33,7 +33,12 @@ type ChargePointClient interface {
 	// Charge point details
 	ChangeChargePointDetails(ctx context.Context, in *ChangeChargePointDetailsRequest, opts ...grpc.CallOption) (*ChangeChargePointDetailsResponse, error)
 	// OCPP configuration variable management
-	GetOCPPVariables(ctx context.Context, in *ChangeChargePointDetailsRequest, opts ...grpc.CallOption) (*ChangeChargePointDetailsResponse, error)
+	GetOCPPVariables(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*GetVariablesResponse, error)
+	SetOCPPVariables(ctx context.Context, in *SetVariablesRequest, opts ...grpc.CallOption) (*SetVariablesResponse, error)
+	GetOCPPVariable(ctx context.Context, in *GetVariableRequest, opts ...grpc.CallOption) (*GetVariablesResponse, error)
+	// Details
+	GetVersion(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*GetVersionResponse, error)
+	GetStatus(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*GetStatusResponse, error)
 	Restart(ctx context.Context, in *RestartRequest, opts ...grpc.CallOption) (*empty.Empty, error)
 }
 
@@ -117,9 +122,45 @@ func (c *chargePointClient) ChangeChargePointDetails(ctx context.Context, in *Ch
 	return out, nil
 }
 
-func (c *chargePointClient) GetOCPPVariables(ctx context.Context, in *ChangeChargePointDetailsRequest, opts ...grpc.CallOption) (*ChangeChargePointDetailsResponse, error) {
-	out := new(ChangeChargePointDetailsResponse)
+func (c *chargePointClient) GetOCPPVariables(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*GetVariablesResponse, error) {
+	out := new(GetVariablesResponse)
 	err := c.cc.Invoke(ctx, "/api.ChargePoint/GetOCPPVariables", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *chargePointClient) SetOCPPVariables(ctx context.Context, in *SetVariablesRequest, opts ...grpc.CallOption) (*SetVariablesResponse, error) {
+	out := new(SetVariablesResponse)
+	err := c.cc.Invoke(ctx, "/api.ChargePoint/SetOCPPVariables", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *chargePointClient) GetOCPPVariable(ctx context.Context, in *GetVariableRequest, opts ...grpc.CallOption) (*GetVariablesResponse, error) {
+	out := new(GetVariablesResponse)
+	err := c.cc.Invoke(ctx, "/api.ChargePoint/GetOCPPVariable", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *chargePointClient) GetVersion(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*GetVersionResponse, error) {
+	out := new(GetVersionResponse)
+	err := c.cc.Invoke(ctx, "/api.ChargePoint/GetVersion", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *chargePointClient) GetStatus(ctx context.Context, in *empty.Empty, opts ...grpc.CallOption) (*GetStatusResponse, error) {
+	out := new(GetStatusResponse)
+	err := c.cc.Invoke(ctx, "/api.ChargePoint/GetStatus", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +194,12 @@ type ChargePointServer interface {
 	// Charge point details
 	ChangeChargePointDetails(context.Context, *ChangeChargePointDetailsRequest) (*ChangeChargePointDetailsResponse, error)
 	// OCPP configuration variable management
-	GetOCPPVariables(context.Context, *ChangeChargePointDetailsRequest) (*ChangeChargePointDetailsResponse, error)
+	GetOCPPVariables(context.Context, *empty.Empty) (*GetVariablesResponse, error)
+	SetOCPPVariables(context.Context, *SetVariablesRequest) (*SetVariablesResponse, error)
+	GetOCPPVariable(context.Context, *GetVariableRequest) (*GetVariablesResponse, error)
+	// Details
+	GetVersion(context.Context, *empty.Empty) (*GetVersionResponse, error)
+	GetStatus(context.Context, *empty.Empty) (*GetStatusResponse, error)
 	Restart(context.Context, *RestartRequest) (*empty.Empty, error)
 	mustEmbedUnimplementedChargePointServer()
 }
@@ -186,8 +232,20 @@ func (UnimplementedChargePointServer) ChangeConnectionDetails(context.Context, *
 func (UnimplementedChargePointServer) ChangeChargePointDetails(context.Context, *ChangeChargePointDetailsRequest) (*ChangeChargePointDetailsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ChangeChargePointDetails not implemented")
 }
-func (UnimplementedChargePointServer) GetOCPPVariables(context.Context, *ChangeChargePointDetailsRequest) (*ChangeChargePointDetailsResponse, error) {
+func (UnimplementedChargePointServer) GetOCPPVariables(context.Context, *empty.Empty) (*GetVariablesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetOCPPVariables not implemented")
+}
+func (UnimplementedChargePointServer) SetOCPPVariables(context.Context, *SetVariablesRequest) (*SetVariablesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetOCPPVariables not implemented")
+}
+func (UnimplementedChargePointServer) GetOCPPVariable(context.Context, *GetVariableRequest) (*GetVariablesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetOCPPVariable not implemented")
+}
+func (UnimplementedChargePointServer) GetVersion(context.Context, *empty.Empty) (*GetVersionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetVersion not implemented")
+}
+func (UnimplementedChargePointServer) GetStatus(context.Context, *empty.Empty) (*GetStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetStatus not implemented")
 }
 func (UnimplementedChargePointServer) Restart(context.Context, *RestartRequest) (*empty.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Restart not implemented")
@@ -350,7 +408,7 @@ func _ChargePoint_ChangeChargePointDetails_Handler(srv interface{}, ctx context.
 }
 
 func _ChargePoint_GetOCPPVariables_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ChangeChargePointDetailsRequest)
+	in := new(empty.Empty)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -362,7 +420,79 @@ func _ChargePoint_GetOCPPVariables_Handler(srv interface{}, ctx context.Context,
 		FullMethod: "/api.ChargePoint/GetOCPPVariables",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ChargePointServer).GetOCPPVariables(ctx, req.(*ChangeChargePointDetailsRequest))
+		return srv.(ChargePointServer).GetOCPPVariables(ctx, req.(*empty.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ChargePoint_SetOCPPVariables_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetVariablesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChargePointServer).SetOCPPVariables(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.ChargePoint/SetOCPPVariables",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChargePointServer).SetOCPPVariables(ctx, req.(*SetVariablesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ChargePoint_GetOCPPVariable_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetVariableRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChargePointServer).GetOCPPVariable(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.ChargePoint/GetOCPPVariable",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChargePointServer).GetOCPPVariable(ctx, req.(*GetVariableRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ChargePoint_GetVersion_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(empty.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChargePointServer).GetVersion(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.ChargePoint/GetVersion",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChargePointServer).GetVersion(ctx, req.(*empty.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ChargePoint_GetStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(empty.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChargePointServer).GetStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.ChargePoint/GetStatus",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChargePointServer).GetStatus(ctx, req.(*empty.Empty))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -427,6 +557,22 @@ var ChargePoint_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetOCPPVariables",
 			Handler:    _ChargePoint_GetOCPPVariables_Handler,
+		},
+		{
+			MethodName: "SetOCPPVariables",
+			Handler:    _ChargePoint_SetOCPPVariables_Handler,
+		},
+		{
+			MethodName: "GetOCPPVariable",
+			Handler:    _ChargePoint_GetOCPPVariable_Handler,
+		},
+		{
+			MethodName: "GetVersion",
+			Handler:    _ChargePoint_GetVersion_Handler,
+		},
+		{
+			MethodName: "GetStatus",
+			Handler:    _ChargePoint_GetStatus_Handler,
 		},
 		{
 			MethodName: "Restart",

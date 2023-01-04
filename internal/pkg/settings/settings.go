@@ -1,6 +1,9 @@
 package settings
 
 import (
+	"strings"
+	"sync"
+
 	"github.com/agrison/go-commons-lang/stringUtils"
 	"github.com/go-playground/validator"
 	log "github.com/sirupsen/logrus"
@@ -8,8 +11,6 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
 	"github.com/xBlaz3kx/ocppManager-go/configuration"
-	"strings"
-	"sync"
 )
 
 var (
@@ -23,14 +24,14 @@ func InitSettings(settingsFilePath string) {
 }
 
 func readConfiguration(viper *viper.Viper, fileName, extension, filePath string) {
+	viper.SetConfigName(fileName)
+	viper.SetConfigType(extension)
+	viper.AddConfigPath(currentFolder)
+	viper.AddConfigPath(evseFolder)
+	viper.AddConfigPath(dockerFolder)
+
 	if stringUtils.IsNotEmpty(filePath) {
 		viper.SetConfigFile(filePath)
-	} else {
-		viper.SetConfigName(fileName)
-		viper.SetConfigType(extension)
-		viper.AddConfigPath(currentFolder)
-		viper.AddConfigPath(evseFolder)
-		viper.AddConfigPath(dockerFolder)
 	}
 
 	err := viper.ReadInConfig()
