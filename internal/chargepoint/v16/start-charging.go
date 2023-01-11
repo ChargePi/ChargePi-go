@@ -1,14 +1,15 @@
 package v16
 
 import (
+	"strconv"
+	"time"
+
 	"github.com/lorenzodonini/ocpp-go/ocpp"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
-	"strconv"
-	"time"
 )
 
 func (cp *ChargePoint) StartCharging(evseId, connectorId int, tagId string) error {
@@ -18,10 +19,12 @@ func (cp *ChargePoint) StartCharging(evseId, connectorId int, tagId string) erro
 		"tagId":       tagId,
 	})
 
+	// Charge point must be available to accept transactions
 	if cp.availability != core.AvailabilityTypeOperative {
 		return chargePoint.ErrChargePointUnavailable
 	}
 
+	// Authorize the tag from either the cache or the backend.
 	if !cp.isTagAuthorized(tagId) {
 		return chargePoint.ErrTagUnauthorized
 	}
@@ -43,8 +46,7 @@ func (cp *ChargePoint) StartCharging(evseId, connectorId int, tagId string) erro
 
 		switch startTransactionConf.IdTagInfo.Status {
 		case types.AuthorizationStatusAccepted, types.AuthorizationStatusConcurrentTx:
-
-			// Attempt to start charging
+			// Start the charging process
 			err := cp.connectorManager.StartCharging(evseId, tagId, strconv.Itoa(startTransactionConf.TransactionId))
 			if err != nil {
 				logInfo.WithError(err).Errorf("Unable to start charging connector")
@@ -56,6 +58,12 @@ func (cp *ChargePoint) StartCharging(evseId, connectorId int, tagId string) erro
 			fallthrough
 		default:
 			logInfo.Errorf("Transaction unauthorized")
+		}
+
+		// Cache the tag
+		err := cp.tagManager.AddTag(tagId, startTransactionConf.IdTagInfo)
+		if err != nil {
+			return
 		}
 	}
 

@@ -162,10 +162,11 @@ func Run(isDebug bool, config *settings.Settings, connectors []*settings.EVSE, c
 	parentCtxForOcpp, parentCancel := context.WithCancel(ctx)
 	defer parentCancel()
 
-	// Create an OCPP client and connect
+	// Create a Charge point and connect
 	handler = CreateChargePoint(parentCtxForOcpp, protocolVersion, logger, manager, sch, tagManager, hardware)
 	handler.SetSettings(chargePointInfo)
 	handler.SetConnectionSettings(connectionSettings)
+
 	go handler.ListenForConnectorStatusChange(ctx, manager.GetNotificationChannel())
 	go handler.Connect(parentCtxForOcpp, serverUrl)
 

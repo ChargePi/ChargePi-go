@@ -2,12 +2,13 @@ package auth
 
 import (
 	"errors"
+	"strconv"
+
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/localauth"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
 	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
 	"github.com/xBlaz3kx/ocppManager-go/configuration"
-	"strconv"
 )
 
 var (
@@ -66,10 +67,6 @@ func NewTagManager(filePath string) *TagManagerImpl {
 func (t *TagManagerImpl) AddTag(tagId string, tagInfo *types.IdTagInfo) error {
 	if t.authCacheEnabled {
 		t.cache.AddTag(tagId, tagInfo)
-	}
-
-	if t.localAuthListEnabled {
-		return t.authList.AddTag(tagId, tagInfo)
 	}
 
 	return nil

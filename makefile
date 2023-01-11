@@ -1,6 +1,6 @@
 proto:
-	protoc --go_out=./internal/api/grpc --go_opt=paths=source_relative \
+	protoc --go_out=./pkg/grpc --go_opt=paths=source_relative \
 		--proto_path=pkg/proto \
-		--go-grpc_out=./internal/api/grpc --go-grpc_opt=paths=source_relative \
+		--go-grpc_out=./pkg/grpc --go-grpc_opt=paths=source_relative \
 		pkg/proto/*.proto
 

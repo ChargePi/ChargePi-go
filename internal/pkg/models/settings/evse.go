@@ -1,16 +1,19 @@
 package settings
 
-import "github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
+import (
+	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/models/settings"
+)
 
 type (
 	EVSE struct {
-		EvseId     int         `json:"evseId,omitempty" yaml:"evseId" mapstructure:"evseId" validate:"required"`
-		MaxPower   float32     `json:"maxPower" yaml:"maxPower" mapstructure:"maxPower" validate:"gt=0"`
-		EVCC       EVCC        `json:"evcc" yaml:"evcc" mapstructure:"evcc"`
-		PowerMeter PowerMeter  `json:"powerMeter" yaml:"powerMeter" mapstructure:"powerMeter"`
-		Session    Session     `json:"session" yaml:"session" mapstructure:"session"`
-		Status     string      `json:"status,omitempty" yaml:"status" mapstructure:"status"`
-		Connectors []Connector `json:"connectors" yaml:"connectors" mapstructure:"connectors"`
+		EvseId     int                 `json:"evseId,omitempty" yaml:"evseId" mapstructure:"evseId" validate:"required"`
+		MaxPower   float32             `json:"maxPower" yaml:"maxPower" mapstructure:"maxPower" validate:"gt=0"`
+		EVCC       settings.EVCC       `json:"evcc" yaml:"evcc" mapstructure:"evcc"`
+		PowerMeter settings.PowerMeter `json:"powerMeter" yaml:"powerMeter" mapstructure:"powerMeter"`
+		Session    Session             `json:"session" yaml:"session" mapstructure:"session"`
+		Status     string              `json:"status,omitempty" yaml:"status" mapstructure:"status"`
+		Connectors []Connector         `json:"connectors" yaml:"connectors" mapstructure:"connectors"`
 	}
 
 	Connector struct {

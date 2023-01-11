@@ -55,10 +55,12 @@ func (evse *Impl) SetStatus(status core.ChargePointStatus, errCode core.ChargePo
 	evse.mu.Lock()
 	defer evse.mu.Unlock()
 
+	// Update the status in a file
 	evse.status = status
 	evse.errorCode = errCode
 	settings.UpdateEVSEStatus(evse.evseId, status)
 
+	// Notify the channel that a status was updated
 	if evse.notificationChannel != nil {
 		evse.notificationChannel <- notifications.NewStatusNotification(evse.evseId, string(status), string(errCode))
 	}

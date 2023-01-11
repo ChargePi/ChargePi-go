@@ -9,10 +9,13 @@ type (
 	}
 
 	Logging struct {
-		Type   []string `validate:"required" json:"type,omitempty" yaml:"type" mapstructure:"type"` // file, remote, console
-		Format string   `json:"format,omitempty" yaml:"format" mapstructure:"format"`               // gelf, syslog, json, etc
-		Host   string   `json:"host,omitempty" yaml:"host" mapstructure:"host"`
-		Port   int      `json:"port,omitempty" yaml:"port" mapstructure:"port"`
+		LogTypes []LogType `json:"logTypes,omitempty" yaml:"logTypes" mapstructure:"logTypes"`
+	}
+
+	LogType struct {
+		Type    string  `json:"type,omitempty" yaml:"type" mapstructure:"type" validate:"required"` // file, remote, console
+		Format  *string `json:"format,omitempty" yaml:"format" mapstructure:"format"`               // gelf, syslog, json, etc
+		Address *string `json:"address,omitempty" yaml:"address" mapstructure:"address"`
 	}
 
 	Api struct {

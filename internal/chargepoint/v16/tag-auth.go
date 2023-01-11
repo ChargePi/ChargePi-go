@@ -1,11 +1,12 @@
 package v16
 
 import (
+	"time"
+
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
 	v16 "github.com/xBlaz3kx/ocppManager-go/configuration"
-	"time"
 )
 
 // isTagAuthorized Check if the tag is authorized for charging. If the authentication cache is enabled and if it can preauthorize from cache,
@@ -18,7 +19,8 @@ func (cp *ChargePoint) isTagAuthorized(tagId string) bool {
 		logInfo              = cp.logger.WithField("tag", tagId)
 	)
 
-	// Check if local authorization is enabled before authorizing with the central system
+	// If local authorization is enabled, get the tag details from cache or authList before requesting the
+	// tag details from the backend.
 	if localPreAuthorize != nil && *localPreAuthorize == "true" {
 		logInfo.Infof("Authorizing tag %s with cache", tagId)
 
@@ -66,13 +68,13 @@ func (cp *ChargePoint) sendAuthorizeRequest(tagId string) (*types.IdTagInfo, err
 	logInfo := cp.logger.WithField("tag", tagId)
 	logInfo.Info("Authorizing tag with central system")
 
-	// Attempt to send a request to the backend.
+	// Authorize the tag with the backend.
 	response, err := cp.chargePoint.SendRequest(core.NewAuthorizationRequest(tagId))
 	if err != nil {
 		logInfo.WithError(err).Error("Requesting the tag failed")
 
 		// An error occurred probably due network issues.
-		// Check if LocalAuthOffline is enabled and try to authenticate from cache or localAuthList.
+		// If LocalAuthOffline is enabled, try to authenticate from cache or localAuthList.
 		localAuthOffline, _ := ocppConfigManager.GetConfigurationValue(v16.LocalAuthorizeOffline.String())
 		if localAuthOffline != nil && *localAuthOffline == "true" {
 			logInfo.Warn("Offline authorization enabled, getting tag")
@@ -91,7 +93,7 @@ func (cp *ChargePoint) sendAuthorizeRequest(tagId string) (*types.IdTagInfo, err
 		types.AuthorizationStatusExpired,
 		types.AuthorizationStatusInvalid:
 
-		// Check if variable is set to true and stop the transaction
+		// Stop the transaction and charging process if the StopTransactionOnInvalidId is enabled.
 		stopTransactionOnInvalidId, _ := ocppConfigManager.GetConfigurationValue(v16.StopTransactionOnInvalidId.String())
 		if stopTransactionOnInvalidId != nil && *stopTransactionOnInvalidId == "true" {
 			logInfo.Warn("Tag status invalid or expired, stopping any charging session with the tag")
@@ -99,6 +101,7 @@ func (cp *ChargePoint) sendAuthorizeRequest(tagId string) (*types.IdTagInfo, err
 		}
 	}
 
+	// Cache the tag (if available)
 	addErr := cp.tagManager.AddTag(tagId, authInfo.IdTagInfo)
 	if addErr != nil {
 		logInfo.Warn("Unable to add tag to authorization manager")

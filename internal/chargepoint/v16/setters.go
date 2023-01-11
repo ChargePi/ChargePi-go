@@ -32,6 +32,7 @@ func (cp *ChargePoint) SetDisplay(display display.Display) error {
 	}
 
 	cp.display = display
+	cp.display.Clear()
 	return nil
 }
 

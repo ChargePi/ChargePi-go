@@ -4,11 +4,11 @@ import (
 	"net"
 
 	log "github.com/sirupsen/logrus"
-	grpc2 "github.com/xBlaz3kx/ChargePi-go/internal/api/grpc"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/users"
+	grpc2 "github.com/xBlaz3kx/ChargePi-go/pkg/grpc"
 	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
 
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/auth"

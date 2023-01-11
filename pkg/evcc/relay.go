@@ -13,15 +13,13 @@ var (
 	ErrInvalidPinNumber = errors.New("pin number must be greater than 0")
 )
 
-type (
-	RelayAsEvcc struct {
-		relayPin      int
-		inverseLogic  bool
-		state         CarState
-		pin           *gpiod.Line
-		statusChannel chan StateNotification
-	}
-)
+type RelayAsEvcc struct {
+	relayPin      int
+	inverseLogic  bool
+	state         CarState
+	pin           *gpiod.Line
+	statusChannel chan StateNotification
+}
 
 // NewRelay creates a new RelayImpl struct that will communicate with the GPIO pin specified.
 func NewRelay(relayPin int, inverseLogic bool) (*RelayAsEvcc, error) {

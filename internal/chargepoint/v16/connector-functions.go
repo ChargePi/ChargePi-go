@@ -3,11 +3,12 @@ package v16
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
 	settingsData "github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
 	"github.com/xBlaz3kx/ocppManager-go/configuration"
-	"time"
 
 	"github.com/lorenzodonini/ocpp-go/ocpp"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
@@ -169,10 +170,13 @@ func (cp *ChargePoint) displayStatusChangeOnDisplay(connectorId int, status core
 
 // handleStatusUpdate if an EV is connected, ask for authentication, if it was disconnected, stop the transaction.
 func (cp *ChargePoint) handleStatusUpdate(ctx context.Context, evseId int, status core.ChargePointStatus) {
+
+	// Todo design a plugin interface so it can be called here
+
 	switch status {
 	case core.ChargePointStatusPreparing:
 
-		// Listen for a tag for a minute. If the tag is presented, request charging
+		// Listen for a tag for a minute. If the tag is tapped, start charging.
 		listenCtx, cancel := context.WithTimeout(ctx, time.Minute)
 		tag, err := cp.ListenForTag(listenCtx, cp.tagReader.GetTagChannel())
 		if err == nil {

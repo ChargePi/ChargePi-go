@@ -4,15 +4,17 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"os/exec"
+	"testing"
+	"time"
+
 	"github.com/kkyr/fig"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/suite"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/evcc"
-	"os/exec"
-	"testing"
-	"time"
+	settings2 "github.com/xBlaz3kx/ChargePi-go/pkg/models/settings"
 )
 
 const (
@@ -23,8 +25,8 @@ type SettingsManagerTestSuite struct {
 	suite.Suite
 	evse       settings.EVSE
 	session    settings.Session
-	evcc       settings.EVCC
-	powerMeter settings.PowerMeter
+	evcc       settings2.EVCC
+	powerMeter settings2.PowerMeter
 }
 
 func (s *SettingsManagerTestSuite) SetupTest() {
@@ -36,11 +38,11 @@ func (s *SettingsManagerTestSuite) SetupTest() {
 		Consumption:   nil,
 	}
 
-	s.evcc = settings.EVCC{
+	s.evcc = settings2.EVCC{
 		Type: evcc.Relay,
 	}
 
-	s.powerMeter = settings.PowerMeter{
+	s.powerMeter = settings2.PowerMeter{
 		Enabled: false,
 		Type:    "",
 	}

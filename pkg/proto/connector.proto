@@ -6,7 +6,7 @@ import "google/protobuf/timestamp.proto";
 
 package api;
 
-option go_package = "github.com/xBlaz3kx/ChargePi-go/internal/api/grpc";
+option go_package = "github.com/xBlaz3kx/ChargePi-go/pkg/grpc";
 
 message EVSE {
   int32 Id = 1;

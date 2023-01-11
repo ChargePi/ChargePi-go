@@ -20,7 +20,6 @@ import (
 
 var (
 	ErrConnectorNotFound      = errors.New("connector not found")
-	ErrConnectorAlreadyExists = errors.New("connector already exists")
 	ErrConnectorStatusInvalid = errors.New("connector status invalid")
 	ErrConnectorNil           = errors.New("connector is nil")
 

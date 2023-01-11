@@ -1,6 +1,9 @@
 package v16
 
 import (
+	"strconv"
+	"time"
+
 	"github.com/lorenzodonini/ocpp-go/ocpp"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
@@ -8,8 +11,6 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
-	"strconv"
-	"time"
 )
 
 func (cp *ChargePoint) StopCharging(evseId, connectorId int, reason core.Reason) error {
@@ -65,7 +66,7 @@ func (cp *ChargePoint) stopChargingConnector(connector evse.EVSE, reason core.Re
 	return util.SendRequest(cp.chargePoint, request, callback)
 }
 
-// stopChargingConnectorWithTagId Search for a ConnectorImpl that contains the tagId and stop the charging.
+// stopChargingConnectorWithTagId Search for a connector with the tagId and stop the charging.
 func (cp *ChargePoint) stopChargingConnectorWithTagId(tagId string, reason core.Reason) error {
 	var c, err = cp.connectorManager.FindEVSEWithTagId(tagId)
 	if err != nil {
@@ -75,7 +76,7 @@ func (cp *ChargePoint) stopChargingConnectorWithTagId(tagId string, reason core.
 	return cp.stopChargingConnector(c, reason)
 }
 
-// stopChargingConnectorWithTransactionId Search for a ConnectorImpl that contains the transactionId and stop the charging.
+// stopChargingConnectorWithTransactionId Search for a connector with the transactionId and stop the charging.
 func (cp *ChargePoint) stopChargingConnectorWithTransactionId(transactionId string) error {
 	var c, err = cp.connectorManager.FindEVSEWithTransactionId(transactionId)
 	if err != nil {

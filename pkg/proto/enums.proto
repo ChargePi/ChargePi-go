@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package api;
 
-option go_package = "github.com/xBlaz3kx/ChargePi-go/internal/api/grpc";
+option go_package = "github.com/xBlaz3kx/ChargePi-go/pkg/grpc";
 
 enum ProtocolVersion{
   OCPP16 = 0;

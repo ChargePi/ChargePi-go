@@ -1,11 +1,11 @@
 package evse
 
 import (
-	"errors"
 	"fmt"
+	"time"
+
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/power-meter"
-	"time"
 
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
@@ -43,6 +43,7 @@ func (evse *Impl) SamplePowerMeter(measurands []types.Measurand) {
 		samples     []types.SampledValue
 	)
 
+	// Get value for each supported measureand
 	for _, measurand := range measurands {
 		switch measurand {
 		case types.MeasurandPowerActiveImport, types.MeasurandPowerActiveExport:
@@ -63,6 +64,7 @@ func (evse *Impl) SamplePowerMeter(measurands []types.Measurand) {
 
 	meterValues.SampledValue = samples
 
+	// Notify a MeterValue update
 	if evse.meterValuesChannel != nil {
 		// evse.GetTransactionId()
 		evse.meterValuesChannel <- notifications.NewMeterValueNotification(evse.evseId, &evse.evseId, nil, meterValues)
@@ -74,12 +76,12 @@ func (evse *Impl) SamplePowerMeter(measurands []types.Measurand) {
 // preparePowerMeterAtConnector
 func (evse *Impl) preparePowerMeterAtConnector() error {
 	if !evse.powerMeterEnabled || util.IsNilInterfaceOrPointer(evse.powerMeter) {
-		return errors.New("")
+		return ErrPowerMeterNotEnabled
 	}
 
 	var (
 		measurands          = util.GetTypesToSample()
-		sampleTime          = "10s"
+		sampleTime          = "30s"
 		sampleInterval, err = ocppConfigManager.GetConfigurationValue(configuration.MeterValueSampleInterval.String())
 		jobTag              = fmt.Sprintf("Evse%dSampling", evse.evseId)
 	)

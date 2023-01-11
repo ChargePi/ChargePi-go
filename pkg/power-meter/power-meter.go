@@ -3,10 +3,11 @@ package powerMeter
 import (
 	"context"
 	"errors"
+
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/models/settings"
 )
 
 // Supported power meters
@@ -21,19 +22,17 @@ var (
 )
 
 // PowerMeter is an abstraction for measurement hardware.
-type (
-	PowerMeter interface {
-		Init(ctx context.Context) error
-		Reset()
-		GetEnergy() types.SampledValue
-		GetPower() types.SampledValue
-		GetCurrent(phase int) types.SampledValue
-		GetVoltage(phase int) types.SampledValue
-		GetRMSCurrent(phase int) types.SampledValue
-		GetRMSVoltage(phase int) types.SampledValue
-		GetType() string
-	}
-)
+type PowerMeter interface {
+	Init(ctx context.Context) error
+	Reset()
+	GetEnergy() types.SampledValue
+	GetPower() types.SampledValue
+	GetCurrent(phase int) types.SampledValue
+	GetVoltage(phase int) types.SampledValue
+	GetRMSCurrent(phase int) types.SampledValue
+	GetRMSVoltage(phase int) types.SampledValue
+	GetType() string
+}
 
 // NewPowerMeter creates a new power meter based on the connector settings.
 func NewPowerMeter(meterSettings settings.PowerMeter) (PowerMeter, error) {

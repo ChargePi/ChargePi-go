@@ -2,14 +2,16 @@ package evse
 
 import (
 	"errors"
+	"testing"
+	"time"
+
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/session"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
+	settings2 "github.com/xBlaz3kx/ChargePi-go/pkg/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/test"
-	"testing"
-	"time"
 )
 
 type (
@@ -66,11 +68,11 @@ func (suite *connectorManagerTestSuite) SetupTest() {
 		Session: settings.Session{
 			IsActive: false,
 		},
-		EVCC: settings.EVCC{
+		EVCC: settings2.EVCC{
 			RelayPin:     14,
 			InverseLogic: false,
 		},
-		PowerMeter: settings.PowerMeter{
+		PowerMeter: settings2.PowerMeter{
 			Enabled: false,
 		},
 	}
@@ -143,11 +145,11 @@ func (suite *connectorManagerTestSuite) TestAddConnectorFromSettings() {
 		EvseId:  2,
 		Status:  "Available",
 		Session: settings.Session{},
-		EVCC: settings.EVCC{
+		EVCC: settings2.EVCC{
 			RelayPin:     23,
 			InverseLogic: false,
 		},
-		PowerMeter: settings.PowerMeter{},
+		PowerMeter: settings2.PowerMeter{},
 	})
 	suite.Require().NoError(err)
 

@@ -34,4 +34,9 @@ type (
 		MaxPower    float32     `json:"maxPower,omitempty" yaml:"maxPower" mapstructure:"maxPower"`
 		OCPPDetails OCPPDetails `json:"ocpp" yaml:"ocpp" mapstructure:"ocpp"`
 	}
+
+	FreeChargingMode struct {
+		Enabled  bool   `json:"enabled,omitempty" yaml:"enabled" mapstructure:"enabled"`
+		Strategy string `json:"strategy,omitempty" yaml:"strategy" mapstructure:"strategy"`
+	}
 )

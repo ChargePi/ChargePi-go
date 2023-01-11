@@ -2,7 +2,7 @@ package service
 
 import (
 	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/xBlaz3kx/ChargePi-go/internal/api/grpc"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/grpc"
 )
 
 type LogService struct {
@@ -14,6 +14,7 @@ func NewLogService() *LogService {
 }
 
 func (s *LogService) GetLogs(e *empty.Empty, server grpc.Log_GetLogsServer) error {
+	// todo either a file-watcher or pipe directly from logrus (hook)?
 	return nil
 }
 

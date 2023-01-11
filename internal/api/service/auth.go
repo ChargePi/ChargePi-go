@@ -5,8 +5,8 @@ import (
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
-	"github.com/xBlaz3kx/ChargePi-go/internal/api/grpc"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/auth"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/grpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 

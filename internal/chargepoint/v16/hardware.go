@@ -30,6 +30,7 @@ func (cp *ChargePoint) displayStatusChangeOnIndicator(connectorIndex int, status
 		return
 	}
 
+	// Custom indicator color mapping, to set preferences.
 	var color = indicator.Off
 	switch status {
 	case core.ChargePointStatusFaulted:
@@ -72,7 +73,7 @@ func (cp *ChargePoint) indicateCard(index int, color indicator.Color) {
 }
 
 // ListenForTag Listen for an RFID/NFC tag on a separate thread. If a tag is detected, call the HandleChargingRequest.
-// Blink the LED if indication is enabled.
+// When the tag is read, blink the LED if indication is enabled.
 func (cp *ChargePoint) ListenForTag(ctx context.Context, tagChannel <-chan string) (*string, error) {
 	if util.IsNilInterfaceOrPointer(tagChannel) {
 		return nil, nil

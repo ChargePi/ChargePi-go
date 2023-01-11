@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/xBlaz3kx/ChargePi-go/internal/api/grpc"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/grpc"
 )
 
 type Service struct {
@@ -55,6 +55,7 @@ func (s *Service) GetEVSE(ctx context.Context, request *grpc.GetEvseRequest) (*g
 }
 
 func (s *Service) SetEVCC(ctx context.Context, request *grpc.SetEVCCRequest) (*grpc.SetEvccResponse, error) {
+
 	return nil, nil
 }
 

@@ -3,12 +3,13 @@ package evse
 import (
 	"errors"
 	"fmt"
+	"sync"
+	"time"
+
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/session"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/evcc"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/power-meter"
-	"sync"
-	"time"
 
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
@@ -25,6 +26,7 @@ var (
 	ErrInvalidEVCC              = errors.New("evcc cannot be nil")
 	ErrSessionTimeLimitExceeded = errors.New("session time limit exceeded")
 	ErrNotCharging              = errors.New("evse not charging")
+	ErrPowerMeterNotEnabled     = errors.New("power meter not enabled")
 )
 
 type (

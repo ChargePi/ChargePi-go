@@ -1,6 +1,6 @@
 # ⚡ ChargePi-go
 
-ChargePi is an open-source, Linux based ⚡Charging Point🔌 project with OCPP support.
+ChargePi is an open-source, Linux based ⚡Charging Point🔌 project with OCPP support with an API and UI.
 It is highly customizable, simple to make and supports both off-the-shelf and commercial hardware.
 
 Multiple connectors/EVSEs🔌 can be configured for the Charge point, which consist of an indicator (🚥 RGB LED strip),
@@ -54,24 +54,24 @@ the charging current limit.
 
 ## ⚡ Quickstart
 
-1. Wire your hardware according to the provided [schematics](/docs/hardware/hardware.md).
+1. Wire your hardware according to the provided [schematics](/docs/getting-started/hardware/hardware-support.md).
 
-2. Install the [libraries](/docs/client/installing-libraries.md) (if needed).
+2. Install the [libraries](/docs/getting-started/installation/libraries.md) (if needed).
 
 3. Configure the settings files according to the hardware and desired functionality:
-    - [client configuration](/docs/client/configuration/configuration.md)
-    - [OCPP configuration](/docs/ocpp/ocpp-16.md)
+    - [client configuration](/docs/getting-started/configuration/configuration.md)
+    - [OCPP configuration](/docs/getting-started/configuration/ocpp/ocpp-16.md)
 
 4. Run the client. ChargePi-go can be deployed/run in multiple ways:
 
     - standalone
     - Docker 🐳 and docker-compose
 
-Details on how to run the client are described in the [client startup guide](docs/client/running-the-client.md).
+Details on how to run the client are described in the [client startup guide](docs/getting-started/installation/running-the-client.md).
 
 ### 🛠️ Configuration and settings
 
-To configure the ChargePi client, check out the [configuration guide](/docs/client/configuration/configuration.md).
+To configure the ChargePi client, check out the [configuration guide](/docs/getting-started/configuration/configuration.md).
 Client comes with default settings which require minimal configuration.
 
 ## Note

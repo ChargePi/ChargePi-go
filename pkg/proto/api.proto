@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package api;
-option go_package = "github.com/xBlaz3kx/ChargePi-go/internal/api/grpc";
+option go_package = "github.com/xBlaz3kx/ChargePi-go/pkg/grpc";
 
 import "hardware.proto";
 import "charge-point.proto";
@@ -29,7 +29,7 @@ service ChargePoint {
   // OCPP configuration variable management
   rpc GetOCPPVariables(google.protobuf.Empty) returns (GetVariablesResponse) {}
   rpc SetOCPPVariables(SetVariablesRequest) returns (SetVariablesResponse) {}
-  rpc GetOCPPVariable(GetVariableRequest) returns (GetVariablesResponse) {}
+  rpc GetOCPPVariable(GetVariableRequest) returns (OcppVariable) {}
 
   // Details
   rpc GetVersion(google.protobuf.Empty) returns (GetVersionResponse) {}
@@ -121,7 +121,7 @@ message GetIndicatorSettingsResponse {
 /*------------------ OCPP variables ------------------------ */
 
 message GetVariableRequest {
-  Indicator Indicator = 1;
+  string Key = 1;
 }
 
 message GetVariablesResponse {

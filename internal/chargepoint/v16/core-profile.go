@@ -2,11 +2,12 @@ package v16
 
 import (
 	"fmt"
+	"strconv"
+	"time"
+
 	"github.com/avast/retry-go"
 	"github.com/lorenzodonini/ocpp-go/ocpp"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
-	"strconv"
-	"time"
 
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
@@ -225,6 +226,7 @@ func (cp *ChargePoint) OnRemoteStartTransaction(request *core.RemoteStartTransac
 
 func (cp *ChargePoint) remoteStart(evseId, connectorId int, tagId string) {
 	// todo AuthorizeRemoteTxRequests variable
+
 	logInfo := cp.logger.WithFields(log.Fields{
 		"evseId":      evseId,
 		"connectorId": connectorId,
