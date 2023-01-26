@@ -15,7 +15,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/auth"
+	"github.com/xBlaz3kx/ChargePi-go/internal/auth"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/reader"
 	v16 "github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/v16"

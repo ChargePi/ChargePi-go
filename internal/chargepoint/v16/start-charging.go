@@ -47,7 +47,7 @@ func (cp *ChargePoint) StartCharging(evseId, connectorId int, tagId string) erro
 		switch startTransactionConf.IdTagInfo.Status {
 		case types.AuthorizationStatusAccepted, types.AuthorizationStatusConcurrentTx:
 			// Start the charging process
-			err := cp.connectorManager.StartCharging(evseId, tagId, strconv.Itoa(startTransactionConf.TransactionId))
+			err := cp.evseManager.StartCharging(evseId, tagId, strconv.Itoa(startTransactionConf.TransactionId))
 			if err != nil {
 				logInfo.WithError(err).Errorf("Unable to start charging connector")
 				return

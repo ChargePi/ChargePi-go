@@ -3,9 +3,10 @@ package tls
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"io/ioutil"
+
 	"github.com/lorenzodonini/ocpp-go/ws"
 	log "github.com/sirupsen/logrus"
-	"io/ioutil"
 )
 
 func CreateWssClient(CACertificatePath, ClientCertificatePath, ClientKeyPath string) *ws.Client {

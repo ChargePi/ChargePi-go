@@ -4,8 +4,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/configuration"
 	settings2 "github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
 )
 
 var (
@@ -21,11 +21,11 @@ var (
 )
 
 func run(cmd *cobra.Command, args []string) {
-	settings.InitSettings(settingsFilePath)
+	configuration.InitSettings(settingsFilePath)
 
 	var (
 		debug        = viper.GetBool(settings2.Debug)
-		mainSettings = settings.GetSettings()
+		mainSettings = configuration.GetSettings()
 	)
 
 	// Run the actual charge point

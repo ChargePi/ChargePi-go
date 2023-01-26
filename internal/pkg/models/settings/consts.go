@@ -12,7 +12,7 @@ const (
 const (
 	Model           = "chargepoint.info.ocpp.model"
 	Vendor          = "chargepoint.info.ocpp.vendor"
-	MaxChargingTime = "chargepoint.info.maxChargingTime"
+	MaxChargingTime = "chargepoint.info.maxChargingwTime"
 	ProtocolVersion = "chargepoint.info.protocolVersion"
 
 	Debug      = "debug"
@@ -28,7 +28,7 @@ const (
 	ApiPortFlag        = "api-port"
 	ApiAddressFlag     = "api-address"
 	SettingsFlag       = "settings"
-	EvseFlag           = "connector-folder"
+	EvseFlag           = "evse"
 	AuthFileFlag       = "auth"
-	OcppConfigPathFlag = "ocpp-config"
+	OcppConfigPathFlag = "ocppVars"
 )

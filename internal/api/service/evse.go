@@ -2,9 +2,11 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/grpc"
 )
 
@@ -37,6 +39,7 @@ func (s *Service) AddEVSE(ctx context.Context, request *grpc.SetEVCCRequest) (*g
 		Status: "Failed",
 	}
 
+	// todo
 	// s.evseManager.AddEVSE()
 
 	return response, nil
@@ -47,7 +50,7 @@ func (s *Service) GetEVSE(ctx context.Context, request *grpc.GetEvseRequest) (*g
 
 	findEVSE, err := s.evseManager.FindEVSE(int(request.EvseId))
 	if err != nil {
-		return res, err
+		return res, nil
 	}
 
 	res.EVSE = toEvse(findEVSE)
@@ -55,15 +58,50 @@ func (s *Service) GetEVSE(ctx context.Context, request *grpc.GetEvseRequest) (*g
 }
 
 func (s *Service) SetEVCC(ctx context.Context, request *grpc.SetEVCCRequest) (*grpc.SetEvccResponse, error) {
-
+	// todo
 	return nil, nil
 }
 
 func (s *Service) SetPowerMeter(ctx context.Context, request *grpc.SetPowerMeterRequest) (*grpc.SetPowerMeterDetails, error) {
+	// todo
 	return nil, nil
 }
 
 func (s *Service) GetUsageForEVSE(request *grpc.GetUsageForEVSERequest, server grpc.Evse_GetUsageForEVSEServer) error {
+	evseWithId, err := s.evseManager.FindEVSE(int(request.EvseId))
+	if err != nil {
+		return err
+	}
+
+	powerMeter := evseWithId.GetPowerMeter()
+	if util.IsNilInterfaceOrPointer(powerMeter) {
+		return nil
+	}
+
+	ctx := server.Context()
+
+Loop:
+	for {
+		select {
+		case <-ctx.Done():
+			break Loop
+		default:
+			// todo
+			// Get measurements from the power meter
+			powerMeter.GetPower()
+			powerMeter.GetEnergy()
+			powerMeter.GetCurrent(1)
+			powerMeter.GetVoltage(1)
+
+			powerMeter.GetCurrent(2)
+			powerMeter.GetVoltage(2)
+
+			powerMeter.GetCurrent(3)
+			powerMeter.GetVoltage(3)
+			time.Sleep(time.Second * 10)
+		}
+	}
+
 	return nil
 }
 

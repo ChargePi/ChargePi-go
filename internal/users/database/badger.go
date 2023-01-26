@@ -99,6 +99,7 @@ func (b *UserDbBadger) AddUser(user models.User) error {
 }
 
 func (b *UserDbBadger) UpdateUser(user models.User) (*models.User, error) {
+	// todo
 	// b.db.NewTransaction(true).
 	return nil, nil
 }

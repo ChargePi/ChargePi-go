@@ -91,7 +91,7 @@ Listener:
 
 			go func() {
 				cp.sendToLCD("Read tag:", tagId)
-				cp.indicateCard(len(cp.connectorManager.GetEVSEs()), indicator.White)
+				cp.indicateCard(len(cp.evseManager.GetEVSEs()), indicator.White)
 			}()
 
 			return &tagId, nil

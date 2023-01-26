@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 )
 
 type ManagerMock struct {
@@ -95,18 +94,9 @@ func (o *ManagerMock) AddEVSE(ctx context.Context, c evse.EVSE) error {
 	return o.Called(c).Error(0)
 }
 
-func (o *ManagerMock) AddEVSEFromSettings(ctx context.Context, maxChargingTime *int, c *settings.EVSE) error {
-	return o.Called(maxChargingTime, c).Error(0)
+func (o *ManagerMock) RestoreEVSEs() error {
+	return o.Called().Error(0)
 }
-
-func (o *ManagerMock) ImportFromSettings(c []settings.EVSE) error {
-	return o.Called(c).Error(0)
-}
-
-func (o *ManagerMock) RestoreEVSEStatus(s *settings.EVSE) error {
-	return o.Called(s).Error(0)
-}
-
 func (o *ManagerMock) SetNotificationChannel(notificationChannel chan notifications.StatusNotification) {
 	o.Called()
 }

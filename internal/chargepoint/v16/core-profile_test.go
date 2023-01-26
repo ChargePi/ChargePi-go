@@ -96,7 +96,7 @@ func (s *coreTestSuite) TestOnRemoteStopTransaction() {
 	connector.On("IsCharging").Return(true).Once()
 	connectorManager.On("FindEVSEWithTransactionId", transactionIdStr).Return(connector).Once()
 
-	s.cp.connectorManager = connectorManager
+	s.cp.evseManager = connectorManager
 
 	req := core.NewRemoteStopTransactionRequest(transactionId)
 	response, err := s.cp.OnRemoteStopTransaction(req)
@@ -137,7 +137,7 @@ func (s *coreTestSuite) TestOnRemoteStartTransaction() {
 	connector.On("IsAvailable").Return(true).Twice()
 	connectorManager.On("FindAvailableEVSE").Return(connector).Once()
 
-	s.cp.connectorManager = connectorManager
+	s.cp.evseManager = connectorManager
 
 	req := core.NewRemoteStartTransactionRequest(tagId)
 	transaction, err := s.cp.OnRemoteStartTransaction(req)

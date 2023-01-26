@@ -14,7 +14,7 @@ import (
 )
 
 func (cp *ChargePoint) StopCharging(evseId, connectorId int, reason core.Reason) error {
-	cpEvse, err := cp.connectorManager.FindEVSE(evseId)
+	cpEvse, err := cp.evseManager.FindEVSE(evseId)
 	if err != nil {
 		return err
 	}
@@ -40,8 +40,9 @@ func (cp *ChargePoint) stopChargingConnector(connector evse.EVSE, reason core.Re
 		return convErr
 	}
 
+	session := connector.GetSession()
 	request := core.NewStopTransactionRequest(
-		int(connector.CalculateSessionAvgEnergyConsumption()),
+		int(session.CalculateEnergyConsumptionWithAvgPower()),
 		types.NewDateTime(time.Now()),
 		transactionId,
 	)
@@ -68,7 +69,7 @@ func (cp *ChargePoint) stopChargingConnector(connector evse.EVSE, reason core.Re
 
 // stopChargingConnectorWithTagId Search for a connector with the tagId and stop the charging.
 func (cp *ChargePoint) stopChargingConnectorWithTagId(tagId string, reason core.Reason) error {
-	var c, err = cp.connectorManager.FindEVSEWithTagId(tagId)
+	var c, err = cp.evseManager.FindEVSEWithTagId(tagId)
 	if err != nil {
 		return err
 	}
@@ -78,7 +79,7 @@ func (cp *ChargePoint) stopChargingConnectorWithTagId(tagId string, reason core.
 
 // stopChargingConnectorWithTransactionId Search for a connector with the transactionId and stop the charging.
 func (cp *ChargePoint) stopChargingConnectorWithTransactionId(transactionId string) error {
-	var c, err = cp.connectorManager.FindEVSEWithTransactionId(transactionId)
+	var c, err = cp.evseManager.FindEVSEWithTransactionId(transactionId)
 	if err != nil {
 		return err
 	}

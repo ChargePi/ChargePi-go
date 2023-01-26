@@ -7,13 +7,14 @@ import (
 
 type (
 	EVSE struct {
-		EvseId     int                 `json:"evseId,omitempty" yaml:"evseId" mapstructure:"evseId" validate:"required"`
-		MaxPower   float32             `json:"maxPower" yaml:"maxPower" mapstructure:"maxPower" validate:"gt=0"`
-		EVCC       settings.EVCC       `json:"evcc" yaml:"evcc" mapstructure:"evcc"`
-		PowerMeter settings.PowerMeter `json:"powerMeter" yaml:"powerMeter" mapstructure:"powerMeter"`
-		Session    Session             `json:"session" yaml:"session" mapstructure:"session"`
-		Status     string              `json:"status,omitempty" yaml:"status" mapstructure:"status"`
-		Connectors []Connector         `json:"connectors" yaml:"connectors" mapstructure:"connectors"`
+		EvseId      int                 `json:"evseId,omitempty" yaml:"evseId" mapstructure:"evseId" validate:"required"`
+		MaxPower    float32             `json:"maxPower" yaml:"maxPower" mapstructure:"maxPower" validate:"gt=0"`
+		EVCC        settings.EVCC       `json:"evcc" yaml:"evcc" mapstructure:"evcc"`
+		PowerMeter  settings.PowerMeter `json:"powerMeter" yaml:"powerMeter" mapstructure:"powerMeter"`
+		Session     Session             `json:"session" yaml:"session" mapstructure:"session"`
+		Status      string              `json:"status,omitempty" yaml:"status" mapstructure:"status"`
+		Reservation *int                `json:"reservation,omitempty" yaml:"reservation" mapstructure:"reservation"`
+		Connectors  []Connector         `json:"connectors" yaml:"connectors" mapstructure:"connectors"`
 	}
 
 	Connector struct {

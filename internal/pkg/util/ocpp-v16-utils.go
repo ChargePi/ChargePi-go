@@ -20,7 +20,7 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ws"
 	log "github.com/sirupsen/logrus"
 	settings2 "github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/tls"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util/tls"
 	ocppManager "github.com/xBlaz3kx/ocppManager-go"
 	"github.com/xBlaz3kx/ocppManager-go/configuration"
 )

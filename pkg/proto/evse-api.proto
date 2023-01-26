@@ -9,11 +9,11 @@ import "google/protobuf/empty.proto";
 
 // Evse settings
 service Evse {
-  rpc AddEVSE (SetEVCCRequest) returns (AddEvseResponse) {}
+  rpc AddEVSE (AddEvseRequest) returns (AddEvseResponse) {}
   rpc GetEVSEs (google.protobuf.Empty) returns (GetEvsesResponse) {}
   rpc GetEVSE (GetEvseRequest) returns (GetEvseResponse) {}
   rpc SetEVCC (SetEVCCRequest) returns (SetEvccResponse) {}
-  rpc SetPowerMeter (SetPowerMeterRequest) returns (SetPowerMeterDetails) {}
+  rpc SetPowerMeter (SetPowerMeterRequest) returns (SetPowerMeterResponse) {}
   rpc GetUsageForEVSE (GetUsageForEVSERequest) returns (stream GetUsageForEVSEResponse) {}
 }
 
@@ -38,7 +38,7 @@ message GetEvseResponse {
 message AddEvseRequest {
   int32 evseId = 1;
   EVCC EVCC = 2;
-  PowerMeter PowerMeter = 3;
+  optional PowerMeter PowerMeter = 3;
 }
 
 message AddEvseResponse {
@@ -62,8 +62,8 @@ message SetPowerMeterRequest {
   PowerMeter PowerMeter = 2;
 }
 
-message SetPowerMeterDetails {
-  string type = 1;
+message SetPowerMeterResponse {
+  string status = 1;
 }
 
 message GetUsageForEVSERequest {

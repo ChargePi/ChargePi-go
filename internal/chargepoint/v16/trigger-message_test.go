@@ -38,7 +38,7 @@ func (s *triggerMessageTestSuite) TestTriggerMessage() {
 	managerMock.On("FindEVSE", 1, connectorId).Return(connectorMock).Once()
 	managerMock.On("GetEVSEs").Return([]evse.EVSE{connectorMock}).Once()
 
-	s.cp.connectorManager = managerMock
+	s.cp.evseManager = managerMock
 
 	numMessages := 0
 	go func() {

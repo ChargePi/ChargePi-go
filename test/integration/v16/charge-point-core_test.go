@@ -51,7 +51,7 @@ func (s *chargePointTestSuite) TestStartStopTransaction() {
 	s.manager.On("AddEVSE", conn).Return(nil)
 	s.manager.On("AddEVSEFromSettings", mock.Anything).Return(nil)
 	s.manager.On("ImportFromSettings", mock.Anything).Return(nil)
-	s.manager.On("RestoreEVSEStatus", mock.Anything).Return(nil)
+	s.manager.On("RestoreEVSE", mock.Anything).Return(nil)
 	s.manager.On("SetNotificationChannel").Return()
 
 	// Create and connect the Charge Point
@@ -129,7 +129,7 @@ func (s *chargePointTestSuite) TestStartStopTransactionWithReader() {
 	s.manager.On("AddEVSE", conn).Return(nil)
 	s.manager.On("AddEVSEFromSettings", mock.Anything).Return(nil)
 	s.manager.On("ImportFromSettings", mock.Anything).Return(nil)
-	s.manager.On("RestoreEVSEStatus", mock.Anything).Return(nil)
+	s.manager.On("RestoreEVSE", mock.Anything).Return(nil)
 	s.manager.On("SetNotificationChannel").Return()
 
 	// Mock tagReader
@@ -213,7 +213,7 @@ func (s *chargePointTestSuite) TestRemoteStartStopTransaction() {
 	s.manager.On("AddEVSE", conn).Return(nil)
 	s.manager.On("AddEVSEFromSettings", mock.Anything).Return(nil)
 	s.manager.On("ImportFromSettings", mock.Anything).Return(nil)
-	s.manager.On("RestoreEVSEStatus", mock.Anything).Return(nil)
+	s.manager.On("RestoreEVSE", mock.Anything).Return(nil)
 	s.manager.On("SetNotificationChannel").Return()
 
 	// Create and connect the Charge Point
@@ -266,7 +266,7 @@ func (s *chargePointTestSuite) TestGetAndChangeConfiguration() {
 	s.manager.On("AddEVSE", mock.Anything).Return(nil)
 	s.manager.On("AddEVSEFromSettings", mock.Anything).Return(nil)
 	s.manager.On("ImportFromSettings", mock.Anything).Return(nil)
-	s.manager.On("RestoreEVSEStatus", mock.Anything).Return(nil)
+	s.manager.On("RestoreEVSE", mock.Anything).Return(nil)
 	s.manager.On("SetNotificationChannel").Return()
 
 	// Create and connect the Charge Point

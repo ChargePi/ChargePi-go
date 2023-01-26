@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-co-op/gocron"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/session"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/evcc"
@@ -27,6 +28,7 @@ var (
 	ErrSessionTimeLimitExceeded = errors.New("session time limit exceeded")
 	ErrNotCharging              = errors.New("evse not charging")
 	ErrPowerMeterNotEnabled     = errors.New("power meter not enabled")
+	ErrConnectorExists          = errors.New("connector already exists")
 )
 
 type (
@@ -40,7 +42,6 @@ type (
 		GetMaxChargingPower() float64
 
 		StartCharging(transactionId, tagId string, connectorId *int) error
-		ResumeCharging(session session.Session) (chargingTimeElapsed *int, err error)
 		StopCharging(reason core.Reason) error
 		Lock()
 		Unlock()
@@ -53,7 +54,6 @@ type (
 		GetPowerMeter() powerMeter.PowerMeter
 		SetPowerMeter(powerMeter.PowerMeter) error
 		SamplePowerMeter(measurands []types.Measurand)
-		CalculateSessionAvgEnergyConsumption() float64
 
 		GetEvcc() evcc.EVCC
 		SetEvcc(evcc.EVCC)
@@ -91,6 +91,7 @@ type (
 		meterValuesChannel  chan<- notifications.MeterValueNotification
 		notificationChannel chan<- notifications.StatusNotification
 		mu                  sync.Mutex
+		scheduler           *gocron.Scheduler
 
 		// Hardware
 		powerMeterEnabled bool
@@ -126,6 +127,7 @@ func NewEvse(evseId int, evcc evcc.EVCC, powerMeter powerMeter.PowerMeter, power
 		maxPower:          maxPower,
 		status:            core.ChargePointStatusAvailable,
 		session:           session.NewEmptySession(),
+		scheduler:         scheduler.NewScheduler(),
 	}, nil
 }
 
@@ -295,8 +297,7 @@ func (evse *Impl) StopCharging(reason core.Reason) error {
 		// todo save the session
 
 		// Remove the sampling of the power meter
-		sched := scheduler.NewScheduler()
-		schedulerErr := sched.RemoveByTag(fmt.Sprintf("evse%dSampling", evse.GetEvseId()))
+		schedulerErr := evse.scheduler.RemoveByTag(fmt.Sprintf("evse%dSampling", evse.GetEvseId()))
 		if schedulerErr != nil {
 			logInfo.WithError(schedulerErr).Errorf("Cannot remove sampling schedule")
 		}

@@ -54,7 +54,6 @@ func (evse *Impl) SetStatus(status core.ChargePointStatus, errCode core.ChargePo
 	evse.mu.Lock()
 	defer evse.mu.Unlock()
 
-	// todo Update the status in a file
 	evse.status = status
 	evse.errorCode = errCode
 

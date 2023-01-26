@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/warthog618/gpiod"
@@ -285,6 +286,7 @@ func (receiver *C5460A) GetCurrent(phase int) types.SampledValue {
 
 	return types.SampledValue{
 		Value:     fmt.Sprintf("%.1f", value),
+		Phase:     getPhase(phase),
 		Measurand: types.MeasurandCurrentImport,
 	}
 }
@@ -294,6 +296,7 @@ func (receiver *C5460A) GetVoltage(phase int) types.SampledValue {
 
 	return types.SampledValue{
 		Value:     fmt.Sprintf("%.1f", value),
+		Phase:     getPhase(phase),
 		Measurand: types.MeasurandVoltage,
 	}
 }
@@ -302,6 +305,7 @@ func (receiver *C5460A) GetRMSCurrent(phase int) types.SampledValue {
 
 	return types.SampledValue{
 		Value:     fmt.Sprintf("%.1f", value),
+		Phase:     getPhase(phase),
 		Measurand: types.MeasurandCurrentImport,
 	}
 }
@@ -309,10 +313,23 @@ func (receiver *C5460A) GetRMSVoltage(phase int) types.SampledValue {
 	value := float64(receiver.readFromRegister(RmsVoltageRegister)) * receiver.voltageMultiplier
 	return types.SampledValue{
 		Value:     fmt.Sprintf("%.1f", value),
+		Phase:     getPhase(phase),
 		Measurand: types.MeasurandVoltage,
 	}
 }
 
 func (receiver *C5460A) GetType() string {
 	return TypeC5460A
+}
+
+func getPhase(phase int) types.Phase {
+	switch phase {
+	case 1:
+		return types.PhaseL1
+	case 2:
+		return types.PhaseL2
+	case 3:
+		return types.PhaseL3
+	}
+	return ""
 }

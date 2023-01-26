@@ -10,7 +10,7 @@ import (
 func (cp *ChargePoint) OnReserveNow(request *reservation.ReserveNowRequest) (confirmation *reservation.ReserveNowConfirmation, err error) {
 	cp.logger.Infof("Received %s for %v", request.GetFeatureName(), request.ConnectorId)
 
-	connector, err := cp.connectorManager.FindEVSE(request.ConnectorId)
+	connector, err := cp.evseManager.FindEVSE(request.ConnectorId)
 	if err != nil {
 		return reservation.NewReserveNowConfirmation(reservation.ReservationStatusUnavailable), nil
 	}
@@ -35,7 +35,7 @@ func (cp *ChargePoint) OnReserveNow(request *reservation.ReserveNowRequest) (con
 func (cp *ChargePoint) OnCancelReservation(request *reservation.CancelReservationRequest) (confirmation *reservation.CancelReservationConfirmation, err error) {
 	cp.logger.Infof("Received %s for %v", request.GetFeatureName(), request.ReservationId)
 	var (
-		connector, rErr = cp.connectorManager.FindEVSEWithReservationId(request.ReservationId)
+		connector, rErr = cp.evseManager.FindEVSEWithReservationId(request.ReservationId)
 		status          = reservation.CancelReservationStatusAccepted
 	)
 

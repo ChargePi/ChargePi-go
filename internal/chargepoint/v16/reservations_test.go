@@ -47,7 +47,7 @@ func (s *reservationTestSuite) TestReservation() {
 	managerMock.On("FindEVSE", connectorId).Return(connectorMock).Twice()
 	// Connector not found
 	managerMock.On("FindEVSE", 2).Return(nil).Once()
-	s.cp.connectorManager = managerMock
+	s.cp.evseManager = managerMock
 
 	response, err := s.cp.OnReserveNow(reservation.NewReserveNowRequest(connectorId, expiryDate, tagId, reservationId))
 	s.Assert().NoError(err)
@@ -80,7 +80,7 @@ func (s *reservationTestSuite) TestCancelReservation() {
 
 	// Set manager expectations
 	managerMock.On("FindEVSEWithReservationId", reservationId).Return(connectorMock)
-	s.cp.connectorManager = managerMock
+	s.cp.evseManager = managerMock
 
 	response, err := s.cp.OnCancelReservation(reservation.NewCancelReservationRequest(1))
 	s.Assert().NoError(err)

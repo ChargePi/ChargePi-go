@@ -8,8 +8,8 @@ import (
 	ocpp16 "github.com/lorenzodonini/ocpp-go/ocpp1.6"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/auth"
-	connectorManager "github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
+	"github.com/xBlaz3kx/ChargePi-go/internal/auth"
+	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/indicator"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/reader"
@@ -17,6 +17,7 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
+	settings2 "github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 )
 
@@ -25,6 +26,7 @@ type (
 		chargePoint        ocpp16.ChargePoint
 		availability       core.AvailabilityType
 		isConnected        bool
+		settingsManager    settings2.Manager
 		info               settings.Info
 		connectionSettings settings.ConnectionSettings
 		// Hardware components
@@ -33,8 +35,7 @@ type (
 		display          display.Display
 		indicatorMapping settings.IndicatorStatusMapping
 		// Software components
-		connectorManager connectorManager.Manager
-
+		evseManager        evse.Manager
 		meterValuesChannel chan notifications.MeterValueNotification
 		scheduler          *gocron.Scheduler
 		tagManager         auth.TagManager
@@ -43,13 +44,13 @@ type (
 )
 
 // NewChargePoint creates a new ChargePoint for OCPP version 1.6.
-func NewChargePoint(manager connectorManager.Manager, cache auth.TagManager, opts ...chargePoint.Options) *ChargePoint {
+func NewChargePoint(manager evse.Manager, tagManager auth.TagManager, opts ...chargePoint.Options) *ChargePoint {
 	cp := &ChargePoint{
-		availability:     core.AvailabilityTypeInoperative,
-		scheduler:        scheduler.NewScheduler(),
-		connectorManager: manager,
-		tagManager:       cache,
-		logger:           log.StandardLogger(),
+		availability: core.AvailabilityTypeInoperative,
+		scheduler:    scheduler.NewScheduler(),
+		evseManager:  manager,
+		tagManager:   tagManager,
+		logger:       log.StandardLogger(),
 	}
 
 	// Set profiles
@@ -97,7 +98,7 @@ func (cp *ChargePoint) CleanUp(reason core.Reason) {
 
 	switch reason {
 	case core.ReasonRemote, core.ReasonLocal, core.ReasonHardReset, core.ReasonSoftReset:
-		for _, c := range cp.connectorManager.GetEVSEs() {
+		for _, c := range cp.evseManager.GetEVSEs() {
 			// Stop charging the connectors
 			err := cp.stopChargingConnector(c, reason)
 			if err != nil {

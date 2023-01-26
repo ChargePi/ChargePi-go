@@ -3,7 +3,7 @@
 There are three **required** configuration files:
 
 1. [`settings`](../../../configs/settings.json)
-2. [`configuration`](../../../configs/configuration.json)
+2. [`configuration`](../../../configs/configuration.yaml)
 3. [`evses`](../../configs/evses/connector-1.json)
 
 The settings files are supported in multiple formats. They are listed under Viper.

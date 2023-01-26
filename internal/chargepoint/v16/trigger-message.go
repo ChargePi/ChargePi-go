@@ -34,8 +34,8 @@ func (cp *ChargePoint) OnTriggerMessage(request *remotetrigger.TriggerMessageReq
 		if request.ConnectorId == nil {
 			// Send the status of all connectors after the response
 			defer func() {
-				for _, c := range cp.connectorManager.GetEVSEs() {
-					if cp.connectorManager.GetNotificationChannel() != nil {
+				for _, c := range cp.evseManager.GetEVSEs() {
+					if cp.evseManager.GetNotificationChannel() != nil {
 						cpStatus, errCode := c.GetStatus()
 						go cp.notifyConnectorStatus(c.GetEvseId(), cpStatus, errCode)
 					}
@@ -47,7 +47,7 @@ func (cp *ChargePoint) OnTriggerMessage(request *remotetrigger.TriggerMessageReq
 		}
 
 		connectorID := *request.ConnectorId
-		c, err := cp.connectorManager.FindEVSE(connectorID)
+		c, err := cp.evseManager.FindEVSE(connectorID)
 		if err == nil {
 			defer func(c evse.EVSE) {
 				cpStatus, errCode := c.GetStatus()

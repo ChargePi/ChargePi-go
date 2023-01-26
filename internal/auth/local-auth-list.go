@@ -1,14 +1,15 @@
 package auth
 
 import (
+	"encoding/binary"
 	"encoding/json"
 	"errors"
-	"fmt"
 
 	"github.com/dgraph-io/badger/v3"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/localauth"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/database"
 )
 
 var (
@@ -43,14 +44,6 @@ func NewLocalAuthList(db *badger.DB, maxTags int) *LocalAuthListImpl {
 	}
 }
 
-func getLocalAuthTagPrefix(tagId string) []byte {
-	return []byte(fmt.Sprintf("auth-tag-%s", tagId))
-}
-
-func getLocalAuthVersion() []byte {
-	return []byte("auth-version")
-}
-
 // AddTag Add a tag to the global authorization cache.
 func (l *LocalAuthListImpl) AddTag(tagId string, tagInfo *types.IdTagInfo) error {
 	if l.numTags+1 >= l.maxTags {
@@ -58,7 +51,7 @@ func (l *LocalAuthListImpl) AddTag(tagId string, tagInfo *types.IdTagInfo) error
 	}
 
 	return l.db.Update(func(txn *badger.Txn) error {
-		_, err := txn.Get(getLocalAuthTagPrefix(tagId))
+		_, err := txn.Get(database.GetLocalAuthTagPrefix(tagId))
 		if err != badger.ErrKeyNotFound {
 			return err
 		}
@@ -68,7 +61,7 @@ func (l *LocalAuthListImpl) AddTag(tagId string, tagInfo *types.IdTagInfo) error
 			return nil
 		}
 
-		err = txn.Set(getLocalAuthTagPrefix(tagId), authTag)
+		err = txn.Set(database.GetLocalAuthTagPrefix(tagId), authTag)
 		if err != nil {
 			return err
 		}
@@ -83,7 +76,7 @@ func (l *LocalAuthListImpl) RemoveTag(tagId string) error {
 	logInfo.Debug("Removing a tag from local auth list")
 
 	return l.db.Update(func(txn *badger.Txn) error {
-		err := txn.Delete(getLocalAuthTagPrefix(tagId))
+		err := txn.Delete(database.GetLocalAuthTagPrefix(tagId))
 		if err != nil {
 			return err
 		}
@@ -94,7 +87,26 @@ func (l *LocalAuthListImpl) RemoveTag(tagId string) error {
 
 // RemoveAll Remove all tags.
 func (l *LocalAuthListImpl) RemoveAll() {
+	log.Debugf("Removing local auth list")
 
+	// Remove all cached keys from database
+	err := l.db.Update(func(txn *badger.Txn) error {
+		it := txn.NewIterator(badger.DefaultIteratorOptions)
+		defer it.Close()
+
+		prefix := database.GetLocalAuthTagPrefix("")
+		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+			item := it.Item()
+			err := txn.Delete(item.Key())
+			if err != nil {
+				return err
+			}
+		}
+		return txn.Commit()
+	})
+	if err != nil {
+		log.WithError(err).Error("Error removing local auth list")
+	}
 }
 
 // GetTag Get a tag
@@ -104,7 +116,7 @@ func (l *LocalAuthListImpl) GetTag(tagId string) (*types.IdTagInfo, error) {
 
 	var tagInfo localauth.AuthorizationData
 	err := l.db.View(func(txn *badger.Txn) error {
-		item, err := txn.Get(getLocalAuthTagPrefix(tagId))
+		item, err := txn.Get(database.GetLocalAuthTagPrefix(tagId))
 		if err != badger.ErrKeyNotFound {
 			return err
 		}
@@ -138,7 +150,7 @@ func (l *LocalAuthListImpl) GetTags() []localauth.AuthorizationData {
 		it := txn.NewIterator(badger.DefaultIteratorOptions)
 		defer it.Close()
 
-		prefix := getLocalAuthTagPrefix("")
+		prefix := database.GetLocalAuthTagPrefix("")
 		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
 			var data localauth.AuthorizationData
 			item := it.Item()
@@ -173,8 +185,22 @@ func (l *LocalAuthListImpl) UpdateTag(tagId string, tagInfo *types.IdTagInfo) er
 
 func (l *LocalAuthListImpl) GetVersion() int {
 	version := -1
+
 	err := l.db.View(func(txn *badger.Txn) error {
-		// todo
+		versionKey := database.GetLocalAuthVersion()
+		item, err := txn.Get(versionKey)
+		if err != nil {
+			return err
+		}
+
+		valueCopy, err := item.ValueCopy(nil)
+		if err != nil {
+			return err
+		}
+
+		v := binary.BigEndian.Uint32(valueCopy)
+		version = int(v)
+
 		return txn.Commit()
 	})
 	if err != nil {
@@ -189,7 +215,16 @@ func (l *LocalAuthListImpl) SetVersion(version int) {
 	logInfo.Info("Updating list version")
 
 	err := l.db.Update(func(txn *badger.Txn) error {
-		// todo
+		versionKey := database.GetLocalAuthVersion()
+
+		bs := make([]byte, 4)
+		binary.BigEndian.PutUint32(bs, uint32(version))
+
+		err := txn.Set(versionKey, bs)
+		if err != nil {
+			return err
+		}
+
 		return txn.Commit()
 	})
 	if err != nil {

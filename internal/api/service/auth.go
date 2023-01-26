@@ -5,7 +5,7 @@ import (
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/auth"
+	"github.com/xBlaz3kx/ChargePi-go/internal/auth"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/grpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -51,7 +51,7 @@ func (s *AuthService) AddAuthorizedCards(ctx context.Context, request *grpc.AddA
 	for _, tag := range request.GetAuthorizedCards() {
 		err := s.tagManager.AddTag(tag.TagId, types.NewIdTagInfo(types.AuthorizationStatus(tag.Status)))
 		if err != nil {
-			response.Status = append(response.Status, "Fail")
+			response.Status = append(response.Status, "Failed")
 			continue
 		}
 
@@ -63,7 +63,7 @@ func (s *AuthService) AddAuthorizedCards(ctx context.Context, request *grpc.AddA
 
 func (s *AuthService) RemoveAuthorizedCard(ctx context.Context, request *grpc.RemoveCardRequest) (*grpc.RemoveCardResponse, error) {
 	response := &grpc.RemoveCardResponse{
-		Status: "Fail",
+		Status: "Failed",
 	}
 
 	return response, nil

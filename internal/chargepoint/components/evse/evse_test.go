@@ -20,14 +20,12 @@ const (
 	fileName = "./evse-1.json"
 )
 
-type (
-	EvseTestSuite struct {
-		suite.Suite
-		evse           *Impl
-		evccMock       *test.EvccMock
-		powerMeterMock *test.PowerMeterMock
-	}
-)
+type EvseTestSuite struct {
+	suite.Suite
+	evse           *Impl
+	evccMock       *test.EvccMock
+	powerMeterMock *test.PowerMeterMock
+}
 
 /*---------------------- Test suite ----------------------*/
 

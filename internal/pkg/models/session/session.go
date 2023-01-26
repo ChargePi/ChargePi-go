@@ -18,25 +18,13 @@ var (
 	ErrInvalidTransactionId = errors.New("transaction id invalid")
 )
 
-type (
-	SessionInterface interface {
-		StartSession(transactionId string, tagId string) error
-		EndSession()
-		AddSampledValue(samples []types.SampledValue)
-		GetSessionConsumption() []types.MeterValue
-		CalculateAvgPower() float64
-		CalculateEnergyConsumptionWithAvgPower() float64
-		ToSessionModel() *settingsModel.Session
-	}
-
-	Session struct {
-		IsActive      bool
-		TransactionId string
-		TagId         string
-		Started       *time.Time
-		Consumption   []types.MeterValue
-	}
-)
+type Session struct {
+	IsActive      bool
+	TransactionId string
+	TagId         string
+	Started       *time.Time
+	Consumption   []types.MeterValue
+}
 
 func NewEmptySession() *Session {
 	return &Session{
@@ -174,11 +162,12 @@ func (session *Session) CalculateAvgPower() float64 {
 			}
 		}
 
-		// If both the current and voltage were sampled and power wasn't, calculate the power by multiplying voltage and current
+		// If both the current and voltage were sampled and power was not, calculate the power by multiplying voltage and current.
 		if hasCurrent && hasVoltage && !hasPower {
 			isValidSample = true
 			powerSum += voltage * current
 		}
+
 		// Edge case -> number of samples != length of measurements
 		// If there is an array of samples that does not contain both Voltage and Current pair or Power sample, discard the sample
 		if isValidSample {

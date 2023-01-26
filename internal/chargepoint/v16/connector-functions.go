@@ -2,11 +2,9 @@ package v16
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
-	settingsData "github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
 	"github.com/xBlaz3kx/ocppManager-go/configuration"
 
@@ -14,10 +12,8 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display/i18n"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 )
 
@@ -28,37 +24,9 @@ import (
 // If the charging fails, change the connector status and notify the central system.
 func (cp *ChargePoint) restoreState() {
 	cp.logger.Info("Restoring evses' state")
-
-	for _, c := range cp.connectorManager.GetEVSEs() {
-		var (
-			cacheKey = fmt.Sprintf("evse%d", c.GetEvseId())
-			conn     settingsData.EVSE
-		)
-
-		// Fetch the viper configuration
-		connectorCfg, isFound := settings.EVSESettings.Load(cacheKey)
-		if !isFound {
-			continue
-		}
-		cfg := connectorCfg.(*viper.Viper)
-
-		// Unmarshall
-		err := cfg.Unmarshal(&conn)
-		if err != nil {
-			continue
-		}
-
-		err = cp.connectorManager.RestoreEVSEStatus(&conn)
-		switch err {
-		case nil:
-		default:
-			// Attempt to stop charging
-			err = cp.stopChargingConnector(c, core.ReasonDeAuthorized)
-			if err != nil {
-				cp.logger.Debugf("Stopping the charging returned %v", err)
-				c.SetStatus(core.ChargePointStatusFaulted, core.InternalError)
-			}
-		}
+	err := cp.evseManager.RestoreEVSEs()
+	if err != nil {
+		cp.logger.WithError(err).Error("Unable to restore states")
 	}
 }
 

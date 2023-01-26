@@ -47,7 +47,7 @@ func (cp *ChargePoint) bootNotification() {
 
 			// Send details about the charge point and its connectors
 			_ = cp.sendChargePointInfo()
-			cp.SendEVSEsDetails(cp.connectorManager.GetEVSEs()...)
+			cp.SendEVSEsDetails(cp.evseManager.GetEVSEs()...)
 
 		case core.RegistrationStatusPending:
 			cp.logger.Info("Registration status pending")

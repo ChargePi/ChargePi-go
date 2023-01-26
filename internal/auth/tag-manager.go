@@ -22,6 +22,7 @@ type (
 		AddTag(tagId string, tagInfo *types.IdTagInfo) error
 		GetTag(tagId string) (*types.IdTagInfo, error)
 		GetTags() []localauth.AuthorizationData
+		RemoveTag(tagId string) error
 		ClearCache()
 		SetMaxTags(number int)
 		UpdateLocalAuthList(version int, updateType localauth.UpdateType, tags []localauth.AuthorizationData) error
@@ -120,6 +121,14 @@ func (t *TagManagerImpl) GetAuthListVersion() int {
 	}
 
 	return t.authList.GetVersion()
+}
+
+func (t *TagManagerImpl) RemoveTag(tagId string) error {
+	if !t.localAuthListEnabled {
+		return ErrLocalAuthListNotEnabled
+	}
+
+	return t.authList.RemoveTag(tagId)
 }
 
 func (t *TagManagerImpl) UpdateLocalAuthList(version int, updateType localauth.UpdateType, tags []localauth.AuthorizationData) error {

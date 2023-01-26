@@ -2,11 +2,12 @@ package tls
 
 import (
 	"fmt"
-	assert2 "github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"os"
 	"os/exec"
 	"testing"
+
+	assert2 "github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (

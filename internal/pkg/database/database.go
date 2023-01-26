@@ -1,6 +1,9 @@
 package database
 
 import (
+	"encoding/json"
+	"fmt"
+
 	"github.com/dgraph-io/badger/v3"
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
@@ -14,4 +17,54 @@ func Get() *badger.DB {
 	}
 
 	return db
+}
+
+func GetEvseKey(evseId int) string {
+	return fmt.Sprintf("evse-%d", evseId)
+}
+
+func GetLocalAuthTagPrefix(tagId string) []byte {
+	return []byte(fmt.Sprintf("auth-tag-%s", tagId))
+}
+
+func GetLocalAuthVersion() []byte {
+	return []byte("auth-version")
+}
+
+func GetSmartChargingProfile(profileId int) []byte {
+	return []byte("profile-")
+}
+
+func GetOcppConfigurationKey() []byte {
+	return []byte(fmt.Sprintf("ocpp-configuration"))
+}
+
+func GetEvseSettings(db *badger.DB) []settings.EVSE {
+	var evseSettings []settings.EVSE
+
+	// Query the database for EVSE settings.
+	err := db.View(func(txn *badger.Txn) error {
+		it := txn.NewIterator(badger.DefaultIteratorOptions)
+		defer it.Close()
+
+		prefix := []byte("evse-")
+		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+			var data settings.EVSE
+			item := it.Item()
+
+			// Value should be the EVSE struct.
+			err := item.Value(func(v []byte) error {
+				return json.Unmarshal(v, &data)
+			})
+			if err != nil {
+				continue
+			}
+		}
+		return txn.Commit()
+	})
+	if err != nil {
+		log.WithError(err).Error("Error querying for EVSE settings")
+	}
+
+	return evseSettings
 }

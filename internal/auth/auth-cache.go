@@ -40,7 +40,7 @@ func (c *CacheImpl) AddTag(tagId string, tagInfo *types.IdTagInfo) {
 	logInfo := log.WithField("tagId", tagId)
 	logInfo.Debug("Adding a tag to cache")
 
-	// Add a tag if it doesn't exist in the cache already
+	// Add a tag if it doesn't exist in the cache.
 	err := c.db.Update(func(txn *badger.Txn) error {
 		_, err := txn.Get(getTagPrefix(tagId))
 		if err != badger.ErrKeyNotFound {
@@ -86,6 +86,25 @@ func (c *CacheImpl) RemoveTag(tagId string) {
 // RemoveCachedTags Remove all Tags from the authorization cache.
 func (c *CacheImpl) RemoveCachedTags() {
 	log.Debugf("Flushing auth cache")
+
+	// Remove all cached keys from database
+	err := c.db.Update(func(txn *badger.Txn) error {
+		it := txn.NewIterator(badger.DefaultIteratorOptions)
+		defer it.Close()
+
+		prefix := getTagPrefix("")
+		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+			item := it.Item()
+			err := txn.Delete(item.Key())
+			if err != nil {
+				return err
+			}
+		}
+		return txn.Commit()
+	})
+	if err != nil {
+		log.WithError(err).Error("Error flushing auth cache")
+	}
 }
 
 // SetMaxCachedTags Set the maximum number of Tags allowed in the authorization cache.

@@ -1,10 +1,11 @@
 package session
 
 import (
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
-	"github.com/stretchr/testify/suite"
 	"testing"
 	"time"
+
+	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
+	"github.com/stretchr/testify/suite"
 )
 
 type SessionTestSuite struct {
@@ -17,16 +18,14 @@ func (s *SessionTestSuite) SetupTest() {
 	s.emptySession = Session{
 		IsActive:      false,
 		TransactionId: "",
-		Started:       "",
-		Consumption:   nil,
 	}
 
+	currentTime := time.Now()
 	s.validSession = Session{
 		IsActive:      true,
 		TransactionId: "1234",
 		TagId:         "1234",
-		Started:       time.Now().Format(time.RFC3339),
-		Consumption:   nil,
+		Started:       &currentTime,
 	}
 }
 
@@ -66,11 +65,12 @@ func (s *SessionTestSuite) TestAddSampledValue() {
 }
 
 func (s *SessionTestSuite) TestStartSession() {
+	currentTime := time.Now()
 	var expectedSession = Session{
 		IsActive:      true,
 		TransactionId: "test1234",
 		TagId:         "test1234",
-		Started:       time.Now().Format(time.RFC3339),
+		Started:       &currentTime,
 		Consumption:   []types.MeterValue{},
 	}
 
@@ -208,9 +208,7 @@ func (s *SessionTestSuite) TestCalculateAvgPower() {
 }
 
 func (s *SessionTestSuite) TestCalculateEnergyConsumptionWithAvgPower() {
-	var (
-		started5min = time.Now().Add(-5 * time.Minute).Format(time.RFC3339)
-	)
+	started5min := time.Now().Add(-5 * time.Minute)
 
 	// Start the session
 	err := s.emptySession.StartSession("1234", "1234")
@@ -225,11 +223,12 @@ func (s *SessionTestSuite) TestCalculateEnergyConsumptionWithAvgPower() {
 	})
 
 	// Session started 5 minutes before
-	s.emptySession.Started = started5min
+	s.emptySession.Started = &started5min
 	s.Require().InDelta(float64(300*10), s.emptySession.CalculateEnergyConsumptionWithAvgPower(), 8)
 
 	// Session just started
-	s.emptySession.Started = time.Now().Format(time.RFC3339)
+	currentTime := time.Now()
+	s.emptySession.Started = &currentTime
 	s.Require().InDelta(0.0, s.emptySession.CalculateEnergyConsumptionWithAvgPower(), 1)
 
 	// Session ended just now

@@ -9,7 +9,6 @@ import (
 
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
 	"github.com/xBlaz3kx/ocppManager-go/configuration"
@@ -91,13 +90,9 @@ func (evse *Impl) preparePowerMeter() error {
 	}
 
 	// Schedule the sampling
-	_, err = scheduler.NewScheduler().Every(sampleTime).
+	_, err = evse.scheduler.Every(sampleTime).
 		Tag(jobTag).
 		Do(evse.SamplePowerMeter, measurands)
 
 	return err
-}
-
-func (evse *Impl) CalculateSessionAvgEnergyConsumption() float64 {
-	return evse.session.CalculateEnergyConsumptionWithAvgPower()
 }

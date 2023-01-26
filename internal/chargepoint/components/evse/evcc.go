@@ -1,13 +1,7 @@
 package evse
 
 import (
-	"errors"
-
 	"github.com/xBlaz3kx/ChargePi-go/pkg/evcc"
-)
-
-var (
-	ErrConnectorExists = errors.New("connector already exists")
 )
 
 func (evse *Impl) Lock() {

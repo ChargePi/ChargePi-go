@@ -1,8 +1,6 @@
 package settings
 
 type (
-	/* ------------- Hardware structs ------------*/
-
 	Hardware struct {
 		Display      Display      `json:"display" yaml:"display" mapstructure:"display"`
 		TagReader    TagReader    `json:"tagReader" yaml:"tagReader" mapstructure:"tagReader"`

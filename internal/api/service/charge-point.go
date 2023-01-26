@@ -8,61 +8,107 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
+	cfg "github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/grpc"
 	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
 )
 
 type ChargePointService struct {
 	grpc.UnimplementedChargePointServer
-	point       chargePoint.ChargePoint
-	ocppManager ocppConfigManager.Manager
+	point           chargePoint.ChargePoint
+	ocppManager     ocppConfigManager.Manager
+	settingsManager cfg.Manager
 }
 
 func NewChargePointService(point chargePoint.ChargePoint, ocppManager ocppConfigManager.Manager) *ChargePointService {
 	return &ChargePointService{
-		point:       point,
-		ocppManager: ocppManager,
+		point:           point,
+		ocppManager:     ocppManager,
+		settingsManager: cfg.GetManager(),
 	}
 }
 
 func (s *ChargePointService) SetDisplaySettings(ctx context.Context, request *grpc.SetDisplaySettingsRequest) (*grpc.SetDisplaySettingsResponse, error) {
-	response := &grpc.SetDisplaySettingsResponse{}
+	response := &grpc.SetDisplaySettingsResponse{
+		Status: "Failed",
+	}
 
-	newDisplay, err := display.NewDisplay(toDisplay(request.GetDisplay()))
+	displaySettings := toDisplay(request.GetDisplay())
+
+	newDisplay, err := display.NewDisplay(displaySettings)
 	if err != nil {
-		return nil, err
+		return response, nil
 	}
 
 	err = s.point.SetDisplay(newDisplay)
 	if err != nil {
-		return nil, err
+		return response, nil
 	}
 
+	response.Status = "Success"
 	return response, nil
 }
 
 func (s *ChargePointService) GetDisplaySettings(ctx context.Context, empty *empty.Empty) (*grpc.GetDisplaySettingsResponse, error) {
 	response := &grpc.GetDisplaySettingsResponse{}
 
+	displaySettings := s.settingsManager.GetChargePointSettings().Hardware.Display
+
+	response.Display = &grpc.Display{
+		Type:     displaySettings.Driver,
+		Enabled:  false,
+		Language: nil,
+		I2C:      nil,
+	}
+
 	return response, nil
 }
 
 func (s *ChargePointService) SetReaderSettings(ctx context.Context, request *grpc.SetReaderSettingsRequest) (*grpc.SetReaderSettingsResponse, error) {
-	return nil, nil
+	response := &grpc.SetReaderSettingsResponse{
+		Status: "Failed",
+	}
+
+	return response, nil
 }
 
 func (s *ChargePointService) GetReaderSettings(ctx context.Context, empty *empty.Empty) (*grpc.GetReaderSettingsResponse, error) {
+	response := &grpc.GetReaderSettingsResponse{}
 
-	return nil, nil
+	readerSettings := s.settingsManager.GetChargePointSettings().Hardware.TagReader
+
+	response.Reader = &grpc.TagReader{
+		Type:          readerSettings.ReaderModel,
+		Enabled:       false,
+		DeviceAddress: nil,
+		ResetPin:      nil,
+	}
+
+	return response, nil
 }
 
 func (s *ChargePointService) SetIndicatorSettings(ctx context.Context, request *grpc.SetIndicatorSettingsRequest) (*grpc.SetIndicatorSettingsResponse, error) {
+	response := &grpc.SetIndicatorSettingsResponse{
+		Status: "Failed",
+	}
 
-	return nil, nil
+	return response, nil
 }
 
 func (s *ChargePointService) GetIndicatorSettings(ctx context.Context, empty *empty.Empty) (*grpc.GetIndicatorSettingsResponse, error) {
-	return nil, nil
+	response := &grpc.GetIndicatorSettingsResponse{}
+
+	indicatorSettings := s.settingsManager.GetChargePointSettings().Hardware.LedIndicator
+
+	response.Indicator = &grpc.Indicator{
+		Type:             indicatorSettings.Type,
+		Enabled:          false,
+		IndicateCardRead: nil,
+		DataPin:          nil,
+		Invert:           nil,
+	}
+
+	return response, nil
 }
 
 func (s *ChargePointService) Restart(ctx context.Context, request *grpc.RestartRequest) (*empty.Empty, error) {
@@ -75,11 +121,15 @@ func (s *ChargePointService) Restart(ctx context.Context, request *grpc.RestartR
 }
 
 func (s *ChargePointService) ChangeConnectionDetails(ctx context.Context, request *grpc.ChangeConnectionDetailsRequest) (*grpc.ChangeConnectionDetailsResponse, error) {
-	return nil, nil
+	response := &grpc.ChangeConnectionDetailsResponse{}
+
+	return response, nil
 }
 
 func (s *ChargePointService) ChangeChargePointDetails(ctx context.Context, request *grpc.ChangeChargePointDetailsRequest) (*grpc.ChangeChargePointDetailsResponse, error) {
-	return nil, nil
+	response := &grpc.ChangeChargePointDetailsResponse{}
+
+	return response, nil
 }
 
 func (s *ChargePointService) GetOCPPVariables(ctx context.Context, e *empty.Empty) (*grpc.GetVariablesResponse, error) {
@@ -90,8 +140,8 @@ func (s *ChargePointService) GetOCPPVariables(ctx context.Context, e *empty.Empt
 		return nil, err
 	}
 
-	for _, cfg := range configuration {
-		response.Variables = append(response.Variables, toConfiguration(cfg))
+	for _, config := range configuration {
+		response.Variables = append(response.Variables, toConfiguration(config))
 	}
 
 	return response, nil
@@ -118,7 +168,7 @@ func (s *ChargePointService) SetOCPPVariables(ctx context.Context, request *grpc
 
 		err := s.ocppManager.UpdateKey(variable.Key, variable.Value)
 		if err == nil {
-			status = "Sucess"
+			status = "Success"
 		}
 
 		response.Statuses = append(response.Statuses, status)

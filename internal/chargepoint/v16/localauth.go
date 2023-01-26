@@ -2,7 +2,7 @@ package v16
 
 import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/localauth"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/auth"
+	"github.com/xBlaz3kx/ChargePi-go/internal/auth"
 )
 
 func (cp *ChargePoint) OnGetLocalListVersion(request *localauth.GetLocalListVersionRequest) (confirmation *localauth.GetLocalListVersionConfirmation, err error) {
