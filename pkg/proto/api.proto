@@ -21,9 +21,11 @@ service ChargePoint {
   rpc GetIndicatorSettings (google.protobuf.Empty) returns (GetIndicatorSettingsResponse) {}
 
   // Connection settings
+  rpc GetConnectionDetails(google.protobuf.Empty) returns (GetConnectionDetailsResponse) {}
   rpc ChangeConnectionDetails(ChangeConnectionDetailsRequest) returns (ChangeConnectionDetailsResponse) {}
 
   // Charge point details
+  rpc GetChargePointDetails(google.protobuf.Empty) returns (GetChargePointDetailsResponse) {}
   rpc ChangeChargePointDetails(ChangeChargePointDetailsRequest) returns (ChangeChargePointDetailsResponse) {}
 
   // OCPP configuration variable management
@@ -39,6 +41,10 @@ service ChargePoint {
 }
 
 /*------------------ ConnectionDetails ------------------------ */
+
+message GetConnectionDetailsResponse {
+  ConnectionSettings ConnectionSettings = 1;
+}
 
 message ChangeConnectionDetailsRequest {
   ConnectionSettings ConnectionSettings = 1;
@@ -57,6 +63,10 @@ message ChangeChargePointDetailsRequest {
 
 message ChangeChargePointDetailsResponse {
   string status = 2;
+}
+
+message GetChargePointDetailsResponse {
+  ChargePointInfo ChargePointInfo = 1;
 }
 
 /*------------------ ChargePointDetails ------------------------ */

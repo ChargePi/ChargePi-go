@@ -6,11 +6,12 @@ package indicator
 import (
 	"encoding/binary"
 	"encoding/hex"
+	"strconv"
+	"time"
+
 	ws2811 "github.com/rpi-ws281x/rpi-ws281x-go"
 	ocppManager "github.com/xBlaz3kx/ocppManager-go"
 	"github.com/xBlaz3kx/ocppManager-go/configuration"
-	"strconv"
-	"time"
 )
 
 const (
@@ -55,7 +56,7 @@ func NewWS281xStrip(numberOfLEDs int, dataPin int) (*WS281x, error) {
 
 	setLightIntensity(opt)
 
-	// Create a led strip
+	// Create a new strip
 	ledStrip, err := ws2811.MakeWS2811(&opt)
 	if err != nil {
 		return nil, err

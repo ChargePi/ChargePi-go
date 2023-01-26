@@ -2,13 +2,15 @@ version: '3.7'
 services:
   chargepi:
     build:
-      dockerfile: ../../build/package/Dockerfile
+      dockerfile: ../../build/Dockerfile
       context: ../..
       target: chargepi
     restart: always
     volumes:
-      - ./configs/:/ChargePi/configs/
+      - data:/tmp/chargepi
     devices:
       - /dev/ttyAMA0:/dev/ttyAMA0
       - /dev/mem:/dev/mem
     privileged: true
+volumes:
+  data:

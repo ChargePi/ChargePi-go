@@ -16,6 +16,7 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 )
 
@@ -42,10 +43,10 @@ type (
 )
 
 // NewChargePoint creates a new ChargePoint for OCPP version 1.6.
-func NewChargePoint(manager connectorManager.Manager, scheduler *gocron.Scheduler, cache auth.TagManager, opts ...chargePoint.Options) *ChargePoint {
+func NewChargePoint(manager connectorManager.Manager, cache auth.TagManager, opts ...chargePoint.Options) *ChargePoint {
 	cp := &ChargePoint{
 		availability:     core.AvailabilityTypeInoperative,
-		scheduler:        scheduler,
+		scheduler:        scheduler.NewScheduler(),
 		connectorManager: manager,
 		tagManager:       cache,
 		logger:           log.StandardLogger(),
@@ -123,9 +124,6 @@ func (cp *ChargePoint) CleanUp(reason core.Reason) {
 	cp.logger.Info("Clearing the scheduler...")
 	cp.scheduler.Stop()
 	cp.scheduler.Clear()
-
-	// Persist tags
-	_ = cp.tagManager.WriteLocalAuthList()
 
 	cp.logger.Infof("Disconnecting the client..")
 	cp.chargePoint.Stop()

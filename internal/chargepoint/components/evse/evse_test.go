@@ -1,11 +1,12 @@
 package evse
 
 import (
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/session"
 	"os/exec"
 	"testing"
 	"time"
+
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/session"
 
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
@@ -138,12 +139,14 @@ func (s *EvseTestSuite) TestStopCharging() {
 
 func (s *EvseTestSuite) TestResumeCharging() {
 	var (
+		currentTime     = time.Now()
+		someTime        = time.Date(2021, 1, 1, 1, 1, 1, 1, time.Local)
 		maxChargingTime = s.evse.GetMaxChargingTime()
 		validSession    = session.Session{
 			IsActive:      true,
 			TransactionId: "1234",
 			TagId:         "1234",
-			Started:       time.Now().Format(time.RFC3339),
+			Started:       &currentTime,
 			Consumption:   nil,
 		}
 
@@ -151,7 +154,7 @@ func (s *EvseTestSuite) TestResumeCharging() {
 			IsActive:      true,
 			TransactionId: "1234",
 			TagId:         "1234",
-			Started:       time.Date(2021, 1, 1, 1, 1, 1, 1, time.Local).Format(time.RFC3339),
+			Started:       &someTime,
 			Consumption:   nil,
 		}
 
@@ -159,7 +162,6 @@ func (s *EvseTestSuite) TestResumeCharging() {
 			IsActive:      false,
 			TransactionId: "",
 			TagId:         "",
-			Started:       "",
 			Consumption:   nil,
 		}
 	)

@@ -26,6 +26,7 @@ type EVCC interface {
 	GetType() string
 	GetStatusChangeChannel() <-chan StateNotification
 	Reset()
+	// SelfCheck() error
 }
 
 // NewEVCCFromType creates a new EVCC instance based on the provided type.

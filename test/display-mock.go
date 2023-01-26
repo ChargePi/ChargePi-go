@@ -5,13 +5,9 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
 )
 
-type (
-	DisplayMock struct {
-		mock.Mock
-	}
-)
-
-/*------------------ Display mock ------------------*/
+type DisplayMock struct {
+	mock.Mock
+}
 
 func (l *DisplayMock) DisplayMessage(message notifications.Message) {
 	l.Called(message)

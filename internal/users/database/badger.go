@@ -1,41 +1,41 @@
 package database
 
 import (
+	"encoding/json"
+	"fmt"
+
 	"github.com/dgraph-io/badger/v3"
-	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/users/pkg/models"
 )
 
-const databasePath = "/tmp/chargepi"
-
-type BadgerDb struct {
+type UserDbBadger struct {
 	db *badger.DB
 }
 
-func NewBadgerDb() *BadgerDb {
-	db, err := badger.Open(badger.DefaultOptions(databasePath))
-	if err != nil {
-		log.WithError(err).Panic("Cannot open database")
-	}
-
-	return &BadgerDb{
+func NewUserDb(db *badger.DB) *UserDbBadger {
+	return &UserDbBadger{
 		db: db,
 	}
 }
 
-func NewBadgerDbWithPath(path string) *BadgerDb {
-	db, err := badger.Open(badger.DefaultOptions(path))
-	if err != nil {
-		log.WithError(err).Panic("Cannot open database")
-	}
-
-	return &BadgerDb{
-		db: db,
-	}
+func getUserKey(username string) []byte {
+	return []byte(fmt.Sprintf("user.%s", username))
 }
 
-func (b *BadgerDb) GetUser(username string) (*models.User, error) {
+func (b *UserDbBadger) GetUser(username string) (*models.User, error) {
+	var user models.User
 	err := b.db.View(func(txn *badger.Txn) error {
+		get, err := txn.Get(getUserKey(username))
+		if err != nil {
+			return err
+		}
+
+		err = get.Value(func(val []byte) error {
+			return json.Unmarshal(val, &user)
+		})
+		if err != nil {
+			return err
+		}
 
 		return nil
 	})
@@ -43,25 +43,73 @@ func (b *BadgerDb) GetUser(username string) (*models.User, error) {
 		return nil, err
 	}
 
+	return &user, nil
+}
+
+func (b *UserDbBadger) GetUsers() []models.User {
+	var users []models.User
+
+	err := b.db.View(func(txn *badger.Txn) error {
+		it := txn.NewIterator(badger.DefaultIteratorOptions)
+		defer it.Close()
+
+		prefix := []byte("user")
+		// Go through every key with “user” prefix.
+		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+			var user models.User
+			item := it.Item()
+			// Value should be the User struct.
+			err := item.Value(func(v []byte) error {
+				return json.Unmarshal(v, &user)
+			})
+			if err != nil {
+				continue
+			}
+		}
+
+		return txn.Commit()
+	})
+	if err != nil {
+		return nil
+	}
+
+	return users
+}
+
+func (b *UserDbBadger) AddUser(user models.User) error {
+	return b.db.Update(func(txn *badger.Txn) error {
+		// Check if user already exists
+		_, err := txn.Get(getUserKey(user.Username))
+		if err == nil {
+			return err
+		}
+
+		marshal, err := json.Marshal(user)
+		if err != nil {
+			return err
+		}
+
+		err = txn.Set(getUserKey(user.Username), marshal)
+		if err != nil {
+			return err
+		}
+
+		return txn.Commit()
+	})
+}
+
+func (b *UserDbBadger) UpdateUser(user models.User) (*models.User, error) {
+	// b.db.NewTransaction(true).
 	return nil, nil
 }
 
-func (b *BadgerDb) GetUsers() []models.User {
-	// b.db.NewTransaction(true).
-	return nil
-}
+func (b *UserDbBadger) DeleteUser(username string) error {
+	return b.db.Update(func(txn *badger.Txn) error {
+		err := txn.Delete(getUserKey(username))
+		if err != nil {
+			return err
+		}
 
-func (b *BadgerDb) AddUser(user models.User) error {
-	// b.db.NewTransaction(true).
-	return nil
-}
-
-func (b *BadgerDb) UpdateUser(user models.User) (*models.User, error) {
-	// b.db.NewTransaction(true).
-	return nil, nil
-}
-
-func (b *BadgerDb) DeleteUser(username string) error {
-	// b.db.NewTransaction(true).
-	return nil
+		return txn.Commit()
+	})
 }

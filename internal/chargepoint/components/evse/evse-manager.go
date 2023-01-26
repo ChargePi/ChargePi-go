@@ -2,10 +2,13 @@ package evse
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sync"
 
+	"github.com/dgraph-io/badger/v3"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/database"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/session"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
@@ -29,26 +32,35 @@ var (
 
 type (
 	Manager interface {
+		InitAll(ctx context.Context) error
+		AddEVSE(ctx context.Context, c EVSE) error
+		UpdateEVSE(ctx context.Context, c EVSE) error
+		RemoveEVSE(evseId int) error
+
 		GetEVSEs() []EVSE
 		FindEVSE(evseId int) (EVSE, error)
 		FindAvailableEVSE() (EVSE, error)
 		FindEVSEWithTagId(tagId string) (EVSE, error)
 		FindEVSEWithTransactionId(transactionId string) (EVSE, error)
 		FindEVSEWithReservationId(reservationId int) (EVSE, error)
+
 		StartCharging(evseId int, tagId, transactionId string) error
 		StopCharging(tagId, transactionId string, reason core.Reason) error
 		StopAllEVSEs(reason core.Reason) error
-		AddEVSE(ctx context.Context, c EVSE) error
-		AddEVSEFromSettings(ctx context.Context, maxChargingTime *int, c *settings.EVSE) error
-		AddEVSEsFromSettings(ctx context.Context, maxChargingTime *int, c []*settings.EVSE) error
-		// RemoveEVSE(evseId int) error
+
+		ImportFromSettings(c []settings.EVSE) error
 		RestoreEVSEStatus(*settings.EVSE) error
+
+		SetMaxChargingTime(maxChargingTime int) error
 		SetNotificationChannel(notificationChannel chan notifications.StatusNotification)
 		GetNotificationChannel() chan notifications.StatusNotification
 		SetMeterValuesChannel(notificationChannel chan notifications.MeterValueNotification)
 	}
 
 	managerImpl struct {
+		// Used to store settings of EVSEs
+		db *badger.DB
+		// Used for running EVSE instances
 		connectors          sync.Map
 		notificationChannel chan notifications.StatusNotification
 		meterValuesChannel  chan notifications.MeterValueNotification
@@ -63,7 +75,7 @@ func init() {
 
 func GetManager() Manager {
 	if manager == nil {
-		log.Debug("Creating connector manager")
+		log.Debug("Creating EVSE manager")
 		manager = NewManager(make(chan notifications.StatusNotification, 20))
 	}
 
@@ -72,9 +84,52 @@ func GetManager() Manager {
 
 func NewManager(notificationChannel chan notifications.StatusNotification) Manager {
 	return &managerImpl{
-		connectors:          sync.Map{},
+		db:                  database.Get(),
 		notificationChannel: notificationChannel,
 	}
+}
+
+func getKey(evseId int) string {
+	return fmt.Sprintf("evse-%d", evseId)
+}
+
+func (m *managerImpl) InitAll(ctx context.Context) error {
+	var evseSettings []settings.EVSE
+
+	// Query the database for EVSE settings.
+	err := m.db.View(func(txn *badger.Txn) error {
+		it := txn.NewIterator(badger.DefaultIteratorOptions)
+		defer it.Close()
+
+		prefix := []byte("evse-")
+		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+			var data settings.EVSE
+			item := it.Item()
+
+			// Value should be the EVSE struct.
+			err := item.Value(func(v []byte) error {
+				return json.Unmarshal(v, &data)
+			})
+			if err != nil {
+				continue
+			}
+		}
+		return txn.Commit()
+	})
+	if err != nil {
+		log.WithError(err).Error("Error querying for EVSE settings")
+		return err
+	}
+
+	// Create EVSEs from settings stored in the database.
+	for _, c := range evseSettings {
+		addErr := m.addEVSEFromSettings(ctx, c)
+		if addErr != nil {
+			return addErr
+		}
+	}
+
+	return nil
 }
 
 func (m *managerImpl) GetEVSEs() []EVSE {
@@ -108,11 +163,7 @@ func (m *managerImpl) SetMeterValuesChannel(notificationChannel chan notificatio
 }
 
 func (m *managerImpl) FindEVSE(evseId int) (EVSE, error) {
-	var (
-		key        = fmt.Sprintf("Evse%d", evseId)
-		c, isFound = m.connectors.Load(key)
-	)
-
+	c, isFound := m.connectors.Load(getKey(evseId))
 	if isFound {
 		return c.(EVSE), nil
 	}
@@ -240,49 +291,52 @@ func (m *managerImpl) AddEVSE(ctx context.Context, c EVSE) error {
 		return ErrConnectorNil
 	}
 
-	var (
-		logInfo = log.WithFields(log.Fields{
-			"evseId": c.GetEvseId(),
-		})
-		key = fmt.Sprintf("Evse%d", c.GetEvseId())
-	)
-
+	// todo retry mechanism?
 	err := c.Init(ctx)
 	if err != nil {
 		return err
 	}
 
+	logInfo := log.WithField("evseId", c.GetEvseId())
 	logInfo.Debugf("Adding an EVSE to manager")
+
 	c.SetNotificationChannel(m.notificationChannel)
 	c.SetMeterValuesChannel(m.meterValuesChannel)
 
 	// Add the connector
-	m.connectors.Store(key, c)
-
+	m.connectors.Store(getKey(c.GetEvseId()), c)
 	return nil
 }
 
-func (m *managerImpl) AddEVSEFromSettings(ctx context.Context, maxChargingTime *int, c *settings.EVSE) error {
-	if util.IsNilInterfaceOrPointer(c) {
-		return ErrConnectorNil
+func (m *managerImpl) addEVSEFromSettings(ctx context.Context, c settings.EVSE) error {
+	logInfo := log.WithField("evseId", c.EvseId)
+	logInfo.Debugf("Creating evcc")
+
+	// Create EVSE from settings
+	evccFromType, err := evcc.NewEVCCFromType(c.EVCC)
+	switch err {
+	case nil:
+	default:
+		return err
 	}
 
-	var (
-		evccFromType, err = evcc.NewEVCCFromType(c.EVCC)
-		// Create a PowerMeter from connector settings
-		meter, powerMeterErr = powerMeter.NewPowerMeter(c.PowerMeter)
-	)
-
+	// Create a PowerMeter from settings
+	logInfo.Debugf("Creating power meter")
+	meter, powerMeterErr := powerMeter.NewPowerMeter(c.PowerMeter)
 	switch powerMeterErr {
+	case nil:
 	case powerMeter.ErrPowerMeterDisabled:
-		log.WithError(powerMeterErr).Warnf("Power meter disabled for evse %d", c.EvseId)
+		logInfo.WithError(powerMeterErr).Warn("Power meter disabled")
 	case powerMeter.ErrPowerMeterUnsupported, powerMeter.ErrInvalidConnectionSettings:
 		fallthrough
 	default:
-		log.WithError(powerMeterErr).Fatalf("Cannot instantiate power meter for evse %d", c.EvseId)
+		logInfo.WithError(powerMeterErr).Error("Cannot instantiate power meter for evse")
+		return err
 	}
 
-	evse, err := NewEvse(c.EvseId, evccFromType, meter, c.PowerMeter.Enabled, float64(c.MaxPower), maxChargingTime)
+	// Create EVSE from EVCC and Power Meter
+	logInfo.Debugf("Creating EVSE")
+	evse, err := NewEvse(c.EvseId, evccFromType, meter, c.PowerMeter.Enabled, float64(c.MaxPower), nil)
 	if err != nil {
 		return err
 	}
@@ -290,14 +344,36 @@ func (m *managerImpl) AddEVSEFromSettings(ctx context.Context, maxChargingTime *
 	return m.AddEVSE(ctx, evse)
 }
 
-func (m *managerImpl) AddEVSEsFromSettings(ctx context.Context, maxChargingTime *int, connectors []*settings.EVSE) error {
-	for _, c := range connectors {
-		addErr := m.AddEVSEFromSettings(ctx, maxChargingTime, c)
-		if addErr != nil {
-			return addErr
-		}
-	}
+func (m *managerImpl) ImportFromSettings(connectors []settings.EVSE) error {
+	log.Info("Importing connectors to the database")
+	// Sync the settings to the database
+	return m.db.Update(func(txn *badger.Txn) error {
 
+		for _, connector := range connectors {
+			marshal, err := json.Marshal(connector)
+			if err != nil {
+				return err
+			}
+
+			err = txn.Set([]byte(getKey(connector.EvseId)), marshal)
+			if err != nil {
+				return err
+			}
+		}
+
+		return txn.Commit()
+	})
+}
+
+func (m *managerImpl) UpdateEVSE(ctx context.Context, c EVSE) error {
+	return nil
+}
+
+func (m *managerImpl) RemoveEVSE(evseId int) error {
+	return nil
+}
+
+func (m *managerImpl) SetMaxChargingTime(maxChargingTime int) error {
 	return nil
 }
 
@@ -325,7 +401,8 @@ func (m *managerImpl) RestoreEVSEStatus(c *settings.EVSE) error {
 	case core.ChargePointStatusPreparing:
 		return evse.StartCharging(c.Session.TransactionId, c.Session.TagId, nil)
 	case core.ChargePointStatusCharging:
-		timeLeft, err := evse.ResumeCharging(session.Session(c.Session))
+		// todo (c.Session)
+		timeLeft, err := evse.ResumeCharging(session.Session{})
 		if err != nil {
 			logInfo.Errorf("Resume charging failed, reason: %v", err)
 
@@ -338,7 +415,7 @@ func (m *managerImpl) RestoreEVSEStatus(c *settings.EVSE) error {
 		}
 
 		// Stop charging
-		_, schedulerErr := scheduler.GetScheduler().Every(*timeLeft).Minutes().At(1).Do(evse.StopCharging(core.ReasonLocal))
+		_, schedulerErr := scheduler.NewScheduler().Every(*timeLeft).Minutes().At(1).Do(evse.StopCharging(core.ReasonLocal))
 		if schedulerErr != nil {
 			return schedulerErr
 		}

@@ -3,6 +3,7 @@ package reader
 import (
 	"context"
 	"errors"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 )
@@ -34,15 +35,9 @@ type Reader interface {
 func NewTagReader(reader settings.TagReader) (Reader, error) {
 	if reader.IsEnabled {
 		log.Infof("Preparing tag reader from config: %s", reader.ReaderModel)
-		tagChannel := make(chan string, 5)
-
 		switch reader.ReaderModel {
 		case PN532, ACR122, PN533, BR500, R502:
-			return &TagReader{
-				TagChannel:    tagChannel,
-				DeviceAddress: reader.Device,
-				ResetPin:      reader.ResetPin,
-			}, nil
+			return NewReader(*reader.Device, reader.ReaderModel, *reader.ResetPin)
 		default:
 			return nil, ErrReaderUnsupported
 		}

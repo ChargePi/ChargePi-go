@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strconv"
 
+	"github.com/dgraph-io/badger/v3"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/localauth"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
@@ -25,8 +26,6 @@ type (
 		SetMaxTags(number int)
 		UpdateLocalAuthList(version int, updateType localauth.UpdateType, tags []localauth.AuthorizationData) error
 		GetAuthListVersion() int
-		ReadLocalAuthList() error
-		WriteLocalAuthList() error
 	}
 
 	TagManagerImpl struct {
@@ -37,7 +36,7 @@ type (
 	}
 )
 
-func NewTagManager(filePath string) *TagManagerImpl {
+func NewTagManager(db *badger.DB) *TagManagerImpl {
 	authCacheEnabled, cacheErr := ocppConfigManager.GetConfigurationValue(configuration.AuthorizationCacheEnabled.String())
 	localListLength, err := ocppConfigManager.GetConfigurationValue(configuration.LocalAuthListMaxLength.String())
 
@@ -54,8 +53,8 @@ func NewTagManager(filePath string) *TagManagerImpl {
 		maxTags = 0
 	}
 
-	cache := NewAuthCache()
-	authList := NewLocalAuthList(filePath, maxTags)
+	cache := NewAuthCache(db)
+	authList := NewLocalAuthList(db, maxTags)
 
 	return &TagManagerImpl{
 		authCacheEnabled: authCacheEnabled != nil && *authCacheEnabled == "true",
@@ -150,20 +149,4 @@ func (t *TagManagerImpl) UpdateLocalAuthList(version int, updateType localauth.U
 
 	t.authList.SetVersion(version)
 	return nil
-}
-
-func (t *TagManagerImpl) ReadLocalAuthList() error {
-	if !t.localAuthListEnabled {
-		return ErrLocalAuthListNotEnabled
-	}
-
-	return t.authList.LoadFromFile()
-}
-
-func (t *TagManagerImpl) WriteLocalAuthList() error {
-	if !t.localAuthListEnabled {
-		return ErrLocalAuthListNotEnabled
-	}
-
-	return t.authList.WriteToFile()
 }

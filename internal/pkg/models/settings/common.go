@@ -2,10 +2,10 @@ package settings
 
 type (
 	TLS struct {
-		IsEnabled             bool   `json:"isEnabled,omitempty" yaml:"isEnabled" mapstructure:"isEnabled"`
+		IsEnabled             bool   `json:"enabled,omitempty" yaml:"enabled" mapstructure:"enabled"`
 		CACertificatePath     string `json:"CACertificatePath,omitempty" yaml:"CACertificatePath" mapstructure:"CACertificatePath"`
-		ClientCertificatePath string `json:"ClientCertificatePath,omitempty" yaml:"ClientCertificatePath" mapstructure:"ClientCertificatePath"`
-		PrivateKeyPath        string `json:"PrivateKeyPath,omitempty" yaml:"PrivateKeyPath" mapstructure:"PrivateKeyPath"`
+		ClientCertificatePath string `json:"certificatePath,omitempty" yaml:"certificatePath" mapstructure:"certificatePath"`
+		PrivateKeyPath        string `json:"keyPath,omitempty" yaml:"keyPath" mapstructure:"keyPath"`
 	}
 
 	Logging struct {
@@ -20,7 +20,7 @@ type (
 
 	Api struct {
 		Enabled bool   `json:"enabled,omitempty" yaml:"enabled" mapstructure:"enabled"`
-		Address string `validate:"hostname_port" json:"address,omitempty" yaml:"address" mapstructure:"address"`
+		Address string `json:"address,omitempty" yaml:"address" mapstructure:"address" validate:"hostname_port"`
 		TLS     TLS    `json:"tls,omitempty" yaml:"tls" mapstructure:"tls"`
 	}
 )

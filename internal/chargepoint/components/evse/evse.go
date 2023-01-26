@@ -231,9 +231,8 @@ func (evse *Impl) StartCharging(transactionId, tagId string, connectorId *int) e
 	}
 
 	evse.evcc.Lock()
-	evse.session.UpdateSessionFile(evse.evseId)
 
-	sampleError := evse.preparePowerMeterAtConnector()
+	sampleError := evse.preparePowerMeter()
 	if sampleError != nil {
 		logInfo.WithError(sampleError).Error("Cannot sample evse")
 	}
@@ -267,13 +266,8 @@ func (evse *Impl) ResumeCharging(session session.Session) (chargingTimeElapsed *
 		evse.session.Consumption = session.Consumption
 	}
 
-	startedChargingTime, err := time.Parse(time.RFC3339, session.Started)
-	if err != nil {
-		return
-	}
-
 	if evse.maxChargingTime != nil {
-		timeElapsed := int(time.Now().Sub(startedChargingTime).Minutes())
+		timeElapsed := int(time.Now().Sub(*session.Started).Minutes())
 		if *evse.maxChargingTime <= timeElapsed {
 			chargingTimeElapsed = &timeElapsed
 		}
@@ -298,10 +292,10 @@ func (evse *Impl) StopCharging(reason core.Reason) error {
 		evse.evcc.DisableCharging()
 		evse.evcc.Unlock()
 		evse.session.EndSession()
-		evse.session.UpdateSessionFile(evse.evseId)
+		// todo save the session
 
 		// Remove the sampling of the power meter
-		sched := scheduler.GetScheduler()
+		sched := scheduler.NewScheduler()
 		schedulerErr := sched.RemoveByTag(fmt.Sprintf("evse%dSampling", evse.GetEvseId()))
 		if schedulerErr != nil {
 			logInfo.WithError(schedulerErr).Errorf("Cannot remove sampling schedule")

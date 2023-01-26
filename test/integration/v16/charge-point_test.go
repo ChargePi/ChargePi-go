@@ -3,9 +3,13 @@ package v16
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"strings"
+	"testing"
+	"time"
+
 	ocpp16 "github.com/lorenzodonini/ocpp-go/ocpp1.6"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/lorenzodonini/ocpp-go/ws"
 	log "github.com/sirupsen/logrus"
@@ -17,15 +21,8 @@ import (
 	v16 "github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/v16"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
 	settings2 "github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
-	setting "github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/models/ocpp"
 	"github.com/xBlaz3kx/ChargePi-go/test"
-	"github.com/xBlaz3kx/ocppManager-go/configuration"
-	"net/http"
-	"strings"
-	"testing"
-	"time"
 )
 
 const (
@@ -77,13 +74,6 @@ func (s *chargePointTestSuite) SetupTest() {
 	s.tagReader = new(test.ReaderMock)
 	s.display = new(test.DisplayMock)
 	s.manager = new(test.ManagerMock)
-
-	// Setup OCPP configuration manager
-	setting.SetupOcppConfigurationManager(
-		ocppConfigurationFilePath,
-		configuration.OCPP16,
-		core.ProfileName,
-		reservation.ProfileName)
 
 	// Start the central system
 	go s.setupCentralSystem(s.csMock)
@@ -138,7 +128,7 @@ func (s *chargePointTestSuite) setupCentralSystemCoreExpectations() {
 		s.Require().IsType(&core.StatusNotificationRequest{}, payload)
 		if payload != nil {
 			statusNotificationRequest := payload.(*core.StatusNotificationRequest)
-			//s.Assert().Subset(core.ConfigurationStatusAccepted, statusNotificationRequest.Status)
+			// s.Assert().Subset(core.ConfigurationStatusAccepted, statusNotificationRequest.Status)
 			s.Assert().Equal(1, statusNotificationRequest.ConnectorId)
 			s.Assert().Equal(core.NoError, statusNotificationRequest.ErrorCode)
 		}
@@ -162,7 +152,7 @@ func (s *chargePointTestSuite) setupCentralSystemCoreExpectations() {
 		if payload != nil {
 			stopTransactionRequest := payload.(*core.StopTransactionRequest)
 			s.Assert().Equal(1, stopTransactionRequest.TransactionId)
-			//s.Assert().Equal(tagId, stopTransactionRequest.IdTag)
+			// s.Assert().Equal(tagId, stopTransactionRequest.IdTag)
 		}
 	}).Return(core.NewStopTransactionConfirmation(), nil)
 }
@@ -170,8 +160,7 @@ func (s *chargePointTestSuite) setupCentralSystemCoreExpectations() {
 func (s *chargePointTestSuite) setupChargePoint(ctx context.Context, lcd display.Display, reader reader.Reader, connectorManager *test.ManagerMock) chargePoint.ChargePoint {
 	cp := v16.NewChargePoint(
 		connectorManager,
-		scheduler.GetScheduler(),
-		auth.NewTagManager(""),
+		auth.NewTagManager(nil),
 		chargePoint.WithDisplay(lcd),
 		chargePoint.WithReader(ctx, reader),
 		chargePoint.WithLogger(log.StandardLogger()),

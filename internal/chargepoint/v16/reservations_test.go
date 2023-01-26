@@ -27,7 +27,7 @@ type reservationTestSuite struct {
 func (s *reservationTestSuite) SetupTest() {
 	s.cp = &ChargePoint{
 		logger:    log.StandardLogger(),
-		scheduler: scheduler.GetScheduler(),
+		scheduler: scheduler.NewScheduler(),
 	}
 }
 

@@ -2,13 +2,14 @@ package session
 
 import (
 	"errors"
+	"strconv"
+	"time"
+
 	strUtil "github.com/agrison/go-commons-lang/stringUtils"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
 	settingsModel "github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
-	"strconv"
-	"time"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 )
 
 var (
@@ -25,15 +26,14 @@ type (
 		GetSessionConsumption() []types.MeterValue
 		CalculateAvgPower() float64
 		CalculateEnergyConsumptionWithAvgPower() float64
-		UpdateSessionFile(evseId, connectorId int)
-		ToSessionFile() *settingsModel.Session
+		ToSessionModel() *settingsModel.Session
 	}
 
 	Session struct {
 		IsActive      bool
 		TransactionId string
 		TagId         string
-		Started       string
+		Started       *time.Time
 		Consumption   []types.MeterValue
 	}
 )
@@ -64,10 +64,11 @@ func (session *Session) StartSession(transactionId string, tagId string) error {
 
 	log.Debugf("Started a session %s for %s", transactionId, tagId)
 
+	started := time.Now()
 	session.TransactionId = transactionId
 	session.TagId = tagId
 	session.IsActive = true
-	session.Started = time.Now().Format(time.RFC3339)
+	session.Started = &started
 	session.Consumption = []types.MeterValue{}
 	return nil
 }
@@ -79,27 +80,23 @@ func (session *Session) EndSession() {
 		session.TransactionId = ""
 		session.TagId = ""
 		session.IsActive = false
-		session.Started = ""
 	}
 }
 
-// ToSessionFile transforms session to a session that is stored in a file in case of a failure.
-func (session *Session) ToSessionFile() *settingsModel.Session {
+// ToSessionModel transforms session to a session that is stored in a file in case of a failure.
+func (session *Session) ToSessionModel() *settingsModel.Session {
+	started := ""
+	if !util.IsNilInterfaceOrPointer(session.Started) {
+		started = session.Started.Format(time.RFC3339)
+	}
+
 	return &settingsModel.Session{
 		IsActive:      session.IsActive,
 		TagId:         session.TagId,
 		TransactionId: session.TransactionId,
-		Started:       session.Started,
+		Started:       started,
 		Consumption:   session.Consumption,
 	}
-}
-
-// UpdateSessionFile Updates the session file.
-func (session *Session) UpdateSessionFile(evseId int) {
-	settings.UpdateSession(
-		evseId,
-		session.ToSessionFile(),
-	)
 }
 
 // AddSampledValue Add all the samples taken to the Session.
@@ -198,12 +195,11 @@ func (session *Session) CalculateAvgPower() float64 {
 
 // CalculateEnergyConsumptionWithAvgPower calculate the total energy consumption for a session that was active, if it had any measurements
 func (session *Session) CalculateEnergyConsumptionWithAvgPower() float64 {
-	startDate, err := time.Parse(time.RFC3339, session.Started)
-	if err != nil {
+	if util.IsNilInterfaceOrPointer(session.Started) {
 		return 0
 	}
 
-	var duration = time.Now().Sub(startDate).Seconds()
+	duration := time.Now().Sub(*session.Started).Seconds()
 	// For testing purposes discard any sub 1-second durations
 	if duration < 1 {
 		return 0

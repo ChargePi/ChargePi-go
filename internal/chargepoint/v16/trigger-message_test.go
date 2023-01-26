@@ -1,6 +1,9 @@
 package v16
 
 import (
+	"testing"
+	"time"
+
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/remotetrigger"
 	log "github.com/sirupsen/logrus"
@@ -9,8 +12,6 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/test"
-	"testing"
-	"time"
 )
 
 type triggerMessageTestSuite struct {
@@ -21,7 +22,7 @@ type triggerMessageTestSuite struct {
 func (s *triggerMessageTestSuite) SetupTest() {
 	s.cp = &ChargePoint{
 		logger:    log.StandardLogger(),
-		scheduler: scheduler.GetScheduler(),
+		scheduler: scheduler.NewScheduler(),
 	}
 	s.cp.scheduler.Clear()
 }

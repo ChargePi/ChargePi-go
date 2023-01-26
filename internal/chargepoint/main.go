@@ -6,41 +6,37 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/casbin/casbin/v2"
-	badgerhold "github.com/inits/badgerholdv2"
-	badgeradapter "github.com/inits/casbin-badgerdb-adapter"
+	"github.com/dgraph-io/badger/v3"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/localauth"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/remotetrigger"
+	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
 	"github.com/xBlaz3kx/ChargePi-go/internal/api/service"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/database"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
+	s "github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/users"
-	"github.com/xBlaz3kx/ChargePi-go/internal/users/database"
+	uDb "github.com/xBlaz3kx/ChargePi-go/internal/users/database"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/logging"
 	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
+	"github.com/xBlaz3kx/ocppManager-go/configuration"
 
-	"github.com/go-co-op/gocron"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/api/http"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/auth"
-	connectorManager "github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
+	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/indicator"
 	v16 "github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/v16"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
-	s "github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/logging"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/models/ocpp"
-	"github.com/xBlaz3kx/ocppManager-go/configuration"
 )
 
 func CreateChargePoint(
 	ctx context.Context,
 	protocolVersion ocpp.ProtocolVersion,
 	logger *log.Logger,
-	manager connectorManager.Manager,
-	sch *gocron.Scheduler,
+	manager evse.Manager,
 	tagManager auth.TagManager,
 	hardware settings.Hardware,
 ) chargePoint.ChargePoint {
@@ -61,7 +57,6 @@ func CreateChargePoint(
 		// Create the client
 		return v16.NewChargePoint(
 			manager,
-			sch,
 			tagManager,
 			opts...,
 		)
@@ -74,50 +69,31 @@ func CreateChargePoint(
 	}
 }
 
-func SetupUserApi(api settings.Api, handler chargePoint.ChargePoint, tagManager auth.TagManager, manager connectorManager.Manager, ocppVariableManager ocppConfigManager.Manager) {
-	db := database.NewBadgerDb()
+func SetupUserApi(db *badger.DB, api settings.Api, handler chargePoint.ChargePoint, tagManager auth.TagManager, manager evse.Manager, ocppVariableManager ocppConfigManager.Manager) {
+	// User database layer
+	userDb := uDb.NewUserDb(db)
 
-	opts := badgerhold.DefaultOptions
-	store, err := badgerhold.Open(opts)
-	if err != nil {
-
-	}
-
-	a, err := badgeradapter.NewAdapter(store, "")
-	if err != nil {
-
-	}
-
-	e, err := casbin.NewEnforcer("path/to/model.conf", a)
-	if err != nil {
-
-	}
-
-	e.EnableEnforce(true)
-	e.EnableLog(true)
-	e.EnableAutoSave(true)
-
-	userService := users.NewUserService(db, e)
+	// User service layer
+	userService := users.NewUserService(userDb)
 
 	// Expose the API endpoints
 	server := service.NewServer(api, handler, tagManager, manager, ocppVariableManager, userService)
 	go server.Run()
 
-	// Expose the ui at http://localhost:4269/
+	// Launch UI at http://localhost:4269/
+	// The UI should be integrated for portability.
 	ui := http.NewUi()
 	go ui.Serve("0.0.0.0:4269")
 }
 
 // Run is an entrypoint with all the configuration needed. This is a blocking function.
-func Run(isDebug bool, config *settings.Settings, connectors []*settings.EVSE, configurationFilePath, localAuthListFilePath string) {
+func Run(debug bool, config *settings.Settings) {
 	var (
-		// ChargePoint components
-		handler             chargePoint.ChargePoint
-		logger              = log.StandardLogger()
-		tagManager          = auth.NewTagManager(localAuthListFilePath)
-		manager             = connectorManager.GetManager()
-		sch                 = scheduler.GetScheduler()
-		ocppVariableManager = ocppConfigManager.GetManager()
+		ctx, cancel = signal.NotifyContext(context.Background(), os.Interrupt)
+
+		handler     chargePoint.ChargePoint
+		logger      = log.StandardLogger()
+		evseManager = evse.GetManager()
 
 		// Settings
 		hardware           = config.ChargePoint.Hardware
@@ -125,55 +101,44 @@ func Run(isDebug bool, config *settings.Settings, connectors []*settings.EVSE, c
 		chargePointInfo    = config.ChargePoint.Info
 		protocolVersion    = connectionSettings.ProtocolVersion
 		serverUrl          = util.CreateConnectionUrl(connectionSettings)
-
-		ctx, cancel = signal.NotifyContext(context.Background(), os.Interrupt)
 	)
-
 	defer cancel()
 
+	// Load/initialize a database for EVSE, tags, users and settings
+	db := database.Get()
+
+	tagManager := auth.NewTagManager(db)
+
+	// Setup OCPP configuration from the database.
+	s.SetupOcppConfiguration(db, configuration.ProtocolVersion(protocolVersion), core.ProfileName, reservation.ProfileName, remotetrigger.ProfileName, localauth.ProfileName)
+
 	// Create the logger
-	logging.Setup(logger, config.ChargePoint.Logging, isDebug)
+	logging.Setup(logger, config.ChargePoint.Logging, debug)
 
-	// Setup OCPP configuration variables manager
-	s.SetupOcppConfigurationManager(
-		configurationFilePath,
-		configuration.ProtocolVersion(connectionSettings.ProtocolVersion),
-		core.ProfileName,
-		reservation.ProfileName,
-		remotetrigger.ProfileName,
-		localauth.ProfileName,
-	)
-
-	// Load the local auth list of tags
-	go func() {
-		err := tagManager.ReadLocalAuthList()
-		if err != nil {
-			logger.WithError(err).Error("Cannot read local auth list")
-		}
-	}()
-
-	// Add EVSEs, they will run standalone
-	err := manager.AddEVSEsFromSettings(ctx, chargePointInfo.MaxChargingTime, connectors)
+	// Initialize all the EVSEs, if there are any
+	err := evseManager.InitAll(ctx)
 	if err != nil {
 		logger.WithError(err).Fatal("Cannot add EVSEs")
 	}
 
-	// Create a new context just for the OCPP connection, so it can be dynamically rebooted
+	// Create a context for the OCPP connection, so it can be dynamically reconnected.
 	parentCtxForOcpp, parentCancel := context.WithCancel(ctx)
 	defer parentCancel()
 
 	// Create a Charge point and connect
-	handler = CreateChargePoint(parentCtxForOcpp, protocolVersion, logger, manager, sch, tagManager, hardware)
+	handler = CreateChargePoint(parentCtxForOcpp, protocolVersion, logger, evseManager, tagManager, hardware)
 	handler.SetSettings(chargePointInfo)
 	handler.SetConnectionSettings(connectionSettings)
 
-	go handler.ListenForConnectorStatusChange(ctx, manager.GetNotificationChannel())
+	go handler.ListenForConnectorStatusChange(ctx, evseManager.GetNotificationChannel())
 	go handler.Connect(parentCtxForOcpp, serverUrl)
 
 	// Setup User API
-	SetupUserApi(config.Api, handler, tagManager, manager, ocppVariableManager)
+	ocppVariableManager := ocppConfigManager.GetManager()
+	SetupUserApi(db, config.Api, handler, tagManager, evseManager, ocppVariableManager)
 
 	<-ctx.Done()
 	handler.CleanUp(core.ReasonLocal)
 	time.Sleep(time.Millisecond * 500)
+	logger.Info("Exiting..")
 }

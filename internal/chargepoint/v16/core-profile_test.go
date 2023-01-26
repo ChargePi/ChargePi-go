@@ -1,6 +1,8 @@
 package v16
 
 import (
+	"testing"
+
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
@@ -10,7 +12,6 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/test"
 	ocppManager "github.com/xBlaz3kx/ocppManager-go"
 	"github.com/xBlaz3kx/ocppManager-go/configuration"
-	"testing"
 )
 
 type coreTestSuite struct {
@@ -21,7 +22,7 @@ type coreTestSuite struct {
 func (s *coreTestSuite) SetupTest() {
 	s.cp = &ChargePoint{
 		chargePoint: nil,
-		scheduler:   scheduler.GetScheduler(),
+		scheduler:   scheduler.NewScheduler(),
 		logger:      log.StandardLogger(),
 	}
 }

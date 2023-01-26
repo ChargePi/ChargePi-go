@@ -1,7 +1,13 @@
 package evse
 
 import (
+	"errors"
+
 	"github.com/xBlaz3kx/ChargePi-go/pkg/evcc"
+)
+
+var (
+	ErrConnectorExists = errors.New("connector already exists")
 )
 
 func (evse *Impl) Lock() {
@@ -20,7 +26,7 @@ func (evse *Impl) AddConnector(connector Connector) error {
 	for _, c := range evse.connectors {
 		// Do not add if they're the same connector
 		if c.ConnectorId == connector.ConnectorId {
-			return nil
+			return ErrConnectorExists
 		}
 	}
 

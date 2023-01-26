@@ -54,11 +54,12 @@ func CreateNewConnectorMock(evseId, connectorId int, session session.Session) *t
 func (suite *connectorManagerTestSuite) SetupTest() {
 	suite.connectorManager = NewManager(nil)
 
+	started := time.Now().Add(-5 * time.Minute)
 	suite.chSession = session.Session{
 		IsActive:      true,
 		TransactionId: "transaction123",
 		TagId:         "tagId",
-		Started:       time.Now().Add(-5 * time.Minute).Format(time.RFC3339),
+		Started:       &started,
 		Consumption:   nil,
 	}
 
@@ -136,26 +137,6 @@ func (suite *connectorManagerTestSuite) TestAddConnectorFromSettings() {
 		return
 	}
 
-	// Try to add duplicate connector
-	err := suite.connectorManager.AddEVSEFromSettings(nil, nil, suite.connectorSettings)
-	suite.Require().Error(err)
-
-	// Try to add another connector
-	err = suite.connectorManager.AddEVSEFromSettings(nil, nil, &settings.EVSE{
-		EvseId:  2,
-		Status:  "Available",
-		Session: settings.Session{},
-		EVCC: settings2.EVCC{
-			RelayPin:     23,
-			InverseLogic: false,
-		},
-		PowerMeter: settings2.PowerMeter{},
-	})
-	suite.Require().NoError(err)
-
-	// Try to add another connector
-	err = suite.connectorManager.AddEVSEFromSettings(nil, nil, nil)
-	suite.Require().Error(err)
 }
 
 func (suite *connectorManagerTestSuite) TestGetConnectors() {

@@ -1,21 +1,14 @@
 package auth
 
 import (
+	"encoding/json"
 	"errors"
-	"github.com/agrison/go-commons-lang/stringUtils"
-	"github.com/kkyr/fig"
+	"fmt"
+
+	"github.com/dgraph-io/badger/v3"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/localauth"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
-	settingsData "github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
-	"path/filepath"
-	"strings"
-	"sync"
-)
-
-const (
-	VersionKey = "LocalAuthListVersion"
 )
 
 var (
@@ -33,25 +26,29 @@ type (
 		SetMaxTags(number int)
 		GetVersion() int
 		SetVersion(version int)
-		LoadFromFile() error
-		WriteToFile() error
 	}
 
 	LocalAuthListImpl struct {
-		filePath string
-		tags     sync.Map
-		numTags  int
-		maxTags  int
+		db      *badger.DB
+		numTags int
+		maxTags int
 	}
 )
 
-func NewLocalAuthList(filePath string, maxTags int) *LocalAuthListImpl {
+func NewLocalAuthList(db *badger.DB, maxTags int) *LocalAuthListImpl {
 	return &LocalAuthListImpl{
-		numTags:  0,
-		filePath: filePath,
-		tags:     sync.Map{},
-		maxTags:  maxTags,
+		db:      db,
+		numTags: 0,
+		maxTags: maxTags,
 	}
+}
+
+func getLocalAuthTagPrefix(tagId string) []byte {
+	return []byte(fmt.Sprintf("auth-tag-%s", tagId))
+}
+
+func getLocalAuthVersion() []byte {
+	return []byte("auth-version")
 }
 
 // AddTag Add a tag to the global authorization cache.
@@ -60,40 +57,76 @@ func (l *LocalAuthListImpl) AddTag(tagId string, tagInfo *types.IdTagInfo) error
 		return ErrTagLimitReached
 	}
 
-	// Add a tag if it doesn't exist in the cache already
-	l.tags.Store(tagId, *tagInfo)
-	// Update the file
-	return l.WriteToFile()
+	return l.db.Update(func(txn *badger.Txn) error {
+		_, err := txn.Get(getLocalAuthTagPrefix(tagId))
+		if err != badger.ErrKeyNotFound {
+			return err
+		}
+
+		authTag := getTag(tagId, tagInfo)
+		if authTag != nil {
+			return nil
+		}
+
+		err = txn.Set(getLocalAuthTagPrefix(tagId), authTag)
+		if err != nil {
+			return err
+		}
+
+		return txn.Commit()
+	})
 }
 
 // RemoveTag Remove a tag from the global authorization cache.
 func (l *LocalAuthListImpl) RemoveTag(tagId string) error {
-	l.tags.Delete(tagId)
-	return nil
+	logInfo := log.WithField("tagId", tagId)
+	logInfo.Debug("Removing a tag from local auth list")
+
+	return l.db.Update(func(txn *badger.Txn) error {
+		err := txn.Delete(getLocalAuthTagPrefix(tagId))
+		if err != nil {
+			return err
+		}
+
+		return txn.Commit()
+	})
 }
 
 // RemoveAll Remove all tags.
 func (l *LocalAuthListImpl) RemoveAll() {
-	version, isVersionFound := l.tags.Load(VersionKey)
-	if !isVersionFound {
-		version = 1
-	}
 
-	l.tags = sync.Map{}
-	l.SetVersion(version.(int))
 }
 
 // GetTag Get a tag
 func (l *LocalAuthListImpl) GetTag(tagId string) (*types.IdTagInfo, error) {
-	log.Infof("Fetching the tag %s", tagId)
+	logInfo := log.WithField("tag", tagId)
+	logInfo.Info("Fetching the tag")
 
-	tagObject, isFound := l.tags.Load(tagId)
-	if isFound {
-		tagInfo := tagObject.(types.IdTagInfo)
-		return &tagInfo, nil
+	var tagInfo localauth.AuthorizationData
+	err := l.db.View(func(txn *badger.Txn) error {
+		item, err := txn.Get(getLocalAuthTagPrefix(tagId))
+		if err != badger.ErrKeyNotFound {
+			return err
+		}
+
+		b, err := item.ValueCopy(nil)
+		if err != nil {
+			return err
+		}
+
+		err = json.Unmarshal(b, &tagInfo)
+		if err != nil {
+			return err
+		}
+
+		return txn.Commit()
+	})
+	if err != nil {
+		logInfo.WithError(err).Error("Error fetching local auth tags")
+		return nil, err
 	}
 
-	return nil, ErrTagNotFound
+	return tagInfo.IdTagInfo, nil
 }
 
 // GetTags Get all stored tags.
@@ -101,112 +134,71 @@ func (l *LocalAuthListImpl) GetTags() []localauth.AuthorizationData {
 	log.Infof("Fetching tags")
 	var tags []localauth.AuthorizationData
 
-	l.tags.Range(func(key, value interface{}) bool {
-		if !stringUtils.Contains(key.(string), VersionKey) {
-			tagInfo := value.(types.IdTagInfo)
-			tag := localauth.AuthorizationData{
-				IdTag:     key.(string),
-				IdTagInfo: &tagInfo,
-			}
+	err := l.db.View(func(txn *badger.Txn) error {
+		it := txn.NewIterator(badger.DefaultIteratorOptions)
+		defer it.Close()
 
-			tags = append(tags, tag)
+		prefix := getLocalAuthTagPrefix("")
+		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+			var data localauth.AuthorizationData
+			item := it.Item()
+
+			// Value should be the AuthorizationData struct.
+			err := item.Value(func(v []byte) error {
+				return json.Unmarshal(v, &data)
+			})
+			if err != nil {
+				continue
+			}
 		}
 
-		return false
+		return txn.Commit()
 	})
+	if err != nil {
+		log.WithError(err).Error("Error fetching local auth tags")
+	}
 
 	return tags
 }
 
 func (l *LocalAuthListImpl) UpdateTag(tagId string, tagInfo *types.IdTagInfo) error {
-	//TODO implement me
-	panic("implement me")
+	logInfo := log.WithField("tagId", tagId)
+	logInfo.Info("Updating tag")
+
+	return l.db.Update(func(txn *badger.Txn) error {
+		// todo
+		return txn.Commit()
+	})
 }
 
 func (l *LocalAuthListImpl) GetVersion() int {
-	version, isVersionFound := l.tags.Load(VersionKey)
-	if isVersionFound {
-		return version.(int)
+	version := -1
+	err := l.db.View(func(txn *badger.Txn) error {
+		// todo
+		return txn.Commit()
+	})
+	if err != nil {
+		return -1
 	}
 
-	return 0
+	return version
 }
 
 func (l *LocalAuthListImpl) SetVersion(version int) {
-	l.tags.Store(VersionKey, version)
+	logInfo := log.WithField("version", version)
+	logInfo.Info("Updating list version")
+
+	err := l.db.Update(func(txn *badger.Txn) error {
+		// todo
+		return txn.Commit()
+	})
+	if err != nil {
+		logInfo.WithError(err).Error("Error updating list version")
+	}
 }
 
 func (l *LocalAuthListImpl) SetMaxTags(number int) {
 	if number > 0 {
 		l.maxTags = number
-	}
-}
-
-// LoadFromFile loads tags from the cache file
-func (l *LocalAuthListImpl) LoadFromFile() error {
-	var (
-		auth settingsData.LocalAuthListFile
-		err  error
-	)
-
-	err = fig.Load(&auth,
-		fig.File(filepath.Base(l.filePath)),
-		fig.Dirs(filepath.Dir(l.filePath)))
-	if err != nil {
-		//todo temporary fix - tags with ExpiryDate won't unmarshall successfully
-		log.WithError(err).Errorf("Unable to load authorization file")
-		return err
-	}
-
-	l.tags.Store(VersionKey, auth.Version)
-
-	loadTags(&l.tags, auth.Tags)
-	l.numTags = len(auth.Tags)
-
-	log.WithField("version", auth.Version).Infof("Read local authorization file")
-	return nil
-}
-
-func (l *LocalAuthListImpl) WriteToFile() error {
-	log.Debug("Writing local authorization list to a file")
-	var (
-		authTags                []settingsData.Tag
-		version, isVersionFound = l.tags.Load(VersionKey)
-	)
-
-	if !isVersionFound {
-		version = 1
-	}
-
-	l.tags.Range(func(key, value interface{}) bool {
-		if !strings.Contains(key.(string), VersionKey) {
-			tag := settingsData.Tag{
-				TagId:   key.(string),
-				TagInfo: value.(types.IdTagInfo),
-			}
-			authTags = append(authTags, tag)
-		}
-
-		return false
-	})
-
-	err := util.WriteToFile(l.filePath, settingsData.LocalAuthListFile{
-		Version: version.(int),
-		Tags:    authTags,
-	})
-	if err != nil {
-		log.WithError(err).Errorf("Error updating local auth list file")
-	}
-
-	return err
-}
-
-// loadTags loads the tags into the cache
-func loadTags(cache *sync.Map, tags []settingsData.Tag) {
-	if tags != nil {
-		for _, tag := range tags {
-			log.Tracef("Adding tag: %v", tag)
-			cache.Store(tag.TagId, tag.TagInfo)
-		}
 	}
 }

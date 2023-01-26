@@ -8,3 +8,4 @@
 
 .idea
 configs
+!configs/casbin/*

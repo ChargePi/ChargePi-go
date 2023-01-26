@@ -14,14 +14,14 @@ type (
 		UpdateUser(username string, password, role *string) (*models.User, error)
 		DeleteUser(username string) error
 	}
+
+	UserService struct {
+		database database.Database
+		enforcer *casbin.Enforcer
+	}
 )
 
-type UserService struct {
-	database database.Database
-	enforcer *casbin.Enforcer
-}
-
-func NewUserService(db database.Database, enforcer *casbin.Enforcer) *UserService {
+func NewUserService(db database.Database) *UserService {
 	/*opts := badgerhold.DefaultOptions
 	store, err := badgerhold.Open(opts)
 	if err != nil {
@@ -44,7 +44,6 @@ func NewUserService(db database.Database, enforcer *casbin.Enforcer) *UserServic
 
 	return &UserService{
 		database: db,
-		enforcer: enforcer,
 	}
 }
 
@@ -82,6 +81,10 @@ func (u *UserService) AddUser(username, password, role string) error {
 		Role:     role,
 	}
 
+	err := validateRole(role)
+	if err != nil {
+		return err
+	}
 	// todo check for access
 
 	/*enforce, err := u.enforcer.Enforce(username)
@@ -100,7 +103,14 @@ func (u *UserService) UpdateUser(username string, password, role *string) (*mode
 		return nil, err
 	}*/
 
-	iUser := models.User{Username: username, Password: *password, Role: *role}
+	if role != nil {
+		err := validateRole(*role)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	iUser := models.User{Username: username, Password: *password}
 	user, err := u.database.UpdateUser(iUser)
 	if err != nil {
 		return nil, err
@@ -118,4 +128,13 @@ func (u *UserService) DeleteUser(username string) error {
 	}*/
 
 	return u.database.DeleteUser(username)
+}
+
+func validateRole(role string) error {
+	switch models.Role(role) {
+	case models.Manufacturer, models.Technician, models.Observer:
+		return nil
+	default:
+		return nil
+	}
 }

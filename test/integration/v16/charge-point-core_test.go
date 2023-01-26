@@ -2,6 +2,9 @@ package v16
 
 import (
 	"context"
+	"strings"
+	"time"
+
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
@@ -9,8 +12,6 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
 	"github.com/xBlaz3kx/ChargePi-go/test"
 	ocppVar "github.com/xBlaz3kx/ocppManager-go/configuration"
-	"strings"
-	"time"
 )
 
 func (s *chargePointTestSuite) TestStartStopTransaction() {
@@ -49,7 +50,7 @@ func (s *chargePointTestSuite) TestStartStopTransaction() {
 	s.manager.On("StopAllEVSEs").Return()
 	s.manager.On("AddEVSE", conn).Return(nil)
 	s.manager.On("AddEVSEFromSettings", mock.Anything).Return(nil)
-	s.manager.On("AddEVSEsFromSettings", mock.Anything).Return(nil)
+	s.manager.On("ImportFromSettings", mock.Anything).Return(nil)
 	s.manager.On("RestoreEVSEStatus", mock.Anything).Return(nil)
 	s.manager.On("SetNotificationChannel").Return()
 
@@ -61,7 +62,7 @@ func (s *chargePointTestSuite) TestStartStopTransaction() {
 	go func() {
 		time.Sleep(time.Second * 3)
 
-		//todo start charging
+		// todo start charging
 
 		// Redeclare expectations
 		s.manager.On("FindEVSEWithTagId", tagId).Return(conn)
@@ -127,7 +128,7 @@ func (s *chargePointTestSuite) TestStartStopTransactionWithReader() {
 	s.manager.On("StopAllEVSEs").Return()
 	s.manager.On("AddEVSE", conn).Return(nil)
 	s.manager.On("AddEVSEFromSettings", mock.Anything).Return(nil)
-	s.manager.On("AddEVSEsFromSettings", mock.Anything).Return(nil)
+	s.manager.On("ImportFromSettings", mock.Anything).Return(nil)
 	s.manager.On("RestoreEVSEStatus", mock.Anything).Return(nil)
 	s.manager.On("SetNotificationChannel").Return()
 
@@ -172,7 +173,7 @@ Loop:
 	}
 
 	cp.CleanUp("")
-	//s.tagReader.AssertCalled(s.T(), "ListenForTags")
+	// s.tagReader.AssertCalled(s.T(), "ListenForTags")
 }
 
 func (s *chargePointTestSuite) TestRemoteStartStopTransaction() {
@@ -211,7 +212,7 @@ func (s *chargePointTestSuite) TestRemoteStartStopTransaction() {
 	s.manager.On("StopAllEVSEs").Return()
 	s.manager.On("AddEVSE", conn).Return(nil)
 	s.manager.On("AddEVSEFromSettings", mock.Anything).Return(nil)
-	s.manager.On("AddEVSEsFromSettings", mock.Anything).Return(nil)
+	s.manager.On("ImportFromSettings", mock.Anything).Return(nil)
 	s.manager.On("RestoreEVSEStatus", mock.Anything).Return(nil)
 	s.manager.On("SetNotificationChannel").Return()
 
@@ -253,7 +254,7 @@ Loop:
 	}
 
 	cp.CleanUp("")
-	//s.tagReader.AssertCalled(s.T(), "ListenForTags")
+	// s.tagReader.AssertCalled(s.T(), "ListenForTags")
 }
 
 func (s *chargePointTestSuite) TestGetAndChangeConfiguration() {
@@ -264,7 +265,7 @@ func (s *chargePointTestSuite) TestGetAndChangeConfiguration() {
 	s.manager.On("GetEVSEs").Return([]evse.EVSE{})
 	s.manager.On("AddEVSE", mock.Anything).Return(nil)
 	s.manager.On("AddEVSEFromSettings", mock.Anything).Return(nil)
-	s.manager.On("AddEVSEsFromSettings", mock.Anything).Return(nil)
+	s.manager.On("ImportFromSettings", mock.Anything).Return(nil)
 	s.manager.On("RestoreEVSEStatus", mock.Anything).Return(nil)
 	s.manager.On("SetNotificationChannel").Return()
 

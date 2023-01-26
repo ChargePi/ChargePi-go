@@ -1,11 +1,13 @@
 package auth
 
 import (
+	"encoding/json"
 	"fmt"
+
+	"github.com/dgraph-io/badger/v3"
+	"github.com/lorenzodonini/ocpp-go/ocpp1.6/localauth"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
-	goCache "github.com/patrickmn/go-cache"
 	log "github.com/sirupsen/logrus"
-	"time"
 )
 
 type (
@@ -14,77 +16,76 @@ type (
 		GetTag(tagId string) (*types.IdTagInfo, error)
 		SetMaxCachedTags(number int)
 		RemoveCachedTags()
-		LoadFromFile() error
-		WriteToFile() error
 	}
 
 	CacheImpl struct {
-		cache   *goCache.Cache
+		db      *badger.DB
 		maxTags int
 	}
 )
 
-func NewAuthCache() *CacheImpl {
+func NewAuthCache(db *badger.DB) *CacheImpl {
 	return &CacheImpl{
-		cache:   goCache.New(goCache.NoExpiration, time.Minute*3),
+		db:      db,
 		maxTags: 0,
 	}
 }
 
+func getTagPrefix(tagId string) []byte {
+	return []byte(fmt.Sprintf("cached-tag-%s", tagId))
+}
+
 // AddTag Add a tag to the authorization cache.
 func (c *CacheImpl) AddTag(tagId string, tagInfo *types.IdTagInfo) {
-	logInfo := log.WithFields(log.Fields{
-		"tagId":      tagId,
-		"tagDetails": tagInfo,
-	})
-	expirationTime := goCache.NoExpiration
-
-	// Check if the cache is not full
-	if c.cache.ItemCount() >= c.maxTags {
-		return
-	}
-
-	if tagInfo.ExpiryDate != nil {
-		expirationTime = tagInfo.ExpiryDate.Sub(time.Now())
-	}
+	logInfo := log.WithField("tagId", tagId)
+	logInfo.Debug("Adding a tag to cache")
 
 	// Add a tag if it doesn't exist in the cache already
-	logInfo.Debug("Adding a tag to cache")
-	err := c.cache.Add(fmt.Sprintf("AuthTag%s", tagId), *tagInfo, expirationTime)
+	err := c.db.Update(func(txn *badger.Txn) error {
+		_, err := txn.Get(getTagPrefix(tagId))
+		if err != badger.ErrKeyNotFound {
+			return err
+		}
+
+		authTag := getTag(tagId, tagInfo)
+		if authTag != nil {
+			return nil
+		}
+
+		err = txn.Set(getTagPrefix(tagId), authTag)
+		if err != nil {
+			return err
+		}
+
+		return txn.Commit()
+	})
 	if err != nil {
-		logInfo.WithError(err).Errorf("Error adding tag to cache")
+		logInfo.WithError(err).Error("Error adding tag to cache")
 		return
 	}
-
-	defer func(c *CacheImpl) {
-		err := c.WriteToFile()
-		if err != nil {
-
-		}
-	}(c)
 }
 
 // RemoveTag Remove a tag from the authorization cache.
 func (c *CacheImpl) RemoveTag(tagId string) {
-	log.WithField("tagId", tagId).Debug("Removing a tag from cache")
-	c.cache.Delete(fmt.Sprintf("AuthTag%s", tagId))
-	defer func(c *CacheImpl) {
-		err := c.WriteToFile()
-		if err != nil {
+	logInfo := log.WithField("tagId", tagId)
+	logInfo.Debug("Removing a tag from cache")
 
+	err := c.db.Update(func(txn *badger.Txn) error {
+		err := txn.Delete(getTagPrefix(tagId))
+		if err != nil {
+			return err
 		}
-	}(c)
+
+		return txn.Commit()
+	})
+	if err != nil {
+		logInfo.WithError(err).Error("Error removing tag from cache")
+	}
 }
 
 // RemoveCachedTags Remove all Tags from the authorization cache.
 func (c *CacheImpl) RemoveCachedTags() {
 	log.Debugf("Flushing auth cache")
-	c.cache.Flush()
-
-	err := c.WriteToFile()
-	if err != nil {
-
-	}
 }
 
 // SetMaxCachedTags Set the maximum number of Tags allowed in the authorization cache.
@@ -97,23 +98,47 @@ func (c *CacheImpl) SetMaxCachedTags(number int) {
 
 // GetTag Get a tag from cache
 func (c *CacheImpl) GetTag(tagId string) (*types.IdTagInfo, error) {
-	log.WithField("tagId", tagId).Info("Getting a tag from cache")
+	logInfo := log.WithField("tagId", tagId)
+	logInfo.Info("Getting a tag from cache")
 
-	tagObject, isFound := c.cache.Get(fmt.Sprintf("AuthTag%s", tagId))
-	if isFound {
-		tagInfo := tagObject.(types.IdTagInfo)
-		return &tagInfo, nil
+	var tagInfo localauth.AuthorizationData
+
+	err := c.db.View(func(txn *badger.Txn) error {
+		item, err := txn.Get(getTagPrefix(tagId))
+		if err != badger.ErrKeyNotFound {
+			return err
+		}
+
+		b, err := item.ValueCopy(nil)
+		if err != nil {
+			return err
+		}
+
+		err = json.Unmarshal(b, &tagInfo)
+		if err != nil {
+			return err
+		}
+
+		return txn.Commit()
+	})
+	if err != nil {
+		logInfo.WithError(err).Errorf("Error getting tag from cache")
+		return nil, err
 	}
 
-	return nil, ErrTagNotFound
+	return tagInfo.IdTagInfo, nil
 }
 
-func (c *CacheImpl) LoadFromFile() error {
-	log.Info("Loading auth cache from file")
-	return nil
-}
+func getTag(tagId string, tagInfo *types.IdTagInfo) []byte {
+	authTag := localauth.AuthorizationData{
+		IdTag:     tagId,
+		IdTagInfo: tagInfo,
+	}
 
-func (c *CacheImpl) WriteToFile() error {
-	log.Debug("Writing auth cache to a file")
-	return nil
+	tag, err := json.Marshal(authTag)
+	if err != nil {
+		return nil
+	}
+
+	return tag
 }

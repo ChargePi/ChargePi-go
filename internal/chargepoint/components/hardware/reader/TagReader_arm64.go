@@ -6,10 +6,11 @@ package reader
 import (
 	"context"
 	"encoding/hex"
+	"time"
+
 	"github.com/clausecker/nfc/v2"
 	log "github.com/sirupsen/logrus"
 	"github.com/warthog618/gpiod"
-	"time"
 )
 
 var (
@@ -26,23 +27,35 @@ var (
 )
 
 type TagReader struct {
-	TagChannel    chan string
-	reader        *nfc.Device
-	DeviceAddress string
-	ResetPin      int
+	tagChannel chan string
+	reader     *nfc.Device
+	devAddress string
+	resetPin   int
+	deviceType string
+}
+
+func NewReader(device, deviceType string, resetPin int) (*TagReader, error) {
+	tagChannel := make(chan string, 5)
+
+	return &TagReader{
+		tagChannel: tagChannel,
+		devAddress: device,
+		resetPin:   resetPin,
+		deviceType: deviceType,
+	}, nil
 }
 
 // init Initialize the NFC/RFID tag reader. Establish the connection and set up the reader.
 func (reader *TagReader) init() {
-	dev, err := nfc.Open(reader.DeviceAddress)
+	dev, err := nfc.Open(reader.devAddress)
 	if err != nil {
-		log.Fatalf("Cannot communicate with reader")
+		log.Panic("Cannot communicate with reader")
 	}
 
 	reader.reader = &dev
 	err = reader.reader.InitiatorInit()
 	if err != nil {
-		log.Fatal("Failed to initialize reader")
+		log.Panic("Failed to initialize reader")
 	}
 }
 
@@ -108,7 +121,7 @@ Listener:
 					continue
 				}
 
-				reader.TagChannel <- UID
+				reader.tagChannel <- UID
 			}
 
 			time.Sleep(time.Millisecond * 200)
@@ -117,41 +130,42 @@ Listener:
 }
 
 func (reader *TagReader) GetTagChannel() <-chan string {
-	return reader.TagChannel
+	return reader.tagChannel
 }
 
 func (reader *TagReader) GetType() string {
-	return PN532
+	return reader.deviceType
 }
 
 // Cleanup Close the reader device connection.
 func (reader *TagReader) Cleanup() {
-	close(reader.TagChannel)
+	close(reader.tagChannel)
 	reader.reader.Close()
 }
 
-// Reset Implements the hardware reset by pulling the ResetPin low and then releasing.
+// Reset Implements the hardware reset by pulling the resetPin low and then releasing.
 func (reader *TagReader) Reset() {
 	log.Infof("Resetting the reader")
+
 	// Refer to gpiod docs
 	c, err := gpiod.NewChip("gpiochip0")
-	pin, err := c.RequestLine(reader.ResetPin, gpiod.AsOutput(1))
+	pin, err := c.RequestLine(reader.resetPin, gpiod.AsOutput(1))
 	if err != nil {
-		log.Errorf("%v", err)
+		log.WithError(err).Error("Error requesting the reset line")
 		return
 	}
 
 	time.Sleep(time.Millisecond * 300)
 	err = pin.SetValue(0)
 	if err != nil {
-		log.Errorf("%v", err)
+		log.WithError(err).Error("Error requesting the reset line")
 		return
 	}
 
 	time.Sleep(time.Millisecond * 300)
 	err = pin.SetValue(1)
 	if err != nil {
-		log.Errorf("%v", err)
+		log.WithError(err).Error("Error requesting the reset line")
 		return
 	}
 }

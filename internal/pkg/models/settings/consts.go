@@ -1,9 +1,11 @@
 package settings
 
+const DatabasePath = "/tmp/chargepi"
+
 const (
-	currentFolder = "./configs"
-	evseFolder    = "./configs/evses"
-	dockerFolder  = "/etc/ChargePi/configs"
+	CurrentFolder = "./configs"
+	EvseFolder    = "./configs/evses"
+	DockerFolder  = "/etc/ChargePi/configs"
 )
 
 // Configuration variables
@@ -12,7 +14,6 @@ const (
 	Vendor          = "chargepoint.info.ocpp.vendor"
 	MaxChargingTime = "chargepoint.info.maxChargingTime"
 	ProtocolVersion = "chargepoint.info.protocolVersion"
-	LoggingFormat   = "chargepoint.logging.format"
 
 	Debug      = "debug"
 	ApiEnabled = "api.enabled"

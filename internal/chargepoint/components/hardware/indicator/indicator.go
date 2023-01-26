@@ -2,6 +2,7 @@ package indicator
 
 import (
 	"errors"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 )
@@ -50,7 +51,7 @@ func NewIndicator(stripLength int, indicator settings.LedIndicator) Indicator {
 		log.Infof("Preparing Indicator from config: %s", indicator.Type)
 		switch indicator.Type {
 		case TypeWS281x:
-			ledStrip, ledError := NewWS281xStrip(stripLength, indicator.DataPin)
+			ledStrip, ledError := NewWS281xStrip(stripLength, *indicator.DataPin)
 			if ledError != nil {
 				log.WithError(ledError).Errorf("Error creating indicator")
 				return nil

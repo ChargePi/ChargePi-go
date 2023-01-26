@@ -4,7 +4,6 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
 )
 
 func (evse *Impl) IsAvailable() bool {
@@ -55,10 +54,9 @@ func (evse *Impl) SetStatus(status core.ChargePointStatus, errCode core.ChargePo
 	evse.mu.Lock()
 	defer evse.mu.Unlock()
 
-	// Update the status in a file
+	// todo Update the status in a file
 	evse.status = status
 	evse.errorCode = errCode
-	settings.UpdateEVSEStatus(evse.evseId, status)
 
 	// Notify the channel that a status was updated
 	if evse.notificationChannel != nil {

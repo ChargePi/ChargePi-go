@@ -14,11 +14,9 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
 )
 
-type (
-	EvseMock struct {
-		mock.Mock
-	}
-)
+type EvseMock struct {
+	mock.Mock
+}
 
 func (m *EvseMock) Init(ctx context.Context) error {
 	return m.Called().Error(0)

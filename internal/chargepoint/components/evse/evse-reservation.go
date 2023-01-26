@@ -31,9 +31,7 @@ func (evse *Impl) RemoveReservation() error {
 		return ErrInvalidStatus
 	}
 
-	logInfo := log.WithFields(log.Fields{
-		"evseId": evse.evseId,
-	})
+	logInfo := log.WithField("evseId", evse.evseId)
 	logInfo.Debugf("Removing reservation")
 
 	evse.reservationId = nil

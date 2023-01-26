@@ -2,6 +2,7 @@ package display
 
 import (
 	"errors"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
@@ -18,15 +19,13 @@ var (
 	ErrDisplayDisabled          = errors.New("display disabled")
 )
 
-type (
-	// Display is an abstraction layer for concrete implementation of a display.
-	Display interface {
-		DisplayMessage(message notifications.Message)
-		Cleanup()
-		Clear()
-		GetType() string
-	}
-)
+// Display is an abstraction layer for concrete implementation of a display.
+type Display interface {
+	DisplayMessage(message notifications.Message)
+	Cleanup()
+	Clear()
+	GetType() string
+}
 
 // NewDisplay returns a concrete implementation of an Display based on the drivers that are supported.
 // The Display is built with the settings from the settings file.

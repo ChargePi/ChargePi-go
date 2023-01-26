@@ -2,6 +2,7 @@ package test
 
 import (
 	"context"
+
 	"github.com/stretchr/testify/mock"
 )
 
@@ -23,4 +24,8 @@ func (r *ReaderMock) Reset() {
 
 func (r *ReaderMock) GetTagChannel() <-chan string {
 	return r.Called().Get(0).(chan string)
+}
+
+func (r *ReaderMock) GetType() string {
+	return r.Called().String(0)
 }

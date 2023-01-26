@@ -32,7 +32,7 @@ func (reader *TagReader) Cleanup() {
 	close(reader.TagChannel)
 }
 
-// Reset Implements the hardware reset by pulling the ResetPin low and then releasing.
+// Reset Implements the hardware reset by pulling the resetPin low and then releasing.
 func (reader *TagReader) Reset() {
 }
 

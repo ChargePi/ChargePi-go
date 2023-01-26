@@ -73,8 +73,8 @@ func (evse *Impl) SamplePowerMeter(measurands []types.Measurand) {
 	evse.session.AddSampledValue(samples)
 }
 
-// preparePowerMeterAtConnector
-func (evse *Impl) preparePowerMeterAtConnector() error {
+// preparePowerMeter
+func (evse *Impl) preparePowerMeter() error {
 	if !evse.powerMeterEnabled || util.IsNilInterfaceOrPointer(evse.powerMeter) {
 		return ErrPowerMeterNotEnabled
 	}
@@ -91,7 +91,7 @@ func (evse *Impl) preparePowerMeterAtConnector() error {
 	}
 
 	// Schedule the sampling
-	_, err = scheduler.GetScheduler().Every(sampleTime).
+	_, err = scheduler.NewScheduler().Every(sampleTime).
 		Tag(jobTag).
 		Do(evse.SamplePowerMeter, measurands)
 

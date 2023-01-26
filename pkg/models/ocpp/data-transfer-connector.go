@@ -2,14 +2,14 @@ package ocpp
 
 type (
 	DataTransferEVSEInfo struct {
-		EvseId     int         `fig:"evseId" json:"evseId" yaml:"evseId" mapstructure:"evseId"`
-		MaxPower   float32     `fig:"maxPower" json:"maxPower,omitempty" yaml:"maxPower" mapstructure:"maxPower"`
-		Connectors []Connector `fig:"connectors" json:"connectors,omitempty" yaml:"connectors" mapstructure:"connectors"`
+		EvseId     int         `json:"evseId" yaml:"evseId" mapstructure:"evseId"`
+		MaxPower   float32     `json:"maxPower,omitempty" yaml:"maxPower" mapstructure:"maxPower"`
+		Connectors []Connector `json:"connectors,omitempty" yaml:"connectors" mapstructure:"connectors"`
 	}
 
 	Connector struct {
-		ConnectorId int    `fig:"ConnectorId" json:"ConnectorId,omitempty" yaml:"ConnectorId" mapstructure:"ConnectorId"`
-		Type        string `fig:"Type" json:"type,omitempty" yaml:"type" mapstructure:"type"`
+		ConnectorId int    `json:"connectorId,omitempty" yaml:"connectorId" mapstructure:"connectorId"`
+		Type        string `json:"type,omitempty" yaml:"type" mapstructure:"type"`
 	}
 )
 

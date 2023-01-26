@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/agrison/go-commons-lang/stringUtils"
+	"github.com/dgraph-io/badger/v3"
 	"github.com/go-playground/validator"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -26,9 +27,9 @@ func InitSettings(settingsFilePath string) {
 func readConfiguration(viper *viper.Viper, fileName, extension, filePath string) {
 	viper.SetConfigName(fileName)
 	viper.SetConfigType(extension)
-	viper.AddConfigPath(currentFolder)
-	viper.AddConfigPath(evseFolder)
-	viper.AddConfigPath(dockerFolder)
+	viper.AddConfigPath(settings.CurrentFolder)
+	viper.AddConfigPath(settings.EvseFolder)
+	viper.AddConfigPath(settings.DockerFolder)
 
 	if stringUtils.IsNotEmpty(filePath) {
 		viper.SetConfigFile(filePath)
@@ -49,28 +50,29 @@ func setupEnv() {
 }
 
 func setDefaults() {
-	viper.SetDefault(Model, "ChargePi")
-	viper.SetDefault(Vendor, "xBlaz3kx")
-	viper.SetDefault(MaxChargingTime, 180)
-	viper.SetDefault(ProtocolVersion, "1.6")
-	viper.SetDefault(LoggingFormat, "gelf")
+	viper.SetDefault(settings.Model, "ChargePi")
+	viper.SetDefault(settings.Vendor, "xBlaz3kx")
+	viper.SetDefault(settings.MaxChargingTime, 180)
+	viper.SetDefault(settings.ProtocolVersion, "1.6")
 }
 
-func SetupOcppConfigurationManager(filePath string, version configuration.ProtocolVersion, supportedProfiles ...string) {
-	ocppConfigManager.SetFilePath(filePath)
+func SetupOcppConfiguration(db *badger.DB, version configuration.ProtocolVersion, supportedProfiles ...string) {
+	// todo load the settings from database if they're stored. Else use defaults.
 	ocppConfigManager.SetVersion(version)
 	ocppConfigManager.SetSupportedProfiles(supportedProfiles...)
 
-	// Load the configuration
-	err := ocppConfigManager.LoadConfiguration()
+	err := ocppConfigManager.GetManager().SetConfiguration(configuration.Config{})
 	if err != nil {
-		log.WithError(err).Fatalf("Cannot load OCPP configuration")
+		return
 	}
 }
 
 // GetSettings gets settings from cache or reads the settings file if the cached settings are not found.
 func GetSettings() *settings.Settings {
 	log.Debug("Fetching settings..")
+	// todo load settings from the database if they're presisted there.
+	// overwrite if they're already set from viper
+
 	var conf settings.Settings
 
 	err := viper.Unmarshal(&conf)

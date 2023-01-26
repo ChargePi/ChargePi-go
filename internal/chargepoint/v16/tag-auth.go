@@ -19,7 +19,7 @@ func (cp *ChargePoint) isTagAuthorized(tagId string) bool {
 		logInfo              = cp.logger.WithField("tag", tagId)
 	)
 
-	// If local authorization is enabled, get the tag details from cache or authList before requesting the
+	// When local authorization is enabled, get the tag details from the cache or authList before requesting the
 	// tag details from the backend.
 	if localPreAuthorize != nil && *localPreAuthorize == "true" {
 		logInfo.Infof("Authorizing tag %s with cache", tagId)
