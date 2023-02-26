@@ -99,8 +99,29 @@ func (b *UserDbBadger) AddUser(user models.User) error {
 }
 
 func (b *UserDbBadger) UpdateUser(user models.User) (*models.User, error) {
-	// todo
-	// b.db.NewTransaction(true).
+	err := b.db.Update(func(txn *badger.Txn) error {
+		// Check if user already exists
+		_, err := txn.Get(getUserKey(user.Username))
+		if err == nil {
+			return err
+		}
+
+		marshal, err := json.Marshal(user)
+		if err != nil {
+			return err
+		}
+
+		err = txn.Set(getUserKey(user.Username), marshal)
+		if err != nil {
+			return err
+		}
+
+		return txn.Commit()
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	return nil, nil
 }
 

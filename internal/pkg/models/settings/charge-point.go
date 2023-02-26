@@ -1,6 +1,8 @@
 package settings
 
-import "github.com/xBlaz3kx/ChargePi-go/pkg/models/ocpp"
+import (
+	"github.com/xBlaz3kx/ChargePi-go/pkg/models/ocpp"
+)
 
 type (
 	Settings struct {

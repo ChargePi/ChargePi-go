@@ -52,7 +52,8 @@ func setDefaults(viper *viper.Viper) {
 // GetSettings gets settings from cache or reads the settings file if the cached settings are not found.
 func GetSettings() *settings.Settings {
 	log.Debug("Fetching settings..")
-	// todo load settings from the database if they're presisted there.
+
+	// TODO load settings from the database if they're presisted there.
 	// overwrite if they're already set from viper
 
 	var conf settings.Settings

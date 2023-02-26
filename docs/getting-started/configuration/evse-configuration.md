@@ -1,20 +1,17 @@
-# 🔌 The `evse` file(s) - EVSE configuration
+# The EVSE configuration
 
-EVSE settings files can be found in the `evse` folder. To add and configure the EVSE, simply add a new file with the
-file structure as in the example. The client will scan the folder at boot, validate the configuration files and add the
-EVSE with the provided configuration.
+To add and configure the EVSEs, simply add a new file with the file structure as in the example. The client will scan
+the folder at boot, validate the configuration files and add the EVSE with the provided configuration.
 
 ## Attributes
 
-| Attribute  |                Description                |            Possible values             | 
-|:----------:|:-----------------------------------------:|:--------------------------------------:|
-|   evseId   |              ID of the EVSE               |                   >1                   |
+| Attribute  |                Description                | Possible values | 
+|:----------:|:-----------------------------------------:|:---------------:|
+|   evseId   |              ID of the EVSE               |       >1        |
 | connectors | List of available connectors for the EVSE ||
 |    evcc    |            Charging Controller            ||
-|   status   |            Status of the EVSE             | "Available", "Charging", "Faulted",... |
-|  session   |          Persistent session data          ||
 | powerMeter |    Power Meter configuration for EVSE     || 
-|  maxPower  |       Maximum power output for EVSE       |                   >0                   |
+|  maxPower  |       Maximum power output for EVSE       |       >0        |
 
 ### evcc
 
@@ -58,19 +55,17 @@ evcc:
   type: Relay
   relayPin: 26
   inverseLogic: false
-status: Available
-session:
-  isActive: false
-  transactionId: ''
-  tagId: ''
-  started: ''
-  consumption: [ ]
 powerMeter:
   enabled: false
   type: CS5460A
-  powerMeterPin: 25
-  spiBus: 0
-  consumption: 0
-  shuntOffset: 0.055
-  voltageDividerOffset: 1333
+  spi:
+    bus: 0
+    pin: 25
+  cs5460a:
+    shuntOffset: 0.055
+    voltageDividerOffset: 1333
 ```
+
+## Importing
+
+## Exporting

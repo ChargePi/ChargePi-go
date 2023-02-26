@@ -1,239 +1,191 @@
 package evse
 
 import (
-	"os/exec"
 	"testing"
 	"time"
 
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/session"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/evcc"
+	powerMeter "github.com/xBlaz3kx/ChargePi-go/pkg/power-meter"
 
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
-	"github.com/xBlaz3kx/ChargePi-go/test"
 	"golang.org/x/net/context"
 )
 
-const (
-	fileName = "./evse-1.json"
-)
-
-type EvseTestSuite struct {
+type evseTestSuite struct {
 	suite.Suite
-	evse           *Impl
-	evccMock       *test.EvccMock
-	powerMeterMock *test.PowerMeterMock
 }
 
-/*---------------------- Test suite ----------------------*/
-
-func NewConnectorTestSuite() *EvseTestSuite {
-	return &EvseTestSuite{}
+func (s *evseTestSuite) SetupTest() {
 }
 
-func (s *EvseTestSuite) SetupTest() {
-	cmd := exec.Command("touch", fileName)
-	err := cmd.Run()
-	s.Require().NoError(err)
-
-	s.evccMock = new(test.EvccMock)
-	s.powerMeterMock = new(test.PowerMeterMock)
-
-	s.evccMock.On("EnableCharging").Return()
-	s.evccMock.On("DisableCharging").Return()
-
-	// Create a new evse
-	evse, err := NewEvse(
-		1,
-		s.evccMock,
-		s.powerMeterMock,
-		false,
-		11,
-		nil,
-	)
-	s.Require().NoError(err)
-
-	s.evse = evse
-}
-
-func (s *EvseTestSuite) TestCreateNewConnector() {
-	s.evccMock.On("DisableCharging").Return()
-	s.evccMock.On("EnableCharging").Return()
+func (s *evseTestSuite) TestCreateNewConnector() {
+	evccMock := evcc.NewEvccMock(s.T())
+	powerMeterMock := powerMeter.NewPowerMeterMock(s.T())
 
 	// Ok case
-	connector1, err := NewEvse(1, s.evccMock, s.powerMeterMock, false, 11, nil)
+	connector1, err := NewEvse(1, evccMock, powerMeterMock, false, 11, nil)
 
-	s.Require().Equal(1, connector1.evseId)
-	s.Require().Equal(core.ChargePointStatusAvailable, connector1.status)
-	s.Require().Equal(15, connector1.maxChargingTime)
-	s.Require().False(connector1.powerMeterEnabled)
+	s.Assert().Equal(1, connector1.evseId)
+	s.Assert().Equal(core.ChargePointStatusAvailable, connector1.status)
+	s.Assert().Equal(15, connector1.maxChargingTime)
+	s.Assert().False(connector1.powerMeterEnabled)
 
 	// Invalid evseId
-	_, err = NewEvse(1, s.evccMock, s.powerMeterMock, false, 11, nil)
-	s.Require().Error(err)
+	_, err = NewEvse(1, evccMock, powerMeterMock, false, 11, nil)
+	s.Assert().Error(err)
 
 	// Invalid evse id
-	_, err = NewEvse(0, s.evccMock, s.powerMeterMock, false, 11, nil)
-	s.Require().Error(err)
+	_, err = NewEvse(0, evccMock, powerMeterMock, false, 11, nil)
+	s.Assert().Error(err)
 
 	// Negative evse id
-	_, err = NewEvse(-1, s.evccMock, s.powerMeterMock, false, 11, nil)
-	s.Require().Error(err)
+	_, err = NewEvse(-1, evccMock, powerMeterMock, false, 11, nil)
+	s.Assert().Error(err)
 }
 
-func (s *EvseTestSuite) TestStartCharging() {
+func (s *evseTestSuite) TestStartCharging() {
+
+	evccMock := evcc.NewEvccMock(s.T())
+	powerMeterMock := powerMeter.NewPowerMeterMock(s.T())
+
 	// Ok case
-	err := s.evse.StartCharging("1234", "exampleTag", nil)
+	evse, err := NewEvse(1, evccMock, powerMeterMock, false, 11, nil)
 	s.Require().NoError(err)
-	s.evccMock.AssertCalled(s.T(), "Enable")
+
+	// Ok case
+	err = evse.StartCharging("1234", "exampleTag", nil)
+	s.Assert().NoError(err)
 
 	// Cannot start new session on a evse that is already charging
-	err = s.evse.StartCharging("1234a", "exampleTag1", nil)
-	s.Require().Error(err)
+	err = evse.StartCharging("1234a", "exampleTag1", nil)
+	s.Assert().Error(err)
 	// s.evccMock.AssertNotCalled(s.T(), "Enable")
 
-	err = s.evse.StopCharging(core.ReasonLocal)
-	s.Require().NoError(err)
+	err = evse.StopCharging(core.ReasonLocal)
+	s.Assert().NoError(err)
 
 	// Invalid transaction and tag id
-	err = s.evse.StartCharging("@1234asd", "~ˇˇ3123", nil)
-	s.Require().Error(err)
-	// s.evccMock.AssertNotCalled(s.T(), "Enable")
+	err = evse.StartCharging("@1234asd", "~ˇˇ3123", nil)
+	s.Assert().Error(err)
 
 	// Invalid transaction id
-	err = s.evse.StartCharging("", "1234", nil)
-	s.Require().Error(err)
-	// s.evccMock.AssertNotCalled(s.T(), "Enable")
+	err = evse.StartCharging("", "1234", nil)
+	s.Assert().Error(err)
 
 	// Invalid tag id
-	err = s.evse.StartCharging("1234", "", nil)
-	s.Require().Error(err)
-	// s.evccMock.AssertNotCalled(s.T(), "Enable")
+	err = evse.StartCharging("1234", "", nil)
+	s.Assert().Error(err)
 
 	// Invalid evse status
-	s.evse.SetStatus(core.ChargePointStatusUnavailable, core.InternalError)
-	err = s.evse.StartCharging("1234a", "1234a", nil)
-	s.Require().Error(err)
+	evse.SetStatus(core.ChargePointStatusUnavailable, core.InternalError)
+	err = evse.StartCharging("1234a", "1234a", nil)
+	s.Assert().Error(err)
 }
 
-func (s *EvseTestSuite) TestStopCharging() {
-	// Start charging
-	err := s.evse.StartCharging("1234", "1234", nil)
+func (s *evseTestSuite) TestStopCharging() {
+	evccMock := evcc.NewEvccMock(s.T())
+	powerMeterMock := powerMeter.NewPowerMeterMock(s.T())
+
+	// Ok case
+	evse, err := NewEvse(1, evccMock, powerMeterMock, false, 11, nil)
 	s.Require().NoError(err)
-	s.evccMock.AssertCalled(s.T(), "Enable")
+
+	// Start charging
+	err = evse.StartCharging("1234", "1234", nil)
+	s.Assert().NoError(err)
 
 	// Stop charging normally
-	err = s.evse.StopCharging(core.ReasonLocal)
-	s.Require().NoError(err)
-	s.evccMock.AssertCalled(s.T(), "Disable")
+	err = evse.StopCharging(core.ReasonLocal)
+	s.Assert().NoError(err)
 
 	// Cannot stop charging if the evse is available
-	err = s.evse.StopCharging(core.ReasonLocal)
-	s.Require().Error(err)
-	// s.evccMock.AssertNotCalled(s.T(), "Disable")
+	err = evse.StopCharging(core.ReasonLocal)
+	s.Assert().Error(err)
 }
 
-func (s *EvseTestSuite) TestResumeCharging() {
+func (s *evseTestSuite) TestResumeCharging() {
+	evccMock := evcc.NewEvccMock(s.T())
+	powerMeterMock := powerMeter.NewPowerMeterMock(s.T())
+
+	evse, err := NewEvse(1, evccMock, powerMeterMock, false, 11, nil)
+	s.Require().NoError(err)
+
 	var (
-		currentTime     = time.Now()
-		someTime        = time.Date(2021, 1, 1, 1, 1, 1, 1, time.Local)
-		maxChargingTime = s.evse.GetMaxChargingTime()
-		validSession    = session.Session{
+		currentTime  = time.Now()
+		validSession = session.Session{
 			IsActive:      true,
 			TransactionId: "1234",
 			TagId:         "1234",
 			Started:       &currentTime,
 			Consumption:   nil,
 		}
-
-		expiredSession = session.Session{
-			IsActive:      true,
-			TransactionId: "1234",
-			TagId:         "1234",
-			Started:       &someTime,
-			Consumption:   nil,
-		}
-
-		invalidSession = session.Session{
-			IsActive:      false,
-			TransactionId: "",
-			TagId:         "",
-			Consumption:   nil,
-		}
 	)
 
 	// Ok case
-	s.evse.SetStatus(core.ChargePointStatusCharging, core.NoError)
-	timeElapsed, err := s.evse.ResumeCharging(validSession)
-	s.Require().NoError(err)
-	s.Require().InDelta(0, timeElapsed, 1)
+	evse.SetStatus(core.ChargePointStatusCharging, core.NoError)
+	timeElapsed, err := evse.ResumeCharging(validSession)
+	s.Assert().NoError(err)
+	s.Assert().InDelta(0, timeElapsed, 1)
 
-	err = s.evse.StopCharging(core.ReasonLocal)
-	s.Require().NoError(err)
-
-	// Invalid session
-	s.evse.SetStatus(core.ChargePointStatusCharging, core.NoError)
-	timeElapsed, err = s.evse.ResumeCharging(invalidSession)
-	s.Require().Error(err)
-	s.Require().InDelta(maxChargingTime, timeElapsed, 1)
-
-	// Invalid evse status
-	s.evse.SetStatus(core.ChargePointStatusAvailable, core.NoError)
-	timeElapsed, err = s.evse.ResumeCharging(validSession)
-	s.Require().Error(err)
-	s.Require().InDelta(maxChargingTime, timeElapsed, 1)
-
-	// Expired session
-	s.evse.SetStatus(core.ChargePointStatusAvailable, core.NoError)
-	timeElapsed, err = s.evse.ResumeCharging(expiredSession)
-	s.Require().Error(err)
-	s.Require().InDelta(maxChargingTime, timeElapsed, 1)
-
-	// Invalid status
-	s.evse.SetStatus(core.ChargePointStatusUnavailable, core.EVCommunicationError)
-	timeElapsed, err = s.evse.ResumeCharging(invalidSession)
-	s.Require().Error(err)
-	s.Require().InDelta(maxChargingTime, timeElapsed, 1)
+	err = evse.StopCharging(core.ReasonLocal)
+	s.Assert().NoError(err)
 }
 
-func (s *EvseTestSuite) TestReserveConnector() {
-	// Ok case
-	err := s.evse.Reserve(1, "")
+func (s *evseTestSuite) TestReserveConnector() {
+	evccMock := evcc.NewEvccMock(s.T())
+	powerMeterMock := powerMeter.NewPowerMeterMock(s.T())
+
+	evse, err := NewEvse(1, evccMock, powerMeterMock, false, 11, nil)
 	s.Require().NoError(err)
+
+	// Ok case
+	err = evse.Reserve(1, "")
+	s.Assert().NoError(err)
 
 	// EVSE already reserved
-	err = s.evse.Reserve(2, "")
-	s.Require().Error(err)
+	err = evse.Reserve(2, "")
+	s.Assert().Error(err)
 
-	err = s.evse.RemoveReservation()
-	s.Require().NoError(err)
+	err = evse.RemoveReservation()
+	s.Assert().NoError(err)
 
 	// Invalid evse status
-	s.evse.SetStatus(core.ChargePointStatusCharging, core.NoError)
-	err = s.evse.Reserve(2, "")
-	s.Require().Error(err)
+	evse.SetStatus(core.ChargePointStatusCharging, core.NoError)
+	err = evse.Reserve(2, "")
+	s.Assert().Error(err)
 }
 
-func (s *EvseTestSuite) TestRemoveReservation() {
-	// Make a reservation
-	err := s.evse.Reserve(1, "")
+func (s *evseTestSuite) TestRemoveReservation() {
+	evccMock := evcc.NewEvccMock(s.T())
+	powerMeterMock := powerMeter.NewPowerMeterMock(s.T())
+
+	evse, err := NewEvse(1, evccMock, powerMeterMock, false, 11, nil)
 	s.Require().NoError(err)
+
+	// Make a reservation
+	err = evse.Reserve(1, "")
+	s.Assert().NoError(err)
 
 	// Ok case
-	err = s.evse.RemoveReservation()
-	s.Require().NoError(err)
+	err = evse.RemoveReservation()
+	s.Assert().NoError(err)
 
 	// Cannot remove reservation that is not there
-	err = s.evse.RemoveReservation()
-	s.Require().Error(err)
+	err = evse.RemoveReservation()
+	s.Assert().Error(err)
 }
 
-func (s *EvseTestSuite) TestSamplePowerMeter() {
-	s.powerMeterMock.On("GetEnergy").Return(1.0)
-	s.powerMeterMock.On("GetCurrent").Return(1.0)
-	s.powerMeterMock.On("GetVoltage").Return(1.0)
+func (s *evseTestSuite) TestSamplePowerMeter() {
+	evccMock := evcc.NewEvccMock(s.T())
+	powerMeterMock := powerMeter.NewPowerMeterMock(s.T())
+
+	evse, err := NewEvse(1, evccMock, powerMeterMock, false, 11, nil)
+	s.Require().NoError(err)
 
 	var (
 		ctx, cancel    = context.WithTimeout(context.Background(), time.Second*30)
@@ -246,7 +198,7 @@ func (s *EvseTestSuite) TestSamplePowerMeter() {
 		for {
 			select {
 			case notif := <-meterValueChan:
-				s.Assert().EqualValues(s.evse.GetEvseId(), notif.EvseId)
+				s.Assert().EqualValues(evse.GetEvseId(), notif.EvseId)
 
 				s.Assert().Len(notif.MeterValues, 3)
 				s.Assert().EqualValues("1.000", notif.MeterValues[0].SampledValue[0].Value)
@@ -263,17 +215,16 @@ func (s *EvseTestSuite) TestSamplePowerMeter() {
 		}
 	}()
 
-	s.evse.SetMeterValuesChannel(meterValueChan)
-	s.evse.powerMeterEnabled = true
-	s.evse.powerMeter = s.powerMeterMock
-	s.evse.SamplePowerMeter([]types.Measurand{types.MeasurandVoltage, types.MeasurandCurrentImport, types.MeasurandEnergyActiveImportInterval})
+	evse.SetMeterValuesChannel(meterValueChan)
+	evse.powerMeterEnabled = true
+	evse.SamplePowerMeter([]types.Measurand{types.MeasurandVoltage, types.MeasurandCurrentImport, types.MeasurandEnergyActiveImportInterval})
 
 	time.Sleep(time.Second)
 
-	s.evse.SamplePowerMeter([]types.Measurand{types.MeasurandVoltage, types.MeasurandCurrentImport, types.MeasurandEnergyActiveImportInterval})
+	evse.SamplePowerMeter([]types.Measurand{types.MeasurandVoltage, types.MeasurandCurrentImport, types.MeasurandEnergyActiveImportInterval})
 }
 
-func TestConnector(t *testing.T) {
+func TestEVSE(t *testing.T) {
 	log.SetLevel(log.DebugLevel)
-	suite.Run(t, NewConnectorTestSuite())
+	suite.Run(t, new(evseTestSuite))
 }

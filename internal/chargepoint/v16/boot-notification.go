@@ -29,9 +29,9 @@ func (cp *ChargePoint) bootNotification() {
 	)
 
 	rescheduleBootNotification := func() {
-		_, err := cp.scheduler.Every(60).Seconds().LimitRunsTo(1).Tag("bootNotification").Do(cp.bootNotification)
+		_, err := cp.scheduler.Every(2).Minute().LimitRunsTo(1).Tag("bootNotification").Do(cp.bootNotification)
 		if err != nil {
-			cp.logger.WithError(err).Errorf("Error scheduling heartbeat")
+			cp.logger.WithError(err).Errorf("Error rescheduling Boot notification")
 		}
 	}
 
@@ -43,12 +43,14 @@ func (cp *ChargePoint) bootNotification() {
 			cp.logger.Info("Accepted by the central system")
 			cp.isConnected = true
 			cp.setHeartbeat(bootConf.Interval)
-			cp.restoreState()
 
 			// Send details about the charge point and its connectors
 			_ = cp.sendChargePointInfo()
 			cp.SendEVSEsDetails(cp.evseManager.GetEVSEs()...)
 
+			// Notify charge point status
+			cp.notifyConnectorStatus(0, core.ChargePointStatusAvailable, core.NoError)
+			cp.restoreState()
 		case core.RegistrationStatusPending:
 			cp.logger.Info("Registration status pending")
 			rescheduleBootNotification()

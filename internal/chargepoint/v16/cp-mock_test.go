@@ -1,6 +1,8 @@
 package v16
 
 import (
+	"time"
+
 	"github.com/lorenzodonini/ocpp-go/ocpp"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/firmware"
@@ -10,14 +12,11 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/smartcharging"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/stretchr/testify/mock"
-	"time"
 )
 
-type (
-	chargePointMock struct {
-		mock.Mock
-	}
-)
+type chargePointMock struct {
+	mock.Mock
+}
 
 func (c *chargePointMock) BootNotification(chargePointModel string, chargePointVendor string, props ...func(request *core.BootNotificationRequest)) (*core.BootNotificationConfirmation, error) {
 	args := c.Called(chargePointModel, chargePointVendor)

@@ -1,11 +1,5 @@
 # Supported hardware
 
-## Note:
-
-The hardware, such as Reader, Indicator and a Display should be configured in [_settings
-file_](../../../configs/settings.json), and EVSEs should be configured in the [_evses folder_](../../../configs/evses),
-each in a separate file.
-
 ## RFID/NFC readers
 
 | Reader | Is supported | 

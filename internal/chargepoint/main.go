@@ -10,14 +10,14 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/localauth"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/remotetrigger"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
-	"github.com/xBlaz3kx/ChargePi-go/internal/api/service"
+	"github.com/xBlaz3kx/ChargePi-go/internal/api/grpc"
 	"github.com/xBlaz3kx/ChargePi-go/internal/auth"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/database"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	cfg "github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
-	"github.com/xBlaz3kx/ChargePi-go/internal/users"
 	uDb "github.com/xBlaz3kx/ChargePi-go/internal/users/database"
+	"github.com/xBlaz3kx/ChargePi-go/internal/users/service"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/logging"
 	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
 	"github.com/xBlaz3kx/ocppManager-go/configuration"
@@ -41,10 +41,10 @@ func CreateChargePoint(
 	hardware settings.Hardware,
 ) chargePoint.ChargePoint {
 
-	// Create a status indicator if enabled
+	// Create a status indicator (if enabled)
 	statusIndicator := indicator.NewIndicator(len(manager.GetEVSEs()), hardware.LedIndicator)
 
-	// Create additional components based on the configuration
+	// Attach additional components based on the configuration
 	opts := []chargePoint.Options{
 		chargePoint.WithDisplayFromSettings(hardware.Display),
 		chargePoint.WithReaderFromSettings(ctx, hardware.TagReader),
@@ -54,7 +54,7 @@ func CreateChargePoint(
 
 	switch protocolVersion {
 	case ocpp.OCPP16:
-		// Create the client
+		// Create the OCPP 1.6 Charge Point
 		return v16.NewChargePoint(
 			manager,
 			tagManager,
@@ -74,10 +74,10 @@ func SetupUserApi(db *badger.DB, api settings.Api, handler chargePoint.ChargePoi
 	userDb := uDb.NewUserDb(db)
 
 	// User service layer
-	userService := users.NewUserService(userDb)
+	userService := service.NewUserService(userDb)
 
 	// Expose the API endpoints
-	server := service.NewServer(api, handler, tagManager, manager, ocppVariableManager, userService)
+	server := grpc.NewServer(api, handler, tagManager, manager, ocppVariableManager, userService)
 	go server.Run()
 
 	// Launch UI at http://localhost:4269/
@@ -104,20 +104,18 @@ func Run(debug bool, config *settings.Settings) {
 	)
 	defer cancel()
 
-	// Load/initialize a database for EVSE, tags, users and settings
+	// Create a database for EVSE, tags, users and settings
 	db := database.Get()
 
-	// Create the logger
 	logging.Setup(logger, config.ChargePoint.Logging, debug)
 
-	// Setup OCPP configuration from the database.
+	// Setup OCPP configuration from the database
 	settingsManager.SetupOcppConfiguration(configuration.ProtocolVersion(protocolVersion), core.ProfileName, reservation.ProfileName, remotetrigger.ProfileName, localauth.ProfileName)
 
-	// Get tag manager
 	tagManager := auth.NewTagManager(db)
 	ocppVariableManager := ocppConfigManager.GetManager()
 
-	// Initialize all the EVSEs, if there are any
+	// Initialize all the EVSEs
 	err := evseManager.InitAll(ctx)
 	if err != nil {
 		logger.WithError(err).Fatal("Cannot add EVSEs")
@@ -127,7 +125,7 @@ func Run(debug bool, config *settings.Settings) {
 	parentCtxForOcpp, parentCancel := context.WithCancel(ctx)
 	defer parentCancel()
 
-	// Create a Charge point and connect
+	// Set the settings and connect to the backend system
 	handler = CreateChargePoint(parentCtxForOcpp, protocolVersion, logger, evseManager, tagManager, hardware)
 	handler.SetSettings(chargePointInfo)
 	handler.SetConnectionSettings(connectionSettings)

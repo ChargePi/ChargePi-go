@@ -1,39 +1,54 @@
 package v16
 
 import (
+	"time"
+
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/firmware"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/remotetrigger"
+	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
 )
 
 func (cp *ChargePoint) OnTriggerMessage(request *remotetrigger.TriggerMessageRequest) (confirmation *remotetrigger.TriggerMessageConfirmation, err error) {
-	cp.logger.Infof("received %s for %v", request.GetFeatureName(), request.RequestedMessage)
+	logInfo := cp.logger.WithFields(log.Fields{"feature": request.GetFeatureName(), "request": request.RequestedMessage})
+	logInfo.Infof("Received a request")
 	status := remotetrigger.TriggerMessageStatusRejected
 
 	switch request.RequestedMessage {
 	case core.BootNotificationFeatureName:
+
+		// Schedule to send a BootNotification per request
 		_, err = cp.scheduler.Every(5).Seconds().LimitRunsTo(1).Do(cp.bootNotification)
 		if err != nil {
+			logInfo.WithError(err).Error("Cannot schedule a boot notification")
 			break
 		}
 
 		status = remotetrigger.TriggerMessageStatusAccepted
+
 	case firmware.DiagnosticsStatusNotificationFeatureName, firmware.FirmwareStatusNotificationFeatureName:
 		status = remotetrigger.TriggerMessageStatusNotImplemented
+
 	case core.HeartbeatFeatureName:
+		// Schedule to send a Heartbeat per request
 		_, err = cp.scheduler.Every(5).Seconds().LimitRunsTo(1).Do(cp.sendHeartBeat)
 		if err != nil {
+			logInfo.WithError(err).Error("Cannot schedule a heartbeat")
 			break
 		}
 
 		status = remotetrigger.TriggerMessageStatusAccepted
+
 	case core.MeterValuesFeatureName:
 		status = remotetrigger.TriggerMessageStatusNotImplemented
 	case core.StatusNotificationFeatureName:
-		if request.ConnectorId == nil {
-			// Send the status of all connectors after the response
+
+		switch request.ConnectorId {
+		// Send the status of all connectors after the response
+		case nil:
 			defer func() {
+				time.Sleep(time.Second)
 				for _, c := range cp.evseManager.GetEVSEs() {
 					if cp.evseManager.GetNotificationChannel() != nil {
 						cpStatus, errCode := c.GetStatus()
@@ -43,19 +58,21 @@ func (cp *ChargePoint) OnTriggerMessage(request *remotetrigger.TriggerMessageReq
 			}()
 
 			status = remotetrigger.TriggerMessageStatusAccepted
-			break
+		default:
+			// Send a StatusNotification for a certain connector
+			evseId := *request.ConnectorId
+			c, findErr := cp.evseManager.FindEVSE(evseId)
+			if findErr == nil {
+				defer func(c evse.EVSE) {
+					time.Sleep(time.Second)
+					cpStatus, errCode := c.GetStatus()
+					cp.notifyConnectorStatus(c.GetEvseId(), cpStatus, errCode)
+				}(c)
+
+				status = remotetrigger.TriggerMessageStatusAccepted
+			}
 		}
 
-		connectorID := *request.ConnectorId
-		c, err := cp.evseManager.FindEVSE(connectorID)
-		if err == nil {
-			defer func(c evse.EVSE) {
-				cpStatus, errCode := c.GetStatus()
-				cp.notifyConnectorStatus(c.GetEvseId(), cpStatus, errCode)
-			}(c)
-
-			status = remotetrigger.TriggerMessageStatusAccepted
-		}
 	default:
 		return remotetrigger.NewTriggerMessageConfirmation(remotetrigger.TriggerMessageStatusNotImplemented), nil
 	}

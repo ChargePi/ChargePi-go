@@ -9,6 +9,7 @@ import (
 	"github.com/go-co-op/gocron"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/session"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/evcc"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/power-meter"
 
@@ -35,8 +36,8 @@ type (
 	EVSE interface {
 		Init(ctx context.Context) error
 
-		AddConnector(connector Connector) error
-		GetConnectors() []Connector
+		AddConnector(connector settings.Connector) error
+		GetConnectors() []settings.Connector
 		GetMaxChargingTime() *int
 		SetMaxChargingTime(time *int)
 		GetMaxChargingPower() float64
@@ -80,7 +81,7 @@ type (
 		evseId          int
 		maxPower        float64
 		maxChargingTime *int
-		connectors      []Connector
+		connectors      []settings.Connector
 		availability    core.AvailabilityType
 		status          core.ChargePointStatus
 		errorCode       core.ChargePointErrorCode

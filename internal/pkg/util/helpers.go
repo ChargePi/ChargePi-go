@@ -1,8 +1,9 @@
 package util
 
 import (
-	log "github.com/sirupsen/logrus"
 	"reflect"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // IsNilInterfaceOrPointer check if the variable is nil or if the pointer's value is nil.

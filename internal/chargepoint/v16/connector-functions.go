@@ -2,11 +2,8 @@ package v16
 
 import (
 	"context"
+	"fmt"
 	"time"
-
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
-	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
-	"github.com/xBlaz3kx/ocppManager-go/configuration"
 
 	"github.com/lorenzodonini/ocpp-go/ocpp"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
@@ -14,7 +11,10 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display/i18n"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
+	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
+	"github.com/xBlaz3kx/ocppManager-go/configuration"
 )
 
 // restoreState After connecting to the central system, try to restore the previous state of each EVSE and notify
@@ -64,7 +64,7 @@ Listener:
 			logInfo.Info("Received evse status update")
 
 			go func() {
-				logInfo.Info("Displaying status change on hardware")
+				logInfo.Info("Displaying status change")
 				// Display connector status change on display and indicator
 				cp.displayStatusChangeOnIndicator(connectorIndex, status)
 				cp.displayStatusChangeOnDisplay(c.EvseId, status)
@@ -142,7 +142,18 @@ func (cp *ChargePoint) handleStatusUpdate(ctx context.Context, evseId int, statu
 	// Todo design a plugin interface so it can be called here
 
 	switch status {
+	case core.ChargePointStatusAvailable:
 	case core.ChargePointStatusPreparing:
+
+		//  Check if FreeMode is enabled. This will bypass any authentication requirement.
+		if cp.info.FreeMode {
+			err := cp.evseManager.StartCharging(evseId, "FreeMode", fmt.Sprintf("%d", evseId))
+			if err != nil {
+				cp.logger.WithError(err).Errorf("Unable to start charging connector")
+			}
+
+			break
+		}
 
 		// Listen for a tag for a minute. If the tag is tapped, start charging.
 		listenCtx, cancel := context.WithTimeout(ctx, time.Minute)
@@ -156,7 +167,10 @@ func (cp *ChargePoint) handleStatusUpdate(ctx context.Context, evseId int, statu
 		}
 
 		cancel()
-	case core.ChargePointStatusSuspendedEV, core.ChargePointStatusSuspendedEVSE:
+	case core.ChargePointStatusCharging:
+	case core.ChargePointStatusSuspendedEV:
+	case core.ChargePointStatusSuspendedEVSE:
+	case core.ChargePointStatusFinishing:
 		stopTransactionOnEVDisconnect, err := ocppConfigManager.GetConfigurationValue(configuration.StopTransactionOnEVSideDisconnect.String())
 
 		// If EV disconnects and the StopTransactionOnEVDisconnect is enabled, stop the transaction

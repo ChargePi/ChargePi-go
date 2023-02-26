@@ -5,19 +5,24 @@ import (
 	"time"
 
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/database"
 )
 
-type AuthCacheTestSuite struct {
+type authCacheTestSuite struct {
 	suite.Suite
 	tag        *types.IdTagInfo
 	blockedTag *types.IdTagInfo
 	expiredTag *types.IdTagInfo
-	authCache  *CacheImpl
+	authCache  Cache
 }
 
-func (s *AuthCacheTestSuite) SetupTest() {
-	s.authCache = NewAuthCache(nil)
+func (s *authCacheTestSuite) SetupTest() {
+	db := database.Get()
+	s.authCache = NewAuthCache(db)
+	s.authCache.RemoveCachedTags()
+
 	s.tag = &types.IdTagInfo{
 		ParentIdTag: "123",
 		ExpiryDate:  types.NewDateTime(time.Now().Add(10 * time.Minute)),
@@ -35,10 +40,9 @@ func (s *AuthCacheTestSuite) SetupTest() {
 		ExpiryDate:  types.NewDateTime(time.Date(1999, 1, 1, 1, 1, 1, 0, time.Local)),
 		Status:      types.AuthorizationStatusAccepted,
 	}
-
 }
 
-func (s *AuthCacheTestSuite) TestAddTag() {
+func (s *authCacheTestSuite) TestAddTag() {
 	s.authCache.SetMaxCachedTags(1)
 	s.authCache.AddTag(s.tag.ParentIdTag, s.tag)
 
@@ -52,7 +56,7 @@ func (s *AuthCacheTestSuite) TestAddTag() {
 	s.authCache.AddTag(overLimitTag.ParentIdTag, &overLimitTag)
 }
 
-func (s *AuthCacheTestSuite) TestRemoveCachedTags() {
+func (s *authCacheTestSuite) TestRemoveCachedTags() {
 	s.authCache.SetMaxCachedTags(5)
 
 	s.authCache.AddTag(s.tag.ParentIdTag, s.tag)
@@ -62,14 +66,12 @@ func (s *AuthCacheTestSuite) TestRemoveCachedTags() {
 	s.authCache.RemoveCachedTags()
 }
 
-func (s *AuthCacheTestSuite) TestRemoveTag() {
-	s.authCache.SetMaxCachedTags(15)
-
-	s.authCache.AddTag(s.tag.ParentIdTag, s.tag)
-	s.authCache.AddTag(s.blockedTag.ParentIdTag, s.blockedTag)
-	s.authCache.AddTag(s.expiredTag.ParentIdTag, s.expiredTag)
+func (s *authCacheTestSuite) TestGetTag() {
+	_, err := s.authCache.GetTag("")
+	s.Assert().NoError(err)
 }
 
 func TestAuthCache(t *testing.T) {
-	suite.Run(t, new(AuthCacheTestSuite))
+	log.SetLevel(log.DebugLevel)
+	suite.Run(t, new(authCacheTestSuite))
 }

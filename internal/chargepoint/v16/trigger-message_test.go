@@ -8,10 +8,8 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/remotetrigger"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
-	"github.com/xBlaz3kx/ChargePi-go/test"
 )
 
 type triggerMessageTestSuite struct {
@@ -29,16 +27,10 @@ func (s *triggerMessageTestSuite) SetupTest() {
 
 func (s *triggerMessageTestSuite) TestTriggerMessage() {
 	var (
-		connectorMock = new(test.EvseMock)
-		managerMock   = new(test.ManagerMock)
 		connectorChan = make(chan notifications.StatusNotification, 2)
 	)
 
 	// Set manager expectations
-	managerMock.On("FindEVSE", 1, connectorId).Return(connectorMock).Once()
-	managerMock.On("GetEVSEs").Return([]evse.EVSE{connectorMock}).Once()
-
-	s.cp.evseManager = managerMock
 
 	numMessages := 0
 	go func() {
@@ -88,11 +80,6 @@ func (s *triggerMessageTestSuite) TestTriggerMessage() {
 	s.Assert().EqualValues(1, numMessages)
 
 	// Get status of a single connector
-	/*request := remotetrigger.NewTriggerMessageRequest(core.StatusNotificationFeatureName)
-	response, err = s.cp.OnTriggerMessage(request)
-	s.Assert().NoError(err)
-	s.Assert().NotNil(response)
-	s.Assert().EqualValues(remotetrigger.TriggerMessageStatusAccepted, response.Status)*/
 }
 
 func TestTriggerMessage(t *testing.T) {

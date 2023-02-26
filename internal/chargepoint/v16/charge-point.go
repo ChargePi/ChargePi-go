@@ -21,27 +21,25 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 )
 
-type (
-	ChargePoint struct {
-		chargePoint        ocpp16.ChargePoint
-		availability       core.AvailabilityType
-		isConnected        bool
-		settingsManager    settings2.Manager
-		info               settings.Info
-		connectionSettings settings.ConnectionSettings
-		// Hardware components
-		tagReader        reader.Reader
-		indicator        indicator.Indicator
-		display          display.Display
-		indicatorMapping settings.IndicatorStatusMapping
-		// Software components
-		evseManager        evse.Manager
-		meterValuesChannel chan notifications.MeterValueNotification
-		scheduler          *gocron.Scheduler
-		tagManager         auth.TagManager
-		logger             *log.Logger
-	}
-)
+type ChargePoint struct {
+	chargePoint        ocpp16.ChargePoint
+	availability       core.AvailabilityType
+	isConnected        bool
+	settingsManager    settings2.Manager
+	info               settings.Info
+	connectionSettings settings.ConnectionSettings
+	// Hardware components
+	tagReader        reader.Reader
+	indicator        indicator.Indicator
+	display          display.Display
+	indicatorMapping settings.IndicatorStatusMapping
+	// Software components
+	evseManager        evse.Manager
+	meterValuesChannel chan notifications.MeterValueNotification
+	scheduler          *gocron.Scheduler
+	tagManager         auth.TagManager
+	logger             *log.Logger
+}
 
 // NewChargePoint creates a new ChargePoint for OCPP version 1.6.
 func NewChargePoint(manager evse.Manager, tagManager auth.TagManager, opts ...chargePoint.Options) *ChargePoint {

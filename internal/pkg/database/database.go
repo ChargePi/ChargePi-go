@@ -32,7 +32,7 @@ func GetLocalAuthVersion() []byte {
 }
 
 func GetSmartChargingProfile(profileId int) []byte {
-	return []byte("profile-")
+	return []byte(fmt.Sprintf("profile-%d", profileId))
 }
 
 func GetOcppConfigurationKey() []byte {

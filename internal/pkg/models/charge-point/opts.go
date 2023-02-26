@@ -2,6 +2,7 @@ package chargePoint
 
 import (
 	"context"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/indicator"

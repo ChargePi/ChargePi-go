@@ -8,7 +8,7 @@
    sudo apt-get update & sudo apt-get upgrade
    ```
 
-2. Installing dependencies and- Sakis3g client:
+2. Install the Sakis3g client:
 
    ```bash
    sudo apt-get install ppp
@@ -25,13 +25,15 @@
    sudo /usr/bin/modem3g/sakis3g connect --interactive
    ```
 
-5. Get default settings for your modem:
+4. Get default settings for your modem:
 
    ```bash
    lsusb
    ```
 
-6. Paste default settings in a file:
+## Running as a service
+
+1. Paste default settings in a file:
 
    ```bash
    sudo nano /etc/sakis3g.conf
@@ -39,27 +41,22 @@
 
    Config file example:
 
-    ```
+    ```text
     USBDRIVER="option"
     USBINTERFACE="0"
     APN="internet"
     MODEM="12d1:155e"
     ```
 
-## 📜 Running as service script:
-
-**Golang should be installed and the binary should be added to PATH variable.**
-
-1. Make two service files:
+2. Make a systemd service file:
 
    ```bash
    sudo nano /etc/systemd/system/modem-connection.service
-   sudo nano /etc/systemd/system/ChargePi.service
    ```
 
-2. Paste into modem-connection.service file:
+3. Paste into modem-connection.service file:
 
-   ```text
+   ```unit file
        [Unit]
        Description=Modem connection service
    
@@ -74,25 +71,7 @@
        WantedBy=multi-user.target
    ```
 
-3. Paste into ChargePi.service file:
-
-   ```text
-       [Unit]
-       Description=ChargePi client 
-       After=network.target modem-connection.service
-   
-       [Service]
-       Type=simple
-       WorkingDirectory= /<path_to_dir>/ChargePi-go/
-       ExecStart=go build main.go && ./main
-       Restart=on-failure
-       KillSignal=SIGTERM
-   
-       [Install]
-       WantedBy=multi-user.target
-   ```
-
-4. Give permissions and add services to **systemd** (repeat for both service files):
+4. Give permissions and add services to **systemd**:
 
    ```bash
    sudo chmod 640 /etc/systemd/system/modem-connection.service

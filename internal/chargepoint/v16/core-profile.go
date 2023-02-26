@@ -21,8 +21,9 @@ func (cp *ChargePoint) OnChangeAvailability(request *core.ChangeAvailabilityRequ
 	cp.logger.Infof("Received request %s", request.GetFeatureName())
 	var response = core.AvailabilityStatusRejected
 
+	// todo check if there are ongoing transactions
+
 	if request.ConnectorId == 0 {
-		// todo check if there are ongoing transactions
 		cp.availability = request.Type
 		return core.NewChangeAvailabilityConfirmation(core.AvailabilityStatusAccepted), nil
 	}
@@ -225,8 +226,6 @@ func (cp *ChargePoint) OnRemoteStartTransaction(request *core.RemoteStartTransac
 }
 
 func (cp *ChargePoint) remoteStart(evseId, connectorId int, tagId string) {
-	// todo AuthorizeRemoteTxRequests variable
-
 	logInfo := cp.logger.WithFields(log.Fields{
 		"evseId":      evseId,
 		"connectorId": connectorId,
@@ -237,8 +236,14 @@ func (cp *ChargePoint) remoteStart(evseId, connectorId int, tagId string) {
 		return
 	}
 
-	if !cp.isTagAuthorized(tagId) {
-		return
+	authorizeRemoteTx, _ := ocppManager.GetManager().GetConfigurationValue(v16.AuthorizeRemoteTxRequests.String())
+	if authorizeRemoteTx != nil && *authorizeRemoteTx == "true" {
+		logInfo.Info("Authorizing RemoteStart transaction")
+
+		if !cp.isTagAuthorized(tagId) {
+			logInfo.Warn("Tag unauthorized")
+			return
+		}
 	}
 
 	request := core.NewStartTransactionRequest(

@@ -1,5 +1,9 @@
 package settings
 
+import (
+	"github.com/xBlaz3kx/ChargePi-go/pkg/models/settings"
+)
+
 type (
 	Hardware struct {
 		Display      Display      `json:"display" yaml:"display" mapstructure:"display"`
@@ -20,6 +24,6 @@ type (
 		Driver    string `json:"driver,omitempty" yaml:"driver,omitempty" mapstructure:"driver,omitempty"`
 		Language  string `json:"language,omitempty" yaml:"language,omitempty" mapstructure:"language,omitempty"`
 		// Based on the type, get the connection details
-		I2C *I2C `fig:"i2c" json:"i2c,omitempty" yaml:"i2c,omitempty" mapstructure:"i2c,omitempty"`
+		I2C *settings.I2C `fig:"i2c" json:"i2c,omitempty" yaml:"i2c,omitempty" mapstructure:"i2c,omitempty"`
 	}
 )

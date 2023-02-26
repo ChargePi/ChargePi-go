@@ -2,17 +2,17 @@ package v16
 
 import (
 	"context"
+	"testing"
+	"time"
+
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
-	"github.com/xBlaz3kx/ChargePi-go/test"
 	ocppManager "github.com/xBlaz3kx/ocppManager-go"
 	"github.com/xBlaz3kx/ocppManager-go/configuration"
-	"testing"
-	"time"
 )
 
 func newString(s string) *string {
@@ -178,22 +178,18 @@ func (s *connectorFunctionsTestSuite) SetupTest() {
 }
 
 func (s *connectorFunctionsTestSuite) TestAddConnectors() {
-	//todo
+	// todo
 }
 
 func (s *connectorFunctionsTestSuite) TestRestoreState() {
-	//todo
+	// todo
 }
 
 func (s *connectorFunctionsTestSuite) TestDisplayConnectorStatus() {
 	var (
 		ctx, cancel = context.WithTimeout(context.Background(), time.Second*10)
 		channel     = make(chan notifications.Message)
-		lcdMock     = new(test.DisplayMock)
 	)
-
-	lcdMock.On("GetLcdChannel").Return(channel)
-	s.cp.display = lcdMock
 
 	go func() {
 		time.Sleep(time.Millisecond * 100)
@@ -242,12 +238,8 @@ Loop:
 
 func (s *connectorFunctionsTestSuite) TestNotifyConnectorStatus() {
 	var (
-		cp            = new(chargePointMock)
-		connectorMock = new(test.EvseMock)
+		cp = new(chargePointMock)
 	)
-
-	connectorMock.On("GetStatus").Return("Available", "NoError")
-	connectorMock.On("GetEvseId").Return(1)
 
 	cp.On("SendRequestAsync", mock.Anything).Run(func(args mock.Arguments) {
 		s.Assert().IsType(&core.StatusNotificationRequest{}, args.Get(0))

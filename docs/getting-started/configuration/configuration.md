@@ -1,26 +1,22 @@
 # 🛠️ Configuration
 
-There are three **required** configuration files:
+There are three types of configurations:
 
-1. [`settings`](../../../configs/settings.json)
-2. [`configuration`](../../../configs/configuration.yaml)
-3. [`evses`](../../configs/evses/connector-1.json)
+1. [charge point](#the-charge-point-configuration)
+2. [ocpp](../configuration/ocpp/ocpp-16.md#ocpp-16)
+3. [evse](evse-configuration.md#the-evse-configuration)
 
-The settings files are supported in multiple formats. They are listed under Viper.
+## The `charge point` configuration
 
-## The `settings` file
-
-The `settings` file contains basic information about the charge point and provides connectivity details:
+The charge point configuration contains basic information about the charge point and its operative details, such as:
 
 - Charge Point ID,
-- central system URI and OCPP protocol version,
+- Connectivity details (central system URI and OCPP protocol version, etc.)
 - OCPP information (vendor, model, firmware, etc.),
 - logging settings,
-- TLS settings,
-- default max charging time,
-- settings for LCD, RFID/NFC reader and LEDs.
+- hardware settings
 
-The table represents attributes, their values and descriptions that require more attention and might not be
+The following tables represent attributes, their values and descriptions that require more attention and might not be
 self-explanatory. Some attributes can have multiple possible values, if any are empty, they will be treated as disabled
 or might not work properly.
 
@@ -114,13 +110,14 @@ chargePoint:
     clientKeyPath: /usr/share/certs/charge-point.key
   hardware:
     lcd:
-      isSupported: true
+      enabled: true
       driver: hd44780
-      i2cAddress: '0x27'
-      i2cBus: 1
+      i2c:
+        address: '0x27'
+        bus: 1
       language: en
     tagReader:
-      isSupported: true
+      enabled: true
       readerModel: PN532
       device: /dev/ttyS0
       resetPin: 19
@@ -131,3 +128,7 @@ chargePoint:
       indicateCardRead: true
       invert: false
 ```
+
+## Importing
+
+## Exporting

@@ -17,7 +17,9 @@ Running the client:
 or compiling and executing the client:
 
    ```bash
-   go build -tags=rpi -o chargepi .
+   GOOS=linux
+   GOARCH=arm64
+   go build -o chargepi .
    ./chargepi
    ```
 
@@ -43,13 +45,13 @@ or compiling and executing the client:
 
 ## Deploying using docker-compose
 
-2. Build the ChargePi client:
+1. Build the ChargePi client:
 
    ```bash
-   docker-compose -f ./deployments build . 
+   docker-compose -f ./deployments build .
    ```
 
-3. Run services in daemon mode:
+2. Run services in daemon mode:
 
    ```bash
    docker-compose -f ./deployments up -d

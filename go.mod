@@ -17,17 +17,15 @@ require (
 	github.com/gin-gonic/gin v1.8.2
 	github.com/go-co-op/gocron v1.6.0
 	github.com/go-playground/validator v9.31.0+incompatible
+	github.com/go-playground/validator/v10 v10.11.1
 	github.com/golang/protobuf v1.5.2
-	github.com/inits/badgerholdv2 v0.0.0-20200520095412-32d8593ae622
-	github.com/inits/casbin-badgerdb-adapter v0.0.0-20220421032324-30ed567f5ea5
+	github.com/grpc-ecosystem/go-grpc-middleware v1.1.0
 	github.com/jacobsa/go-serial v0.0.0-20180131005756-15cf729a72d4
-	github.com/kkyr/fig v0.3.0
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/lestrrat-go/strftime v1.0.5 // indirect
 	github.com/lorenzodonini/ocpp-go v0.16.0
 	github.com/nicksnyder/go-i18n/v2 v2.1.2
 	github.com/op/go-logging v0.0.0-20160315200505-970db520ece7 // indirect
-	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5
 	github.com/rpi-ws281x/rpi-ws281x-go v1.0.8
 	github.com/sirupsen/logrus v1.9.0
@@ -47,20 +45,16 @@ require (
 )
 
 require (
-	github.com/DataDog/zstd v1.4.1 // indirect
 	github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/dgraph-io/badger/v2 v2.0.3 // indirect
 	github.com/dgraph-io/ristretto v0.1.1 // indirect
-	github.com/dgryski/go-farm v0.0.0-20190423205320-6a90982ecee2 // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
-	github.com/go-playground/validator/v10 v10.11.1 // indirect
 	github.com/goccy/go-json v0.9.11 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b // indirect
@@ -72,6 +66,7 @@ require (
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
+	github.com/kkyr/fig v0.3.0 // indirect
 	github.com/klauspost/compress v1.12.3 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
