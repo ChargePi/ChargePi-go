@@ -29,14 +29,14 @@ message TagReader {
   string type = 1;
   bool enabled = 2;
   optional string deviceAddress = 3;
-  optional string resetPin = 4;
+  optional int32 resetPin = 4;
 }
 
 message Indicator {
   string type = 1;
   bool enabled = 2;
   optional bool indicateCardRead = 3;
-  optional string dataPin = 4;
+  optional int32 dataPin = 4;
   optional bool invert = 5;
 }
 

@@ -5,7 +5,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
-	"github.com/xBlaz3kx/ChargePi-go/internal/users/database"
+	"github.com/xBlaz3kx/ChargePi-go/internal/users/pkg/database"
 )
 
 type serviceTestSuite struct {

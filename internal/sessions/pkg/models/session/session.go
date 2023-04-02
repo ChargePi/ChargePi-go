@@ -8,7 +8,6 @@ import (
 	strUtil "github.com/agrison/go-commons-lang/stringUtils"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
-	settingsModel "github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 )
 
@@ -19,11 +18,14 @@ var (
 )
 
 type Session struct {
-	IsActive      bool
-	TransactionId string
-	TagId         string
-	Started       *time.Time
-	Consumption   []types.MeterValue
+	IsActive      bool               `json:"isActive"`
+	EvseId        int                `json:"evseId"`
+	ConnectorId   *int               `json:"connectorId"`
+	ReservationId *int               `json:"reservationId"`
+	TransactionId string             `json:"transactionId"`
+	TagId         string             `json:"tagId"`
+	Started       *time.Time         `json:"started"`
+	Consumption   []types.MeterValue `json:"consumption"`
 }
 
 func NewEmptySession() *Session {
@@ -71,27 +73,11 @@ func (session *Session) EndSession() {
 	}
 }
 
-// ToSessionModel transforms session to a session that is stored in a file in case of a failure.
-func (session *Session) ToSessionModel() *settingsModel.Session {
-	started := ""
-	if !util.IsNilInterfaceOrPointer(session.Started) {
-		started = session.Started.Format(time.RFC3339)
-	}
-
-	return &settingsModel.Session{
-		IsActive:      session.IsActive,
-		TagId:         session.TagId,
-		TransactionId: session.TransactionId,
-		Started:       started,
-		Consumption:   session.Consumption,
-	}
-}
-
 // AddSampledValue Add all the samples taken to the Session.
 func (session *Session) AddSampledValue(samples []types.SampledValue) {
 	if session.IsActive {
 		log.Tracef("Added meter sample for session %s", session.TransactionId)
-		session.Consumption = append(session.Consumption, types.MeterValue{SampledValue: samples})
+		session.Consumption = append(session.Consumption, types.MeterValue{Timestamp: types.NewDateTime(time.Now()), SampledValue: samples})
 	}
 }
 

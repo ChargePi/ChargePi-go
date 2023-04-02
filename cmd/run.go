@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/configuration"
-	settings2 "github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 )
 
 var (
@@ -24,7 +24,7 @@ func run(cmd *cobra.Command, args []string) {
 	configuration.InitSettings(settingsFilePath)
 
 	var (
-		debug        = viper.GetBool(settings2.Debug)
+		debug        = viper.GetBool(settings.Debug)
 		mainSettings = configuration.GetSettings()
 	)
 
@@ -35,12 +35,12 @@ func run(cmd *cobra.Command, args []string) {
 func init() {
 	rootCmd.AddCommand(runCmd)
 
-	rootCmd.PersistentFlags().StringVar(&settingsFilePath, settings2.SettingsFlag, "", "config file path")
+	rootCmd.PersistentFlags().StringVar(&settingsFilePath, settings.SettingsFlag, "", "config file path")
 
 	// Here you will define your flags and configuration settings.
-	runCmd.PersistentFlags().String(settings2.ApiAddressFlag, "localhost", "address of the api")
-	runCmd.PersistentFlags().Int(settings2.ApiPortFlag, 4269, "port for the API")
+	runCmd.PersistentFlags().String(settings.ApiAddressFlag, "localhost", "address of the api")
+	runCmd.PersistentFlags().Int(settings.ApiPortFlag, 4269, "port for the API")
 
-	_ = viper.BindPFlag(settings2.ApiAddress, runCmd.PersistentFlags().Lookup(settings2.ApiAddressFlag))
-	_ = viper.BindPFlag(settings2.ApiPort, runCmd.PersistentFlags().Lookup(settings2.ApiPortFlag))
+	_ = viper.BindPFlag(settings.ApiAddress, runCmd.PersistentFlags().Lookup(settings.ApiAddressFlag))
+	_ = viper.BindPFlag(settings.ApiPort, runCmd.PersistentFlags().Lookup(settings.ApiPortFlag))
 }

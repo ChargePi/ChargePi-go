@@ -128,12 +128,13 @@ func (c *CacheImpl) GetTag(tagId string) (*types.IdTagInfo, error) {
 			return err
 		}
 
-		b, err := item.ValueCopy(nil)
+		var tagCopy []byte
+		_, err = item.ValueCopy(tagCopy)
 		if err != nil {
 			return err
 		}
 
-		err = json.Unmarshal(b, &tagInfo)
+		err = json.Unmarshal(tagCopy, &tagInfo)
 		if err != nil {
 			return err
 		}

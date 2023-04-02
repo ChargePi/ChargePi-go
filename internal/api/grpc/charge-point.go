@@ -10,6 +10,7 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	cfg "github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/grpc"
+	commonSettings "github.com/xBlaz3kx/ChargePi-go/pkg/models/settings"
 	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
 )
 
@@ -56,11 +57,16 @@ func (s *ChargePointService) GetDisplaySettings(ctx context.Context, empty *empt
 
 	displaySettings := s.settingsManager.GetChargePointSettings().Hardware.Display
 
+	var i2cSettings *grpc.I2C
+	if displaySettings.I2C != nil {
+		// i2cSettings = toI2c(displaySettings.I2C)
+	}
+
 	response.Display = &grpc.Display{
 		Type:     displaySettings.Driver,
-		Enabled:  false,
-		Language: nil,
-		I2C:      nil,
+		Enabled:  displaySettings.IsEnabled,
+		Language: &displaySettings.Language,
+		I2C:      i2cSettings,
 	}
 
 	return response, nil
@@ -81,9 +87,8 @@ func (s *ChargePointService) GetReaderSettings(ctx context.Context, empty *empty
 
 	response.Reader = &grpc.TagReader{
 		Type:          readerSettings.ReaderModel,
-		Enabled:       false,
-		DeviceAddress: nil,
-		ResetPin:      nil,
+		Enabled:       readerSettings.IsEnabled,
+		DeviceAddress: readerSettings.Device,
 	}
 
 	return response, nil
@@ -104,10 +109,9 @@ func (s *ChargePointService) GetIndicatorSettings(ctx context.Context, empty *em
 
 	response.Indicator = &grpc.Indicator{
 		Type:             indicatorSettings.Type,
-		Enabled:          false,
-		IndicateCardRead: nil,
-		DataPin:          nil,
-		Invert:           nil,
+		Enabled:          indicatorSettings.Enabled,
+		IndicateCardRead: &indicatorSettings.IndicateCardRead,
+		Invert:           indicatorSettings.Invert,
 	}
 
 	return response, nil
@@ -209,5 +213,12 @@ func toDisplay(display *grpc.Display) settings.Display {
 		Driver:    display.Type,
 		Language:  *display.Language,
 		I2C:       nil,
+	}
+}
+
+func toI2c(i2c commonSettings.I2C) *grpc.I2C {
+	return &grpc.I2C{
+		Address: i2c.Address,
+		Bus:     int32(i2c.Bus),
 	}
 }

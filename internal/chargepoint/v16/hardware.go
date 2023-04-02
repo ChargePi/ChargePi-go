@@ -79,6 +79,10 @@ func (cp *ChargePoint) ListenForTag(ctx context.Context, tagChannel <-chan strin
 		return nil, nil
 	}
 
+	if util.IsNilInterfaceOrPointer(cp.tagReader) {
+		return nil, nil
+	}
+
 	go cp.tagReader.ListenForTags(ctx)
 
 	cp.logger.Info("Started listening for tags from reader")

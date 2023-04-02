@@ -3,18 +3,28 @@ package database
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
 
 	"github.com/dgraph-io/badger/v3"
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 )
 
+var (
+	db   *badger.DB
+	once = sync.Once{}
+)
+
 func Get() *badger.DB {
-	// Load/initialize a database for EVSE, tags, users and settings
-	db, err := badger.Open(badger.DefaultOptions(settings.DatabasePath))
-	if err != nil {
-		log.WithError(err).Panic("Cannot open/create database")
-	}
+	once.Do(func() {
+		// Load/initialize a database for EVSE, tags, users and settings
+		badgerDb, err := badger.Open(badger.DefaultOptions(settings.DatabasePath))
+		if err != nil {
+			log.WithError(err).Panic("Cannot open/create database")
+		}
+
+		db = badgerDb
+	})
 
 	return db
 }

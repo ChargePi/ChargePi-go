@@ -30,7 +30,7 @@ func (evse *Impl) SamplePowerMeter(measurands []types.Measurand) {
 		"evseId": evse.evseId,
 	})
 
-	if !evse.powerMeterEnabled || util.IsNilInterfaceOrPointer(evse.powerMeter) {
+	if util.IsNilInterfaceOrPointer(evse.powerMeter) {
 		logInfo.Warn("Sampling the power meter unavailable")
 		return
 	}
@@ -68,13 +68,11 @@ func (evse *Impl) SamplePowerMeter(measurands []types.Measurand) {
 		// evse.GetTransactionId()
 		evse.meterValuesChannel <- notifications.NewMeterValueNotification(evse.evseId, &evse.evseId, nil, meterValues)
 	}
-
-	evse.session.AddSampledValue(samples)
 }
 
 // preparePowerMeter
 func (evse *Impl) preparePowerMeter() error {
-	if !evse.powerMeterEnabled || util.IsNilInterfaceOrPointer(evse.powerMeter) {
+	if util.IsNilInterfaceOrPointer(evse.powerMeter) {
 		return ErrPowerMeterNotEnabled
 	}
 

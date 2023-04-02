@@ -15,12 +15,8 @@ type SessionTestSuite struct {
 }
 
 func (s *SessionTestSuite) SetupTest() {
-	s.emptySession = Session{
-		IsActive:      false,
-		TransactionId: "",
-	}
-
 	currentTime := time.Now()
+
 	s.validSession = Session{
 		IsActive:      true,
 		TransactionId: "1234",
@@ -53,15 +49,15 @@ func (s *SessionTestSuite) TestAddSampledValue() {
 
 	// Session not active
 	s.emptySession.AddSampledValue(samples)
-	s.Require().Nil(s.emptySession.Consumption)
+	s.Assert().Nil(s.emptySession.Consumption)
 
 	// Start session
 	hasStarted := s.emptySession.StartSession("1234", "1234")
-	s.Require().NoError(hasStarted)
+	s.Assert().NoError(hasStarted)
 
 	// Session active
 	s.emptySession.AddSampledValue(samples)
-	s.Require().EqualValues(expected, s.emptySession.Consumption)
+	s.Assert().EqualValues(expected, s.emptySession.Consumption)
 }
 
 func (s *SessionTestSuite) TestStartSession() {
@@ -75,26 +71,26 @@ func (s *SessionTestSuite) TestStartSession() {
 	}
 
 	err := s.emptySession.StartSession("", "")
-	s.Require().Error(err)
-	s.Require().EqualValues(s.emptySession, s.emptySession)
+	s.Assert().Error(err)
+	s.Assert().EqualValues(s.emptySession, s.emptySession)
 
 	err = s.emptySession.StartSession("1234", "")
-	s.Require().Error(err)
-	s.Require().EqualValues(s.emptySession, s.emptySession)
+	s.Assert().Error(err)
+	s.Assert().EqualValues(s.emptySession, s.emptySession)
 
 	err = s.emptySession.StartSession("", "test1234")
-	s.Require().Error(err)
-	s.Require().EqualValues(s.emptySession, s.emptySession)
+	s.Assert().Error(err)
+	s.Assert().EqualValues(s.emptySession, s.emptySession)
 
 	// Ok case
 	err = s.emptySession.StartSession("test1234", "test1234")
-	s.Require().NoError(err)
-	s.Require().EqualValues(expectedSession, s.emptySession)
+	s.Assert().NoError(err)
+	s.Assert().EqualValues(expectedSession, s.emptySession)
 }
 
 func (s *SessionTestSuite) TestEndSession() {
 	s.validSession.EndSession()
-	s.Require().EqualValues(s.validSession, s.emptySession)
+	s.Assert().EqualValues(s.validSession, s.emptySession)
 }
 
 func (s *SessionTestSuite) TestCalculateAvgPower() {
@@ -191,19 +187,19 @@ func (s *SessionTestSuite) TestCalculateAvgPower() {
 
 	// Start with zero samples
 	s.emptySession.Consumption = zeroSamples
-	s.Require().InDelta(0, s.emptySession.CalculateAvgPower(), 0.1)
+	s.Assert().InDelta(0, s.emptySession.CalculateAvgPower(), 0.1)
 
 	s.emptySession.Consumption = consumption1
-	s.Require().InDelta(10, s.emptySession.CalculateAvgPower(), 1)
+	s.Assert().InDelta(10, s.emptySession.CalculateAvgPower(), 1)
 
 	s.emptySession.Consumption = mixedConsumption
-	s.Require().InDelta(20, s.emptySession.CalculateAvgPower(), .5)
+	s.Assert().InDelta(20, s.emptySession.CalculateAvgPower(), .5)
 
 	s.emptySession.Consumption = faultyMixedConsumption
-	s.Require().InDelta(10, s.emptySession.CalculateAvgPower(), 0.1)
+	s.Assert().InDelta(10, s.emptySession.CalculateAvgPower(), 0.1)
 
 	s.emptySession.Consumption = threeMeasurands
-	s.Require().InDelta(10, s.emptySession.CalculateAvgPower(), 0.1)
+	s.Assert().InDelta(10, s.emptySession.CalculateAvgPower(), 0.1)
 
 }
 
@@ -212,7 +208,7 @@ func (s *SessionTestSuite) TestCalculateEnergyConsumptionWithAvgPower() {
 
 	// Start the session
 	err := s.emptySession.StartSession("1234", "1234")
-	s.Require().NoError(err)
+	s.Assert().NoError(err)
 
 	// Add a sample
 	s.emptySession.AddSampledValue([]types.SampledValue{
@@ -224,16 +220,16 @@ func (s *SessionTestSuite) TestCalculateEnergyConsumptionWithAvgPower() {
 
 	// Session started 5 minutes before
 	s.emptySession.Started = &started5min
-	s.Require().InDelta(float64(300*10), s.emptySession.CalculateEnergyConsumptionWithAvgPower(), 8)
+	s.Assert().InDelta(float64(300*10), s.emptySession.CalculateEnergyConsumptionWithAvgPower(), 8)
 
 	// Session just started
 	currentTime := time.Now()
 	s.emptySession.Started = &currentTime
-	s.Require().InDelta(0.0, s.emptySession.CalculateEnergyConsumptionWithAvgPower(), 1)
+	s.Assert().InDelta(0.0, s.emptySession.CalculateEnergyConsumptionWithAvgPower(), 1)
 
 	// Session ended just now
 	s.emptySession.EndSession()
-	s.Require().InDelta(0.0, s.emptySession.CalculateEnergyConsumptionWithAvgPower(), 1)
+	s.Assert().InDelta(0.0, s.emptySession.CalculateEnergyConsumptionWithAvgPower(), 1)
 
 	s.emptySession.AddSampledValue([]types.SampledValue{
 		{
@@ -241,7 +237,7 @@ func (s *SessionTestSuite) TestCalculateEnergyConsumptionWithAvgPower() {
 			Measurand: types.MeasurandPowerActiveImport,
 		},
 	})
-	s.Require().InDelta(0.0, s.emptySession.CalculateEnergyConsumptionWithAvgPower(), 1)
+	s.Assert().InDelta(0.0, s.emptySession.CalculateEnergyConsumptionWithAvgPower(), 1)
 }
 
 func TestSession(t *testing.T) {

@@ -4,11 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"sync"
-	"time"
 
 	"github.com/go-co-op/gocron"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/session"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/evcc"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/power-meter"
@@ -42,14 +40,11 @@ type (
 		SetMaxChargingTime(time *int)
 		GetMaxChargingPower() float64
 
-		StartCharging(transactionId, tagId string, connectorId *int) error
+		StartCharging(connectorId *int) error
 		StopCharging(reason core.Reason) error
 		Lock()
 		Unlock()
 
-		GetSession() session.Session
-		GetTagId() string
-		GetTransactionId() string
 		GetEvseId() int
 
 		GetPowerMeter() powerMeter.PowerMeter
@@ -71,10 +66,6 @@ type (
 
 		SetNotificationChannel(notificationChannel chan<- notifications.StatusNotification)
 		SetMeterValuesChannel(notificationChannel chan<- notifications.MeterValueNotification)
-
-		Reserve(reservationId int, tagId string) error
-		RemoveReservation() error
-		GetReservationId() int
 	}
 
 	Impl struct {
@@ -85,7 +76,6 @@ type (
 		availability    core.AvailabilityType
 		status          core.ChargePointStatus
 		errorCode       core.ChargePointErrorCode
-		session         *session.Session
 		reservationId   *int
 
 		// Notification channels
@@ -103,11 +93,10 @@ type (
 
 // NewEvse Create a new evse object from the provided arguments. evseId, connectorId and maxChargingTime must be greater than zero.
 // When created, it makes an empty session, turns off the relay and defaults the status to Available.
-func NewEvse(evseId int, evcc evcc.EVCC, powerMeter powerMeter.PowerMeter, powerMeterEnabled bool, maxPower float64, maxChargingTime *int) (*Impl, error) {
+func NewEvse(evseId int, evcc evcc.EVCC, powerMeter powerMeter.PowerMeter, maxPower float64, maxChargingTime *int) (*Impl, error) {
 	log.WithFields(log.Fields{
 		"evseId":          evseId,
 		"maxChargingTime": maxChargingTime,
-		"hasPowerMeter":   powerMeterEnabled,
 	}).Info("Creating a new evse")
 
 	if evseId <= 0 {
@@ -119,16 +108,14 @@ func NewEvse(evseId int, evcc evcc.EVCC, powerMeter powerMeter.PowerMeter, power
 	}
 
 	return &Impl{
-		mu:                sync.Mutex{},
-		evseId:            evseId,
-		evcc:              evcc,
-		powerMeter:        powerMeter,
-		powerMeterEnabled: powerMeterEnabled,
-		maxChargingTime:   maxChargingTime,
-		maxPower:          maxPower,
-		status:            core.ChargePointStatusAvailable,
-		session:           session.NewEmptySession(),
-		scheduler:         scheduler.NewScheduler(),
+		mu:              sync.Mutex{},
+		evseId:          evseId,
+		evcc:            evcc,
+		powerMeter:      powerMeter,
+		maxChargingTime: maxChargingTime,
+		maxPower:        maxPower,
+		status:          core.ChargePointStatusAvailable,
+		scheduler:       scheduler.NewScheduler(),
 	}, nil
 }
 
@@ -211,21 +198,14 @@ Loop:
 
 // StartCharging Start charging a evse if evse is available and session could be started.
 // It turns on the relay (even if negative logic applies).
-func (evse *Impl) StartCharging(transactionId, tagId string, connectorId *int) error {
+func (evse *Impl) StartCharging(connectorId *int) error {
 	logInfo := log.WithFields(log.Fields{
-		"evseId":        evse.evseId,
-		"transactionId": transactionId,
-		"tagId":         tagId,
+		"evseId": evse.evseId,
 	})
 	logInfo.Debugf("Trying to start charging on evse")
 
 	if !(evse.IsAvailable() || evse.IsPreparing()) {
 		return ErrInvalidStatus
-	}
-
-	sessionErr := evse.session.StartSession(transactionId, tagId)
-	if sessionErr != nil {
-		return sessionErr
 	}
 
 	err := evse.evcc.EnableCharging()
@@ -243,45 +223,6 @@ func (evse *Impl) StartCharging(transactionId, tagId string, connectorId *int) e
 	return nil
 }
 
-// ResumeCharging Resumes or restores the charging state after boot if a charging session was active.
-func (evse *Impl) ResumeCharging(session session.Session) (chargingTimeElapsed *int, err error) {
-	logInfo := log.WithFields(log.Fields{
-		"evseId":  evse.evseId,
-		"session": session,
-	})
-	logInfo.Debugf("Trying to resume charging on evse")
-
-	// Set the transaction id so evse is able to stop the transaction if charging fails
-	evse.session.TransactionId = session.TransactionId
-
-	sessionErr := evse.session.StartSession(session.TransactionId, session.TagId)
-	if sessionErr != nil {
-		return evse.maxChargingTime, fmt.Errorf("cannot resume session: %v", sessionErr)
-	}
-
-	if evse.IsPreparing() || evse.IsCharging() {
-		err = evse.evcc.EnableCharging()
-		if err != nil {
-			return
-		}
-
-		evse.session.Started = session.Started
-		evse.session.Consumption = session.Consumption
-	}
-
-	if evse.maxChargingTime != nil {
-		timeElapsed := int(time.Now().Sub(*session.Started).Minutes())
-		if *evse.maxChargingTime <= timeElapsed {
-			chargingTimeElapsed = &timeElapsed
-		}
-
-		err = ErrSessionTimeLimitExceeded
-		return
-	}
-
-	return nil, nil
-}
-
 // StopCharging Stops charging the evse by turning the relay off and ending the session.
 func (evse *Impl) StopCharging(reason core.Reason) error {
 	logInfo := log.WithFields(log.Fields{
@@ -294,8 +235,6 @@ func (evse *Impl) StopCharging(reason core.Reason) error {
 
 		evse.evcc.DisableCharging()
 		evse.evcc.Unlock()
-		evse.session.EndSession()
-		// todo save the session
 
 		// Remove the sampling of the power meter
 		schedulerErr := evse.scheduler.RemoveByTag(fmt.Sprintf("evse%dSampling", evse.GetEvseId()))
@@ -307,18 +246,6 @@ func (evse *Impl) StopCharging(reason core.Reason) error {
 	}
 
 	return ErrNotCharging
-}
-
-func (evse *Impl) GetSession() session.Session {
-	return *evse.session
-}
-
-func (evse *Impl) GetTransactionId() string {
-	return evse.session.TransactionId
-}
-
-func (evse *Impl) GetTagId() string {
-	return evse.session.TagId
 }
 
 func (evse *Impl) GetEvseId() int {

@@ -176,16 +176,14 @@ func (cp *ChargePoint) OnUnlockConnector(request *core.UnlockConnectorRequest) (
 func (cp *ChargePoint) OnRemoteStopTransaction(request *core.RemoteStopTransactionRequest) (confirmation *core.RemoteStopTransactionConfirmation, err error) {
 	cp.logger.WithField("transactionId", request.TransactionId).Infof("Received request %s", request.GetFeatureName())
 
-	var (
-		response      = types.RemoteStartStopStatusRejected
-		transactionId = fmt.Sprintf("%d", request.TransactionId)
-		conn, fErr    = cp.evseManager.FindEVSEWithTransactionId(transactionId)
-	)
+	response := types.RemoteStartStopStatusRejected
+	transactionId := fmt.Sprintf("%d", request.TransactionId)
 
-	if fErr == nil && conn.IsCharging() {
+	session, fErr := cp.sessionManager.GetSessionWithTransactionId(transactionId)
+	if fErr == nil {
 		response = types.RemoteStartStopStatusAccepted
 		// Delay stopping the transaction by 3 seconds
-		_, schedulerErr := cp.scheduler.Every(3).Seconds().LimitRunsTo(1).Do(cp.stopChargingConnectorWithTransactionId, transactionId)
+		_, schedulerErr := cp.scheduler.Every(3).Seconds().LimitRunsTo(1).Do(cp.StopCharging, session.EvseId, session.ConnectorId, core.ReasonRemote)
 		if schedulerErr != nil {
 			response = types.RemoteStartStopStatusRejected
 		}
@@ -265,7 +263,7 @@ func (cp *ChargePoint) remoteStart(evseId, connectorId int, tagId string) {
 		case types.AuthorizationStatusAccepted, types.AuthorizationStatusConcurrentTx:
 
 			// Attempt to start charging
-			err := cp.evseManager.StartCharging(evseId, tagId, strconv.Itoa(startTransactionConf.TransactionId))
+			err := cp.evseManager.StartCharging(evseId, nil)
 			if err != nil {
 				logInfo.WithError(err).Errorf("Unable to start charging connector")
 				return

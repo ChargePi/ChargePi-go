@@ -10,16 +10,11 @@ import (
 func (cp *ChargePoint) OnReserveNow(request *reservation.ReserveNowRequest) (confirmation *reservation.ReserveNowConfirmation, err error) {
 	cp.logger.Infof("Received %s for %v", request.GetFeatureName(), request.ConnectorId)
 
-	connector, err := cp.evseManager.FindEVSE(request.ConnectorId)
-	if err != nil {
-		return reservation.NewReserveNowConfirmation(reservation.ReservationStatusUnavailable), nil
-	}
-
-	err = connector.Reserve(request.ReservationId, request.IdTag)
+	err = cp.evseManager.Reserve(request.ConnectorId, nil, request.ReservationId, request.IdTag)
 	switch err {
 	case nil:
 		timeFormat := fmt.Sprintf("%d:%d", request.ExpiryDate.Hour(), request.ExpiryDate.Minute())
-		_, schedulerErr := cp.scheduler.Every(1).Day().At(timeFormat).LimitRunsTo(1).Do(connector.RemoveReservation)
+		_, schedulerErr := cp.scheduler.Every(1).Day().At(timeFormat).LimitRunsTo(1).Do(cp.evseManager.RemoveReservation, request.ReservationId)
 		if schedulerErr != nil {
 			return reservation.NewReserveNowConfirmation(reservation.ReservationStatusRejected), nil
 		}
@@ -34,17 +29,12 @@ func (cp *ChargePoint) OnReserveNow(request *reservation.ReserveNowRequest) (con
 
 func (cp *ChargePoint) OnCancelReservation(request *reservation.CancelReservationRequest) (confirmation *reservation.CancelReservationConfirmation, err error) {
 	cp.logger.Infof("Received %s for %v", request.GetFeatureName(), request.ReservationId)
-	var (
-		connector, rErr = cp.evseManager.FindEVSEWithReservationId(request.ReservationId)
-		status          = reservation.CancelReservationStatusAccepted
-	)
+	status := reservation.CancelReservationStatusAccepted
 
-	if rErr != nil {
-		return reservation.NewCancelReservationConfirmation(reservation.CancelReservationStatusRejected), nil
-	}
-
-	err = connector.RemoveReservation()
-	if err != nil {
+	err = cp.evseManager.RemoveReservation(request.ReservationId)
+	switch err {
+	case nil:
+	default:
 		status = reservation.CancelReservationStatusRejected
 	}
 

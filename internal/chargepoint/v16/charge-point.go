@@ -19,6 +19,7 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
 	settings2 "github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
+	"github.com/xBlaz3kx/ChargePi-go/internal/sessions/service/session"
 )
 
 type ChargePoint struct {
@@ -35,6 +36,7 @@ type ChargePoint struct {
 	indicatorMapping settings.IndicatorStatusMapping
 	// Software components
 	evseManager        evse.Manager
+	sessionManager     session.Manager
 	meterValuesChannel chan notifications.MeterValueNotification
 	scheduler          *gocron.Scheduler
 	tagManager         auth.TagManager

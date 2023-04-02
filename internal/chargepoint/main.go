@@ -16,7 +16,7 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	cfg "github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
-	uDb "github.com/xBlaz3kx/ChargePi-go/internal/users/database"
+	uDb "github.com/xBlaz3kx/ChargePi-go/internal/users/pkg/database"
 	"github.com/xBlaz3kx/ChargePi-go/internal/users/service"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/logging"
 	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
@@ -69,7 +69,14 @@ func CreateChargePoint(
 	}
 }
 
-func SetupUserApi(db *badger.DB, api settings.Api, handler chargePoint.ChargePoint, tagManager auth.TagManager, manager evse.Manager, ocppVariableManager ocppConfigManager.Manager) {
+func SetupUserApi(
+	db *badger.DB,
+	api settings.Api,
+	handler chargePoint.ChargePoint,
+	tagManager auth.TagManager,
+	manager evse.Manager,
+	ocppVariableManager ocppConfigManager.Manager,
+) {
 	// User database layer
 	userDb := uDb.NewUserDb(db)
 

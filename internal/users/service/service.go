@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/casbin/casbin/v2"
-	"github.com/xBlaz3kx/ChargePi-go/internal/users/database"
+	"github.com/xBlaz3kx/ChargePi-go/internal/users/pkg/database"
 	"github.com/xBlaz3kx/ChargePi-go/internal/users/pkg/models"
 )
 

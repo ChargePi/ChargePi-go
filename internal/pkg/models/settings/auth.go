@@ -5,6 +5,6 @@ import (
 )
 
 type AuthList struct {
-	Version int
-	Tags    []localauth.AuthorizationData
+	Version int                           `json:"version" yaml:"version" mapstructure:"version"`
+	Tags    []localauth.AuthorizationData `json:"tags" yaml:"tags" mapstructure:"tags"`
 }

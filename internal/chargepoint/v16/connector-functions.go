@@ -64,7 +64,7 @@ Listener:
 			logInfo.Info("Received evse status update")
 
 			go func() {
-				logInfo.Info("Displaying status change")
+				logInfo.Debug("Displaying status change")
 				// Display connector status change on display and indicator
 				cp.displayStatusChangeOnIndicator(connectorIndex, status)
 				cp.displayStatusChangeOnDisplay(c.EvseId, status)
@@ -85,10 +85,6 @@ Listener:
 			// Send a meter value notification to the Central System
 			values := core.NewMeterValuesRequest(meterVal.EvseId, meterVal.MeterValues)
 			err := util.SendRequest(cp.chargePoint, values, func(confirmation ocpp.Response, protoError error) {
-				if protoError != nil {
-					return
-				}
-
 				logInfo.Info("Sent a meter value update")
 			})
 			if err != nil {
@@ -157,16 +153,22 @@ func (cp *ChargePoint) handleStatusUpdate(ctx context.Context, evseId int, statu
 
 		// Listen for a tag for a minute. If the tag is tapped, start charging.
 		listenCtx, cancel := context.WithTimeout(ctx, time.Minute)
+		defer cancel()
+
 		tag, err := cp.ListenForTag(listenCtx, cp.tagReader.GetTagChannel())
-		if err == nil {
+		switch err {
+		case nil:
 			// Tag was found, start charging
 			err = cp.StartCharging(evseId, 1, *tag)
 			if err != nil {
 				cp.logger.WithError(err).Error("Cannot start charging")
 			}
+		case context.DeadlineExceeded:
+			// Indicate timeout
+		default:
+			// Indicate error
 		}
 
-		cancel()
 	case core.ChargePointStatusCharging:
 	case core.ChargePointStatusSuspendedEV:
 	case core.ChargePointStatusSuspendedEVSE:

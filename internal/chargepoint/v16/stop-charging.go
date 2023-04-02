@@ -28,19 +28,21 @@ func (cp *ChargePoint) stopChargingConnector(connector evse.EVSE, reason core.Re
 		return chargePoint.ErrConnectorNil
 	}
 
-	var (
-		transactionId, convErr = strconv.Atoi(connector.GetTransactionId())
-		logInfo                = cp.logger.WithFields(log.Fields{
-			"evseId": connector.GetEvseId(),
-			"reason": reason,
-		})
-	)
+	logInfo := cp.logger.WithFields(log.Fields{
+		"evseId": connector.GetEvseId(),
+		"reason": reason,
+	})
 
+	session, err := cp.sessionManager.GetSession(connector.GetEvseId(), nil)
+	if err != nil {
+		return err
+	}
+
+	transactionId, convErr := strconv.Atoi(session.TransactionId)
 	if convErr != nil {
 		return convErr
 	}
 
-	session := connector.GetSession()
 	request := core.NewStopTransactionRequest(
 		int(session.CalculateEnergyConsumptionWithAvgPower()),
 		types.NewDateTime(time.Now()),
@@ -55,7 +57,13 @@ func (cp *ChargePoint) stopChargingConnector(connector evse.EVSE, reason core.Re
 		}
 
 		logInfo.Info("Stopping transaction")
-		err := connector.StopCharging(reason)
+
+		err = cp.sessionManager.StopSession(connector.GetEvseId(), nil, reason)
+		if err != nil {
+			logInfo.WithError(err).Warnf("Unable to stop session")
+		}
+
+		err = connector.StopCharging(reason)
 		if err != nil {
 			logInfo.WithError(err).Errorf("Unable to stop charging")
 			return
@@ -65,24 +73,4 @@ func (cp *ChargePoint) stopChargingConnector(connector evse.EVSE, reason core.Re
 	}
 
 	return util.SendRequest(cp.chargePoint, request, callback)
-}
-
-// stopChargingConnectorWithTagId Search for a connector with the tagId and stop the charging.
-func (cp *ChargePoint) stopChargingConnectorWithTagId(tagId string, reason core.Reason) error {
-	var c, err = cp.evseManager.FindEVSEWithTagId(tagId)
-	if err != nil {
-		return err
-	}
-
-	return cp.stopChargingConnector(c, reason)
-}
-
-// stopChargingConnectorWithTransactionId Search for a connector with the transactionId and stop the charging.
-func (cp *ChargePoint) stopChargingConnectorWithTransactionId(transactionId string) error {
-	var c, err = cp.evseManager.FindEVSEWithTransactionId(transactionId)
-	if err != nil {
-		return err
-	}
-
-	return cp.stopChargingConnector(c, core.ReasonRemote)
 }

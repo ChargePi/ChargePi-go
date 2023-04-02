@@ -2,73 +2,67 @@ package auth
 
 import (
 	"testing"
-	"time"
 
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/database"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/util"
 )
 
 type authCacheTestSuite struct {
 	suite.Suite
-	tag        *types.IdTagInfo
-	blockedTag *types.IdTagInfo
-	expiredTag *types.IdTagInfo
-	authCache  Cache
+	authCache *CacheImpl
 }
 
 func (s *authCacheTestSuite) SetupTest() {
 	db := database.Get()
 	s.authCache = NewAuthCache(db)
 	s.authCache.RemoveCachedTags()
-
-	s.tag = &types.IdTagInfo{
-		ParentIdTag: "123",
-		ExpiryDate:  types.NewDateTime(time.Now().Add(10 * time.Minute)),
-		Status:      types.AuthorizationStatusAccepted,
-	}
-
-	s.blockedTag = &types.IdTagInfo{
-		ParentIdTag: "BlockedTag123",
-		ExpiryDate:  types.NewDateTime(time.Now().Add(40 * time.Minute)),
-		Status:      types.AuthorizationStatusBlocked,
-	}
-
-	s.expiredTag = &types.IdTagInfo{
-		ParentIdTag: "ExpiredTag123",
-		ExpiryDate:  types.NewDateTime(time.Date(1999, 1, 1, 1, 1, 1, 0, time.Local)),
-		Status:      types.AuthorizationStatusAccepted,
-	}
 }
 
 func (s *authCacheTestSuite) TestAddTag() {
 	s.authCache.SetMaxCachedTags(1)
-	s.authCache.AddTag(s.tag.ParentIdTag, s.tag)
 
-	overLimitTag := types.IdTagInfo{
-		ParentIdTag: "testTag123",
-		ExpiryDate:  types.NewDateTime(time.Now().Add(10 * time.Minute)),
-		Status:      types.AuthorizationStatusAccepted,
-	}
+	tagId := util.GenerateRandomTag()
+	s.authCache.AddTag(tagId, okTag)
 
 	// Test cached tag limit
-	s.authCache.AddTag(overLimitTag.ParentIdTag, &overLimitTag)
+	tagId = util.GenerateRandomTag()
+	s.authCache.AddTag(tagId, expiredTag)
 }
 
 func (s *authCacheTestSuite) TestRemoveCachedTags() {
-	s.authCache.SetMaxCachedTags(5)
+	tagId1 := util.GenerateRandomTag()
+	s.authCache.AddTag(tagId1, okTag)
 
-	s.authCache.AddTag(s.tag.ParentIdTag, s.tag)
-	s.authCache.AddTag(s.blockedTag.ParentIdTag, s.blockedTag)
-	s.authCache.AddTag(s.expiredTag.ParentIdTag, s.expiredTag)
+	tagId2 := util.GenerateRandomTag()
+	s.authCache.AddTag(tagId2, expiredTag)
+
+	tagId3 := util.GenerateRandomTag()
+	s.authCache.AddTag(tagId3, blockedTag)
 
 	s.authCache.RemoveCachedTags()
+
+	_, err := s.authCache.GetTag(tagId1)
+	s.Assert().Error(err)
+
+	_, err = s.authCache.GetTag(tagId2)
+	s.Assert().Error(err)
+
+	_, err = s.authCache.GetTag(tagId3)
+	s.Assert().Error(err)
 }
 
 func (s *authCacheTestSuite) TestGetTag() {
-	_, err := s.authCache.GetTag("")
+	tagId := util.GenerateRandomTag()
+	s.authCache.AddTag(tagId, okTag)
+	tag, err := s.authCache.GetTag(tagId)
 	s.Assert().NoError(err)
+	s.Assert().EqualValues(*okTag, *tag)
+
+	tagId = util.GenerateRandomTag()
+	_, err = s.authCache.GetTag(tagId)
+	s.Assert().Error(err)
 }
 
 func TestAuthCache(t *testing.T) {

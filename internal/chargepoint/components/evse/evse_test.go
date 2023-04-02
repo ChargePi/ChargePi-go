@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/session"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/evcc"
 	powerMeter "github.com/xBlaz3kx/ChargePi-go/pkg/power-meter"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/util"
 
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
@@ -23,38 +23,36 @@ type evseTestSuite struct {
 func (s *evseTestSuite) SetupTest() {
 }
 
-func (s *evseTestSuite) TestCreateNewConnector() {
+func (s *evseTestSuite) TestCreateNewEVSE() {
 	evccMock := evcc.NewEvccMock(s.T())
 	powerMeterMock := powerMeter.NewPowerMeterMock(s.T())
 
 	// Ok case
-	connector1, err := NewEvse(1, evccMock, powerMeterMock, false, 11, nil)
-
+	connector1, err := NewEvse(1, evccMock, powerMeterMock, 11, nil)
 	s.Assert().Equal(1, connector1.evseId)
 	s.Assert().Equal(core.ChargePointStatusAvailable, connector1.status)
 	s.Assert().Equal(15, connector1.maxChargingTime)
 	s.Assert().False(connector1.powerMeterEnabled)
 
 	// Invalid evseId
-	_, err = NewEvse(1, evccMock, powerMeterMock, false, 11, nil)
+	_, err = NewEvse(1, evccMock, powerMeterMock, 11, nil)
 	s.Assert().Error(err)
 
 	// Invalid evse id
-	_, err = NewEvse(0, evccMock, powerMeterMock, false, 11, nil)
+	_, err = NewEvse(0, evccMock, powerMeterMock, 11, nil)
 	s.Assert().Error(err)
 
 	// Negative evse id
-	_, err = NewEvse(-1, evccMock, powerMeterMock, false, 11, nil)
+	_, err = NewEvse(-1, evccMock, powerMeterMock, 11, nil)
 	s.Assert().Error(err)
 }
 
 func (s *evseTestSuite) TestStartCharging() {
-
 	evccMock := evcc.NewEvccMock(s.T())
 	powerMeterMock := powerMeter.NewPowerMeterMock(s.T())
 
 	// Ok case
-	evse, err := NewEvse(1, evccMock, powerMeterMock, false, 11, nil)
+	evse, err := NewEvse(1, evccMock, powerMeterMock, 11, nil)
 	s.Require().NoError(err)
 
 	// Ok case
@@ -92,11 +90,12 @@ func (s *evseTestSuite) TestStopCharging() {
 	powerMeterMock := powerMeter.NewPowerMeterMock(s.T())
 
 	// Ok case
-	evse, err := NewEvse(1, evccMock, powerMeterMock, false, 11, nil)
+	evse, err := NewEvse(1, evccMock, powerMeterMock, 11, nil)
 	s.Require().NoError(err)
 
 	// Start charging
-	err = evse.StartCharging("1234", "1234", nil)
+	tagId := util.GenerateRandomTag()
+	err = evse.StartCharging("1234", tagId, nil)
 	s.Assert().NoError(err)
 
 	// Stop charging normally
@@ -108,83 +107,11 @@ func (s *evseTestSuite) TestStopCharging() {
 	s.Assert().Error(err)
 }
 
-func (s *evseTestSuite) TestResumeCharging() {
-	evccMock := evcc.NewEvccMock(s.T())
-	powerMeterMock := powerMeter.NewPowerMeterMock(s.T())
-
-	evse, err := NewEvse(1, evccMock, powerMeterMock, false, 11, nil)
-	s.Require().NoError(err)
-
-	var (
-		currentTime  = time.Now()
-		validSession = session.Session{
-			IsActive:      true,
-			TransactionId: "1234",
-			TagId:         "1234",
-			Started:       &currentTime,
-			Consumption:   nil,
-		}
-	)
-
-	// Ok case
-	evse.SetStatus(core.ChargePointStatusCharging, core.NoError)
-	timeElapsed, err := evse.ResumeCharging(validSession)
-	s.Assert().NoError(err)
-	s.Assert().InDelta(0, timeElapsed, 1)
-
-	err = evse.StopCharging(core.ReasonLocal)
-	s.Assert().NoError(err)
-}
-
-func (s *evseTestSuite) TestReserveConnector() {
-	evccMock := evcc.NewEvccMock(s.T())
-	powerMeterMock := powerMeter.NewPowerMeterMock(s.T())
-
-	evse, err := NewEvse(1, evccMock, powerMeterMock, false, 11, nil)
-	s.Require().NoError(err)
-
-	// Ok case
-	err = evse.Reserve(1, "")
-	s.Assert().NoError(err)
-
-	// EVSE already reserved
-	err = evse.Reserve(2, "")
-	s.Assert().Error(err)
-
-	err = evse.RemoveReservation()
-	s.Assert().NoError(err)
-
-	// Invalid evse status
-	evse.SetStatus(core.ChargePointStatusCharging, core.NoError)
-	err = evse.Reserve(2, "")
-	s.Assert().Error(err)
-}
-
-func (s *evseTestSuite) TestRemoveReservation() {
-	evccMock := evcc.NewEvccMock(s.T())
-	powerMeterMock := powerMeter.NewPowerMeterMock(s.T())
-
-	evse, err := NewEvse(1, evccMock, powerMeterMock, false, 11, nil)
-	s.Require().NoError(err)
-
-	// Make a reservation
-	err = evse.Reserve(1, "")
-	s.Assert().NoError(err)
-
-	// Ok case
-	err = evse.RemoveReservation()
-	s.Assert().NoError(err)
-
-	// Cannot remove reservation that is not there
-	err = evse.RemoveReservation()
-	s.Assert().Error(err)
-}
-
 func (s *evseTestSuite) TestSamplePowerMeter() {
 	evccMock := evcc.NewEvccMock(s.T())
 	powerMeterMock := powerMeter.NewPowerMeterMock(s.T())
 
-	evse, err := NewEvse(1, evccMock, powerMeterMock, false, 11, nil)
+	evse, err := NewEvse(1, evccMock, powerMeterMock, 11, nil)
 	s.Require().NoError(err)
 
 	var (
@@ -204,11 +131,11 @@ func (s *evseTestSuite) TestSamplePowerMeter() {
 				s.Assert().EqualValues("1.000", notif.MeterValues[0].SampledValue[0].Value)
 				s.Assert().EqualValues(types.MeasurandVoltage, notif.MeterValues[0].SampledValue[0].Measurand)
 
-				s.Assert().EqualValues("1.000", notif.MeterValues[1].SampledValue[0].Value)
-				s.Assert().EqualValues(types.MeasurandCurrentImport, notif.MeterValues[1].SampledValue[0].Measurand)
+				s.Assert().EqualValues("1.000", notif.MeterValues[0].SampledValue[0].Value)
+				s.Assert().EqualValues(types.MeasurandCurrentImport, notif.MeterValues[0].SampledValue[1].Measurand)
 
-				s.Assert().EqualValues("1.000", notif.MeterValues[2].SampledValue[0].Value)
-				s.Assert().EqualValues(types.MeasurandEnergyActiveImportInterval, notif.MeterValues[2].SampledValue[0].Measurand)
+				s.Assert().EqualValues("1.000", notif.MeterValues[0].SampledValue[0].Value)
+				s.Assert().EqualValues(types.MeasurandEnergyActiveImportInterval, notif.MeterValues[0].SampledValue[2].Measurand)
 			case <-ctx.Done():
 				break Loop
 			}
