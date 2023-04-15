@@ -5,9 +5,12 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
+	"github.com/samber/lo"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/grpc"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type Service struct {
@@ -34,7 +37,7 @@ func (s *Service) GetEVSEs(ctx context.Context, empty *empty.Empty) (*grpc.GetEv
 	return response, nil
 }
 
-func (s *Service) AddEVSE(ctx context.Context, request *grpc.SetEVCCRequest) (*grpc.AddEvseResponse, error) {
+func (s *Service) AddEVSE(ctx context.Context, request *grpc.AddEvseRequest) (*grpc.AddEvseResponse, error) {
 	response := &grpc.AddEvseResponse{
 		Status: "Failed",
 	}
@@ -62,7 +65,7 @@ func (s *Service) SetEVCC(ctx context.Context, request *grpc.SetEVCCRequest) (*g
 	return nil, nil
 }
 
-func (s *Service) SetPowerMeter(ctx context.Context, request *grpc.SetPowerMeterRequest) (*grpc.SetPowerMeterDetails, error) {
+func (s *Service) SetPowerMeter(ctx context.Context, request *grpc.SetPowerMeterRequest) (*grpc.SetPowerMeterResponse, error) {
 	// todo
 	return nil, nil
 }
@@ -73,11 +76,6 @@ func (s *Service) GetUsageForEVSE(request *grpc.GetUsageForEVSERequest, server g
 		return err
 	}
 
-	powerMeter := evseWithId.GetPowerMeter()
-	if util.IsNilInterfaceOrPointer(powerMeter) {
-		return nil
-	}
-
 	ctx := server.Context()
 
 Loop:
@@ -86,18 +84,21 @@ Loop:
 		case <-ctx.Done():
 			break Loop
 		default:
-			// todo
-			// Get measurements from the power meter
-			powerMeter.GetPower()
-			powerMeter.GetEnergy()
-			powerMeter.GetCurrent(1)
-			powerMeter.GetVoltage(1)
+			// Sample power meter
+			samples := evseWithId.SamplePowerMeter(util.GetTypesToSample())
 
-			powerMeter.GetCurrent(2)
-			powerMeter.GetVoltage(2)
+			// Convert to grpc samples
+			var samplesToReturn []*grpc.Sample
+			for _, sample := range samples {
+				samplesToReturn = append(samplesToReturn, toSample(sample))
+			}
 
-			powerMeter.GetCurrent(3)
-			powerMeter.GetVoltage(3)
+			err := server.Send(&grpc.GetUsageForEVSEResponse{
+				Samples: samplesToReturn,
+			})
+			if err != nil {
+				return err
+			}
 			time.Sleep(time.Second * 10)
 		}
 	}
@@ -121,5 +122,20 @@ func toEvse(e evse.EVSE) *grpc.EVSE {
 		},
 		Status:  0,
 		Session: &grpc.Session{},
+	}
+}
+
+func toSample(sample types.SampledValue) *grpc.Sample {
+	consumption := &grpc.Consumption{
+		Unit: string(sample.Unit),
+		// Value: sample.Value,
+	}
+	return &grpc.Sample{
+		Consumption: consumption,
+		Measureand:  string(sample.Measurand),
+		Phase:       lo.ToPtr(string(sample.Phase)),
+		Location:    lo.ToPtr(string(sample.Location)),
+		Context:     lo.ToPtr(string(sample.Context)),
+		Timestamp:   timestamppb.New(time.Now()),
 	}
 }

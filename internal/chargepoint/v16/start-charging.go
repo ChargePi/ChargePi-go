@@ -18,6 +18,7 @@ func (cp *ChargePoint) StartCharging(evseId, connectorId int, tagId string) erro
 		"connectorId": connectorId,
 		"tagId":       tagId,
 	})
+	logInfo.Infof("Starting charging")
 
 	// Charge point must be available to accept transactions
 	if cp.availability != core.AvailabilityTypeOperative {
@@ -38,7 +39,7 @@ func (cp *ChargePoint) StartCharging(evseId, connectorId int, tagId string) erro
 
 	callback := func(confirmation ocpp.Response, protoError error) {
 		if protoError != nil {
-			logInfo.WithError(protoError).Errorf("Central system responded with an error for %s", confirmation.GetFeatureName())
+			logInfo.WithError(protoError).Warn("Central system responded with an error for %s", confirmation.GetFeatureName())
 			return
 		}
 
@@ -46,7 +47,8 @@ func (cp *ChargePoint) StartCharging(evseId, connectorId int, tagId string) erro
 
 		switch startTransactionConf.IdTagInfo.Status {
 		case types.AuthorizationStatusAccepted, types.AuthorizationStatusConcurrentTx:
-			err := cp.sessionManager.StartSession(evseId, nil, tagId, fmt.Sprintf("%d", startTransactionConf.TransactionId))
+			transactionId := fmt.Sprintf("%d", startTransactionConf.TransactionId)
+			err := cp.sessionManager.StartSession(evseId, nil, tagId, transactionId)
 			if err != nil {
 				return
 			}

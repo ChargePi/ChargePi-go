@@ -26,7 +26,10 @@ message Session {
 message Sample{
   Consumption Consumption = 1;
   string Measureand = 2;
-  google.protobuf.Timestamp Timestamp = 3;
+  optional string Phase = 3;
+  optional string Location = 4;
+  optional string Context = 5;
+  google.protobuf.Timestamp Timestamp = 6;
 }
 
 message Consumption{

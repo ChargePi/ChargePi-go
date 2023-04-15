@@ -10,7 +10,7 @@ type Message struct {
 }
 
 // NewMessage creates a new message for the Display.
-func NewMessage(duration time.Duration, messages []string) Message {
+func NewMessage(duration time.Duration, messages ...string) Message {
 	return Message{
 		Messages:        messages,
 		MessageDuration: duration,

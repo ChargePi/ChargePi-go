@@ -105,7 +105,7 @@ func (s *ChargePointService) SetIndicatorSettings(ctx context.Context, request *
 func (s *ChargePointService) GetIndicatorSettings(ctx context.Context, empty *empty.Empty) (*grpc.GetIndicatorSettingsResponse, error) {
 	response := &grpc.GetIndicatorSettingsResponse{}
 
-	indicatorSettings := s.settingsManager.GetChargePointSettings().Hardware.LedIndicator
+	indicatorSettings := s.settingsManager.GetChargePointSettings().Hardware.Indicator
 
 	response.Indicator = &grpc.Indicator{
 		Type:             indicatorSettings.Type,

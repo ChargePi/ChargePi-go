@@ -2,14 +2,11 @@ package auth
 
 import (
 	"errors"
-	"strconv"
 
 	"github.com/dgraph-io/badger/v3"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/localauth"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
-	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
-	"github.com/xBlaz3kx/ocppManager-go/configuration"
 )
 
 var (
@@ -38,27 +35,11 @@ type (
 )
 
 func NewTagManager(db *badger.DB) *TagManagerImpl {
-	authCacheEnabled, cacheErr := ocppConfigManager.GetConfigurationValue(configuration.AuthorizationCacheEnabled.String())
-	localListLength, err := ocppConfigManager.GetConfigurationValue(configuration.LocalAuthListMaxLength.String())
-
-	if cacheErr != nil {
-	}
-
-	if err != nil {
-		length := "0"
-		localListLength = &length
-	}
-
-	maxTags, err := strconv.Atoi(*localListLength)
-	if err != nil {
-		maxTags = 0
-	}
-
 	cache := NewAuthCache(db)
-	authList := NewLocalAuthList(db, maxTags)
+	authList := NewLocalAuthList(db, 10)
 
 	return &TagManagerImpl{
-		authCacheEnabled: authCacheEnabled != nil && *authCacheEnabled == "true",
+		authCacheEnabled: true,
 		cache:            cache,
 		authList:         authList,
 	}

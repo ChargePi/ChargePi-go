@@ -1,7 +1,7 @@
 package settings
 
 type (
-	LedIndicator struct {
+	Indicator struct {
 		Enabled          bool   `json:"enabled" yaml:"enabled" mapstructure:"enabled"`
 		IndicateCardRead bool   `json:"indicateCardRead,omitempty" yaml:"indicateCardRead,omitempty" mapstructure:"indicateCardRead,omitempty"`
 		Type             string `json:"type,omitempty" yaml:"type" mapstructure:"type"`

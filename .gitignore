@@ -9,3 +9,4 @@
 .idea
 configs
 !configs/casbin/*
+.DS_Store

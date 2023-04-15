@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"sync"
 
+	"github.com/go-playground/validator/v10"
+	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
+
 	"github.com/dgraph-io/badger/v3"
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/database"
@@ -27,7 +30,7 @@ func init() {
 
 func GetManager() Manager {
 	if manager == nil {
-		log.Debug("Creating EVSE manager")
+		log.Debug("Creating settings manager")
 		manager = NewManager(database.Get())
 	}
 
@@ -37,8 +40,12 @@ func GetManager() Manager {
 type (
 	Manager interface {
 		SetupOcppConfiguration(version configuration.ProtocolVersion, supportedProfiles ...string)
+		GetOcppConfiguration(version configuration.ProtocolVersion) ([]core.ConfigurationKey, error)
+		GetOcppConfigurationWithKey(version configuration.ProtocolVersion, key string) (*core.ConfigurationKey, error)
 		GetChargePointSettings() settings.ChargePoint
 		SetChargePointSettings(settings settings.ChargePoint) error
+		SetSettings(settings settings.Settings) error
+		GetSettings() (*settings.Settings, error)
 	}
 
 	Impl struct {
@@ -46,16 +53,6 @@ type (
 		ocppVariableManager ocppConfigManager.Manager
 	}
 )
-
-func (i *Impl) GetChargePointSettings() settings.ChargePoint {
-	// todo
-	return settings.ChargePoint{}
-}
-
-func (i *Impl) SetChargePointSettings(settings settings.ChargePoint) error {
-	// todo
-	return nil
-}
 
 func NewManager(db *badger.DB) *Impl {
 	return &Impl{
@@ -71,25 +68,19 @@ func (i *Impl) SetupOcppConfiguration(version configuration.ProtocolVersion, sup
 	i.ocppVariableManager.SetVersion(version)
 	i.ocppVariableManager.SetSupportedProfiles(supportedProfiles...)
 
-	ocppConfig := configuration.Config{}
+	var ocppConfig configuration.Config
+
+	// Read the configuration from the database
 	err := i.db.View(func(txn *badger.Txn) error {
 
-		confg, err := txn.Get(database.GetOcppConfigurationKey())
+		config, err := txn.Get(database.GetOcppConfigurationKey(version))
 		if err != nil {
 			return err
 		}
 
-		bytes, err := confg.ValueCopy(nil)
-		if err != nil {
-			return err
-		}
-
-		err = json.Unmarshal(bytes, &ocppConfig)
-		if err != nil {
-			return err
-		}
-
-		return txn.Commit()
+		return config.Value(func(val []byte) error {
+			return json.Unmarshal(val, &ocppConfig)
+		})
 	})
 	if err != nil {
 		logInfo.WithError(err).Errorf("Error reading configuration from database")
@@ -100,5 +91,101 @@ func (i *Impl) SetupOcppConfiguration(version configuration.ProtocolVersion, sup
 	if err != nil {
 		logInfo.WithError(err).Errorf("Error setting the configuration to the manager")
 		return
+	}
+}
+
+func (i *Impl) GetChargePointSettings() settings.ChargePoint {
+	var settingsS settings.ChargePoint
+
+	err := i.db.View(func(txn *badger.Txn) error {
+		config, err := txn.Get(database.GetSettingsKey())
+		if err != nil {
+			return err
+		}
+
+		return config.Value(func(val []byte) error {
+			return json.Unmarshal(val, &settingsS)
+		})
+	})
+	if err != nil {
+		return settingsS
+	}
+
+	return settingsS
+}
+
+func (i *Impl) SetChargePointSettings(settings settings.ChargePoint) error {
+	// Validate the settings
+	validationErr := validator.New().Struct(settings)
+	if validationErr != nil {
+		return validationErr
+	}
+
+	return nil
+}
+
+func (i *Impl) SetSettings(settings settings.Settings) error {
+	// Validate the settings
+	validationErr := validator.New().Struct(settings)
+	if validationErr != nil {
+		return validationErr
+	}
+
+	// Read the configuration from the database
+	err := i.db.Update(func(txn *badger.Txn) error {
+		res, err := json.Marshal(settings)
+		if err != nil {
+			return err
+		}
+
+		return txn.Set(database.GetSettingsKey(), res)
+	})
+	return err
+}
+
+func (i *Impl) GetSettings() (*settings.Settings, error) {
+	var settingsS settings.Settings
+
+	err := i.db.View(func(txn *badger.Txn) error {
+		config, err := txn.Get(database.GetSettingsKey())
+		if err != nil {
+			return err
+		}
+
+		return config.Value(func(val []byte) error {
+			return json.Unmarshal(val, &settingsS)
+		})
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &settingsS, nil
+}
+
+func (i *Impl) GetOcppConfiguration(version configuration.ProtocolVersion) ([]core.ConfigurationKey, error) {
+	switch version {
+	case configuration.OCPP16:
+		return i.ocppVariableManager.GetConfiguration()
+	default:
+		return nil, nil
+	}
+}
+
+func (i *Impl) GetOcppConfigurationWithKey(version configuration.ProtocolVersion, key string) (*core.ConfigurationKey, error) {
+	switch version {
+	case configuration.OCPP16:
+		value, err := i.ocppVariableManager.GetConfigurationValue(key)
+		if err != nil {
+			return nil, err
+		}
+
+		return &core.ConfigurationKey{
+			Key:      key,
+			Readonly: false,
+			Value:    value,
+		}, nil
+	default:
+		return nil, nil
 	}
 }

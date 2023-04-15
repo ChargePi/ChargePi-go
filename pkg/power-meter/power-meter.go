@@ -25,12 +25,12 @@ var (
 type PowerMeter interface {
 	Init(ctx context.Context) error
 	Reset()
-	GetEnergy() types.SampledValue
-	GetPower() types.SampledValue
-	GetCurrent(phase int) types.SampledValue
-	GetVoltage(phase int) types.SampledValue
-	GetRMSCurrent(phase int) types.SampledValue
-	GetRMSVoltage(phase int) types.SampledValue
+	GetEnergy() (*types.SampledValue, error)
+	GetPower(phase int) (*types.SampledValue, error)
+	GetReactivePower(phase int) (*types.SampledValue, error)
+	GetApparentPower(phase int) (*types.SampledValue, error)
+	GetCurrent(phase int) (*types.SampledValue, error)
+	GetVoltage(phase int) (*types.SampledValue, error)
 	GetType() string
 }
 

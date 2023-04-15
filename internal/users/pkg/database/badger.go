@@ -2,10 +2,16 @@ package database
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/dgraph-io/badger/v3"
 	"github.com/xBlaz3kx/ChargePi-go/internal/users/pkg/models"
+)
+
+var (
+	ErrUserExists      = errors.New("user already exists")
+	ErrUserDoesntExist = errors.New("user doesn't exist")
 )
 
 type UserDbBadger struct {
@@ -19,7 +25,7 @@ func NewUserDb(db *badger.DB) *UserDbBadger {
 }
 
 func getUserKey(username string) []byte {
-	return []byte(fmt.Sprintf("user.%s", username))
+	return []byte(fmt.Sprintf("user-%s", username))
 }
 
 func (b *UserDbBadger) GetUser(username string) (*models.User, error) {
@@ -53,7 +59,7 @@ func (b *UserDbBadger) GetUsers() []models.User {
 		it := txn.NewIterator(badger.DefaultIteratorOptions)
 		defer it.Close()
 
-		prefix := []byte("user")
+		prefix := []byte("user-")
 		// Go through every key with “user” prefix.
 		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
 			var user models.User
@@ -81,7 +87,7 @@ func (b *UserDbBadger) AddUser(user models.User) error {
 		// Check if user already exists
 		_, err := txn.Get(getUserKey(user.Username))
 		if err == nil {
-			return err
+			return ErrUserExists
 		}
 
 		marshal, err := json.Marshal(user)
@@ -102,8 +108,8 @@ func (b *UserDbBadger) UpdateUser(user models.User) (*models.User, error) {
 	err := b.db.Update(func(txn *badger.Txn) error {
 		// Check if user already exists
 		_, err := txn.Get(getUserKey(user.Username))
-		if err == nil {
-			return err
+		if err != nil {
+			return ErrUserDoesntExist
 		}
 
 		marshal, err := json.Marshal(user)

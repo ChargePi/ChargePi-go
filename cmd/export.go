@@ -1,56 +1,85 @@
 package cmd
 
 import (
+	"fmt"
+
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	cfg "github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
 )
 
-// exportCmd represents the export command
-var exportCmd = &cobra.Command{
-	Use:   "export",
-	Short: "Export component settings of the ChargePi.",
-	Long:  ``,
-	Run: func(cmd *cobra.Command, args []string) {
-		exporter := cfg.GetExporter()
-		config := viper.New()
+var (
+	exportEvseFolderPath            *string
+	exportOcppConfigurationFilePath *string
+	exportAuthFilePath              *string
+	exportSettingsFilePath          *string
+)
 
-		evseFlag := cmd.Flags().Lookup(settings.EvseFlag).Changed
-		ocppFlag := cmd.Flags().Lookup(settings.OcppConfigPathFlag).Changed
-		authFlag := cmd.Flags().Lookup(settings.AuthFileFlag).Changed
+// exportCommand represents the export command
+func exportCommand() *cobra.Command {
+	exportCmd := &cobra.Command{
+		Use:   "export",
+		Short: "Export settings from ChargePi.",
+		Long:  ``,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			exporter := cfg.GetExporter()
+			config := viper.New()
 
-		// If the flag was set, export the EVSE configurations
-		if evseFlag {
-			err := cfg.ExportEVSEs(exporter, config, *evseFolderPath)
-			if err != nil {
-				return
+			evseFlag := cmd.Flags().Lookup(settings.EvseFlag).Changed
+			ocppFlag := cmd.Flags().Lookup(settings.OcppConfigPathFlag).Changed
+			authFlag := cmd.Flags().Lookup(settings.AuthFileFlag).Changed
+			settingsFlag := cmd.Flags().Lookup(settings.SettingsFlag).Changed
+
+			// If the flag was set, export the EVSE configurations
+			if evseFlag {
+				log.Infof("Exporting EVSE settings to %s", *exportEvseFolderPath)
+
+				err := cfg.ExportEVSEs(exporter, config, *exportEvseFolderPath)
+				if err != nil {
+					return fmt.Errorf("could not export EVSE settings: %v", err)
+				}
 			}
-		}
 
-		// If the flag was set, export the OCPP configuration
-		if ocppFlag {
-			err := cfg.ExportOcppConfiguration(exporter, config, *ocppConfigurationFilePath)
-			if err != nil {
-				return
+			// If the flag was set, export the OCPP configuration
+			if ocppFlag {
+				log.Infof("Exporting OCPP configuration to %s", *exportOcppConfigurationFilePath)
+
+				err := cfg.ExportOcppConfiguration(exporter, config, *exportOcppConfigurationFilePath)
+				if err != nil {
+					return fmt.Errorf("could not export OCPP configuration: %v", err)
+				}
 			}
-		}
 
-		// If the flag was set, export tags.
-		if authFlag {
-			err := cfg.ExportLocalAuthList(exporter, config, *authFilePath)
-			if err != nil {
-				return
+			// If the flag was set, export tags.
+			if authFlag {
+				log.Infof("Exporting tags to %s", *exportAuthFilePath)
+
+				err := cfg.ExportLocalAuthList(exporter, config, *exportAuthFilePath)
+				if err != nil {
+					return fmt.Errorf("could not export tags: %v", err)
+				}
 			}
-		}
-	},
-}
 
-func init() {
-	rootCmd.AddCommand(exportCmd)
+			// If the flag was set, export settings.
+			if settingsFlag {
+				log.Infof("Exporting settings to %s", *exportSettingsFilePath)
 
-	// Here you will define your flags and configuration settings.
-	exportCmd.PersistentFlags().StringVar(evseFolderPath, settings.EvseFlag, "./configs/evses", "evse folder path")
-	exportCmd.PersistentFlags().StringVar(ocppConfigurationFilePath, settings.OcppConfigPathFlag, "./configs/settings.yaml", "OCPP config file path")
-	exportCmd.PersistentFlags().StringVar(authFilePath, settings.AuthFileFlag, "./configs/authorization.yaml", "authorization file path")
+				err := cfg.ExportSettings(exporter, config, *exportSettingsFilePath)
+				if err != nil {
+					return fmt.Errorf("could not export settings: %v", err)
+				}
+			}
+
+			return nil
+		},
+	}
+
+	exportEvseFolderPath = exportCmd.Flags().String(settings.EvseFlag, "./configs/evses", "evse folder path")
+	exportOcppConfigurationFilePath = exportCmd.Flags().String(settings.OcppConfigPathFlag, "./configs/ocpp.yaml", "OCPP config file path")
+	exportAuthFilePath = exportCmd.Flags().String(settings.AuthFileFlag, "./configs/authorization.yaml", "authorization file path")
+	exportSettingsFilePath = exportCmd.Flags().String(settings.SettingsFlag, "./configs/settings.yaml", "settings file path")
+
+	return exportCmd
 }

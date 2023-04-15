@@ -19,4 +19,24 @@ It is highly recommended splitting both GND and VCC between relays or using a re
 
 ## Example configuration
 
-TODO
+```yaml
+evseId: 1
+maxPower: 1.7
+connectors:
+  - connectorId: 1
+    type: Schuko
+    status: Available
+evcc:
+  type: Relay
+  relayPin: 26
+  inverseLogic: false
+powerMeter:
+  enabled: false
+  type: CS5460A
+  spi:
+    bus: 0
+    pin: 25
+  cs5460a:
+    shuntOffset: 0.055
+    voltageDividerOffset: 1333
+```

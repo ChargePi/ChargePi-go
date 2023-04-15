@@ -30,11 +30,6 @@ func (s *hardwareTestSuite) TestSendToLCD() {
 	lcdMock := display.NewDisplayMock(s.T())
 	s.cp.SetDisplay(lcdMock)
 	lcdMock.OnCleanup().Return()
-
-	s.cp.sendToLCD(exampleMessage, exampleMessage1)
-
-	// Disable LCD
-	s.cp.sendToLCD(exampleMessage, exampleMessage1)
 }
 
 func (s *hardwareTestSuite) TestDisplayLedStatus() {

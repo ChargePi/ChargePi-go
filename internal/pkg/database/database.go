@@ -2,7 +2,6 @@ package database
 
 import (
 	"encoding/json"
-	"fmt"
 	"sync"
 
 	"github.com/dgraph-io/badger/v3"
@@ -17,36 +16,23 @@ var (
 
 func Get() *badger.DB {
 	once.Do(func() {
+		opts := badger.DefaultOptions(settings.DatabasePath)
+		opts.Logger = newLogger()
+		opts.NumGoroutines = 3
+
 		// Load/initialize a database for EVSE, tags, users and settings
-		badgerDb, err := badger.Open(badger.DefaultOptions(settings.DatabasePath))
+		badgerDb, err := badger.Open(opts)
 		if err != nil {
 			log.WithError(err).Panic("Cannot open/create database")
 		}
 
 		db = badgerDb
+
+		// Migrate the database to the latest version
+		migration(db)
 	})
 
 	return db
-}
-
-func GetEvseKey(evseId int) string {
-	return fmt.Sprintf("evse-%d", evseId)
-}
-
-func GetLocalAuthTagPrefix(tagId string) []byte {
-	return []byte(fmt.Sprintf("auth-tag-%s", tagId))
-}
-
-func GetLocalAuthVersion() []byte {
-	return []byte("auth-version")
-}
-
-func GetSmartChargingProfile(profileId int) []byte {
-	return []byte(fmt.Sprintf("profile-%d", profileId))
-}
-
-func GetOcppConfigurationKey() []byte {
-	return []byte(fmt.Sprintf("ocpp-configuration"))
 }
 
 func GetEvseSettings(db *badger.DB) []settings.EVSE {
@@ -67,9 +53,13 @@ func GetEvseSettings(db *badger.DB) []settings.EVSE {
 				return json.Unmarshal(v, &data)
 			})
 			if err != nil {
+				log.WithError(err).Warnf("Error unmarshalling EVSE settings for %s", item.Key())
 				continue
 			}
+
+			evseSettings = append(evseSettings, data)
 		}
+
 		return txn.Commit()
 	})
 	if err != nil {

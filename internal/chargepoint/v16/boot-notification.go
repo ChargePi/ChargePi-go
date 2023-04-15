@@ -28,15 +28,10 @@ func (cp *ChargePoint) bootNotification() {
 		}
 	)
 
-	rescheduleBootNotification := func() {
-		_, err := cp.scheduler.Every(2).Minute().LimitRunsTo(1).Tag("bootNotification").Do(cp.bootNotification)
-		if err != nil {
-			cp.logger.WithError(err).Errorf("Error rescheduling Boot notification")
-		}
-	}
-
 	callback := func(confirmation ocpp.Response, protoError error) {
 		bootConf := confirmation.(*core.BootNotificationConfirmation)
+
+		cp.logger.Infof("Registration status: %s", bootConf.Status)
 
 		switch bootConf.Status {
 		case core.RegistrationStatusAccepted:
@@ -51,12 +46,12 @@ func (cp *ChargePoint) bootNotification() {
 			// Notify charge point status
 			cp.notifyConnectorStatus(0, core.ChargePointStatusAvailable, core.NoError)
 			cp.restoreState()
-		case core.RegistrationStatusPending:
-			cp.logger.Info("Registration status pending")
-			rescheduleBootNotification()
-		case core.RegistrationStatusRejected:
-			cp.logger.Warn("Rejected by the central system")
-			rescheduleBootNotification()
+		case core.RegistrationStatusPending, core.RegistrationStatusRejected:
+
+			_, err := cp.scheduler.Every(2).Minute().LimitRunsTo(1).Tag("bootNotification").Do(cp.bootNotification)
+			if err != nil {
+				cp.logger.WithError(err).Errorf("Error rescheduling Boot notification")
+			}
 		}
 	}
 

@@ -97,7 +97,16 @@ func (cp *ChargePoint) sendAuthorizeRequest(tagId string) (*types.IdTagInfo, err
 		stopTransactionOnInvalidId, _ := ocppConfigManager.GetConfigurationValue(v16.StopTransactionOnInvalidId.String())
 		if stopTransactionOnInvalidId != nil && *stopTransactionOnInvalidId == "true" {
 			logInfo.Warn("Tag status invalid or expired, stopping any charging session with the tag")
-			err = cp.stopChargingConnectorWithTagId(tagId, core.ReasonDeAuthorized)
+
+			sessionId, err := cp.sessionManager.GetSessionWithTagId(tagId)
+			if err != nil {
+				return nil, err
+			}
+
+			err = cp.evseManager.StopCharging(sessionId.EvseId, nil, core.ReasonDeAuthorized)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 

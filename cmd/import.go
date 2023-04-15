@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -11,53 +13,79 @@ import (
 var (
 	evseFolderPath            *string
 	ocppConfigurationFilePath *string
+	ocppVersionFlag           *string
 	authFilePath              *string
+	importSettingsFilePath    *string
+)
 
-	// importCmd represents the import command
-	importCmd = &cobra.Command{
+// importCmd represents the import command
+func importCommand() *cobra.Command {
+	importCmd := &cobra.Command{
 		Use:   "import",
-		Short: "Import component configuration to ChargePi.",
+		Short: "Import configurations to ChargePi.",
 		Long:  ``,
-		Run: func(cmd *cobra.Command, args []string) {
-			manager := cfg.GetImporter()
+		RunE: func(cmd *cobra.Command, args []string) error {
+			importer := cfg.GetImporter()
 			conf := viper.New()
 
 			evseFlag := cmd.Flags().Lookup(settings.EvseFlag).Changed
 			ocppFlag := cmd.Flags().Lookup(settings.OcppConfigPathFlag).Changed
 			authFlag := cmd.Flags().Lookup(settings.AuthFileFlag).Changed
+			settingsFlag := cmd.Flags().Lookup(settings.SettingsFlag).Changed
 
 			if evseFlag {
+				log.Infof("Importing EVSE settings from %s", *evseFolderPath)
+
 				// If a directory is specified, (try to) import all the files in that directory.
-				err := cfg.ImportEVSEs(manager, conf, *evseFolderPath)
+				err := cfg.ImportEVSEs(importer, conf, *evseFolderPath)
 				if err != nil {
-					log.WithError(err).Errorf("Could not import EVSE settings")
+					return fmt.Errorf("could not import EVSE settings: %v", err)
 				}
 			}
 
 			// If the flag was set, import OCPP configuration to the ChargePi
 			if ocppFlag {
-				err := cfg.ImportOcppConfiguration(manager, conf, *ocppConfigurationFilePath)
+				log.Infof("Importing OCPP configuration from %s", *ocppConfigurationFilePath)
+
+				err := cfg.ImportOcppConfiguration(importer, conf, *ocppConfigurationFilePath, *ocppVersionFlag)
 				if err != nil {
-					log.WithError(err).Errorf("Could not import OCPP settings")
+					return fmt.Errorf("could not import OCPP configuration: %v", err)
 				}
 			}
 
 			// If the flag was set, import tags to the database.
 			if authFlag {
-				err := cfg.ImportLocalAuthList(manager, conf, *authFilePath)
+				log.Infof("Importing tags from %s", *authFilePath)
+
+				err := cfg.ImportLocalAuthList(importer, conf, *authFilePath)
 				if err != nil {
-					log.WithError(err).Errorf("Could not import Local Auth List")
+					return fmt.Errorf("could not import tags: %v", err)
 				}
 			}
 
+			if settingsFlag {
+				log.Infof("Importing settings from %s", *importSettingsFilePath)
+
+				err := cfg.ImportSettings(importer, conf, *importSettingsFilePath)
+				if err != nil {
+					return fmt.Errorf("could not import settings: %v", err)
+				}
+			}
+
+			return nil
 		},
 	}
-)
 
-func init() {
-	rootCmd.AddCommand(importCmd)
+	evseFolderPath = importCmd.Flags().String(settings.EvseFlag, "", "evse folder path")
+	ocppConfigurationFilePath = importCmd.Flags().String(settings.OcppConfigPathFlag, "", "OCPP config file path")
+	ocppVersionFlag = importCmd.Flags().StringP(settings.OcppVersion, "v", "1.6", "OCPP config file path")
+	authFilePath = importCmd.Flags().String(settings.AuthFileFlag, "", "authorization file path")
+	importSettingsFilePath = importCmd.Flags().String(settings.SettingsFlag, "", "settings file path")
 
-	importCmd.Flags().StringVar(evseFolderPath, settings.EvseFlag, "", "evse folder path")
-	importCmd.Flags().StringVar(ocppConfigurationFilePath, settings.OcppConfigPathFlag, "", "OCPP config file path")
-	importCmd.Flags().StringVar(authFilePath, settings.AuthFileFlag, "", "authorization file path")
+	err := importCmd.MarkFlagRequired(settings.OcppVersion)
+	if err != nil {
+		return nil
+	}
+
+	return importCmd
 }

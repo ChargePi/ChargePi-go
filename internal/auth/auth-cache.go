@@ -31,7 +31,7 @@ func NewAuthCache(db *badger.DB) *CacheImpl {
 	}
 }
 
-func getTagPrefix(tagId string) []byte {
+func getTagKey(tagId string) []byte {
 	return []byte(fmt.Sprintf("cached-tag-%s", tagId))
 }
 
@@ -42,7 +42,7 @@ func (c *CacheImpl) AddTag(tagId string, tagInfo *types.IdTagInfo) {
 
 	// Add a tag if it doesn't exist in the cache.
 	err := c.db.Update(func(txn *badger.Txn) error {
-		_, err := txn.Get(getTagPrefix(tagId))
+		_, err := txn.Get(getTagKey(tagId))
 		if err != badger.ErrKeyNotFound {
 			return err
 		}
@@ -52,7 +52,7 @@ func (c *CacheImpl) AddTag(tagId string, tagInfo *types.IdTagInfo) {
 			return nil
 		}
 
-		err = txn.Set(getTagPrefix(tagId), authTag)
+		err = txn.Set(getTagKey(tagId), authTag)
 		if err != nil {
 			return err
 		}
@@ -71,7 +71,7 @@ func (c *CacheImpl) RemoveTag(tagId string) {
 	logInfo.Debug("Removing a tag from cache")
 
 	err := c.db.Update(func(txn *badger.Txn) error {
-		err := txn.Delete(getTagPrefix(tagId))
+		err := txn.Delete(getTagKey(tagId))
 		if err != nil {
 			return err
 		}
@@ -92,7 +92,7 @@ func (c *CacheImpl) RemoveCachedTags() {
 		it := txn.NewIterator(badger.DefaultIteratorOptions)
 		defer it.Close()
 
-		prefix := getTagPrefix("")
+		prefix := getTagKey("")
 		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
 			item := it.Item()
 			err := txn.Delete(item.Key())
@@ -123,7 +123,7 @@ func (c *CacheImpl) GetTag(tagId string) (*types.IdTagInfo, error) {
 	var tagInfo localauth.AuthorizationData
 
 	err := c.db.View(func(txn *badger.Txn) error {
-		item, err := txn.Get(getTagPrefix(tagId))
+		item, err := txn.Get(getTagKey(tagId))
 		if err != badger.ErrKeyNotFound {
 			return err
 		}

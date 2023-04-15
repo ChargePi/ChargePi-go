@@ -2,25 +2,25 @@ package v16
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
-	chargePoint "github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
 
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/indicator"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 )
 
-func (cp *ChargePoint) sendToLCD(messages ...string) {
+func (cp *ChargePoint) DisplayMessage(message notifications.Message) error {
 	if util.IsNilInterfaceOrPointer(cp.display) {
 		cp.logger.Warn("Cannot send message to display, it is disabled or not configured")
-		return
+		return nil
 	}
 
-	cp.logger.Debugf("Sending message(s) to display: %v", messages)
-	go cp.display.DisplayMessage(chargePoint.NewMessage(time.Second*5, messages))
+	cp.logger.Debugf("Sending message to display: %v", message)
+	go cp.display.DisplayMessage(message)
+	return nil
 }
 
 func (cp *ChargePoint) displayStatusChangeOnIndicator(connectorIndex int, status core.ChargePointStatus) {
@@ -94,7 +94,8 @@ Listener:
 			tagId = strings.ToUpper(tagId)
 
 			go func() {
-				cp.sendToLCD("Read tag:", tagId)
+				message := notifications.NewMessage(time.Second*10, "Tag read")
+				_ = cp.DisplayMessage(message)
 				cp.indicateCard(len(cp.evseManager.GetEVSEs()), indicator.White)
 			}()
 
@@ -102,7 +103,7 @@ Listener:
 		case <-ctx.Done():
 			break Listener
 		default:
-			fmt.Printf("%s: Waiting for a tag \n", time.Now().String())
+			cp.logger.Trace("Waiting for tag...")
 			time.Sleep(time.Millisecond * 200)
 		}
 	}

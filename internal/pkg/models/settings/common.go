@@ -13,14 +13,20 @@ type (
 	}
 
 	LogType struct {
-		Type    string  `json:"type,omitempty" yaml:"type" mapstructure:"type" validate:"required"` // file, remote, console
+		Type    string  `json:"type,omitempty" yaml:"type" mapstructure:"type" validate:"required"` // remote, console
 		Format  *string `json:"format,omitempty" yaml:"format" mapstructure:"format"`               // gelf, syslog, json, etc
 		Address *string `json:"address,omitempty" yaml:"address" mapstructure:"address"`
 	}
 
 	Api struct {
 		Enabled bool   `json:"enabled,omitempty" yaml:"enabled" mapstructure:"enabled"`
-		Address string `json:"address,omitempty" yaml:"address" mapstructure:"address" validate:"hostname_port"`
+		Address string `json:"address,omitempty" yaml:"address" mapstructure:"address"`
+		TLS     TLS    `json:"tls,omitempty" yaml:"tls" mapstructure:"tls"`
+	}
+
+	Ui struct {
+		Enabled bool   `json:"enabled,omitempty" yaml:"enabled" mapstructure:"enabled"`
+		Address string `json:"address,omitempty" yaml:"address" mapstructure:"address"`
 		TLS     TLS    `json:"tls,omitempty" yaml:"tls" mapstructure:"tls"`
 	}
 )

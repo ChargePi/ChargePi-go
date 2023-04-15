@@ -264,58 +264,79 @@ func (receiver *C5460A) setCurrentOffset(value int32) {
 	receiver.startConverting()
 }
 
-func (receiver *C5460A) GetEnergy() types.SampledValue {
+func (receiver *C5460A) GetEnergy() (*types.SampledValue, error) {
 	value := float64(receiver.readFromRegister(TotalEnergyRegister) << 16)
 
-	return types.SampledValue{
+	return &types.SampledValue{
 		Value:     fmt.Sprintf("%.1f", value),
 		Measurand: types.MeasurandEnergyActiveImportRegister,
-	}
+	}, nil
 }
-func (receiver *C5460A) GetPower() types.SampledValue {
+
+func (receiver *C5460A) GetPower(phase int) (*types.SampledValue, error) {
 	value := float64(receiver.readFromRegister(LastPowerRegister)) * receiver.powerMultiplier
 
-	return types.SampledValue{
+	return &types.SampledValue{
 		Value:     fmt.Sprintf("%.1f", value),
 		Measurand: types.MeasurandPowerActiveImport,
-	}
+	}, nil
 }
 
-func (receiver *C5460A) GetCurrent(phase int) types.SampledValue {
+func (receiver *C5460A) GetApparentPower(phase int) (*types.SampledValue, error) {
+	value := float64(receiver.readFromRegister(LastPowerRegister)) * receiver.powerMultiplier
+
+	return &types.SampledValue{
+		Value:     fmt.Sprintf("%.1f", value),
+		Measurand: types.MeasurandPowerActiveImport,
+	}, nil
+}
+
+func (receiver *C5460A) GetReactivePower(phase int) (*types.SampledValue, error) {
+	value := float64(receiver.readFromRegister(LastPowerRegister)) * receiver.powerMultiplier
+
+	return &types.SampledValue{
+		Value:     fmt.Sprintf("%.1f", value),
+		Measurand: types.MeasurandPowerActiveImport,
+	}, nil
+}
+
+func (receiver *C5460A) GetCurrent(phase int) (*types.SampledValue, error) {
 	value := float64(receiver.readFromRegister(LastCurrentRegister)) * receiver.currentMultiplier
 
-	return types.SampledValue{
+	return &types.SampledValue{
 		Value:     fmt.Sprintf("%.1f", value),
 		Phase:     getPhase(phase),
 		Measurand: types.MeasurandCurrentImport,
-	}
+	}, nil
 }
 
-func (receiver *C5460A) GetVoltage(phase int) types.SampledValue {
+func (receiver *C5460A) GetVoltage(phase int) (*types.SampledValue, error) {
 	value := float64(receiver.readFromRegister(LastVoltageRegister)) * receiver.voltageMultiplier
 
-	return types.SampledValue{
+	return &types.SampledValue{
 		Value:     fmt.Sprintf("%.1f", value),
 		Phase:     getPhase(phase),
 		Measurand: types.MeasurandVoltage,
-	}
+	}, nil
 }
-func (receiver *C5460A) GetRMSCurrent(phase int) types.SampledValue {
+
+func (receiver *C5460A) getRMSCurrent(phase int) (*types.SampledValue, error) {
 	value := float64(receiver.readFromRegister(RmsCurrentRegister)) * receiver.currentMultiplier
 
-	return types.SampledValue{
+	return &types.SampledValue{
 		Value:     fmt.Sprintf("%.1f", value),
 		Phase:     getPhase(phase),
 		Measurand: types.MeasurandCurrentImport,
-	}
+	}, nil
 }
-func (receiver *C5460A) GetRMSVoltage(phase int) types.SampledValue {
+
+func (receiver *C5460A) getRMSVoltage(phase int) (*types.SampledValue, error) {
 	value := float64(receiver.readFromRegister(RmsVoltageRegister)) * receiver.voltageMultiplier
-	return types.SampledValue{
+	return &types.SampledValue{
 		Value:     fmt.Sprintf("%.1f", value),
 		Phase:     getPhase(phase),
 		Measurand: types.MeasurandVoltage,
-	}
+	}, nil
 }
 
 func (receiver *C5460A) GetType() string {

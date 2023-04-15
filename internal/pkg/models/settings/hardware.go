@@ -6,9 +6,9 @@ import (
 
 type (
 	Hardware struct {
-		Display      Display      `json:"display" yaml:"display" mapstructure:"display"`
-		TagReader    TagReader    `json:"tagReader" yaml:"tagReader" mapstructure:"tagReader"`
-		LedIndicator LedIndicator `json:"ledIndicator" yaml:"ledIndicator" mapstructure:"ledIndicator"`
+		Display   Display   `json:"display" yaml:"display" mapstructure:"display"`
+		TagReader TagReader `json:"reader" yaml:"reader" mapstructure:"reader"`
+		Indicator Indicator `json:"indicator" yaml:"indicator" mapstructure:"indicator"`
 	}
 
 	TagReader struct {

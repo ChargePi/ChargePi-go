@@ -1,6 +1,6 @@
-FROM  golang:1.17 as base
+FROM golang:1.17 as base
 
-COPY package /ChargePi/src
+COPY . /ChargePi/src
 WORKDIR /ChargePi/src
 
 ARG READER_CONNECTION_TYPE
@@ -19,8 +19,13 @@ RUN go mod download
 RUN go mod verify
 RUN go build -o ChargePi .
 
-FROM base as dev
-ENTRYPOINT ["go","run", "."]
+FROM node:19 as build-ui
+
+COPY ./ui /ui
+WORKDIR /ui
+
+RUN npm install
+RUN npm run build
 
 FROM alpine as chargepi
 
@@ -33,14 +38,17 @@ ENV READER_CONNECTION_TYPE=$READER_CONNECTION_TYPE
 RUN chmod +x ./scripts/install-dependencies.sh
 RUN ./scripts/install-dependencies.sh $READER_CONNECTION_TYPE 0
 
+# Copy the xecutable
+COPY --from=base /ChargePi/src/configs /etc/ChargePi/configs
 COPY --from=base /ChargePi/src/ChargePi /usr/bin/ChargePi
 
-ENTRYPOINT ["./chargepi run"]
+# Copy the UI static files
+COPY --from=build-ui /ui/build/ /usr/bin/ChargePi/ui/build
+
+CMD ["./chargepi"]
 
 # Test the client
 FROM base as test
-
-ENV GOARCH=amd64
 
 RUN cp -r configs/ test/  \
     && cd test/  \

@@ -15,11 +15,10 @@ func (cp *ChargePoint) sendChargePointInfo() error {
 	dataTransfer.Data = data.NewChargePointInfo(cp.info.Type, cp.info.MaxPower)
 	// dataTransfer.MessageId
 
-	return util.SendRequest(cp.chargePoint,
-		dataTransfer,
+	return util.SendRequest(cp.chargePoint, dataTransfer,
 		func(confirmation ocpp.Response, protoError error) {
 			if protoError != nil {
-				cp.logger.Info("Error sending data")
+				cp.logger.WithError(protoError).Warn("Error sending data")
 				return
 			}
 
@@ -39,6 +38,8 @@ func (cp *ChargePoint) SendEVSEsDetails(evses ...evse.EVSE) {
 // sendEvseDetails sends the connector type and maximum output power information to the backend.
 func (cp *ChargePoint) sendEvseDetails(evse evse.EVSE) {
 	logInfo := cp.logger.WithField("evseId", evse.GetEvseId())
+	logInfo.Info("Sending EVSE details to the central system")
+
 	dataTransfer := core.NewDataTransferRequest(cp.info.OCPPDetails.Vendor)
 
 	var connectors []data.Connector
@@ -48,11 +49,10 @@ func (cp *ChargePoint) sendEvseDetails(evse evse.EVSE) {
 
 	dataTransfer.Data = data.NewEvseInfo(evse.GetEvseId(), float32(evse.GetMaxChargingPower()), connectors...)
 
-	err := util.SendRequest(cp.chargePoint,
-		dataTransfer,
+	err := util.SendRequest(cp.chargePoint, dataTransfer,
 		func(confirmation ocpp.Response, protoError error) {
 			if protoError != nil {
-				logInfo.Info("Error sending data")
+				logInfo.WithError(protoError).Warn("Error sending data")
 				return
 			}
 
@@ -61,7 +61,5 @@ func (cp *ChargePoint) sendEvseDetails(evse evse.EVSE) {
 				logInfo.Info("Sent additional charge point information")
 			}
 		})
-	if err != nil {
-		logInfo.WithError(err).Error("Cannot send EVSE details")
-	}
+	util.HandleRequestErr(err, "Cannot send EVSE details")
 }

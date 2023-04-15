@@ -1,12 +1,9 @@
 package http
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
-	healthcheck "github.com/tavsec/gin-healthcheck"
-	"github.com/tavsec/gin-healthcheck/checks"
-	"github.com/tavsec/gin-healthcheck/config"
+	"github.com/mandrigin/gin-spa/spa"
+	log "github.com/sirupsen/logrus"
 )
 
 type UI struct {
@@ -19,24 +16,11 @@ func NewUi() *UI {
 	}
 }
 
-func (u *UI) Serve(url string, checks ...checks.Check) {
-	// Configure healthcheck
-	err := healthcheck.New(u.router, config.DefaultConfig(), checks)
-	if err != nil {
-		return
-	}
+func (u *UI) Serve(url string) {
+	log.Infof("Starting UI at %s", url)
+	u.router.Use(spa.Middleware("/", "./ui/build"))
 
-	u.router.LoadHTMLGlob("templates/**/*.html")
-
-	u.router.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "index.html", nil)
-	})
-
-	u.router.GET("/login", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "login.html", nil)
-	})
-
-	err = u.router.Run(url)
+	err := u.router.Run(url)
 	if err != nil {
 		return
 	}

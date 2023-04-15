@@ -1,13 +1,9 @@
 package logging
 
 import (
-	"fmt"
 	"log/syslog"
-	"time"
 
 	graylog "github.com/gemnasium/logrus-graylog-hook/v3"
-	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
-	"github.com/rifflock/lfshook"
 	log "github.com/sirupsen/logrus"
 	lSyslog "github.com/sirupsen/logrus/hooks/syslog"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
@@ -18,11 +14,9 @@ const logFilePath = "/var/log/chargepi/"
 
 // Setup setup logs
 func Setup(logger *log.Logger, loggingConfig settings.Logging, isDebug bool) {
-	var (
-		// Default logging settings
-		logLevel                = log.WarnLevel
-		formatter log.Formatter = &log.JSONFormatter{}
-	)
+	// Default logging settings
+	logLevel := log.InfoLevel
+	formatter := &log.JSONFormatter{}
 
 	if isDebug {
 		logLevel = log.DebugLevel
@@ -33,8 +27,6 @@ func Setup(logger *log.Logger, loggingConfig settings.Logging, isDebug bool) {
 
 	for _, logType := range loggingConfig.LogTypes {
 		switch LogType(logType.Type) {
-		case FileLogging:
-			fileLogging(logger, isDebug, logFilePath)
 		case RemoteLogging:
 			if util.IsNilInterfaceOrPointer(logType.Address) && util.IsNilInterfaceOrPointer(logType.Format) {
 				remoteLogging(logger, *logType.Address, LogFormat(*logType.Format))
@@ -69,33 +61,4 @@ func remoteLogging(logger *log.Logger, address string, format LogFormat) {
 	if err == nil {
 		logger.AddHook(hook)
 	}
-}
-
-// fileLogging sets up the logging to file.
-func fileLogging(logger *log.Logger, isDebug bool, path string) {
-	fileName := fmt.Sprintf("%s.%s.chargepi.log", path, ".%Y%m%d%H%M")
-	writer, err := rotatelogs.New(
-		fileName,
-		rotatelogs.WithLinkName(path),
-		rotatelogs.WithMaxAge(time.Duration(86400)*time.Second),
-		rotatelogs.WithRotationTime(time.Duration(86400)*time.Second),
-	)
-	if err != nil {
-		return
-	}
-
-	writerMap := make(lfshook.WriterMap)
-	writerMap[log.InfoLevel] = writer
-	writerMap[log.ErrorLevel] = writer
-
-	if isDebug {
-		writerMap[log.DebugLevel] = writer
-	}
-
-	hook := lfshook.NewHook(
-		writerMap,
-		&log.JSONFormatter{},
-	)
-
-	logger.AddHook(hook)
 }

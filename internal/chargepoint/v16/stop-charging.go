@@ -33,6 +33,7 @@ func (cp *ChargePoint) stopChargingConnector(connector evse.EVSE, reason core.Re
 		"reason": reason,
 	})
 
+	// Check if the connector is already stopped
 	session, err := cp.sessionManager.GetSession(connector.GetEvseId(), nil)
 	if err != nil {
 		return err
@@ -58,15 +59,15 @@ func (cp *ChargePoint) stopChargingConnector(connector evse.EVSE, reason core.Re
 
 		logInfo.Info("Stopping transaction")
 
-		err = cp.sessionManager.StopSession(connector.GetEvseId(), nil, reason)
-		if err != nil {
-			logInfo.WithError(err).Warnf("Unable to stop session")
-		}
-
 		err = connector.StopCharging(reason)
 		if err != nil {
 			logInfo.WithError(err).Errorf("Unable to stop charging")
 			return
+		}
+
+		err = cp.sessionManager.StopSession(session.TransactionId)
+		if err != nil {
+			logInfo.WithError(err).Warnf("Unable to stop session")
 		}
 
 		logInfo.Infof("Stopped charging at %s", time.Now())

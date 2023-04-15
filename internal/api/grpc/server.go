@@ -42,6 +42,7 @@ func NewServer(
 ) *Server {
 	var opts []grpc.ServerOption
 
+	// Add TLS if enabled
 	if settings.TLS.IsEnabled {
 		creds, err := credentials.NewServerTLSFromFile(settings.TLS.CACertificatePath, settings.TLS.PrivateKeyPath)
 		if err != nil {
@@ -54,6 +55,7 @@ func NewServer(
 	// Add authentication middleware
 	opts = append(opts, grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
 		grpc_auth.UnaryServerInterceptor(func(ctx context.Context) (context.Context, error) {
+			log.Debug("Authenticating request")
 			token, err := grpc_auth.AuthFromMD(ctx, "basic")
 			if err != nil {
 				return nil, status.Errorf(codes.Unauthenticated, "no basic header found: %v", err)
@@ -85,6 +87,8 @@ func (s *Server) Run() {
 	grpc2.RegisterLogServer(s.server, s.logService)
 	grpc2.RegisterTagServer(s.server, s.authService)
 	grpc2.RegisterUsersServer(s.server, s.userService)
+
+	log.Infof("Exposing API endpoints at %s", s.address)
 
 	listener, err := net.Listen("tcp", s.address)
 	if err != nil {

@@ -45,6 +45,7 @@ type (
 		StopCharging(evseId int, connectorId *int, reason core.Reason) error
 		StopAllEVSEs(reason core.Reason) error
 		RestoreEVSEs() error
+		// RestoreEVSE(evseId int,) error
 
 		Reserve(evseId int, connectorId *int, reservationId int, tagId string) error
 		RemoveReservation(reservationId int) error
@@ -227,6 +228,7 @@ func (m *managerImpl) addEVSEFromSettings(ctx context.Context, c settings.EVSE) 
 	evccFromType, err := evcc.NewEVCCFromType(c.EVCC)
 	switch err {
 	case nil:
+		logInfo.WithField("type", c.EVCC.Type).Debugf("EVCC created")
 	default:
 		return err
 	}
@@ -284,13 +286,17 @@ func (m *managerImpl) restoreEVSEStatus(c settings.EVSE) error {
 	})
 	logInfo.Debugf("Attempting to restore connector status")
 
+	// Find the EVSE
 	evse, err := m.FindEVSE(c.EvseId)
 	if err != nil {
 		return err
 	}
 
+	// Get the current status
+	status, _ := evse.GetStatus()
+
 	// Determine what to do based on the previous status
-	switch core.ChargePointStatus(c.Status) {
+	switch status {
 	case core.ChargePointStatusAvailable:
 		return nil
 	case core.ChargePointStatusPreparing:

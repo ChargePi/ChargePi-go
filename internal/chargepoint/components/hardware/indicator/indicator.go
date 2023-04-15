@@ -42,7 +42,7 @@ type (
 )
 
 // NewIndicator constructs the Indicator based on the type provided by the settings file.
-func NewIndicator(stripLength int, indicator settings.LedIndicator) Indicator {
+func NewIndicator(stripLength int, indicator settings.Indicator) Indicator {
 	if indicator.Enabled {
 		if indicator.IndicateCardRead {
 			stripLength++

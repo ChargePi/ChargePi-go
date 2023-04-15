@@ -38,6 +38,7 @@ type ChargePoint interface {
 	// Options
 	SetLogger(logger *log.Logger)
 	SetDisplay(display display.Display) error
+	DisplayMessage(display notifications.Message) error
 
 	// Settings
 	SetSettings(settings settings.Info) error

@@ -2,14 +2,15 @@ package i18n
 
 import (
 	"fmt"
-	"github.com/nicksnyder/go-i18n/v2/i18n"
-	log "github.com/sirupsen/logrus"
-	"golang.org/x/text/language"
-	"gopkg.in/yaml.v3"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/nicksnyder/go-i18n/v2/i18n"
+	log "github.com/sirupsen/logrus"
+	"golang.org/x/text/language"
+	"gopkg.in/yaml.v3"
 )
 
 var (
@@ -75,7 +76,7 @@ func addDefaultMessage(message i18n.Message) {
 
 // loadTranslations loads all available translations from the translations folder into the bundle.
 func loadTranslations() {
-	log.Info("Loading translations..")
+	log.Debug("Loading translations..")
 
 	err := filepath.Walk("./hardware/display/i18n/translations", func(path string, info os.FileInfo, err error) error {
 		// Load all active.*.yaml translations into the bundle

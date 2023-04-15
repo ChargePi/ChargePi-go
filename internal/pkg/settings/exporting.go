@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"os"
+	"path/filepath"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/agrison/go-commons-lang/stringUtils"
 	"github.com/spf13/viper"
@@ -12,6 +14,8 @@ import (
 
 func ExportLocalAuthList(exporter Exporter, config *viper.Viper, filePath string) error {
 	localAuthList, _ := exporter.ExportLocalAuthList()
+
+	prepareViperCfg(config, "authList", "yaml", filePath)
 
 	marshal, err := json.Marshal(localAuthList)
 	if err != nil {
@@ -23,13 +27,13 @@ func ExportLocalAuthList(exporter Exporter, config *viper.Viper, filePath string
 		return err
 	}
 
-	prepareViperCfg(config, "authList", "yaml", filePath)
-
-	return config.WriteConfigAs(fmt.Sprintf("%s%dauth.yaml", filePath, os.PathListSeparator))
+	return config.WriteConfigAs(filePath)
 }
 
 func ExportOcppConfiguration(exporter Exporter, config *viper.Viper, filePath string) error {
 	ocppConfiguration := exporter.ExportOcppConfiguration()
+
+	prepareViperCfg(config, "ocpp", "yaml", filePath)
 
 	marshal, err := json.Marshal(ocppConfiguration)
 	if err != nil {
@@ -41,16 +45,39 @@ func ExportOcppConfiguration(exporter Exporter, config *viper.Viper, filePath st
 		return err
 	}
 
-	prepareViperCfg(config, "ocpp", "yaml", filePath)
+	return config.WriteConfigAs(filePath)
+}
 
-	return config.WriteConfigAs(fmt.Sprintf("%s%docpp.yaml", filePath, os.PathListSeparator))
+func ExportSettings(exporter Exporter, config *viper.Viper, filePath string) error {
+	ocppConfiguration, err := exporter.ExportChargePointSettings()
+	if err != nil {
+		return err
+	}
+
+	prepareViperCfg(config, "settings", "yaml", filePath)
+
+	marshal, err := json.Marshal(ocppConfiguration)
+	if err != nil {
+		return err
+	}
+
+	err = config.ReadConfig(bytes.NewBuffer(marshal))
+	if err != nil {
+		return err
+	}
+
+	return config.WriteConfigAs(filePath)
 }
 
 func ExportEVSEs(exporter Exporter, config *viper.Viper, path string) error {
 	evseSettings := exporter.ExportEVSESettings()
 
+	log.Debug(evseSettings)
 	// Create a file for each EVSE
 	for _, evseSetting := range evseSettings {
+		fileName := fmt.Sprintf("evse-%d.yaml", evseSetting.EvseId)
+		prepareViperCfg(config, fileName, "yaml", path)
+
 		marshal, err := json.Marshal(evseSetting)
 		if err != nil {
 			return err
@@ -61,10 +88,7 @@ func ExportEVSEs(exporter Exporter, config *viper.Viper, path string) error {
 			return err
 		}
 
-		fileName := fmt.Sprintf("evse-%d", evseSetting.EvseId)
-		prepareViperCfg(config, fileName, "yaml", path)
-
-		err = config.WriteConfigAs(fmt.Sprintf("%s%d%s", path, os.PathListSeparator, fileName))
+		err = config.WriteConfigAs(filepath.Join(path, fileName))
 		if err != nil {
 			return err
 		}

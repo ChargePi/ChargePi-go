@@ -83,19 +83,31 @@ or might not work properly.
 Example settings:
 
 ```yaml
+api:
+  enabled: true
+  address: 0.0.0.0:8080
+
 chargePoint:
-  info:
+  connectionSettings:
     id: ChargePi
     protocolVersion: '1.6'
     serverUri: example.com
     basicAuthUser: ''
     basicAuthPass: ''
+    tls:
+      isEnabled: false
+      CACertificatePath: /usr/share/certs/rootCA.crt
+      clientCertificatePath: /usr/share/certs/charge-point.crt
+      clientKeyPath: /usr/share/certs/charge-point.key
+
+  info:
+    type: AC
+    maxPower: 11
     maxChargingTime: 5
     ocpp:
       vendor: UL FE
       model: ChargePi
-    type: AC
-    maxPower: 11
+
   logging:
     type:
       - remote
@@ -103,25 +115,21 @@ chargePoint:
     format: gelf
     host: logging.example.com
     port: 12201
-  tls:
-    isEnabled: false
-    CACertificatePath: /usr/share/certs/rootCA.crt
-    clientCertificatePath: /usr/share/certs/charge-point.crt
-    clientKeyPath: /usr/share/certs/charge-point.key
+
   hardware:
-    lcd:
+    display:
       enabled: true
       driver: hd44780
       i2c:
         address: '0x27'
         bus: 1
       language: en
-    tagReader:
+    reader:
       enabled: true
       readerModel: PN532
       device: /dev/ttyS0
       resetPin: 19
-    ledIndicator:
+    indicator:
       enabled: true
       type: WS281x
       dataPin: 18

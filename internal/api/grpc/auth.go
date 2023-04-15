@@ -26,8 +26,10 @@ func (s *AuthService) GetAuthorizedCards(ctx context.Context, empty *empty.Empty
 		AuthorizedCards: []*grpc.AuthorizedCard{},
 	}
 
+	// Get all tags from the database
 	tags := s.tagManager.GetTags()
 
+	// Convert the tags to the gRPC response
 	for _, tag := range tags {
 		var timestamp *timestamppb.Timestamp
 		if tag.IdTagInfo.ExpiryDate != nil {
@@ -49,6 +51,7 @@ func (s *AuthService) AddAuthorizedCards(ctx context.Context, request *grpc.AddA
 	response := &grpc.AddAuthorizedCardsResponse{Status: []string{}}
 
 	for _, tag := range request.GetAuthorizedCards() {
+		// Add the tag to the database
 		err := s.tagManager.AddTag(tag.TagId, types.NewIdTagInfo(types.AuthorizationStatus(tag.Status)))
 		if err != nil {
 			response.Status = append(response.Status, "Failed")
@@ -66,6 +69,13 @@ func (s *AuthService) RemoveAuthorizedCard(ctx context.Context, request *grpc.Re
 		Status: "Failed",
 	}
 
+	// Remove the tag from the database
+	err := s.tagManager.RemoveTag(request.GetTagId())
+	if err != nil {
+		return response, nil
+	}
+
+	response.Status = "Success"
 	return response, nil
 }
 

@@ -20,14 +20,12 @@ import (
 )
 
 var (
-	ErrInvalidEvseId            = errors.New("invalid evse id")
-	ErrInvalidReservationId     = errors.New("invalid reservation id")
-	ErrInvalidStatus            = errors.New("invalid evse status")
-	ErrInvalidEVCC              = errors.New("evcc cannot be nil")
-	ErrSessionTimeLimitExceeded = errors.New("session time limit exceeded")
-	ErrNotCharging              = errors.New("evse not charging")
-	ErrPowerMeterNotEnabled     = errors.New("power meter not enabled")
-	ErrConnectorExists          = errors.New("connector already exists")
+	ErrInvalidEvseId        = errors.New("invalid evse id")
+	ErrInvalidStatus        = errors.New("invalid evse status")
+	ErrInvalidEVCC          = errors.New("evcc cannot be nil")
+	ErrNotCharging          = errors.New("evse not charging")
+	ErrPowerMeterNotEnabled = errors.New("power meter not enabled")
+	ErrConnectorExists      = errors.New("connector already exists")
 )
 
 type (
@@ -49,7 +47,7 @@ type (
 
 		GetPowerMeter() powerMeter.PowerMeter
 		SetPowerMeter(powerMeter.PowerMeter) error
-		SamplePowerMeter(measurands []types.Measurand)
+		SamplePowerMeter(measurands []types.Measurand) []types.SampledValue
 
 		GetEvcc() evcc.EVCC
 		SetEvcc(evcc.EVCC)

@@ -44,13 +44,15 @@ type ChargePoint struct {
 }
 
 // NewChargePoint creates a new ChargePoint for OCPP version 1.6.
-func NewChargePoint(manager evse.Manager, tagManager auth.TagManager, opts ...chargePoint.Options) *ChargePoint {
+func NewChargePoint(manager evse.Manager, tagManager auth.TagManager, sessionManager session.Manager, opts ...chargePoint.Options) *ChargePoint {
 	cp := &ChargePoint{
-		availability: core.AvailabilityTypeInoperative,
-		scheduler:    scheduler.NewScheduler(),
-		evseManager:  manager,
-		tagManager:   tagManager,
-		logger:       log.StandardLogger(),
+		availability:    core.AvailabilityTypeInoperative,
+		scheduler:       scheduler.NewScheduler(),
+		evseManager:     manager,
+		tagManager:      tagManager,
+		sessionManager:  sessionManager,
+		settingsManager: settings2.GetManager(),
+		logger:          log.StandardLogger(),
 	}
 
 	// Set profiles
@@ -108,21 +110,21 @@ func (cp *ChargePoint) CleanUp(reason core.Reason) {
 	}
 
 	if !util.IsNilInterfaceOrPointer(cp.tagReader) {
-		cp.logger.Info("Cleaning up the Tag Reader")
+		cp.logger.Debug("Cleaning up the Tag Reader")
 		cp.tagReader.Cleanup()
 	}
 
 	if !util.IsNilInterfaceOrPointer(cp.display) {
-		cp.logger.Info("Cleaning up display")
+		cp.logger.Debug("Cleaning up display")
 		cp.display.Cleanup()
 	}
 
 	if !util.IsNilInterfaceOrPointer(cp.indicator) {
-		cp.logger.Info("Cleaning up Indicator")
+		cp.logger.Debug("Cleaning up Indicator")
 		cp.indicator.Cleanup()
 	}
 
-	cp.logger.Info("Clearing the scheduler...")
+	cp.logger.Debug("Clearing the scheduler...")
 	cp.scheduler.Stop()
 	cp.scheduler.Clear()
 

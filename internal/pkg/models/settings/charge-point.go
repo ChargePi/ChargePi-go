@@ -8,6 +8,7 @@ type (
 	Settings struct {
 		ChargePoint ChargePoint `json:"chargePoint" yaml:"chargePoint" mapstructure:"chargePoint"`
 		Api         Api         `json:"api" yaml:"api" mapstructure:"api"`
+		Ui          Ui          `json:"ui" yaml:"ui" mapstructure:"ui"`
 	}
 
 	ChargePoint struct {
@@ -18,9 +19,9 @@ type (
 	}
 
 	ConnectionSettings struct {
-		Id                string               `validate:"required" json:"id,omitempty" yaml:"id" mapstructure:"id"`
-		ProtocolVersion   ocpp.ProtocolVersion `validate:"required" json:"ProtocolVersion,omitempty" yaml:"ProtocolVersion" mapstructure:"ProtocolVersion"`
-		ServerUri         string               `json:"ServerUri,omitempty" yaml:"ServerUri" mapstructure:"ServerUri"`
+		Id                string               `json:"id,omitempty" yaml:"id" mapstructure:"id" validate:"required"`
+		ProtocolVersion   ocpp.ProtocolVersion `json:"protocolVersion,omitempty" yaml:"protocolVersion" mapstructure:"protocolVersion" validate:"required"`
+		ServerUri         string               `json:"uri,omitempty" yaml:"uri" mapstructure:"uri" validate:"required"`
 		BasicAuthUsername string               `json:"basicAuthUser,omitempty" yaml:"basicAuthUser" mapstructure:"basicAuthUser"`
 		BasicAuthPassword string               `json:"basicAuthPass,omitempty" yaml:"basicAuthPass" mapstructure:"basicAuthPass"`
 		TLS               TLS                  `json:"tls" yaml:"tls" mapstructure:"tls"`
@@ -31,7 +32,7 @@ type (
 		MaxChargingTime *int `json:"MaxChargingTime,omitempty" yaml:"MaxChargingTime" mapstructure:"MaxChargingTime"`
 		FreeMode        bool `json:"freeMode,omitempty" yaml:"freeMode" mapstructure:"freeMode"`
 		// AC or DC
-		Type string `json:"type,omitempty" yaml:"type" mapstructure:"type"`
+		Type string `json:"type,omitempty" yaml:"type" mapstructure:"type" validate:"oneof=AC DC"`
 		// in kW
 		MaxPower    float32     `json:"maxPower,omitempty" yaml:"maxPower" mapstructure:"maxPower"`
 		OCPPDetails OCPPDetails `json:"ocpp" yaml:"ocpp" mapstructure:"ocpp"`

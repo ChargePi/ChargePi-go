@@ -16,23 +16,22 @@ require (
 	github.com/gemnasium/logrus-graylog-hook/v3 v3.1.0
 	github.com/gin-gonic/gin v1.9.0
 	github.com/go-co-op/gocron v1.6.0
-	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/go-playground/validator/v10 v10.12.0
 	github.com/golang/protobuf v1.5.2
+	github.com/google/uuid v1.3.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.1.0
-	github.com/jacobsa/go-serial v0.0.0-20180131005756-15cf729a72d4
-	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
-	github.com/lestrrat-go/strftime v1.0.5 // indirect
 	github.com/lorenzodonini/ocpp-go v0.16.0
+	github.com/mandrigin/gin-spa v0.0.0-20200212133200-790d0c0c7335
 	github.com/nicksnyder/go-i18n/v2 v2.1.2
 	github.com/op/go-logging v0.0.0-20160315200505-970db520ece7 // indirect
-	github.com/rifflock/lfshook v0.0.0-20180920164130-b9218ef580f5
 	github.com/rpi-ws281x/rpi-ws281x-go v1.0.8
+	github.com/samber/lo v1.38.1
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.3.0
 	github.com/spf13/viper v1.11.0
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/stretchr/testify v1.8.2
+	github.com/tavsec/gin-healthcheck v1.0.2
 	github.com/warthog618/gpiod v0.6.0
 	github.com/xBlaz3kx/ocppManager-go v0.2.0
 	golang.org/x/net v0.8.0
@@ -44,10 +43,7 @@ require (
 	periph.io/x/host/v3 v3.7.2
 )
 
-require (
-	github.com/google/uuid v1.3.0
-	github.com/tavsec/gin-healthcheck v1.0.2
-)
+require github.com/jacobsa/go-serial v0.0.0-20180131005756-15cf729a72d4
 
 require (
 	github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible // indirect
@@ -60,6 +56,7 @@ require (
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
+	github.com/gin-gonic/contrib v0.0.0-20221130124618-7e01895a63f2 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
@@ -97,6 +94,7 @@ require (
 	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/arch v0.3.0 // indirect
 	golang.org/x/crypto v0.7.0 // indirect
+	golang.org/x/exp v0.0.0-20220303212507-bbda1eaf7a17 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.6.0 // indirect
 	google.golang.org/genproto v0.0.0-20220407144326-9054f6ed7bac // indirect

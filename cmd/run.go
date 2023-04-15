@@ -9,38 +9,31 @@ import (
 )
 
 var (
-	runCmd = &cobra.Command{
-		Use:   "run",
-		Short: "Run the ChargePi core",
-		Long:  ``,
-		Run:   run,
-	}
-
 	// Basic configuration setting
 	settingsFilePath string
 )
 
-func run(cmd *cobra.Command, args []string) {
-	configuration.InitSettings(settingsFilePath)
+// runCommand is the command for the ChargePi core.
+func runCommand() *cobra.Command {
+	runCmd := &cobra.Command{
+		Use:   "run",
+		Short: "Run the ChargePi core",
+		Long:  ``,
+		Run: func(cmd *cobra.Command, args []string) {
+			configuration.InitSettings(settingsFilePath)
 
-	var (
-		debug        = viper.GetBool(settings.Debug)
-		mainSettings = configuration.GetSettings()
-	)
+			debug := viper.GetBool(settings.Debug)
+			mainSettings := configuration.GetSettings()
 
-	// Run the actual charge point
-	chargepoint.Run(debug, mainSettings)
-}
+			// Run the charge point
+			chargepoint.Run(debug, mainSettings)
+		},
+	}
 
-func init() {
-	rootCmd.AddCommand(runCmd)
+	runCmd.Flags().StringVar(&settingsFilePath, settings.SettingsFlag, "", "config file path")
+	runCmd.Flags().String(settings.ApiAddressFlag, "localhost:4269", "listen address")
 
-	rootCmd.PersistentFlags().StringVar(&settingsFilePath, settings.SettingsFlag, "", "config file path")
+	_ = viper.BindPFlag(settings.ApiAddress, runCmd.Flags().Lookup(settings.ApiAddressFlag))
 
-	// Here you will define your flags and configuration settings.
-	runCmd.PersistentFlags().String(settings.ApiAddressFlag, "localhost", "address of the api")
-	runCmd.PersistentFlags().Int(settings.ApiPortFlag, 4269, "port for the API")
-
-	_ = viper.BindPFlag(settings.ApiAddress, runCmd.PersistentFlags().Lookup(settings.ApiAddressFlag))
-	_ = viper.BindPFlag(settings.ApiPort, runCmd.PersistentFlags().Lookup(settings.ApiPortFlag))
+	return runCmd
 }
