@@ -3,11 +3,10 @@ package cmd
 import (
 	"fmt"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	cfg "github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
+	"github.com/xBlaz3kx/ocppManager-go/configuration"
 )
 
 var (
@@ -26,7 +25,6 @@ func importCommand() *cobra.Command {
 		Long:  ``,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			importer := cfg.GetImporter()
-			conf := viper.New()
 
 			evseFlag := cmd.Flags().Lookup(settings.EvseFlag).Changed
 			ocppFlag := cmd.Flags().Lookup(settings.OcppConfigPathFlag).Changed
@@ -34,10 +32,8 @@ func importCommand() *cobra.Command {
 			settingsFlag := cmd.Flags().Lookup(settings.SettingsFlag).Changed
 
 			if evseFlag {
-				log.Infof("Importing EVSE settings from %s", *evseFolderPath)
-
 				// If a directory is specified, (try to) import all the files in that directory.
-				err := cfg.ImportEVSEs(importer, conf, *evseFolderPath)
+				err := importer.ImportEVSESettingsFromPath(*evseFolderPath)
 				if err != nil {
 					return fmt.Errorf("could not import EVSE settings: %v", err)
 				}
@@ -45,9 +41,7 @@ func importCommand() *cobra.Command {
 
 			// If the flag was set, import OCPP configuration to the ChargePi
 			if ocppFlag {
-				log.Infof("Importing OCPP configuration from %s", *ocppConfigurationFilePath)
-
-				err := cfg.ImportOcppConfiguration(importer, conf, *ocppConfigurationFilePath, *ocppVersionFlag)
+				err := importer.ImportOcppConfigurationFromPath(configuration.ProtocolVersion(*ocppVersionFlag), *ocppConfigurationFilePath)
 				if err != nil {
 					return fmt.Errorf("could not import OCPP configuration: %v", err)
 				}
@@ -55,18 +49,14 @@ func importCommand() *cobra.Command {
 
 			// If the flag was set, import tags to the database.
 			if authFlag {
-				log.Infof("Importing tags from %s", *authFilePath)
-
-				err := cfg.ImportLocalAuthList(importer, conf, *authFilePath)
+				err := importer.ImportLocalAuthListFromPath(*authFilePath)
 				if err != nil {
 					return fmt.Errorf("could not import tags: %v", err)
 				}
 			}
 
 			if settingsFlag {
-				log.Infof("Importing settings from %s", *importSettingsFilePath)
-
-				err := cfg.ImportSettings(importer, conf, *importSettingsFilePath)
+				err := importer.ImportChargePointSettingsFromPath(*importSettingsFilePath)
 				if err != nil {
 					return fmt.Errorf("could not import settings: %v", err)
 				}
@@ -81,11 +71,6 @@ func importCommand() *cobra.Command {
 	ocppVersionFlag = importCmd.Flags().StringP(settings.OcppVersion, "v", "1.6", "OCPP config file path")
 	authFilePath = importCmd.Flags().String(settings.AuthFileFlag, "", "authorization file path")
 	importSettingsFilePath = importCmd.Flags().String(settings.SettingsFlag, "", "settings file path")
-
-	err := importCmd.MarkFlagRequired(settings.OcppVersion)
-	if err != nil {
-		return nil
-	}
 
 	return importCmd
 }

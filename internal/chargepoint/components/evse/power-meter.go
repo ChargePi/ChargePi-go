@@ -122,7 +122,6 @@ func (evse *Impl) preparePowerMeter() error {
 	var (
 		sampleTime          = "30s"
 		sampleInterval, err = ocppConfigManager.GetConfigurationValue(configuration.MeterValueSampleInterval.String())
-		jobTag              = fmt.Sprintf("Evse%dSampling", evse.evseId)
 	)
 
 	if err == nil && sampleInterval != nil {
@@ -131,7 +130,7 @@ func (evse *Impl) preparePowerMeter() error {
 
 	// Schedule the sampling
 	_, err = evse.scheduler.Every(sampleTime).
-		Tag(jobTag).
+		Tag("evse", "sampling", fmt.Sprintf("%d", evse.evseId)).
 		Do(evse.samplePowerMeterAndSend)
 
 	return err

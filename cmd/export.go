@@ -3,9 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	cfg "github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
 )
@@ -25,7 +23,6 @@ func exportCommand() *cobra.Command {
 		Long:  ``,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			exporter := cfg.GetExporter()
-			config := viper.New()
 
 			evseFlag := cmd.Flags().Lookup(settings.EvseFlag).Changed
 			ocppFlag := cmd.Flags().Lookup(settings.OcppConfigPathFlag).Changed
@@ -34,9 +31,7 @@ func exportCommand() *cobra.Command {
 
 			// If the flag was set, export the EVSE configurations
 			if evseFlag {
-				log.Infof("Exporting EVSE settings to %s", *exportEvseFolderPath)
-
-				err := cfg.ExportEVSEs(exporter, config, *exportEvseFolderPath)
+				err := exporter.ExportEVSESettingsToFile(*exportEvseFolderPath)
 				if err != nil {
 					return fmt.Errorf("could not export EVSE settings: %v", err)
 				}
@@ -44,9 +39,7 @@ func exportCommand() *cobra.Command {
 
 			// If the flag was set, export the OCPP configuration
 			if ocppFlag {
-				log.Infof("Exporting OCPP configuration to %s", *exportOcppConfigurationFilePath)
-
-				err := cfg.ExportOcppConfiguration(exporter, config, *exportOcppConfigurationFilePath)
+				err := exporter.ExportOcppConfigurationToFile(*exportOcppConfigurationFilePath)
 				if err != nil {
 					return fmt.Errorf("could not export OCPP configuration: %v", err)
 				}
@@ -54,9 +47,7 @@ func exportCommand() *cobra.Command {
 
 			// If the flag was set, export tags.
 			if authFlag {
-				log.Infof("Exporting tags to %s", *exportAuthFilePath)
-
-				err := cfg.ExportLocalAuthList(exporter, config, *exportAuthFilePath)
+				err := exporter.ExportLocalAuthListToFile(*exportAuthFilePath)
 				if err != nil {
 					return fmt.Errorf("could not export tags: %v", err)
 				}
@@ -64,9 +55,7 @@ func exportCommand() *cobra.Command {
 
 			// If the flag was set, export settings.
 			if settingsFlag {
-				log.Infof("Exporting settings to %s", *exportSettingsFilePath)
-
-				err := cfg.ExportSettings(exporter, config, *exportSettingsFilePath)
+				err := exporter.ExportChargePointSettingsToFile(*exportSettingsFilePath)
 				if err != nil {
 					return fmt.Errorf("could not export settings: %v", err)
 				}

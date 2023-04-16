@@ -113,6 +113,9 @@ func (r *RelayAsEvcc) GetType() string {
 func (r *RelayAsEvcc) GetStatusChangeChannel() <-chan StateNotification {
 	return r.statusChannel
 }
+func (r *RelayAsEvcc) SetNotificationChannel(notifications chan StateNotification) {
+	r.statusChannel = notifications
+}
 
 func (r *RelayAsEvcc) Reset() {
 }

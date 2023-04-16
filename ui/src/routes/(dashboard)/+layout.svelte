@@ -18,7 +18,7 @@
 
 <div class="flex flex-col h-full space-y-4 p-4">
     <div class="navbar rounded-box bg-base-300 shadow-sm">
-        <div class="flex-1">
+        <div class="flex-1 px-5">
             <img alt="logo" class="" src="../../../static/logo.svg"/>
         </div>
         <div class="flex-none">
@@ -35,15 +35,20 @@
                             <ThemeToggle/>
                         </div>
                     </li>
+                    <li>
+                        <button class="btn btn-square btn-ghost" on:click={() => (expand = !expand)}>
+                            <Fa icon={faBars}/>
+                        </button>
+                    </li>
                     <li><a>Settings</a></li>
+
+
                     <li><a href="/login">
                         <Fa icon={faRightFromBracket}/>
                         Logout</a></li>
                 </ul>
             </div>
-            <button class="btn btn-square btn-ghost" on:click={() => (expand = !expand)}>
-                <Fa icon={faBars}/>
-            </button>
+
         </div>
     </div>
 

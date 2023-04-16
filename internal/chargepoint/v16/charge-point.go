@@ -55,9 +55,6 @@ func NewChargePoint(manager evse.Manager, tagManager auth.TagManager, sessionMan
 		logger:          log.StandardLogger(),
 	}
 
-	// Set profiles
-	util.SetProfilesFromConfig(cp.chargePoint, cp, cp, cp, cp)
-
 	cp.ApplyOpts(opts...)
 
 	return cp
@@ -79,6 +76,9 @@ func (cp *ChargePoint) Connect(ctx context.Context, serverUrl string) {
 
 	logInfo.Debug("Creating an ocpp connection")
 	cp.chargePoint = ocpp16.NewChargePoint(connectionSettings.Id, nil, wsClient)
+
+	// Set profiles
+	util.SetProfilesFromConfig(cp.chargePoint, cp, cp, cp, cp)
 
 	cp.logger.Infof("Trying to connect to the central system: %s", serverUrl)
 	connectErr := cp.chargePoint.Start(serverUrl)

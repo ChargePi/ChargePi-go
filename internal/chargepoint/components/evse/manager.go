@@ -254,10 +254,15 @@ func (m *managerImpl) addEVSEFromSettings(ctx context.Context, c settings.EVSE) 
 		return err
 	}
 
+	if m.notificationChannel != nil {
+		evse.SetNotificationChannel(m.notificationChannel)
+	}
+
 	return m.AddEVSE(ctx, evse)
 }
 
 func (m *managerImpl) UpdateEVSE(ctx context.Context, c EVSE) error {
+	// todo implement me
 	return nil
 }
 

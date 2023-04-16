@@ -68,26 +68,13 @@ func (i *Impl) SetupOcppConfiguration(version configuration.ProtocolVersion, sup
 	i.ocppVariableManager.SetVersion(version)
 	i.ocppVariableManager.SetSupportedProfiles(supportedProfiles...)
 
-	var ocppConfig configuration.Config
-
-	// Read the configuration from the database
-	err := i.db.View(func(txn *badger.Txn) error {
-
-		config, err := txn.Get(database.GetOcppConfigurationKey(version))
-		if err != nil {
-			return err
-		}
-
-		return config.Value(func(val []byte) error {
-			return json.Unmarshal(val, &ocppConfig)
-		})
-	})
+	ocppConfig, err := loadConfiguration(i.db, i.ocppVariableManager, version)
 	if err != nil {
-		logInfo.WithError(err).Errorf("Error reading configuration from database")
+		logInfo.WithError(err).Errorf("Error loading the configuration from the database")
 		return
 	}
 
-	err = i.ocppVariableManager.SetConfiguration(ocppConfig)
+	err = i.ocppVariableManager.SetConfiguration(*ocppConfig)
 	if err != nil {
 		logInfo.WithError(err).Errorf("Error setting the configuration to the manager")
 		return
@@ -164,6 +151,16 @@ func (i *Impl) GetSettings() (*settings.Settings, error) {
 }
 
 func (i *Impl) GetOcppConfiguration(version configuration.ProtocolVersion) ([]core.ConfigurationKey, error) {
+	config, err := loadConfiguration(i.db, i.ocppVariableManager, version)
+	if err != nil {
+		return nil, err
+	}
+
+	err = i.ocppVariableManager.SetConfiguration(*config)
+	if err != nil {
+		log.WithError(err).Errorf("Error setting the configuration to the manager")
+	}
+
 	switch version {
 	case configuration.OCPP16:
 		return i.ocppVariableManager.GetConfiguration()
@@ -188,4 +185,31 @@ func (i *Impl) GetOcppConfigurationWithKey(version configuration.ProtocolVersion
 	default:
 		return nil, nil
 	}
+}
+
+func loadConfiguration(db *badger.DB, ocppVariableManager ocppConfigManager.Manager, version configuration.ProtocolVersion) (*configuration.Config, error) {
+	var ocppConfig configuration.Config
+
+	// Read the configuration from the database
+	err := db.View(func(txn *badger.Txn) error {
+
+		config, err := txn.Get(database.GetOcppConfigurationKey(version))
+		if err != nil {
+			return err
+		}
+
+		return config.Value(func(val []byte) error {
+			return json.Unmarshal(val, &ocppConfig)
+		})
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	err = ocppVariableManager.SetConfiguration(ocppConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ocppConfig, nil
 }

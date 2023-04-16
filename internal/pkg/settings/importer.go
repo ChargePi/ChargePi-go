@@ -3,10 +3,14 @@ package settings
 import (
 	"encoding/binary"
 	"encoding/json"
+	"os"
+	"path/filepath"
 
+	"github.com/agrison/go-commons-lang/stringUtils"
 	"github.com/dgraph-io/badger/v3"
 	"github.com/go-playground/validator/v10"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/database"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	"github.com/xBlaz3kx/ocppManager-go/configuration"
@@ -28,9 +32,13 @@ func GetImporter() Importer {
 
 type Importer interface {
 	ImportEVSESettings(settings []settings.EVSE) error
+	ImportEVSESettingsFromPath(path string) error
 	ImportOcppConfiguration(version configuration.ProtocolVersion, config configuration.Config) error
+	ImportOcppConfigurationFromPath(version configuration.ProtocolVersion, path string) error
 	ImportLocalAuthList(list settings.AuthList) error
+	ImportLocalAuthListFromPath(path string) error
 	ImportChargePointSettings(point settings.Settings) error
+	ImportChargePointSettingsFromPath(path string) error
 }
 
 type ImporterImpl struct {
@@ -41,10 +49,12 @@ type ImporterImpl struct {
 func (i *ImporterImpl) ImportEVSESettings(settings []settings.EVSE) error {
 	log.Debug("Importing connectors to the database")
 
-	// Validate the EVSE settings
-	validationErr := validator.New().Struct(settings)
-	if validationErr != nil {
-		return validationErr
+	for _, setting := range settings {
+		// Validate the EVSE settings
+		validationErr := validator.New().Struct(setting)
+		if validationErr != nil {
+			return validationErr
+		}
 	}
 
 	// Sync the settings to the database
@@ -124,4 +134,113 @@ func (i *ImporterImpl) ImportLocalAuthList(list settings.AuthList) error {
 func (i *ImporterImpl) ImportChargePointSettings(settings settings.Settings) error {
 	log.Debug("Importing charge point settings to the database")
 	return i.settingsManager.SetSettings(settings)
+}
+
+func (i *ImporterImpl) ImportEVSESettingsFromPath(path string) error {
+	log.Infof("Importing EVSE settings from %s", path)
+
+	var evseSettings []settings.EVSE
+
+	err := filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if !info.IsDir() {
+			var s settings.EVSE
+			config := viper.New()
+
+			config.SetConfigFile(path)
+			err := config.ReadInConfig()
+			if err != nil {
+				return err
+			}
+
+			err = config.Unmarshal(&s)
+			if err != nil {
+				return err
+			}
+
+			evseSettings = append(evseSettings, s)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	// Store the settings
+	return i.ImportEVSESettings(evseSettings)
+}
+
+func (i *ImporterImpl) ImportLocalAuthListFromPath(path string) error {
+	log.Infof("Importing tags from %s", path)
+
+	var tagList settings.AuthList
+	config := viper.New()
+
+	err := readConfiguration(config, "authList", "yaml", path)
+	if err != nil {
+		return err
+	}
+
+	err = config.Unmarshal(&tagList)
+	if err != nil {
+		return err
+	}
+
+	return i.ImportLocalAuthList(tagList)
+}
+
+func (i *ImporterImpl) ImportChargePointSettingsFromPath(path string) error {
+	log.Infof("Importing settings from %s", path)
+
+	var cpSettings settings.Settings
+
+	config := viper.New()
+
+	// Read the settings from the file.
+	err := readConfiguration(config, "settings", "yaml", path)
+	if err != nil {
+		return err
+	}
+
+	err = config.Unmarshal(&cpSettings)
+	if err != nil {
+		return err
+	}
+
+	return i.ImportChargePointSettings(cpSettings)
+}
+
+func (i *ImporterImpl) ImportOcppConfigurationFromPath(version configuration.ProtocolVersion, path string) error {
+	log.Infof("Importing OCPP configuration from %s", path)
+
+	var ocppConfiguration configuration.Config
+	config := viper.New()
+
+	// Read the settings from the file.
+	err := readConfiguration(config, "ocpp", "yaml", path)
+	if err != nil {
+		return err
+	}
+
+	err = config.Unmarshal(&ocppConfiguration)
+	if err != nil {
+		return err
+	}
+
+	return importer.ImportOcppConfiguration(version, ocppConfiguration)
+}
+
+func readConfiguration(viper *viper.Viper, fileName, extension, filePath string) error {
+	viper.SetConfigName(fileName)
+	viper.SetConfigType(extension)
+
+	if stringUtils.IsNotEmpty(filePath) {
+		viper.SetConfigFile(filePath)
+	}
+
+	return viper.ReadInConfig()
 }

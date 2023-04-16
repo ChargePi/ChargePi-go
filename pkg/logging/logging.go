@@ -10,8 +10,6 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 )
 
-const logFilePath = "/var/log/chargepi/"
-
 // Setup setup logs
 func Setup(logger *log.Logger, loggingConfig settings.Logging, isDebug bool) {
 	// Default logging settings

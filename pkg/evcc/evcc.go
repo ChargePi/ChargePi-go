@@ -25,6 +25,7 @@ type EVCC interface {
 	Cleanup() error
 	GetType() string
 	GetStatusChangeChannel() <-chan StateNotification
+	SetNotificationChannel(notifications chan StateNotification)
 	Reset()
 	// SelfCheck() error
 }

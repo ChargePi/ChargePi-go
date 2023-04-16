@@ -127,6 +127,12 @@ func (evse *Impl) Init(ctx context.Context) error {
 	// Disable charging by default
 	evse.evcc.DisableCharging()
 
+	// Set max charging current
+	err = evse.evcc.SetMaxChargingCurrent(evse.maxPower)
+	if err != nil {
+		return err
+	}
+
 	// Listen for EVCC status updates in another thread
 	go evse.listenForStatusUpdates(ctx)
 	return nil
@@ -218,6 +224,14 @@ func (evse *Impl) StartCharging(connectorId *int) error {
 		logInfo.WithError(sampleError).Error("Cannot sample evse")
 	}
 
+	if evse.maxChargingTime != nil {
+		// Schedule a stop charging after the maxChargingTime
+		_, err := evse.scheduler.Every(*evse.maxChargingTime).Minutes().Tag("evse", fmt.Sprintf("%d", evse.GetEvseId()), "chargingTimer").Do(evse.StopCharging, core.ReasonLocal)
+		if err != nil {
+			logInfo.WithError(err).Error("Cannot schedule stop charging")
+		}
+	}
+
 	return nil
 }
 
@@ -234,8 +248,8 @@ func (evse *Impl) StopCharging(reason core.Reason) error {
 		evse.evcc.DisableCharging()
 		evse.evcc.Unlock()
 
-		// Remove the sampling of the power meter
-		schedulerErr := evse.scheduler.RemoveByTag(fmt.Sprintf("evse%dSampling", evse.GetEvseId()))
+		// Remove any jobs scheduled for this evse
+		schedulerErr := evse.scheduler.RemoveByTag(fmt.Sprintf("%d", evse.GetEvseId()))
 		if schedulerErr != nil {
 			logInfo.WithError(schedulerErr).Errorf("Cannot remove sampling schedule")
 		}
