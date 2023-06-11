@@ -50,10 +50,8 @@ func (cp *ChargePoint) OnTriggerMessage(request *remotetrigger.TriggerMessageReq
 			defer func() {
 				time.Sleep(time.Second)
 				for _, c := range cp.evseManager.GetEVSEs() {
-					if cp.evseManager.GetNotificationChannel() != nil {
-						cpStatus, errCode := c.GetStatus()
-						go cp.notifyConnectorStatus(c.GetEvseId(), cpStatus, errCode)
-					}
+					cpStatus, errCode := c.GetStatus()
+					go cp.notifyConnectorStatus(c.GetEvseId(), cpStatus, errCode)
 				}
 			}()
 

@@ -35,6 +35,8 @@ func NewEVCCFromType(evccSettings settings.EVCC) (EVCC, error) {
 	switch evccSettings.Type {
 	case Relay:
 		return NewRelay(evccSettings.RelayPin, evccSettings.InverseLogic)
+	case Western:
+		return NewWesternController(1, evccSettings.Serial)
 	default:
 		return nil, nil
 	}

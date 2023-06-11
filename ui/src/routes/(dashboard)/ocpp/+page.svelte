@@ -66,7 +66,7 @@
                     </div>
                 {/each}
                 <div class="flex flex-col py-5">
-                    <button class="btn btn-success ">Apply</button>
+                    <button class="btn btn-primary">Apply</button>
                 </div>
             </div>
         </div>
@@ -98,7 +98,7 @@
                     <td>{key.readOnly}</td>
                     <td><input class="input input-bordered" placeholder="{key.value}" type="text"/></td>
                     <td>
-                        <button class="btn btn-success">Apply</button>
+                        <button class="btn btn-primary">Apply</button>
                     </td>
                 </tr>
             {/each}

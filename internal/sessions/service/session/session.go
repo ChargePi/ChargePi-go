@@ -12,6 +12,7 @@ type (
 		StopSession(transactionId string) error
 		UpdateMeterValues(transactionId string, values ...types.SampledValue) error
 		GetSession(evseId int, connectorId *int) (*session.Session, error)
+		// GetSessions(evseId *int) ([]session.Session, error)
 		GetSessionWithTransactionId(transactionId string) (*session.Session, error)
 		GetSessionWithTagId(tagId string) (*session.Session, error)
 	}
@@ -49,14 +50,14 @@ func (i *Impl) StopSession(transactionId string) error {
 }
 
 func (i *Impl) UpdateMeterValues(transactionId string, values ...types.SampledValue) error {
-	sesh, err := i.GetSessionWithTransactionId(transactionId)
+	sessionWithTransactionId, err := i.GetSessionWithTransactionId(transactionId)
 	if err != nil {
 		return nil
 	}
 
-	sesh.AddSampledValue(values)
+	sessionWithTransactionId.AddSampledValue(values)
 
-	return i.sessionRepository.UpdateSession(sesh)
+	return i.sessionRepository.UpdateSession(sessionWithTransactionId)
 }
 
 func (i *Impl) GetSession(evseId int, connectorId *int) (*session.Session, error) {

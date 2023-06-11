@@ -4,6 +4,7 @@
         faBars,
         faBolt,
         faCloud,
+        faCreditCard,
         faFilePen,
         faHome,
         faMicrochip,
@@ -81,6 +82,12 @@
                         <NavItem href="/ocpp">
                             <Fa icon={faCloud}/>
                             OCPP
+                        </NavItem>
+                    </li>
+                    <li>
+                        <NavItem href="/tags">
+                            <Fa icon={faCreditCard}/>
+                            Tags
                         </NavItem>
                     </li>
                     <li>

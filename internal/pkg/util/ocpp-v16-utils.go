@@ -20,7 +20,7 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ws"
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util/tls"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/util/tls"
 	ocppManager "github.com/xBlaz3kx/ocppManager-go"
 	"github.com/xBlaz3kx/ocppManager-go/configuration"
 )
@@ -40,23 +40,27 @@ func CreateConnectionUrl(connectionSettings settings.ConnectionSettings) string 
 }
 
 // CreateClient creates a Websocket client based on the settings.
-func CreateClient(basicAuthUser, basicAuthPass string, tlsConfig settings.TLS) *ws.Client {
-	var (
-		client            = ws.NewClient()
-		clientConfig      = ws.NewClientTimeoutConfig()
-		pingInterval, err = ocppManager.GetConfigurationValue(configuration.WebSocketPingInterval.String())
-	)
+func CreateClient(basicAuthUser, basicAuthPass string, tlsConfig settings.TLS) (*ws.Client, error) {
+	client := ws.NewClient()
+	clientConfig := ws.NewClientTimeoutConfig()
 
+	// Set the ping interval
+	pingInterval, err := ocppManager.GetConfigurationValue(configuration.WebSocketPingInterval.String())
 	if err == nil {
-		duration, err := time.ParseDuration(fmt.Sprintf("%ss", pingInterval))
+		duration, err := time.ParseDuration(fmt.Sprintf("%ss", *pingInterval))
 		if err == nil {
 			clientConfig.PingPeriod = duration
 		}
 	}
 
-	// Check if the client has TLS
+	// Check if the TLS is enabled for the client
 	if tlsConfig.IsEnabled {
-		client = tls.CreateWssClient(tlsConfig.CACertificatePath, tlsConfig.ClientCertificatePath, tlsConfig.PrivateKeyPath)
+
+		client, err = tls.CreateWssClient(tlsConfig.CACertificatePath, tlsConfig.ClientCertificatePath, tlsConfig.PrivateKeyPath)
+		if err != nil {
+			log.WithError(err).Error("Couldn't create TLS client")
+			return nil, err
+		}
 	}
 
 	// If HTTP basic auth is provided, set it in the Websocket client
@@ -65,7 +69,7 @@ func CreateClient(basicAuthUser, basicAuthPass string, tlsConfig settings.TLS) *
 	}
 
 	client.SetTimeoutConfig(clientConfig)
-	return client
+	return client, nil
 }
 
 // SetProfilesFromConfig based on the provided OCPP configuration, set the profiles

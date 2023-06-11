@@ -90,6 +90,8 @@ Listener:
 				logInfo.WithError(err).Errorf("Cannot send meter values")
 			}
 
+			// todo add plugin/middleware support
+
 		case <-ctx.Done():
 			break Listener
 		}
@@ -134,47 +136,29 @@ func (cp *ChargePoint) displayStatusChangeOnDisplay(connectorId int, status core
 func (cp *ChargePoint) handleStatusUpdate(ctx context.Context, evseId int, status core.ChargePointStatus) {
 	logInfo := cp.logger.WithField("evseId", evseId).WithField("status", status)
 	logInfo.Debug("Handling status update")
-	// Todo design a plugin interface so it can be called here
+	// Todo design a plugin/middleware interface so it can be called here
 
 	switch status {
 	case core.ChargePointStatusAvailable:
+		// Todo indicate that the EVSE is available
+
 	case core.ChargePointStatusPreparing:
 
-		//  Check if FreeMode is enabled. This will bypass any authentication requirement.
+		// Check if FreeMode is enabled. This will bypass any authentication requirement.
 		if cp.info.FreeMode {
-			logInfo.Info("Free mode enabled, starting charging")
-
-			err := cp.evseManager.StartCharging(evseId, nil)
-			if err != nil {
-				logInfo.WithError(err).Errorf("Unable to start charging connector")
-			}
+			cp.startChargingFreeMode(evseId)
 			break
 		}
 
-		// Listen for a tag for a minute. If the tag is tapped, start charging.
-		listenCtx, cancel := context.WithTimeout(ctx, time.Minute)
-		defer cancel()
-
-		cp.logger.Info("Waiting for the user to tap a tag")
-
-		tag, err := cp.ListenForTag(listenCtx, cp.tagReader.GetTagChannel())
-		switch err {
-		case nil:
-			// Tag was found, start charging
-			err = cp.StartCharging(evseId, 1, *tag)
-			if err != nil {
-				logInfo.WithError(err).Error("Cannot start charging")
-			}
-		case context.DeadlineExceeded:
-			// Indicate timeout
-		default:
-			logInfo.WithError(err).Error("Error while listening for tag")
-			// Indicate error
-		}
+		// Default to RFID authentication
+		cp.authenticateWithRfidCard(ctx, evseId)
 
 	case core.ChargePointStatusCharging:
+		// Todo indicate that the EV is charging
 	case core.ChargePointStatusSuspendedEV:
+		// Todo indicate that the EV has halted charging
 	case core.ChargePointStatusSuspendedEVSE:
+		// Todo indicate that the EVSE has halted charging
 	case core.ChargePointStatusFinishing:
 		stopTransactionOnEVDisconnect, err := ocppConfigManager.GetConfigurationValue(configuration.StopTransactionOnEVSideDisconnect.String())
 
@@ -183,7 +167,10 @@ func (cp *ChargePoint) handleStatusUpdate(ctx context.Context, evseId int, statu
 			stopChargingErr := cp.StopCharging(evseId, 1, core.ReasonEVDisconnected)
 			if stopChargingErr != nil {
 				logInfo.WithError(err).Error("Cannot stop charging")
+				// Todo Indicate that the charging hasn't been successfully stopped
 			}
+
+			// Todo Indicate that the charging has been stopped
 		}
 
 	case core.ChargePointStatusFaulted:
@@ -191,5 +178,42 @@ func (cp *ChargePoint) handleStatusUpdate(ctx context.Context, evseId int, statu
 		if err != nil {
 			logInfo.WithError(err).Error("Cannot stop charging")
 		}
+	}
+}
+
+func (cp *ChargePoint) startChargingFreeMode(evseId int) {
+	logInfo := cp.logger.WithField("evseId", evseId)
+	logInfo.Info("Free mode enabled, starting charging")
+
+	err := cp.evseManager.StartCharging(evseId, nil)
+	if err != nil {
+		logInfo.WithError(err).Errorf("Unable to start charging connector")
+	}
+}
+
+func (cp *ChargePoint) authenticateWithRfidCard(ctx context.Context, evseId int) {
+	logInfo := cp.logger.WithField("evseId", evseId)
+
+	// Listen for a tag for a minute. If the tag is tapped, start charging.
+	listenCtx, cancel := context.WithTimeout(ctx, time.Minute)
+	defer cancel()
+
+	cp.logger.Info("Waiting for the user to tap a tag")
+
+	tag, err := cp.ListenForTag(listenCtx, cp.tagReader.GetTagChannel())
+	switch err {
+	case nil:
+		// Tag was found, start charging
+		err = cp.StartCharging(evseId, 1, *tag)
+		if err != nil {
+			logInfo.WithError(err).Error("Cannot start charging")
+		}
+		// Indicate charging should start
+
+	case context.DeadlineExceeded:
+		// Indicate timeout
+	default:
+		logInfo.WithError(err).Error("Error while listening for tag")
+		// Indicate error
 	}
 }

@@ -201,17 +201,18 @@ Loop:
 }
 
 // StartCharging Start charging a evse if evse is available and session could be started.
-// It turns on the relay (even if negative logic applies).
 func (evse *Impl) StartCharging(connectorId *int) error {
 	logInfo := log.WithFields(log.Fields{
 		"evseId": evse.evseId,
 	})
 	logInfo.Debugf("Trying to start charging on evse")
 
+	// Check if evse is available
 	if !(evse.IsAvailable() || evse.IsPreparing()) {
 		return ErrInvalidStatus
 	}
 
+	// Enable charging
 	err := evse.evcc.EnableCharging()
 	if err != nil {
 		return err
@@ -219,11 +220,13 @@ func (evse *Impl) StartCharging(connectorId *int) error {
 
 	evse.evcc.Lock()
 
+	// Prepare power meter and schedule sampling
 	sampleError := evse.preparePowerMeter()
 	if sampleError != nil {
 		logInfo.WithError(sampleError).Error("Cannot sample evse")
 	}
 
+	// Schedule a stop charging after the maxChargingTime, if provided
 	if evse.maxChargingTime != nil {
 		// Schedule a stop charging after the maxChargingTime
 		_, err := evse.scheduler.Every(*evse.maxChargingTime).Minutes().Tag("evse", fmt.Sprintf("%d", evse.GetEvseId()), "chargingTimer").Do(evse.StopCharging, core.ReasonLocal)
@@ -235,7 +238,7 @@ func (evse *Impl) StartCharging(connectorId *int) error {
 	return nil
 }
 
-// StopCharging Stops charging the evse by turning the relay off and ending the session.
+// StopCharging Stops charging a evse if evse is charging
 func (evse *Impl) StopCharging(reason core.Reason) error {
 	logInfo := log.WithFields(log.Fields{
 		"evseId": evse.evseId,

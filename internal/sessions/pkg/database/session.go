@@ -9,6 +9,7 @@ type SessionRepository interface {
 	StopSession(transactionId string) error
 	UpdateSession(session *session.Session) error
 	GetSession(evseId int, connectorId *int) (*session.Session, error)
+	// GetSessions() ([]session.Session, error)
 	GetSessionWithTransactionId(transactionId string) (*session.Session, error)
 	GetSessionWithTagId(tagId string) (*session.Session, error)
 }

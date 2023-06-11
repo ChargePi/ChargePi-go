@@ -4,11 +4,15 @@
     let Errors = 0;
     let EVSEs = 2;
     let Active = "Connected";
-
+    let user = "Admin";
 
 </script>
 
 <div class="flex flex-col w-full">
+    <div class="flex pb-5">
+        <h1 class="text-4xl">Welcome, {user}!</h1>
+    </div>
+
     <div class="stats shadow">
         <div class="stat">
             <div class="stat-figure text-secondary">

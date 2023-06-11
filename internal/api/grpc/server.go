@@ -42,14 +42,14 @@ func NewServer(
 ) *Server {
 	var opts []grpc.ServerOption
 
-	// Add TLS if enabled
 	if settings.TLS.IsEnabled {
-		creds, err := credentials.NewServerTLSFromFile(settings.TLS.CACertificatePath, settings.TLS.PrivateKeyPath)
+		// Add TLS if enabled
+		tlsCredentials, err := credentials.NewServerTLSFromFile(settings.TLS.CACertificatePath, settings.TLS.PrivateKeyPath)
 		if err != nil {
 			log.WithError(err).Panic("Failed to fetch credentials")
 		}
 
-		opts = []grpc.ServerOption{grpc.Creds(creds)}
+		opts = []grpc.ServerOption{grpc.Creds(tlsCredentials)}
 	}
 
 	// Add authentication middleware

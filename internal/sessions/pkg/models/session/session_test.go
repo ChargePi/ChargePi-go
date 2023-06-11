@@ -8,13 +8,13 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type SessionTestSuite struct {
+type sessionTestSuite struct {
 	suite.Suite
 	emptySession Session
 	validSession Session
 }
 
-func (s *SessionTestSuite) SetupTest() {
+func (s *sessionTestSuite) SetupTest() {
 	currentTime := time.Now()
 
 	s.validSession = Session{
@@ -25,7 +25,7 @@ func (s *SessionTestSuite) SetupTest() {
 	}
 }
 
-func (s *SessionTestSuite) TestAddSampledValue() {
+func (s *sessionTestSuite) TestAddSampledValue() {
 	var (
 		samples = []types.SampledValue{
 			{
@@ -60,7 +60,7 @@ func (s *SessionTestSuite) TestAddSampledValue() {
 	s.Assert().EqualValues(expected, s.emptySession.Consumption)
 }
 
-func (s *SessionTestSuite) TestStartSession() {
+func (s *sessionTestSuite) TestStartSession() {
 	currentTime := time.Now()
 	var expectedSession = Session{
 		IsActive:      true,
@@ -88,12 +88,12 @@ func (s *SessionTestSuite) TestStartSession() {
 	s.Assert().EqualValues(expectedSession, s.emptySession)
 }
 
-func (s *SessionTestSuite) TestEndSession() {
+func (s *sessionTestSuite) TestEndSession() {
 	s.validSession.EndSession()
 	s.Assert().EqualValues(s.validSession, s.emptySession)
 }
 
-func (s *SessionTestSuite) TestCalculateAvgPower() {
+func (s *sessionTestSuite) TestCalculateAvgPower() {
 	var (
 		emptySample = []types.SampledValue{}
 		zeroSamples = []types.MeterValue{
@@ -203,7 +203,7 @@ func (s *SessionTestSuite) TestCalculateAvgPower() {
 
 }
 
-func (s *SessionTestSuite) TestCalculateEnergyConsumptionWithAvgPower() {
+func (s *sessionTestSuite) TestCalculateEnergyConsumptionWithAvgPower() {
 	started5min := time.Now().Add(-5 * time.Minute)
 
 	// Start the session
@@ -241,5 +241,5 @@ func (s *SessionTestSuite) TestCalculateEnergyConsumptionWithAvgPower() {
 }
 
 func TestSession(t *testing.T) {
-	suite.Run(t, new(SessionTestSuite))
+	suite.Run(t, new(sessionTestSuite))
 }

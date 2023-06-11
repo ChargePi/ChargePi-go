@@ -62,19 +62,21 @@ func NewChargePoint(manager evse.Manager, tagManager auth.TagManager, sessionMan
 
 // Connect to the central system and send a BootNotification
 func (cp *ChargePoint) Connect(ctx context.Context, serverUrl string) {
-	var (
-		connectionSettings = cp.connectionSettings
-		tlsConfig          = connectionSettings.TLS
-		wsClient           = util.CreateClient(
-			connectionSettings.BasicAuthUsername,
-			connectionSettings.BasicAuthPassword,
-			tlsConfig)
-		logInfo = log.WithFields(log.Fields{
-			"chargePointId": connectionSettings.Id,
-		})
-	)
+	connectionSettings := cp.connectionSettings
+	tlsConfig := connectionSettings.TLS
+	logInfo := log.WithFields(log.Fields{
+		"chargePointId": connectionSettings.Id,
+	})
 
-	logInfo.Debug("Creating an ocpp connection")
+	wsClient, err := util.CreateClient(
+		connectionSettings.BasicAuthUsername,
+		connectionSettings.BasicAuthPassword,
+		tlsConfig)
+	if err != nil {
+		logInfo.WithError(err).Panic("Cannot create a new client")
+	}
+
+	logInfo.Debug("Connecting to the OCPP backend")
 	cp.chargePoint = ocpp16.NewChargePoint(connectionSettings.Id, nil, wsClient)
 
 	// Set profiles

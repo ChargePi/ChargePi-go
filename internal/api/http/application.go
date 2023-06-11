@@ -2,6 +2,7 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
 	healthcheck "github.com/tavsec/gin-healthcheck"
 	"github.com/tavsec/gin-healthcheck/checks"
 	"github.com/tavsec/gin-healthcheck/config"
@@ -21,7 +22,7 @@ func (u *App) Serve(url string, checks ...checks.Check) {
 	// Configure healthcheck
 	err := healthcheck.New(u.router, config.DefaultConfig(), checks)
 	if err != nil {
-		return
+		log.WithError(err).Panic("Failed to configure healthcheck")
 	}
 
 	err = u.router.Run(url)

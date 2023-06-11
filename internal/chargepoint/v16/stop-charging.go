@@ -59,6 +59,7 @@ func (cp *ChargePoint) stopChargingConnector(connector evse.EVSE, reason core.Re
 
 		logInfo.Info("Stopping transaction")
 
+		// Stop charging on EVSE
 		err = connector.StopCharging(reason)
 		if err != nil {
 			logInfo.WithError(err).Errorf("Unable to stop charging")

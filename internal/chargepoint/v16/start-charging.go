@@ -25,7 +25,7 @@ func (cp *ChargePoint) StartCharging(evseId, connectorId int, tagId string) erro
 		return chargePoint.ErrChargePointUnavailable
 	}
 
-	// Authorize the tag from either the cache or the backend.
+	// Authorize the tag from either the list, cache or the backend.
 	if !cp.isTagAuthorized(tagId) {
 		return chargePoint.ErrTagUnauthorized
 	}
@@ -48,15 +48,17 @@ func (cp *ChargePoint) StartCharging(evseId, connectorId int, tagId string) erro
 		switch startTransactionConf.IdTagInfo.Status {
 		case types.AuthorizationStatusAccepted, types.AuthorizationStatusConcurrentTx:
 			transactionId := fmt.Sprintf("%d", startTransactionConf.TransactionId)
+
 			err := cp.sessionManager.StartSession(evseId, nil, tagId, transactionId)
 			if err != nil {
+				logInfo.WithError(err).Errorf("Unable to start session")
 				return
 			}
 
-			// Start the charging process
+			// Start the charging on EVSE
 			err = cp.evseManager.StartCharging(evseId, nil)
 			if err != nil {
-				logInfo.WithError(err).Errorf("Unable to start charging connector")
+				logInfo.WithError(err).Errorf("Unable to start charging on EVSE")
 				return
 			}
 
@@ -64,13 +66,13 @@ func (cp *ChargePoint) StartCharging(evseId, connectorId int, tagId string) erro
 		case types.AuthorizationStatusBlocked, types.AuthorizationStatusInvalid, types.AuthorizationStatusExpired:
 			fallthrough
 		default:
-			logInfo.Errorf("Transaction unauthorized")
+			logInfo.Warn("Transaction unauthorized")
 		}
 
 		// Cache the tag
 		err := cp.tagManager.AddTag(tagId, startTransactionConf.IdTagInfo)
 		if err != nil {
-			return
+			logInfo.WithError(err).Warn("Unable to cache tag")
 		}
 	}
 

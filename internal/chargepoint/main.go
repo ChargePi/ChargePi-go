@@ -55,6 +55,7 @@ func Run(debug bool, config *settings.Settings) {
 		remotetrigger.ProfileName,
 		localauth.ProfileName,
 	)
+
 	ocppVariableManager := ocppConfigManager.GetManager()
 	evseManager := evse.GetManager()
 	tagManager := auth.NewTagManager(db)
@@ -70,10 +71,17 @@ func Run(debug bool, config *settings.Settings) {
 	parentCtxForOcpp, parentCancel := context.WithCancel(ctx)
 	defer parentCancel()
 
-	// Set the settings and connect to the backend system
+	// Set the settings
 	handler = CreateChargePoint(parentCtxForOcpp, protocolVersion, logger, evseManager, tagManager, sessionManager, hardware)
-	handler.SetSettings(chargePointInfo)
-	handler.SetConnectionSettings(connectionSettings)
+	err = handler.SetSettings(chargePointInfo)
+	if err != nil {
+		logger.WithError(err).Fatal("Unable to set the charge point settings")
+	}
+
+	err = handler.SetConnectionSettings(connectionSettings)
+	if err != nil {
+		logger.WithError(err).Fatal("Unable to set the connection settings")
+	}
 
 	// Listen for connector status changes
 	go handler.ListenForConnectorStatusChange(ctx, evseManager.GetNotificationChannel())
