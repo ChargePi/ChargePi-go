@@ -1,6 +1,7 @@
 package v16
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
@@ -11,8 +12,8 @@ func (cp *ChargePoint) OnReserveNow(request *reservation.ReserveNowRequest) (con
 	cp.logger.Infof("Received %s for %v", request.GetFeatureName(), request.ConnectorId)
 
 	err = cp.evseManager.Reserve(request.ConnectorId, nil, request.ReservationId, request.IdTag)
-	switch err {
-	case nil:
+	switch {
+	case err == nil:
 		timeFormat := fmt.Sprintf("%d:%d", request.ExpiryDate.Hour(), request.ExpiryDate.Minute())
 		_, schedulerErr := cp.scheduler.Every(1).Day().At(timeFormat).LimitRunsTo(1).Do(cp.evseManager.RemoveReservation, request.ReservationId)
 		if schedulerErr != nil {
@@ -20,7 +21,7 @@ func (cp *ChargePoint) OnReserveNow(request *reservation.ReserveNowRequest) (con
 		}
 
 		return reservation.NewReserveNowConfirmation(reservation.ReservationStatusAccepted), nil
-	case evse.ErrConnectorStatusInvalid:
+	case errors.Is(err, evse.ErrConnectorStatusInvalid):
 		return reservation.NewReserveNowConfirmation(reservation.ReservationStatusOccupied), nil
 	default:
 		return reservation.NewReserveNowConfirmation(reservation.ReservationStatusRejected), nil

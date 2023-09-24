@@ -37,25 +37,28 @@ func (cp *ChargePoint) bootNotification() {
 		case core.RegistrationStatusAccepted:
 			cp.logger.Info("Accepted by the central system")
 			cp.isConnected = true
+			cp.availability = core.AvailabilityTypeOperative
 			cp.setHeartbeat(bootConf.Interval)
 
-			// Send details about the charge point and its connectors
+			// Send details about the charge point and its EVSes
 			_ = cp.sendChargePointInfo()
-			cp.SendEVSEsDetails(cp.evseManager.GetEVSEs()...)
+			cp.sendEvses()
 
 			// Notify charge point status
 			cp.notifyConnectorStatus(0, core.ChargePointStatusAvailable, core.NoError)
+
+			// Restore the state of the charge point
 			cp.restoreState()
 		case core.RegistrationStatusPending, core.RegistrationStatusRejected:
-
-			_, err := cp.scheduler.Every(2).Minute().LimitRunsTo(1).Tag("bootNotification").Do(cp.bootNotification)
+			// Schedule a new boot notification in 1 minute
+			_, err := cp.scheduler.Every(1).Minute().LimitRunsTo(1).Tag("bootNotification").Do(cp.bootNotification)
 			if err != nil {
-				cp.logger.WithError(err).Errorf("Error rescheduling Boot notification")
+				cp.logger.WithError(err).Errorf("Error rescheduling BootNotification")
 			}
 		}
 	}
 
-	cp.logger.Info("Sending a boot notification")
+	cp.logger.Info("Sending a BootNotification")
 	err := util.SendRequest(cp.chargePoint, request, callback)
 	util.HandleRequestErr(err, "Error sending BootNotification")
 }
@@ -77,13 +80,13 @@ func (cp *ChargePoint) setHeartbeat(interval int) {
 
 // sendHeartBeat Send a setHeartbeat to the central system.
 func (cp *ChargePoint) sendHeartBeat() error {
-	return util.SendRequest(cp.chargePoint,
-		core.NewHeartbeatRequest(),
-		func(confirmation ocpp.Response, protoError error) {
-			if protoError != nil {
-				return
-			}
+	cp.logger.Info("Sending a heartbeat")
 
-			cp.logger.Info("Sent heartbeat")
-		})
+	return util.SendRequest(cp.chargePoint, core.NewHeartbeatRequest(), func(confirmation ocpp.Response, protoError error) {
+		if protoError != nil {
+			return
+		}
+
+		cp.logger.Info("Sent heartbeat")
+	})
 }

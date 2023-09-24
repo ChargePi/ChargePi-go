@@ -14,6 +14,7 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/pkg/models/ocpp"
 )
 
+// CreateChargePoint Creates a OCPP-enabled charge point based on the protocol version
 func CreateChargePoint(
 	ctx context.Context,
 	protocolVersion ocpp.ProtocolVersion,

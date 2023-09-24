@@ -34,14 +34,14 @@ func (s *hardwareTestSuite) TestSendToLCD() {
 
 func (s *hardwareTestSuite) TestDisplayLedStatus() {
 	// Ok statuses
-	s.cp.displayStatusChangeOnIndicator(1, core.ChargePointStatusCharging)
-	s.cp.displayStatusChangeOnIndicator(1, core.ChargePointStatusFinishing)
-	s.cp.displayStatusChangeOnIndicator(1, core.ChargePointStatusAvailable)
-	s.cp.displayStatusChangeOnIndicator(1, core.ChargePointStatusFaulted)
-	s.cp.displayStatusChangeOnIndicator(1, core.ChargePointStatusUnavailable)
-	s.cp.displayStatusChangeOnIndicator(1, core.ChargePointStatusReserved)
+	s.cp.indicateStatusChange(1, core.ChargePointStatusCharging)
+	s.cp.indicateStatusChange(1, core.ChargePointStatusFinishing)
+	s.cp.indicateStatusChange(1, core.ChargePointStatusAvailable)
+	s.cp.indicateStatusChange(1, core.ChargePointStatusFaulted)
+	s.cp.indicateStatusChange(1, core.ChargePointStatusUnavailable)
+	s.cp.indicateStatusChange(1, core.ChargePointStatusReserved)
 	// Invalid status
-	s.cp.displayStatusChangeOnIndicator(1, "")
+	s.cp.indicateStatusChange(1, "")
 
 	time.Sleep(time.Second)
 }

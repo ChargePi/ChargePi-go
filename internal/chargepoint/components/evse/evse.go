@@ -183,6 +183,7 @@ Loop:
 					state = core.ChargePointStatusSuspendedEV
 				}
 
+				// todo
 			case core.ChargePointStatusSuspendedEV:
 			case core.ChargePointStatusSuspendedEVSE:
 			case core.ChargePointStatusFaulted:
@@ -200,7 +201,7 @@ Loop:
 	}
 }
 
-// StartCharging Start charging a evse if evse is available and session could be started.
+// StartCharging Start charging an evse if evse is available and session could be started.
 func (evse *Impl) StartCharging(connectorId *int) error {
 	logInfo := log.WithFields(log.Fields{
 		"evseId": evse.evseId,
@@ -238,7 +239,7 @@ func (evse *Impl) StartCharging(connectorId *int) error {
 	return nil
 }
 
-// StopCharging Stops charging a evse if evse is charging
+// StopCharging Stops charging an evse if evse is charging
 func (evse *Impl) StopCharging(reason core.Reason) error {
 	logInfo := log.WithFields(log.Fields{
 		"evseId": evse.evseId,

@@ -51,7 +51,7 @@ func (s *Service) AddEVSE(ctx context.Context, request *grpc.AddEvseRequest) (*g
 func (s *Service) GetEVSE(ctx context.Context, request *grpc.GetEvseRequest) (*grpc.GetEvseResponse, error) {
 	res := &grpc.GetEvseResponse{}
 
-	findEVSE, err := s.evseManager.FindEVSE(int(request.EvseId))
+	findEVSE, err := s.evseManager.GetEVSE(int(request.EvseId))
 	if err != nil {
 		return res, nil
 	}
@@ -71,7 +71,7 @@ func (s *Service) SetPowerMeter(ctx context.Context, request *grpc.SetPowerMeter
 }
 
 func (s *Service) GetUsageForEVSE(request *grpc.GetUsageForEVSERequest, server grpc.Evse_GetUsageForEVSEServer) error {
-	evseWithId, err := s.evseManager.FindEVSE(int(request.EvseId))
+	evseWithId, err := s.evseManager.GetEVSE(int(request.EvseId))
 	if err != nil {
 		return err
 	}

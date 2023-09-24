@@ -2,8 +2,10 @@ package v16
 
 import (
 	"context"
+	"errors"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/indicator"
@@ -84,6 +86,19 @@ func (cp *ChargePoint) SetIndicatorSettings(settings settings.IndicatorStatusMap
 	}
 
 	cp.indicatorMapping = settings
+	return nil
+}
+
+func (cp *ChargePoint) SetAvailability(availabilityType core.AvailabilityType) error {
+	// Check if there are ongoing transactions
+	_, sessionErr := cp.sessionManager.GetSession(0, nil)
+	switch sessionErr {
+	case nil:
+		cp.availability = availabilityType
+	default:
+		return errors.New("error checking for ongoing transactions")
+	}
+
 	return nil
 }
 

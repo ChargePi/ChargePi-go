@@ -5,13 +5,16 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (m *managerImpl) FindEVSEWithReservationId(reservationId int) (EVSE, error) {
+func (m *managerImpl) GetEVSEWithReservationId(reservationId int) (EVSE, error) {
+	logInfo := log.WithField("reservationId", reservationId)
+	logInfo.Debugf("Finding evse with reservation id")
+
 	evseId, isFound := m.reservations[reservationId]
 	if !isFound || evseId == nil {
 		return nil, ErrReservationNotFound
 	}
 
-	evse, err := m.FindEVSE(*evseId)
+	evse, err := m.GetEVSE(*evseId)
 	if err != nil {
 		return nil, err
 	}
@@ -27,7 +30,7 @@ func (m *managerImpl) Reserve(evseId int, connectorId *int, reservationId int, t
 	})
 	logInfo.Debugf("Reserving evse")
 
-	evse, err := m.FindEVSE(evseId)
+	evse, err := m.GetEVSE(evseId)
 	if err != nil {
 		return err
 	}
@@ -42,7 +45,7 @@ func (m *managerImpl) RemoveReservation(reservationId int) error {
 		return ErrReservationNotFound
 	}
 
-	evse, err := m.FindEVSEWithReservationId(reservationId)
+	evse, err := m.GetEVSEWithReservationId(reservationId)
 	if err != nil {
 		return err
 	}

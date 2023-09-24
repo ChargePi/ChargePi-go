@@ -2,17 +2,19 @@ package v16
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"time"
 
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
-
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
+	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/display"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/indicator"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 )
 
-func (cp *ChargePoint) DisplayMessage(message notifications.Message) error {
+// DisplayMessage sends/shows a message on the display.
+func (cp *ChargePoint) DisplayMessage(message display.MessageInfo) error {
 	if util.IsNilInterfaceOrPointer(cp.display) {
 		cp.logger.Warn("Cannot send message to display, it is disabled or not configured")
 		return nil
@@ -23,35 +25,21 @@ func (cp *ChargePoint) DisplayMessage(message notifications.Message) error {
 	return nil
 }
 
-func (cp *ChargePoint) displayStatusChangeOnIndicator(connectorIndex int, status core.ChargePointStatus) {
+func (cp *ChargePoint) indicateStatusChange(connectorIndex int, status core.ChargePointStatus) {
 	logInfo := cp.logger.WithField("connector", connectorIndex+1)
 	if util.IsNilInterfaceOrPointer(cp.indicator) {
 		logInfo.Warn("Cannot indicate status change, indicator disabled or not configured")
 		return
 	}
 
-	// Custom indicator color mapping, to set preferences.
-	var color = indicator.Off
-	switch status {
-	case core.ChargePointStatusFaulted:
-		color = indicator.Color(cp.indicatorMapping.Error)
-	case core.ChargePointStatusCharging:
-		color = indicator.Color(cp.indicatorMapping.Charging)
-	case core.ChargePointStatusReserved:
-		color = indicator.Color(cp.indicatorMapping.Reserved)
-	case core.ChargePointStatusFinishing:
-		color = indicator.Color(cp.indicatorMapping.Finishing)
-	case core.ChargePointStatusAvailable:
-		color = indicator.Color(cp.indicatorMapping.Available)
-	case core.ChargePointStatusUnavailable:
-		color = indicator.Color(cp.indicatorMapping.Fault)
-	default:
-		logInfo.Error("Cannot find a color for the status")
-		return
+	// Get the color for the status
+	color, err := colorMapping(cp.indicatorMapping, status)
+	if err != nil {
+		logInfo.WithError(err).Errorf("Error indicating status")
 	}
 
 	logInfo.Debugf("Indicating connector status: %x", color)
-	err := cp.indicator.DisplayColor(connectorIndex, color)
+	err = cp.indicator.ChangeColor(connectorIndex, *color)
 	if err != nil {
 		logInfo.WithError(err).Errorf("Error indicating status")
 	}
@@ -94,8 +82,7 @@ Listener:
 			tagId = strings.ToUpper(tagId)
 
 			go func() {
-				message := notifications.NewMessage(time.Second*10, "Tag read")
-				_ = cp.DisplayMessage(message)
+				// todo _ = cp.DisplayMessage(message)
 				cp.indicateCard(len(cp.evseManager.GetEVSEs()), indicator.White)
 			}()
 
@@ -109,4 +96,27 @@ Listener:
 	}
 
 	return nil, ctx.Err()
+}
+
+// colorMapping Maps a ChargePointStatus to a color based on the indicator mapping.
+func colorMapping(indicatorMapping settings.IndicatorStatusMapping, status core.ChargePointStatus) (*indicator.Color, error) {
+	var color indicator.Color
+	switch status {
+	case core.ChargePointStatusFaulted:
+		color = indicator.Color(indicatorMapping.Error)
+	case core.ChargePointStatusCharging:
+		color = indicator.Color(indicatorMapping.Charging)
+	case core.ChargePointStatusReserved:
+		color = indicator.Color(indicatorMapping.Reserved)
+	case core.ChargePointStatusFinishing:
+		color = indicator.Color(indicatorMapping.Finishing)
+	case core.ChargePointStatusAvailable:
+		color = indicator.Color(indicatorMapping.Available)
+	case core.ChargePointStatusUnavailable:
+		color = indicator.Color(indicatorMapping.Fault)
+	default:
+		return nil, errors.New("cannot find a color for the status")
+	}
+
+	return &color, nil
 }

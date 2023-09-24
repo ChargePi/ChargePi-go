@@ -66,12 +66,12 @@ Skip:
 // Adds the tag to the cache and/or localAuthList if it's enabled.
 func (cp *ChargePoint) sendAuthorizeRequest(tagId string) (*types.IdTagInfo, error) {
 	logInfo := cp.logger.WithField("tag", tagId)
-	logInfo.Info("Authorizing tag with central system")
+	logInfo.Info("Authorizing the tag with the central system")
 
 	// Authorize the tag with the backend.
 	response, err := cp.chargePoint.SendRequest(core.NewAuthorizationRequest(tagId))
 	if err != nil {
-		logInfo.WithError(err).Error("Requesting the tag failed")
+		logInfo.WithError(err).Error("Tag authorization with the central system failed")
 
 		// An error occurred probably due network issues.
 		// If LocalAuthOffline is enabled, try to authenticate from cache or localAuthList.
@@ -85,6 +85,8 @@ func (cp *ChargePoint) sendAuthorizeRequest(tagId string) (*types.IdTagInfo, err
 
 			return tag, nil
 		}
+
+		return nil, err
 	}
 
 	authInfo := response.(*core.AuthorizeConfirmation)
@@ -116,5 +118,5 @@ func (cp *ChargePoint) sendAuthorizeRequest(tagId string) (*types.IdTagInfo, err
 		logInfo.Warn("Unable to add tag to authorization manager")
 	}
 
-	return authInfo.IdTagInfo, err
+	return authInfo.IdTagInfo, nil
 }

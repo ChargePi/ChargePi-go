@@ -237,7 +237,7 @@ func (_c *indicatorCleanupCall) OnGetTypeRaw() *indicatorGetTypeCall {
 	return _c.Parent.OnGetTypeRaw()
 }
 
-func (_m *indicatorMock) DisplayColor(index int, color Color) error {
+func (_m *indicatorMock) ChangeColor(index int, color Color) error {
 	_ret := _m.Called(index, color)
 
 	if _rf, ok := _ret.Get(0).(func(int, Color) error); ok {
@@ -250,11 +250,11 @@ func (_m *indicatorMock) DisplayColor(index int, color Color) error {
 }
 
 func (_m *indicatorMock) OnDisplayColor(index int, color Color) *indicatorDisplayColorCall {
-	return &indicatorDisplayColorCall{Call: _m.Mock.On("DisplayColor", index, color), Parent: _m}
+	return &indicatorDisplayColorCall{Call: _m.Mock.On("ChangeColor", index, color), Parent: _m}
 }
 
 func (_m *indicatorMock) OnDisplayColorRaw(index interface{}, color interface{}) *indicatorDisplayColorCall {
-	return &indicatorDisplayColorCall{Call: _m.Mock.On("DisplayColor", index, color), Parent: _m}
+	return &indicatorDisplayColorCall{Call: _m.Mock.On("ChangeColor", index, color), Parent: _m}
 }
 
 type indicatorDisplayColorCall struct {

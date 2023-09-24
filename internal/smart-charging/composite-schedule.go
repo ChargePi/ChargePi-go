@@ -15,7 +15,7 @@ type ScheduleInterval struct {
 
 func CreateCompositeSchedule(connectorSchedules []*types.ChargingProfile) []ScheduleInterval {
 	// Map to store the minimum limit for each time interval
-	minLimitMap := make(map[int]float64)
+	minLimitMap := make(map[time.Time]float64)
 
 	// Loop through all the charging profiles for the connector
 	for _, profile := range connectorSchedules {

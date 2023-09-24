@@ -14,7 +14,7 @@ import (
 )
 
 func (cp *ChargePoint) StopCharging(evseId, connectorId int, reason core.Reason) error {
-	cpEvse, err := cp.evseManager.FindEVSE(evseId)
+	cpEvse, err := cp.evseManager.GetEVSE(evseId)
 	if err != nil {
 		return err
 	}

@@ -2,6 +2,7 @@ package v16
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/lorenzodonini/ocpp-go/ocpp"
@@ -9,7 +10,6 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display/i18n"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
@@ -22,7 +22,7 @@ import (
 // If the ConnectorStatus was "Preparing" or "Charging", try to resume or start charging.
 // If the charging fails, change the connector status and notify the central system.
 func (cp *ChargePoint) restoreState() {
-	cp.logger.Info("Restoring evses' state")
+	cp.logger.Info("Restoring charge point state")
 	err := cp.evseManager.RestoreEVSEs()
 	if err != nil {
 		cp.logger.WithError(err).Warn("Unable to restore states")
@@ -51,7 +51,6 @@ Listener:
 		select {
 		case c := <-ch:
 			// Connector starts with index 1
-			connectorIndex := c.EvseId - 1
 			status := core.ChargePointStatus(c.Status)
 			errCode := core.ChargePointErrorCode(c.Status)
 
@@ -61,13 +60,6 @@ Listener:
 				"errCode": errCode,
 			})
 			logInfo.Info("Received evse status update")
-
-			go func() {
-				logInfo.Debug("Displaying status change")
-				// Display connector status change on display and indicator
-				cp.displayStatusChangeOnIndicator(connectorIndex, status)
-				cp.displayStatusChangeOnDisplay(c.EvseId, status)
-			}()
 
 			go cp.handleStatusUpdate(ctx, c.EvseId, status)
 
@@ -98,45 +90,25 @@ Listener:
 	}
 }
 
+// displayStatusChangeOnDisplay sends an update to the Display based on the EVSE status change.
 func (cp *ChargePoint) displayStatusChangeOnDisplay(connectorId int, status core.ChargePointStatus) {
-	var (
-		language = ""
-		message  []string
-		err      error
-	)
 
 	switch cp.display.GetType() {
 	case display.DriverHD44780:
 
-		switch status {
-		case core.ChargePointStatusAvailable:
-			message, err = i18n.TranslateConnectorAvailableMessage(language, connectorId)
-		case core.ChargePointStatusFinishing:
-			message, err = i18n.TranslateConnectorFinishingMessage(language, connectorId)
-		case core.ChargePointStatusCharging:
-			message, err = i18n.TranslateConnectorChargingMessage(language, connectorId)
-		case core.ChargePointStatusFaulted:
-			message, err = i18n.TranslateConnectorFaultedMessage(language, connectorId)
-		case core.ChargePointStatusUnavailable:
-		}
-
 	default:
-		err = display.ErrDisplayUnsupported
+		cp.logger.Errorf("Display unsupported")
 	}
-
-	if err != nil {
-		cp.logger.WithError(err).Errorf("Error displaying status")
-		return
-	}
-
-	_ = cp.DisplayMessage(notifications.NewMessage(time.Second*10, message...))
 }
 
 // handleStatusUpdate if an EV is connected, ask for authentication, if it was disconnected, stop the transaction.
 func (cp *ChargePoint) handleStatusUpdate(ctx context.Context, evseId int, status core.ChargePointStatus) {
 	logInfo := cp.logger.WithField("evseId", evseId).WithField("status", status)
 	logInfo.Debug("Handling status update")
-	// Todo design a plugin/middleware interface so it can be called here
+
+	cp.indicateStatusChange(evseId-1, status)
+
+	// Todo design a plugin/middleware interface
 
 	switch status {
 	case core.ChargePointStatusAvailable:
@@ -146,7 +118,7 @@ func (cp *ChargePoint) handleStatusUpdate(ctx context.Context, evseId int, statu
 
 		// Check if FreeMode is enabled. This will bypass any authentication requirement.
 		if cp.info.FreeMode {
-			cp.startChargingFreeMode(evseId)
+			cp.StartChargingFreeMode(evseId)
 			break
 		}
 
@@ -181,36 +153,37 @@ func (cp *ChargePoint) handleStatusUpdate(ctx context.Context, evseId int, statu
 	}
 }
 
-func (cp *ChargePoint) startChargingFreeMode(evseId int) {
+func (cp *ChargePoint) StartChargingFreeMode(evseId int) error {
+	if !cp.info.FreeMode {
+		return errors.New("free mode is not enabled")
+	}
+
 	logInfo := cp.logger.WithField("evseId", evseId)
 	logInfo.Info("Free mode enabled, starting charging")
 
-	err := cp.evseManager.StartCharging(evseId, nil)
-	if err != nil {
-		logInfo.WithError(err).Errorf("Unable to start charging connector")
-	}
+	return cp.evseManager.StartCharging(evseId, nil)
 }
 
+// authenticateWithRfidCard waits for a tag to be tapped and starts charging if the tag is valid.
 func (cp *ChargePoint) authenticateWithRfidCard(ctx context.Context, evseId int) {
-	logInfo := cp.logger.WithField("evseId", evseId)
-
-	// Listen for a tag for a minute. If the tag is tapped, start charging.
+	// Listen for a tag for a minute. If the tag is tapped, trigger the standard charging flow.
 	listenCtx, cancel := context.WithTimeout(ctx, time.Minute)
 	defer cancel()
 
-	cp.logger.Info("Waiting for the user to tap a tag")
+	logInfo := cp.logger.WithField("evseId", evseId)
+	logInfo.Info("Waiting for the user to tap a tag")
 
 	tag, err := cp.ListenForTag(listenCtx, cp.tagReader.GetTagChannel())
-	switch err {
-	case nil:
-		// Tag was found, start charging
+	switch {
+	case err == nil:
+		// Tag was found, attempt to start charging
 		err = cp.StartCharging(evseId, 1, *tag)
 		if err != nil {
 			logInfo.WithError(err).Error("Cannot start charging")
 		}
-		// Indicate charging should start
 
-	case context.DeadlineExceeded:
+		// Indicate charging should start
+	case errors.Is(err, context.DeadlineExceeded):
 		// Indicate timeout
 	default:
 		logInfo.WithError(err).Error("Error while listening for tag")

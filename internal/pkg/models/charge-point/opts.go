@@ -2,6 +2,7 @@ package chargePoint
 
 import (
 	"context"
+	"errors"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display"
@@ -26,10 +27,10 @@ func WithReaderFromSettings(ctx context.Context, readerSettings settings.TagRead
 	return func(point ChargePoint) {
 		// Create reader based on settings
 		tagReader, err := reader.NewTagReader(readerSettings)
-		switch err {
-		case reader.ErrReaderDisabled:
+		switch {
+		case errors.Is(err, reader.ErrReaderDisabled):
 			return
-		case reader.ErrReaderUnsupported:
+		case errors.Is(err, reader.ErrReaderUnsupported):
 			log.WithError(err).Fatal("Error attaching a display")
 		}
 
@@ -48,10 +49,10 @@ func WithReader(ctx context.Context, tagReader reader.Reader) Options {
 func WithDisplayFromSettings(lcdSettings settings.Display) Options {
 	return func(point ChargePoint) {
 		lcd, err := display.NewDisplay(lcdSettings)
-		switch err {
-		case display.ErrDisplayDisabled:
+		switch {
+		case errors.Is(err, display.ErrDisplayDisabled):
 			return
-		case display.ErrDisplayUnsupported, display.ErrInvalidConnectionDetails:
+		case errors.Is(err, display.ErrDisplayUnsupported), errors.Is(err, display.ErrInvalidConnectionDetails):
 			log.WithError(err).Fatal("Error attaching a display")
 		}
 

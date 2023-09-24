@@ -10,7 +10,7 @@ import (
 
 var (
 	ErrRoleDoesntExist = errors.New("role does not exist")
-	ErrNoPermissions   = errors.New("the user does not have enough permissions")
+	ErrNoPermissions   = errors.New("the user does not have sufficient permissions")
 )
 
 type (

@@ -1,31 +1,52 @@
 package v16
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
 
 	"github.com/avast/retry-go"
 	"github.com/lorenzodonini/ocpp-go/ocpp"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
-
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
+	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/display"
 	log "github.com/sirupsen/logrus"
+	"github.com/xBlaz3kx/ChargePi-go/internal/auth"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 	ocppManager "github.com/xBlaz3kx/ocppManager-go"
 	v16 "github.com/xBlaz3kx/ocppManager-go/configuration"
 )
 
 func (cp *ChargePoint) OnChangeAvailability(request *core.ChangeAvailabilityRequest) (confirmation *core.ChangeAvailabilityConfirmation, err error) {
 	cp.logger.Infof("Received request %s", request.GetFeatureName())
-	var response = core.AvailabilityStatusRejected
+	response := core.AvailabilityStatusRejected
 
-	// todo check if there are ongoing transactions
-
+	// This would mean a request to change the availability of the whole charge point
 	if request.ConnectorId == 0 {
-		cp.availability = request.Type
+
+		// Try to set the availability of the charge point, if it fails, schedule the change
+		err := cp.SetAvailability(request.Type)
+		if err != nil {
+			_, err := cp.scheduler.Every(3).Seconds().LimitRunsTo(1).Do(cp.SetAvailability, request.Type)
+			if err != nil {
+				return core.NewChangeAvailabilityConfirmation(core.AvailabilityStatusScheduled), nil
+			}
+		}
+
 		return core.NewChangeAvailabilityConfirmation(core.AvailabilityStatusAccepted), nil
+	}
+
+	// Check if there are ongoing transactions, schedule the change if there are
+	_, sessionErr := cp.sessionManager.GetSession(request.ConnectorId, nil)
+	switch sessionErr {
+	case nil:
+		response = core.AvailabilityStatusScheduled
+		// todo set evse availability
+		// cp.evseManager.Get
+	default:
+		cp.logger.WithError(sessionErr).Error("Error checking for ongoing transactions ")
 	}
 
 	return core.NewChangeAvailabilityConfirmation(response), nil
@@ -35,6 +56,7 @@ func (cp *ChargePoint) OnChangeConfiguration(request *core.ChangeConfigurationRe
 	cp.logger.Infof("Received request %s", request.GetFeatureName())
 	var response = core.ConfigurationStatusRejected
 
+	// todo rework this
 	err = ocppManager.UpdateKey(request.Key, &request.Value)
 	if err == nil {
 		response = core.ConfigurationStatusAccepted
@@ -50,20 +72,19 @@ func (cp *ChargePoint) OnChangeConfiguration(request *core.ChangeConfigurationRe
 
 func (cp *ChargePoint) OnClearCache(request *core.ClearCacheRequest) (confirmation *core.ClearCacheConfirmation, err error) {
 	cp.logger.Infof("Received request %s", request.GetFeatureName())
+	response := core.ClearCacheStatusRejected
 
-	var (
-		response                  = core.ClearCacheStatusRejected
-		authCacheEnabled, confErr = ocppManager.GetConfigurationValue(v16.AuthorizationCacheEnabled.String())
-	)
-
-	if confErr != nil {
-		cp.logger.WithError(confErr).Errorf("Cannot clear cache")
-		return core.NewClearCacheConfirmation(response), nil
-	}
-
-	if authCacheEnabled != nil && *authCacheEnabled == "true" {
-		cp.tagManager.ClearCache()
+	cacheErr := cp.tagManager.ClearCache()
+	switch {
+	case cacheErr == nil:
+		cp.logger.Info("Cache cleared")
 		response = core.ClearCacheStatusAccepted
+	case errors.Is(cacheErr, auth.ErrCacheNotEnabled):
+		cp.logger.Info("Cache not enabled")
+		response = core.ClearCacheStatusRejected
+	default:
+		cp.logger.WithError(cacheErr).Warn("Unable to clear cache")
+		response = core.ClearCacheStatusRejected
 	}
 
 	return core.NewClearCacheConfirmation(response), nil
@@ -72,6 +93,31 @@ func (cp *ChargePoint) OnClearCache(request *core.ClearCacheRequest) (confirmati
 func (cp *ChargePoint) OnDataTransfer(request *core.DataTransferRequest) (confirmation *core.DataTransferConfirmation, err error) {
 	cp.logger.Infof("Received request %s", request.GetFeatureName())
 	var response = core.DataTransferStatusRejected
+
+	// Supporting direct display control over custom data transfer messages, based on the messages in OCPP 2.0.1.
+	if request.VendorId != cp.settingsManager.GetChargePointSettings().Info.OCPPDetails.Vendor {
+		return core.NewDataTransferConfirmation(core.DataTransferStatusUnknownVendorId), nil
+	}
+
+	switch request.MessageId {
+	case display.ClearDisplayMessageFeatureName:
+		_ = request.Data.(display.ClearDisplayRequest)
+		cp.display.Clear()
+	case display.NotifyDisplayMessagesFeatureName:
+		_ = request.Data.(display.NotifyDisplayMessagesRequest)
+	case display.GetDisplayMessagesFeatureName:
+		_ = request.Data.(display.GetDisplayMessagesRequest)
+	case display.SetDisplayMessageFeatureName:
+		req := request.Data.(display.SetDisplayMessageRequest)
+
+		displayErr := cp.DisplayMessage(req.Message)
+		if displayErr != nil {
+			cp.logger.WithError(displayErr).Warn("Failed to display requested message")
+			response = core.DataTransferStatusRejected
+		}
+	default:
+		response = core.DataTransferStatusUnknownMessageId
+	}
 
 	return core.NewDataTransferConfirmation(response), nil
 }
@@ -153,21 +199,14 @@ func (cp *ChargePoint) OnReset(request *core.ResetRequest) (confirmation *core.R
 
 func (cp *ChargePoint) OnUnlockConnector(request *core.UnlockConnectorRequest) (confirmation *core.UnlockConnectorConfirmation, err error) {
 	cp.logger.Infof("Received request %s", request.GetFeatureName())
+	response := core.UnlockStatusNotSupported
 
-	var (
-		response   = core.UnlockStatusNotSupported
-		conn, fErr = cp.evseManager.FindEVSE(request.ConnectorId)
-	)
-
-	if fErr != nil {
-		return core.NewUnlockConnectorConfirmation(response), nil
-	}
-
-	response = core.UnlockStatusUnlocked
-
-	_, schedulerErr := cp.scheduler.Every(1).Seconds().LimitRunsTo(1).Do(cp.stopChargingConnector, conn, core.ReasonUnlockCommand)
-	if schedulerErr != nil {
-		response = core.UnlockStatusUnlockFailed
+	conn, fErr := cp.evseManager.GetEVSE(request.ConnectorId)
+	switch fErr {
+	case nil:
+		cp.logger.Infof("Unlocking connector %d", request.ConnectorId)
+		response = core.UnlockStatusUnlocked
+		conn.GetEvcc().Unlock()
 	}
 
 	return core.NewUnlockConnectorConfirmation(response), nil
@@ -181,10 +220,13 @@ func (cp *ChargePoint) OnRemoteStopTransaction(request *core.RemoteStopTransacti
 
 	session, fErr := cp.sessionManager.GetSessionWithTransactionId(transactionId)
 	if fErr == nil {
+		cp.logger.WithField("transactionId", request.TransactionId).Infof("Stopping transaction")
 		response = types.RemoteStartStopStatusAccepted
+
 		// Delay stopping the transaction by 3 seconds
 		_, schedulerErr := cp.scheduler.Every(3).Seconds().LimitRunsTo(1).Do(cp.StopCharging, session.EvseId, session.ConnectorId, core.ReasonRemote)
 		if schedulerErr != nil {
+			cp.logger.WithError(err).Error("Failed to schedule stop charging")
 			response = types.RemoteStartStopStatusRejected
 		}
 	}
@@ -206,12 +248,14 @@ func (cp *ChargePoint) OnRemoteStartTransaction(request *core.RemoteStartTransac
 
 	// If the connector is specified, check if it exists and is available.
 	if request.ConnectorId != nil {
-		conn, err = cp.evseManager.FindEVSE(*request.ConnectorId)
+		conn, err = cp.evseManager.GetEVSE(*request.ConnectorId)
 	} else {
-		conn, err = cp.evseManager.FindAvailableEVSE()
+		conn, err = cp.evseManager.GetAvailableEVSE()
 	}
 
 	if err == nil && conn.IsAvailable() {
+		logInfo.Infof("Remote starting transaction")
+
 		// Delay the charging by 3 seconds
 		response = types.RemoteStartStopStatusAccepted
 		_, schedulerErr := cp.scheduler.Every(3).Seconds().LimitRunsTo(1).Do(cp.remoteStart, conn, 1, request.IdTag)

@@ -51,14 +51,14 @@ func (cp *ChargePoint) StartCharging(evseId, connectorId int, tagId string) erro
 
 			err := cp.sessionManager.StartSession(evseId, nil, tagId, transactionId)
 			if err != nil {
-				logInfo.WithError(err).Errorf("Unable to start session")
+				logInfo.WithError(err).Error("Unable to start a session")
 				return
 			}
 
 			// Start the charging on EVSE
 			err = cp.evseManager.StartCharging(evseId, nil)
 			if err != nil {
-				logInfo.WithError(err).Errorf("Unable to start charging on EVSE")
+				logInfo.WithError(err).Error("Unable to start charging on EVSE")
 				return
 			}
 

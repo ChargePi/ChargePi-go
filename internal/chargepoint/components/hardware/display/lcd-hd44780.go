@@ -1,64 +1,101 @@
 package display
 
 import (
-	"github.com/d2r2/go-hd44780"
-	"github.com/d2r2/go-i2c"
-	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
 	"strconv"
 	"time"
+
+	"github.com/d2r2/go-hd44780"
+	"github.com/d2r2/go-i2c"
+	"github.com/go-co-op/gocron"
+	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/display"
+	log "github.com/sirupsen/logrus"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
 )
 
 type HD44780 struct {
-	LCDChannel chan notifications.Message
-	i2c        *i2c.I2C
-	display    *hd44780.Lcd
+	i2c       *i2c.I2C
+	display   *hd44780.Lcd
+	scheduler *gocron.Scheduler
 }
 
 // NewHD44780 Create a new HD44780 struct.
 func NewHD44780(i2cAddress string, i2cBus int) (*HD44780, error) {
-	var display = HD44780{}
-
+	// Decode the I2C address from hex to uint8
 	decodeString, err := strconv.ParseUint(i2cAddress, 16, 8)
 	if err != nil {
 		return nil, err
 	}
 
+	// Establish I2C connection
 	i2cDev, err := i2c.NewI2C(uint8(decodeString), i2cBus)
 	if err != nil {
 		return nil, err
 	}
 
-	display.i2c = i2cDev
-
 	// Construct the display with I2C connection
-	lcd2, err := hd44780.NewLcd(display.i2c, hd44780.LCD_16x2)
+	lcd2, err := hd44780.NewLcd(i2cDev, hd44780.LCD_16x2)
 	if err != nil {
 		return nil, err
 	}
 
-	display.display = lcd2
 	_ = lcd2.BacklightOn()
 	_ = lcd2.Clear()
-	return &display, nil
+
+	return &HD44780{
+		i2c:       i2cDev,
+		display:   lcd2,
+		scheduler: scheduler.NewScheduler(),
+	}, nil
 }
 
 // DisplayMessage displays the message on the Display. Pairs of messages will be displayed for the duration set in Message.
-func (lcd *HD44780) DisplayMessage(message notifications.Message) {
-	log.Debugf("Displaying the message to Display: %v", message.Messages)
+func (lcd *HD44780) DisplayMessage(message display.MessageInfo) {
+
+	// Schedule the display of the message a bit later than the start time to prevent the message from being displayed
+	if message.StartDateTime != nil {
+		_, err := lcd.scheduler.At(*message.StartDateTime).Tag("displayMessage").Do(lcd.DisplayMessage, message)
+		if err != nil {
+			log.WithError(err).Errorf("Error scheduling ClearMessage")
+		}
+		return
+	}
+
+	log.Debugf("Displaying the message to Display: %v", message)
 
 	// Display lines in pairs. If there are odd number of lines, display the last line by itself.
-	for i := 0; i < len(message.Messages); i = i + 2 {
+	lines := splitString(message.Message.Content, 16)
+	for i := 0; i < len(lines); i = i + 2 {
 		_ = lcd.display.Clear()
-		_ = lcd.display.ShowMessage(message.Messages[i], hd44780.SHOW_LINE_1)
+		_ = lcd.display.ShowMessage(lines[i], hd44780.SHOW_LINE_1)
 
 		// Prevents index-out-of-range error
-		if i < len(message.Messages)-1 {
-			_ = lcd.display.ShowMessage(message.Messages[i+1], hd44780.SHOW_LINE_2)
+		if i < len(lines)-1 {
+			_ = lcd.display.ShowMessage(lines[i+1], hd44780.SHOW_LINE_2)
 		}
 
-		time.Sleep(message.MessageDuration)
+		time.Sleep(time.Second * 5)
 	}
+
+	if message.EndDateTime != nil {
+		_, err := lcd.scheduler.At(*message.EndDateTime).Tag("clearMessage").Do(lcd.Clear)
+		if err != nil {
+			log.WithError(err).Errorf("Error scheduling ClearMessage")
+		}
+	}
+}
+
+func splitString(str string, size int) []string {
+	var result []string
+
+	for start := 0; start < len(str); start += size {
+		end := start + size
+		if end > len(str) {
+			end = len(str)
+		}
+		result = append(result, str[start:end])
+	}
+
+	return result
 }
 
 func (lcd *HD44780) Clear() {
@@ -67,7 +104,6 @@ func (lcd *HD44780) Clear() {
 
 // Cleanup Close the Display I2C connection.
 func (lcd *HD44780) Cleanup() {
-	close(lcd.LCDChannel)
 	lcd.Clear()
 	_ = lcd.display.BacklightOff()
 	_ = lcd.i2c.Close()

@@ -14,6 +14,8 @@ import (
 	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
 )
 
+// SetupApi Runs a gRPC API server at a specified address if it is enabled. The API is protected by an authentication layer.
+// Check the user manual for defaults.
 func SetupApi(
 	db *badger.DB,
 	api settings.Api,
@@ -23,6 +25,7 @@ func SetupApi(
 	ocppVariableManager ocppConfigManager.Manager,
 ) {
 	if !api.Enabled {
+		log.Info("API is disabled")
 		return
 	}
 
@@ -37,8 +40,10 @@ func SetupApi(
 	server.Run()
 }
 
+// SetupUi Runs a management UI server if enabled
 func SetupUi(uiSettings settings.Ui) {
 	if !uiSettings.Enabled {
+		log.Info("Management UI is disabled")
 		return
 	}
 
@@ -46,7 +51,8 @@ func SetupUi(uiSettings settings.Ui) {
 	ui.Serve(uiSettings.Address)
 }
 
-func setupApplicationHealthcheck() {
+// Creates a healthcheck endpoint
+func setupHealthcheck() {
 	log.Infof("Starting application healthcheck at localhost:8081")
 	http.NewAppServer().Serve(":8081")
 }

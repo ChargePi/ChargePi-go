@@ -70,7 +70,7 @@ func (l *LocalAuthListImpl) AddTag(tagId string, tagInfo *types.IdTagInfo) error
 	})
 }
 
-// RemoveTag Remove a tag from the global authorization cache.
+// RemoveTag Remove a tag with the ID from the Local Auth List.
 func (l *LocalAuthListImpl) RemoveTag(tagId string) error {
 	logInfo := log.WithField("tagId", tagId)
 	logInfo.Debug("Removing a tag from local auth list")
@@ -141,7 +141,7 @@ func (l *LocalAuthListImpl) GetTag(tagId string) (*types.IdTagInfo, error) {
 	return tagInfo.IdTagInfo, nil
 }
 
-// GetTags Get all stored tags.
+// GetTags Get all tags stored in the Local Auth store.
 func (l *LocalAuthListImpl) GetTags() []localauth.AuthorizationData {
 	log.Infof("Fetching tags")
 	var tags []localauth.AuthorizationData
@@ -173,6 +173,7 @@ func (l *LocalAuthListImpl) GetTags() []localauth.AuthorizationData {
 	return tags
 }
 
+// UpdateTag Update a tag in the Local Auth store.
 func (l *LocalAuthListImpl) UpdateTag(tagId string, tagInfo *types.IdTagInfo) error {
 	logInfo := log.WithField("tagId", tagId)
 	logInfo.Info("Updating tag")
@@ -183,6 +184,7 @@ func (l *LocalAuthListImpl) UpdateTag(tagId string, tagInfo *types.IdTagInfo) er
 	})
 }
 
+// GetVersion Get the current version of the Local Auth list.
 func (l *LocalAuthListImpl) GetVersion() int {
 	version := -1
 
@@ -210,6 +212,7 @@ func (l *LocalAuthListImpl) GetVersion() int {
 	return version
 }
 
+// SetVersion Set the current version of the Local Auth list.
 func (l *LocalAuthListImpl) SetVersion(version int) {
 	logInfo := log.WithField("version", version)
 	logInfo.Info("Updating list version")
@@ -232,6 +235,7 @@ func (l *LocalAuthListImpl) SetVersion(version int) {
 	}
 }
 
+// SetMaxTags Set the maximum number of tags that can be stored in the Local Auth list.
 func (l *LocalAuthListImpl) SetMaxTags(number int) {
 	if number > 0 {
 		l.maxTags = number

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/dgraph-io/badger/v3"
-	"github.com/xBlaz3kx/ChargePi-go/internal/sessions/pkg/models/session"
+	session "github.com/xBlaz3kx/ChargePi-go/internal/sessions/pkg/models"
 )
 
 type SessionBadgerDb struct {
@@ -78,6 +78,14 @@ func (s *SessionBadgerDb) UpdateSession(sesh *session.Session) error {
 }
 
 func (s *SessionBadgerDb) GetSession(evseId int, connectorId *int) (*session.Session, error) {
+	return nil, nil
+}
+
+func (s *SessionBadgerDb) GetSessions() ([]session.Session, error) {
+	return nil, nil
+}
+
+func (s *SessionBadgerDb) GetActiveSessions() ([]session.Session, error) {
 	return nil, nil
 }
 

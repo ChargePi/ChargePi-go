@@ -115,7 +115,7 @@ func (c *CacheImpl) SetMaxCachedTags(number int) {
 	}
 }
 
-// GetTag Get a tag from cache
+// GetTag Get a tag from cache based on the tag ID.
 func (c *CacheImpl) GetTag(tagId string) (*types.IdTagInfo, error) {
 	logInfo := log.WithField("tagId", tagId)
 	logInfo.Info("Getting a tag from cache")
@@ -149,6 +149,7 @@ func (c *CacheImpl) GetTag(tagId string) (*types.IdTagInfo, error) {
 	return tagInfo.IdTagInfo, nil
 }
 
+// getTag transforms a tag struct into a byte array.
 func getTag(tagId string, tagInfo *types.IdTagInfo) []byte {
 	authTag := localauth.AuthorizationData{
 		IdTag:     tagId,

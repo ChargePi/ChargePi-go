@@ -4,7 +4,7 @@ ChargePi is an open-source, Linux based ⚡Charging Point🔌 project with OCPP 
 It is highly customizable, simple to make and supports both off-the-shelf and commercial hardware.
 
 Multiple connectors/EVSEs🔌 can be configured for the Charge point, which consist of an indicator (🚥 RGB LED strip),
-an EV Charge Controller and a ⚡Power Meter. Optionally, the charge point supports an RFID/NFC reader and a display as an
+an EV Charge Controller and a ⚡Power Meter. Optionally, the charge point supports an RFID/NFC reader and a display as a
 user interface.
 
 ## 🔌 Charge point specifications

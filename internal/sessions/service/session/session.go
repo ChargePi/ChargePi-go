@@ -3,7 +3,7 @@ package session
 import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/xBlaz3kx/ChargePi-go/internal/sessions/pkg/database"
-	"github.com/xBlaz3kx/ChargePi-go/internal/sessions/pkg/models/session"
+	session "github.com/xBlaz3kx/ChargePi-go/internal/sessions/pkg/models"
 )
 
 type (
@@ -52,7 +52,7 @@ func (i *Impl) StopSession(transactionId string) error {
 func (i *Impl) UpdateMeterValues(transactionId string, values ...types.SampledValue) error {
 	sessionWithTransactionId, err := i.GetSessionWithTransactionId(transactionId)
 	if err != nil {
-		return nil
+		return err
 	}
 
 	sessionWithTransactionId.AddSampledValue(values)

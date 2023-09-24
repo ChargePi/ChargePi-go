@@ -1,7 +1,10 @@
 package util
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"io/ioutil"
 	"strconv"
 	"strings"
 	"time"
@@ -18,9 +21,9 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/smartcharging"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/lorenzodonini/ocpp-go/ws"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/util/tls"
 	ocppManager "github.com/xBlaz3kx/ocppManager-go"
 	"github.com/xBlaz3kx/ocppManager-go/configuration"
 )
@@ -40,11 +43,13 @@ func CreateConnectionUrl(connectionSettings settings.ConnectionSettings) string 
 }
 
 // CreateClient creates a Websocket client based on the settings.
-func CreateClient(basicAuthUser, basicAuthPass string, tlsConfig settings.TLS) (*ws.Client, error) {
+func CreateClient(connectionSettings settings.ConnectionSettings) (*ws.Client, error) {
+	log.Debug("Creating a websocket client")
+
 	client := ws.NewClient()
 	clientConfig := ws.NewClientTimeoutConfig()
 
-	// Set the ping interval
+	// Fetch the ping interval from the manager
 	pingInterval, err := ocppManager.GetConfigurationValue(configuration.WebSocketPingInterval.String())
 	if err == nil {
 		duration, err := time.ParseDuration(fmt.Sprintf("%ss", *pingInterval))
@@ -54,18 +59,39 @@ func CreateClient(basicAuthUser, basicAuthPass string, tlsConfig settings.TLS) (
 	}
 
 	// Check if the TLS is enabled for the client
-	if tlsConfig.IsEnabled {
+	if connectionSettings.TLS.IsEnabled {
+		log.Debug("TLS enabled for the websocket client")
 
-		client, err = tls.CreateWssClient(tlsConfig.CACertificatePath, tlsConfig.ClientCertificatePath, tlsConfig.PrivateKeyPath)
+		certPool, err := x509.SystemCertPool()
 		if err != nil {
-			log.WithError(err).Error("Couldn't create TLS client")
-			return nil, err
+			return nil, errors.Wrap(err, "Cannot fetch certificate pool")
 		}
+
+		// Load CA cert
+		caCert, err := ioutil.ReadFile(connectionSettings.TLS.CACertificatePath)
+		if err != nil {
+			return nil, errors.Wrap(err, "error reading CA certificate")
+		} else if !certPool.AppendCertsFromPEM(caCert) {
+			return nil, errors.Wrap(err, "no ca.cert file found, will use system CA certificates")
+		}
+
+		// Load client certificate
+		certificate, err := tls.LoadX509KeyPair(connectionSettings.TLS.ClientCertificatePath, connectionSettings.TLS.PrivateKeyPath)
+		if err != nil {
+			return nil, errors.Wrap(err, "couldn't load client TLS certificate")
+		}
+
+		// Create client with TLS config
+		client = ws.NewTLSClient(&tls.Config{
+			RootCAs:      certPool,
+			Certificates: []tls.Certificate{certificate},
+		})
 	}
 
 	// If HTTP basic auth is provided, set it in the Websocket client
-	if stringUtils.IsNoneEmpty(basicAuthUser, basicAuthPass) {
-		client.SetBasicAuth(basicAuthUser, basicAuthPass)
+	if stringUtils.IsNoneEmpty(connectionSettings.BasicAuthUsername, connectionSettings.BasicAuthPassword) {
+		log.Debug("Basic auth enabled")
+		client.SetBasicAuth(connectionSettings.BasicAuthUsername, connectionSettings.BasicAuthPassword)
 	}
 
 	client.SetTimeoutConfig(clientConfig)
@@ -79,6 +105,7 @@ func SetProfilesFromConfig(
 	reservationHandler reservation.ChargePointHandler,
 	triggerHandler remotetrigger.ChargePointHandler,
 	localAuth localauth.ChargePointHandler,
+	firmwareUpdateHandler firmware.ChargePointHandler,
 ) {
 	chargePoint.SetCoreHandler(coreHandler)
 
@@ -105,7 +132,7 @@ func SetProfilesFromConfig(
 			logInfo.Debug("Setting remote trigger handler")
 			chargePoint.SetRemoteTriggerHandler(triggerHandler)
 		case strings.ToLower(firmware.ProfileName):
-			// chargePoint.SetFirmwareManagementHandler(cp)
+			chargePoint.SetFirmwareManagementHandler(firmwareUpdateHandler)
 		}
 	}
 }

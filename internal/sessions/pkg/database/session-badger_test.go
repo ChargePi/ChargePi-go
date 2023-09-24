@@ -7,7 +7,7 @@ import (
 
 	"github.com/dgraph-io/badger/v3"
 	"github.com/stretchr/testify/assert"
-	"github.com/xBlaz3kx/ChargePi-go/internal/sessions/pkg/models/session"
+	session "github.com/xBlaz3kx/ChargePi-go/internal/sessions/pkg/models"
 )
 
 func TestSessionRepository(t *testing.T) {

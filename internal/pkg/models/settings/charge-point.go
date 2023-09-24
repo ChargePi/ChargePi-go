@@ -18,6 +18,12 @@ type (
 		Hardware           Hardware           `json:"hardware" yaml:"hardware" mapstructure:"hardware"`
 	}
 
+	Hardware struct {
+		Display   Display   `json:"display" yaml:"display" mapstructure:"display"`
+		TagReader TagReader `json:"reader" yaml:"reader" mapstructure:"reader"`
+		Indicator Indicator `json:"indicator" yaml:"indicator" mapstructure:"indicator"`
+	}
+
 	ConnectionSettings struct {
 		Id                string               `json:"id,omitempty" yaml:"id" mapstructure:"id" validate:"required"`
 		ProtocolVersion   ocpp.ProtocolVersion `json:"protocolVersion,omitempty" yaml:"protocolVersion" mapstructure:"protocolVersion" validate:"required"`

@@ -57,16 +57,11 @@ func (s *ChargePointService) GetDisplaySettings(ctx context.Context, empty *empt
 
 	displaySettings := s.settingsManager.GetChargePointSettings().Hardware.Display
 
-	var i2cSettings *grpc.I2C
-	if displaySettings.I2C != nil {
-		// i2cSettings = toI2c(displaySettings.I2C)
-	}
-
 	response.Display = &grpc.Display{
 		Type:     displaySettings.Driver,
 		Enabled:  displaySettings.IsEnabled,
 		Language: &displaySettings.Language,
-		I2C:      i2cSettings,
+		// I2C:      i2cSettings,
 	}
 
 	return response, nil
@@ -86,9 +81,9 @@ func (s *ChargePointService) GetReaderSettings(ctx context.Context, empty *empty
 	readerSettings := s.settingsManager.GetChargePointSettings().Hardware.TagReader
 
 	response.Reader = &grpc.TagReader{
-		Type:          readerSettings.ReaderModel,
-		Enabled:       readerSettings.IsEnabled,
-		DeviceAddress: readerSettings.Device,
+		Type:    readerSettings.ReaderModel,
+		Enabled: readerSettings.IsEnabled,
+		// DeviceAddress: readerSettings.Device,
 	}
 
 	return response, nil
@@ -111,7 +106,7 @@ func (s *ChargePointService) GetIndicatorSettings(ctx context.Context, empty *em
 		Type:             indicatorSettings.Type,
 		Enabled:          indicatorSettings.Enabled,
 		IndicateCardRead: &indicatorSettings.IndicateCardRead,
-		Invert:           indicatorSettings.Invert,
+		// Invert:           indicatorSettings.Invert,
 	}
 
 	return response, nil
@@ -212,7 +207,7 @@ func toDisplay(display *grpc.Display) settings.Display {
 		IsEnabled: false,
 		Driver:    display.Type,
 		Language:  *display.Language,
-		I2C:       nil,
+		// I2C:       nil,
 	}
 }
 

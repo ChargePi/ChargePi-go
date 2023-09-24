@@ -8,9 +8,9 @@ the folder at boot, validate the configuration files and add the EVSE with the p
 | Attribute  |                Description                | Possible values | 
 |:----------:|:-----------------------------------------:|:---------------:|
 |   evseId   |              ID of the EVSE               |       >1        |
-| connectors | List of available connectors for the EVSE ||
-|    evcc    |            Charging Controller            ||
-| powerMeter |    Power Meter configuration for EVSE     || 
+| connectors | List of available connectors for the EVSE |                 |
+|    evcc    |            Charging Controller            |                 |
+| powerMeter |    Power Meter configuration for EVSE     |                 | 
 |  maxPower  |       Maximum power output for EVSE       |       >0        |
 
 ### evcc

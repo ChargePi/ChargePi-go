@@ -35,16 +35,17 @@ type (
 		AddEVSE(ctx context.Context, c EVSE) error
 		UpdateEVSE(ctx context.Context, c EVSE) error
 		RemoveEVSE(evseId int) error
-
 		GetEVSEs() []EVSE
-		FindEVSE(evseId int) (EVSE, error)
-		FindAvailableEVSE() (EVSE, error)
-		FindEVSEWithReservationId(reservationId int) (EVSE, error)
+		GetEVSE(evseId int) (EVSE, error)
+		GetAvailableEVSE() (EVSE, error)
+		GetEVSEWithReservationId(reservationId int) (EVSE, error)
 
 		StartCharging(evseId int, connectorId *int) error
 		StopCharging(evseId int, connectorId *int, reason core.Reason) error
 		StopAllEVSEs(reason core.Reason) error
 		RestoreEVSEs() error
+		// GetCurrentConsumption() (*types.MeterValue,error)
+		// UnlockConnector(evseId, connectorId int) error
 		// RestoreEVSE(evseId int,) error
 
 		Reserve(evseId int, connectorId *int, reservationId int, tagId string) error
@@ -136,7 +137,7 @@ func (m *managerImpl) SetMeterValuesChannel(notificationChannel chan notificatio
 	}
 }
 
-func (m *managerImpl) FindEVSE(evseId int) (EVSE, error) {
+func (m *managerImpl) GetEVSE(evseId int) (EVSE, error) {
 	c, isFound := m.connectors.Load(getKey(evseId))
 	if isFound {
 		return c.(EVSE), nil
@@ -145,7 +146,7 @@ func (m *managerImpl) FindEVSE(evseId int) (EVSE, error) {
 	return nil, ErrConnectorNotFound
 }
 
-func (m *managerImpl) FindAvailableEVSE() (EVSE, error) {
+func (m *managerImpl) GetAvailableEVSE() (EVSE, error) {
 	var availableConnector EVSE
 
 	m.connectors.Range(func(key, value interface{}) bool {
@@ -166,7 +167,7 @@ func (m *managerImpl) FindAvailableEVSE() (EVSE, error) {
 }
 
 func (m *managerImpl) StartCharging(evseId int, connectorId *int) error {
-	c, err := m.FindEVSE(evseId)
+	c, err := m.GetEVSE(evseId)
 	if err != nil {
 		return err
 	}
@@ -175,7 +176,7 @@ func (m *managerImpl) StartCharging(evseId int, connectorId *int) error {
 }
 
 func (m *managerImpl) StopCharging(evseId int, connectorId *int, reason core.Reason) error {
-	c, err := m.FindEVSE(evseId)
+	c, err := m.GetEVSE(evseId)
 	if err != nil {
 		return err
 	}
@@ -203,7 +204,6 @@ func (m *managerImpl) AddEVSE(ctx context.Context, c EVSE) error {
 		return ErrConnectorNil
 	}
 
-	// todo retry mechanism?
 	err := c.Init(ctx)
 	if err != nil {
 		return err
@@ -292,7 +292,7 @@ func (m *managerImpl) restoreEVSEStatus(c settings.EVSE) error {
 	logInfo.Debugf("Attempting to restore connector status")
 
 	// Find the EVSE
-	evse, err := m.FindEVSE(c.EvseId)
+	evse, err := m.GetEVSE(c.EvseId)
 	if err != nil {
 		return err
 	}

@@ -5,6 +5,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 )
 
 // color constants
@@ -34,7 +35,7 @@ type (
 
 	// Indicator is an abstraction layer for connector status indication, usually an RGB LED strip.
 	Indicator interface {
-		DisplayColor(index int, color Color) error
+		ChangeColor(index int, color Color) error
 		Blink(index int, times int, color Color) error
 		Cleanup()
 		GetType() string
@@ -44,6 +45,8 @@ type (
 // NewIndicator constructs the Indicator based on the type provided by the settings file.
 func NewIndicator(stripLength int, indicator settings.Indicator) Indicator {
 	if indicator.Enabled {
+
+		// Last LED is used to indicate card read
 		if indicator.IndicateCardRead {
 			stripLength++
 		}
@@ -51,7 +54,11 @@ func NewIndicator(stripLength int, indicator settings.Indicator) Indicator {
 		log.Infof("Preparing Indicator from config: %s", indicator.Type)
 		switch indicator.Type {
 		case TypeWS281x:
-			ledStrip, ledError := NewWS281xStrip(stripLength, *indicator.DataPin)
+			if util.IsNilInterfaceOrPointer(indicator.WS281x) {
+				return nil
+			}
+
+			ledStrip, ledError := NewWS281xStrip(stripLength, indicator.WS281x.DataPin)
 			if ledError != nil {
 				log.WithError(ledError).Errorf("Error creating indicator")
 				return nil

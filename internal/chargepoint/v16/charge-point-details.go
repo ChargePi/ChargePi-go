@@ -3,7 +3,6 @@ package v16
 import (
 	"github.com/lorenzodonini/ocpp-go/ocpp"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 	data "github.com/xBlaz3kx/ChargePi-go/pkg/models/ocpp"
 )
@@ -29,25 +28,24 @@ func (cp *ChargePoint) sendChargePointInfo() error {
 		})
 }
 
-func (cp *ChargePoint) SendEVSEsDetails(evses ...evse.EVSE) {
-	for _, e := range evses {
-		cp.sendEvseDetails(e)
+// sendEvses Send the EVSEs' configuration to the central system.
+func (cp *ChargePoint) sendEvses() {
+	for _, evse := range cp.evseManager.GetEVSEs() {
+		var connectors []data.Connector
+		for _, connector := range evse.GetConnectors() {
+			connectors = append(connectors, data.NewConnector(connector.ConnectorId, connector.Type))
+		}
+
+		cp.SendEVSEsDetails(evse.GetEvseId(), float32(evse.GetMaxChargingPower()), connectors...)
 	}
 }
 
-// sendEvseDetails sends the connector type and maximum output power information to the backend.
-func (cp *ChargePoint) sendEvseDetails(evse evse.EVSE) {
-	logInfo := cp.logger.WithField("evseId", evse.GetEvseId())
+func (cp *ChargePoint) SendEVSEsDetails(evseId int, maxPower float32, connectors ...data.Connector) {
+	logInfo := cp.logger.WithField("evseId", evseId)
 	logInfo.Info("Sending EVSE details to the central system")
 
 	dataTransfer := core.NewDataTransferRequest(cp.info.OCPPDetails.Vendor)
-
-	var connectors []data.Connector
-	for _, connector := range evse.GetConnectors() {
-		connectors = append(connectors, data.NewConnector(connector.ConnectorId, connector.Type))
-	}
-
-	dataTransfer.Data = data.NewEvseInfo(evse.GetEvseId(), float32(evse.GetMaxChargingPower()), connectors...)
+	dataTransfer.Data = data.NewEvseInfo(evseId, maxPower, connectors...)
 
 	err := util.SendRequest(cp.chargePoint, dataTransfer,
 		func(confirmation ocpp.Response, protoError error) {
@@ -61,5 +59,7 @@ func (cp *ChargePoint) sendEvseDetails(evse evse.EVSE) {
 				logInfo.Info("Sent additional charge point information")
 			}
 		})
-	util.HandleRequestErr(err, "Cannot send EVSE details")
+	if err != nil {
+		logInfo.WithError(err).Warn("Error sending data")
+	}
 }

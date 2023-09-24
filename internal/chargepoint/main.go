@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"time"
 
+	database2 "github.com/xBlaz3kx/ChargePi-go/internal/sessions/pkg/database"
 	"github.com/xBlaz3kx/ChargePi-go/internal/sessions/service/session"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/logging"
 
@@ -59,7 +60,8 @@ func Run(debug bool, config *settings.Settings) {
 	ocppVariableManager := ocppConfigManager.GetManager()
 	evseManager := evse.GetManager()
 	tagManager := auth.NewTagManager(db)
-	sessionManager := session.NewSessionManager(nil)
+	sessionRepository := database2.NewSessionBadgerDb(db)
+	sessionManager := session.NewSessionManager(sessionRepository)
 
 	// Initialize all the EVSEs
 	err := evseManager.InitAll(ctx)
@@ -89,7 +91,7 @@ func Run(debug bool, config *settings.Settings) {
 	// Start the UI and API
 	go SetupApi(db, config.Api, handler, tagManager, evseManager, ocppVariableManager)
 	go SetupUi(config.Ui)
-	go setupApplicationHealthcheck()
+	go setupHealthcheck()
 
 	// Connect to the backend system
 	go handler.Connect(parentCtxForOcpp, serverUrl)

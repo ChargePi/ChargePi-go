@@ -1,6 +1,8 @@
 package v16
 
 import (
+	"errors"
+
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/localauth"
 	"github.com/xBlaz3kx/ChargePi-go/internal/auth"
 )
@@ -18,10 +20,10 @@ func (cp *ChargePoint) OnSendLocalList(request *localauth.SendLocalListRequest) 
 	res := localauth.UpdateStatusFailed
 
 	updateErr := cp.tagManager.UpdateLocalAuthList(request.ListVersion, request.UpdateType, request.LocalAuthorizationList)
-	switch updateErr {
-	case nil:
+	switch {
+	case updateErr == nil:
 		res = localauth.UpdateStatusAccepted
-	case auth.ErrLocalAuthListNotEnabled:
+	case errors.Is(updateErr, auth.ErrLocalAuthListNotEnabled):
 		res = localauth.UpdateStatusNotSupported
 	}
 

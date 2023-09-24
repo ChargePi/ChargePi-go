@@ -77,7 +77,7 @@ func NewWS281xStrip(numberOfLEDs int, dataPin int) (*WS281x, error) {
 
 // DisplayColor change the color of the LED at specified index to the specified color.
 // The index must be greater than 0 and less than the length of the LED strip.
-func (ws *WS281x) DisplayColor(index int, color Color) error {
+func (ws *WS281x) ChangeColor(index int, color Color) error {
 	if index < 0 || index > len(ws.ws2811.Leds(0)) {
 		return ErrInvalidIndex
 	}
@@ -116,7 +116,7 @@ func (ws *WS281x) Cleanup() {
 	var i = 0
 
 	for ws.numberOfLEDs != i {
-		_ = ws.DisplayColor(i, Off)
+		_ = ws.ChangeColor(i, Off)
 		i++
 	}
 

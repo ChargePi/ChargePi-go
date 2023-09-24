@@ -23,17 +23,22 @@ import (
 )
 
 type ChargePoint struct {
-	chargePoint        ocpp16.ChargePoint
-	availability       core.AvailabilityType
-	isConnected        bool
+	// OCPP related
+	chargePoint  ocpp16.ChargePoint
+	availability core.AvailabilityType
+	isConnected  bool
+
+	// Settings management
 	settingsManager    settings2.Manager
 	info               settings.Info
 	connectionSettings settings.ConnectionSettings
+
 	// Hardware components
 	tagReader        reader.Reader
 	indicator        indicator.Indicator
 	display          display.Display
 	indicatorMapping settings.IndicatorStatusMapping
+
 	// Software components
 	evseManager        evse.Manager
 	sessionManager     session.Manager
@@ -62,37 +67,35 @@ func NewChargePoint(manager evse.Manager, tagManager auth.TagManager, sessionMan
 
 // Connect to the central system and send a BootNotification
 func (cp *ChargePoint) Connect(ctx context.Context, serverUrl string) {
-	connectionSettings := cp.connectionSettings
-	tlsConfig := connectionSettings.TLS
-	logInfo := log.WithFields(log.Fields{
-		"chargePointId": connectionSettings.Id,
-	})
-
-	wsClient, err := util.CreateClient(
-		connectionSettings.BasicAuthUsername,
-		connectionSettings.BasicAuthPassword,
-		tlsConfig)
-	if err != nil {
-		logInfo.WithError(err).Panic("Cannot create a new client")
+	// Disconnect if already connected to a central system, might be a reconnection or a new URL
+	if cp.isConnected {
+		cp.chargePoint.Stop()
 	}
 
-	logInfo.Debug("Connecting to the OCPP backend")
-	cp.chargePoint = ocpp16.NewChargePoint(connectionSettings.Id, nil, wsClient)
+	logInfo := log.WithFields(log.Fields{
+		"chargePointId": cp.connectionSettings.Id,
+	})
+
+	wsClient, err := util.CreateClient(cp.connectionSettings)
+	if err != nil {
+		logInfo.WithError(err).Panic("Cannot create a new websocket client")
+	}
+
+	cp.chargePoint = ocpp16.NewChargePoint(cp.connectionSettings.Id, nil, wsClient)
 
 	// Set profiles
-	util.SetProfilesFromConfig(cp.chargePoint, cp, cp, cp, cp)
+	util.SetProfilesFromConfig(cp.chargePoint, cp, cp, cp, cp, cp)
 
 	cp.logger.Infof("Trying to connect to the central system: %s", serverUrl)
 	connectErr := cp.chargePoint.Start(serverUrl)
 	if connectErr != nil {
 		// cp.CleanUp(core.ReasonOther)
 		cp.isConnected = false
-		cp.logger.WithError(connectErr).Panic("Cannot connect to the central system")
+		cp.logger.WithError(connectErr).Error("Cannot connect to the central system")
+		return
 	}
 
 	cp.logger.Infof("Successfully connected to: %s", serverUrl)
-	cp.availability = core.AvailabilityTypeOperative
-
 	cp.bootNotification()
 }
 

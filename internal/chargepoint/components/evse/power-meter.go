@@ -108,7 +108,7 @@ func (evse *Impl) samplePowerMeterAndSend() {
 
 	// Notify a MeterValue update
 	if evse.meterValuesChannel != nil {
-		// evse.GetTransactionId()
+		// todo get transaction id evse.GetTransactionId()
 		evse.meterValuesChannel <- notifications.NewMeterValueNotification(evse.evseId, &evse.evseId, nil, meterValue)
 	}
 }
