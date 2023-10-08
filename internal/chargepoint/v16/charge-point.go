@@ -84,7 +84,7 @@ func (cp *ChargePoint) Connect(ctx context.Context, serverUrl string) {
 	cp.chargePoint = ocpp16.NewChargePoint(cp.connectionSettings.Id, nil, wsClient)
 
 	// Set profiles
-	util.SetProfilesFromConfig(cp.chargePoint, cp, cp, cp, cp, cp)
+	cp.SetProfilesFromConfig()
 
 	cp.logger.Infof("Trying to connect to the central system: %s", serverUrl)
 	connectErr := cp.chargePoint.Start(serverUrl)

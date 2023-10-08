@@ -74,5 +74,5 @@ func (cp *ChargePoint) stopChargingConnector(connector evse.EVSE, reason core.Re
 		logInfo.Infof("Stopped charging at %s", time.Now())
 	}
 
-	return util.SendRequest(cp.chargePoint, request, callback)
+	return cp.sendRequest(request, callback)
 }

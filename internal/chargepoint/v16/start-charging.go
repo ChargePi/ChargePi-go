@@ -9,7 +9,6 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 )
 
 func (cp *ChargePoint) StartCharging(evseId, connectorId int, tagId string) error {
@@ -76,5 +75,5 @@ func (cp *ChargePoint) StartCharging(evseId, connectorId int, tagId string) erro
 		}
 	}
 
-	return util.SendRequest(cp.chargePoint, request, callback)
+	return cp.sendRequest(request, callback)
 }

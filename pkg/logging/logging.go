@@ -4,6 +4,8 @@ import (
 	"log/syslog"
 
 	graylog "github.com/gemnasium/logrus-graylog-hook/v3"
+	"github.com/lorenzodonini/ocpp-go/ocppj"
+	"github.com/lorenzodonini/ocpp-go/ws"
 	log "github.com/sirupsen/logrus"
 	lSyslog "github.com/sirupsen/logrus/hooks/syslog"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
@@ -15,12 +17,14 @@ func Setup(logger *log.Logger, loggingConfig settings.Logging, isDebug bool) {
 	// Default logging settings
 	logLevel := log.InfoLevel
 	formatter := &log.JSONFormatter{}
+	logger.SetFormatter(formatter)
 
 	if isDebug {
 		logLevel = log.DebugLevel
+		ocppj.SetLogger(logger)
+		ws.SetLogger(logger)
 	}
 
-	logger.SetFormatter(formatter)
 	logger.SetLevel(logLevel)
 
 	for _, logType := range loggingConfig.LogTypes {

@@ -1,3 +1,3 @@
 package chargePoint
 
-const FirmwareVersion = "0.1.0"
+const FirmwareVersion = "v1.0.0"

@@ -6,7 +6,6 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 	configManager "github.com/xBlaz3kx/ocppManager-go"
 	"github.com/xBlaz3kx/ocppManager-go/configuration"
 )
@@ -59,8 +58,8 @@ func (cp *ChargePoint) bootNotification() {
 	}
 
 	cp.logger.Info("Sending a BootNotification")
-	err := util.SendRequest(cp.chargePoint, request, callback)
-	util.HandleRequestErr(err, "Error sending BootNotification")
+	err := cp.sendRequest(request, callback)
+	cp.handleRequestErr(err, "Error sending BootNotification")
 }
 
 func (cp *ChargePoint) setHeartbeat(interval int) {
@@ -82,7 +81,7 @@ func (cp *ChargePoint) setHeartbeat(interval int) {
 func (cp *ChargePoint) sendHeartBeat() error {
 	cp.logger.Info("Sending a heartbeat")
 
-	return util.SendRequest(cp.chargePoint, core.NewHeartbeatRequest(), func(confirmation ocpp.Response, protoError error) {
+	return cp.sendRequest(core.NewHeartbeatRequest(), func(confirmation ocpp.Response, protoError error) {
 		if protoError != nil {
 			return
 		}

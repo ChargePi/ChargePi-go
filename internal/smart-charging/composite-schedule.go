@@ -27,11 +27,11 @@ func CreateCompositeSchedule(connectorSchedules []*types.ChargingProfile) []Sche
 			continue
 		}
 
-		startTime := 0
+		startTime := time.Now()
 
 		// Loop through all the schedule intervals in the profile
 		for _, period := range profile.ChargingSchedule.ChargingSchedulePeriod {
-			endTime := startTime + period.StartPeriod
+			endTime := startTime.Add(time.Duration(period.StartPeriod))
 
 			// Check if the current period limit is less than the stored minimum limit
 			if minLimit, exists := minLimitMap[startTime]; exists {

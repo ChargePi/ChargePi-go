@@ -11,7 +11,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
 	"github.com/xBlaz3kx/ocppManager-go/configuration"
 )
@@ -38,8 +37,8 @@ func (cp *ChargePoint) notifyConnectorStatus(evseId int, status core.ChargePoint
 		cp.logger.WithField("evseId", evseId).Infof("Notified status %s of the connector", status)
 	}
 
-	err := util.SendRequest(cp.chargePoint, request, callback)
-	util.HandleRequestErr(err, "Cannot send status of connector")
+	err := cp.sendRequest(request, callback)
+	cp.handleRequestErr(err, "Cannot send status of connector")
 }
 
 // ListenForConnectorStatusChange listen for change in connector and notify the central system about the state
@@ -75,7 +74,7 @@ Listener:
 
 			// Send a meter value notification to the Central System
 			values := core.NewMeterValuesRequest(meterVal.EvseId, meterVal.MeterValues)
-			err := util.SendRequest(cp.chargePoint, values, func(confirmation ocpp.Response, protoError error) {
+			err := cp.sendRequest(values, func(confirmation ocpp.Response, protoError error) {
 				logInfo.Info("Sent a meter value update")
 			})
 			if err != nil {

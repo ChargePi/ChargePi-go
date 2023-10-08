@@ -5,20 +5,10 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io/ioutil"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/agrison/go-commons-lang/stringUtils"
-	"github.com/avast/retry-go"
-	"github.com/lorenzodonini/ocpp-go/ocpp"
-	ocpp16 "github.com/lorenzodonini/ocpp-go/ocpp1.6"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/firmware"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/localauth"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/remotetrigger"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/smartcharging"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/lorenzodonini/ocpp-go/ws"
 	"github.com/pkg/errors"
@@ -98,45 +88,6 @@ func CreateClient(connectionSettings settings.ConnectionSettings) (*ws.Client, e
 	return client, nil
 }
 
-// SetProfilesFromConfig based on the provided OCPP configuration, set the profiles
-func SetProfilesFromConfig(
-	chargePoint ocpp16.ChargePoint,
-	coreHandler core.ChargePointHandler,
-	reservationHandler reservation.ChargePointHandler,
-	triggerHandler remotetrigger.ChargePointHandler,
-	localAuth localauth.ChargePointHandler,
-	firmwareUpdateHandler firmware.ChargePointHandler,
-) {
-	chargePoint.SetCoreHandler(coreHandler)
-
-	// Set handlers based on configuration
-	profiles, err := ocppManager.GetConfigurationValue(configuration.SupportedFeatureProfiles.String())
-	if err != nil {
-		log.WithError(err).Panic("No supported profiles specified")
-	}
-
-	logInfo := log.WithField("profiles", profiles)
-
-	for _, profile := range strings.Split(*profiles, ", ") {
-		switch strings.ToLower(profile) {
-		case strings.ToLower(reservation.ProfileName):
-			chargePoint.SetReservationHandler(reservationHandler)
-			logInfo.Debug("Setting reservation handler")
-		case strings.ToLower(smartcharging.ProfileName):
-			logInfo.Debug("Setting local auth handler")
-			// chargePoint.SetSmartChargingHandler(cp)
-		case strings.ToLower(localauth.ProfileName):
-			logInfo.Debug("Setting local auth handler")
-			chargePoint.SetLocalAuthListHandler(localAuth)
-		case strings.ToLower(remotetrigger.ProfileName):
-			logInfo.Debug("Setting remote trigger handler")
-			chargePoint.SetRemoteTriggerHandler(triggerHandler)
-		case strings.ToLower(firmware.ProfileName):
-			chargePoint.SetFirmwareManagementHandler(firmwareUpdateHandler)
-		}
-	}
-}
-
 // GetTypesToSample get the measurands to sample from the OCPP configuration.
 func GetTypesToSample() []types.Measurand {
 	var (
@@ -154,30 +105,4 @@ func GetTypesToSample() []types.Measurand {
 	}
 
 	return measurands
-}
-
-// SendRequest is a middleware function that implements a retry mechanism for sending requests. If the max attempts is reached, return an error
-func SendRequest(chargePoint ocpp16.ChargePoint, request ocpp.Request, callback func(confirmation ocpp.Response, protoError error)) error {
-	var (
-		maxMessageAttempts, attemptErr  = ocppManager.GetConfigurationValue(configuration.TransactionMessageAttempts.String())
-		retryIntervalValue, intervalErr = ocppManager.GetConfigurationValue(configuration.TransactionMessageRetryInterval.String())
-		maxRetries, convError           = strconv.Atoi(*maxMessageAttempts)
-		retryInterval, convError2       = strconv.Atoi(*retryIntervalValue)
-	)
-
-	if attemptErr != nil || convError != nil {
-		maxRetries = 5
-	}
-
-	if intervalErr != nil || convError2 != nil {
-		retryInterval = 30
-	}
-
-	return retry.Do(
-		func() error {
-			return chargePoint.SendRequestAsync(request, callback)
-		},
-		retry.Attempts(uint(maxRetries)),
-		retry.Delay(time.Duration(retryInterval)),
-	)
 }

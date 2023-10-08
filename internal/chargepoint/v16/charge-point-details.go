@@ -3,7 +3,6 @@ package v16
 import (
 	"github.com/lorenzodonini/ocpp-go/ocpp"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 	data "github.com/xBlaz3kx/ChargePi-go/pkg/models/ocpp"
 )
 
@@ -14,18 +13,17 @@ func (cp *ChargePoint) sendChargePointInfo() error {
 	dataTransfer.Data = data.NewChargePointInfo(cp.info.Type, cp.info.MaxPower)
 	// dataTransfer.MessageId
 
-	return util.SendRequest(cp.chargePoint, dataTransfer,
-		func(confirmation ocpp.Response, protoError error) {
-			if protoError != nil {
-				cp.logger.WithError(protoError).Warn("Error sending data")
-				return
-			}
+	return cp.sendRequest(dataTransfer, func(confirmation ocpp.Response, protoError error) {
+		if protoError != nil {
+			cp.logger.WithError(protoError).Warn("Error sending data")
+			return
+		}
 
-			resp := confirmation.(*core.DataTransferConfirmation)
-			if resp.Status == core.DataTransferStatusAccepted {
-				cp.logger.Info("Sent additional charge point information")
-			}
-		})
+		resp := confirmation.(*core.DataTransferConfirmation)
+		if resp.Status == core.DataTransferStatusAccepted {
+			cp.logger.Info("Sent additional charge point information")
+		}
+	})
 }
 
 // sendEvses Send the EVSEs' configuration to the central system.
@@ -47,18 +45,17 @@ func (cp *ChargePoint) SendEVSEsDetails(evseId int, maxPower float32, connectors
 	dataTransfer := core.NewDataTransferRequest(cp.info.OCPPDetails.Vendor)
 	dataTransfer.Data = data.NewEvseInfo(evseId, maxPower, connectors...)
 
-	err := util.SendRequest(cp.chargePoint, dataTransfer,
-		func(confirmation ocpp.Response, protoError error) {
-			if protoError != nil {
-				logInfo.WithError(protoError).Warn("Error sending data")
-				return
-			}
+	err := cp.sendRequest(dataTransfer, func(confirmation ocpp.Response, protoError error) {
+		if protoError != nil {
+			logInfo.WithError(protoError).Warn("Error sending data")
+			return
+		}
 
-			resp := confirmation.(*core.DataTransferConfirmation)
-			if resp.Status == core.DataTransferStatusAccepted {
-				logInfo.Info("Sent additional charge point information")
-			}
-		})
+		resp := confirmation.(*core.DataTransferConfirmation)
+		if resp.Status == core.DataTransferStatusAccepted {
+			logInfo.Info("Sent additional charge point information")
+		}
+	})
 	if err != nil {
 		logInfo.WithError(err).Warn("Error sending data")
 	}
