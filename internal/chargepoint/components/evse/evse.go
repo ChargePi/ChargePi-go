@@ -1,6 +1,7 @@
 package evse
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sync"
@@ -16,7 +17,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
-	"golang.org/x/net/context"
 )
 
 var (
