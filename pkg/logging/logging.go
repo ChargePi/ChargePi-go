@@ -6,6 +6,7 @@ import (
 	graylog "github.com/gemnasium/logrus-graylog-hook/v3"
 	"github.com/lorenzodonini/ocpp-go/ocppj"
 	"github.com/lorenzodonini/ocpp-go/ws"
+	"github.com/orandin/lumberjackrus"
 	log "github.com/sirupsen/logrus"
 	lSyslog "github.com/sirupsen/logrus/hooks/syslog"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
@@ -20,6 +21,7 @@ func Setup(logger *log.Logger, loggingConfig settings.Logging, isDebug bool) {
 	logger.SetFormatter(formatter)
 
 	if isDebug {
+		// Set underlying library loggers to debug level
 		logLevel = log.DebugLevel
 		ocppj.SetLogger(logger)
 		ws.SetLogger(logger)
@@ -27,6 +29,10 @@ func Setup(logger *log.Logger, loggingConfig settings.Logging, isDebug bool) {
 
 	logger.SetLevel(logLevel)
 
+	// Setup file logging
+	fileLogging(logger, "/var/log/chargepi.log")
+
+	// Setup remote logging, if configured
 	for _, logType := range loggingConfig.LogTypes {
 		switch LogType(logType.Type) {
 		case RemoteLogging:
@@ -36,6 +42,28 @@ func Setup(logger *log.Logger, loggingConfig settings.Logging, isDebug bool) {
 		case ConsoleLogging:
 		}
 	}
+}
+
+func fileLogging(logger *log.Logger, fileName string) {
+	hook, err := lumberjackrus.NewHook(
+		&lumberjackrus.LogFile{
+			Filename:   fileName,
+			MaxSize:    200,
+			MaxBackups: 20,
+			MaxAge:     1,
+			Compress:   false,
+			LocalTime:  false,
+		},
+		logger.GetLevel(),
+		logger.Formatter,
+		nil,
+	)
+
+	if err != nil {
+		panic(err)
+	}
+
+	logger.AddHook(hook)
 }
 
 // remoteLogging sends logs remotely to Graylog or any Syslog receiver.
