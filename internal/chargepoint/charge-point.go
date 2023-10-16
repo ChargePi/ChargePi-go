@@ -5,12 +5,12 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/auth"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/indicator"
+	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/evse"
 	v16 "github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/v16"
 	chargePoint "github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/sessions/service/session"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/indicator"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/models/ocpp"
 )
 

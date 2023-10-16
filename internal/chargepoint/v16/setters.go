@@ -7,12 +7,12 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/indicator"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/reader"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/display"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/indicator"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/reader"
 )
 
 func (cp *ChargePoint) SetLogger(logger *log.Logger) {

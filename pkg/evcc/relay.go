@@ -7,6 +7,7 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	log "github.com/sirupsen/logrus"
 	"github.com/warthog618/gpiod"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/models/settings"
 )
 
 var (
@@ -22,15 +23,15 @@ type RelayAsEvcc struct {
 }
 
 // NewRelay creates a new RelayImpl struct that will communicate with the GPIO pin specified.
-func NewRelay(relayPin int, inverseLogic bool) (*RelayAsEvcc, error) {
-	if relayPin <= 0 {
+func NewRelay(settings *settings.Relay) (*RelayAsEvcc, error) {
+	if settings.RelayPin <= 0 {
 		return nil, ErrInvalidPinNumber
 	}
 
-	log.Debugf("Creating new relay at pin %d", relayPin)
+	log.Debugf("Creating new relay at pin %d", settings.RelayPin)
 	relay := RelayAsEvcc{
-		relayPin:      relayPin,
-		inverseLogic:  inverseLogic,
+		relayPin:      settings.RelayPin,
+		inverseLogic:  settings.InverseLogic,
 		statusChannel: make(chan StateNotification, 10),
 	}
 

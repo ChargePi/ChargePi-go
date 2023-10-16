@@ -5,10 +5,10 @@ import (
 	"errors"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/indicator"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/reader"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/display"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/indicator"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/models/settings"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/reader"
 )
 
 type Options func(point ChargePoint)

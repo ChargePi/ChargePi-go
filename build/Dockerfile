@@ -1,4 +1,4 @@
-FROM golang:1.17 as base
+FROM golang:1.18 as base
 
 COPY . /ChargePi/src
 WORKDIR /ChargePi/src
@@ -54,4 +54,7 @@ RUN cp -r configs/ test/  \
     && cd test/  \
     && chmod +x create-test-certs.sh \
     && ./create-test-certs.sh \
+
+# Gen mocks
+
 CMD ["go", "test","-v","./..."]

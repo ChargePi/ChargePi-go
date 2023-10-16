@@ -6,7 +6,7 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/api/grpc"
 	"github.com/xBlaz3kx/ChargePi-go/internal/api/http"
 	"github.com/xBlaz3kx/ChargePi-go/internal/auth"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
+	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/evse"
 	chargePoint "github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	userDatabase "github.com/xBlaz3kx/ChargePi-go/internal/users/pkg/database"

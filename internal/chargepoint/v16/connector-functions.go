@@ -9,8 +9,8 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/display"
 	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
 	"github.com/xBlaz3kx/ocppManager-go/configuration"
 )

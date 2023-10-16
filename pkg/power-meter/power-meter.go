@@ -13,6 +13,7 @@ import (
 // Supported power meters
 const (
 	TypeC5460A = "cs5460a"
+	TypeDummy  = "dummy"
 )
 
 var (
@@ -56,6 +57,8 @@ func NewPowerMeter(meterSettings settings.PowerMeter) (PowerMeter, error) {
 			}
 
 			return powerMeter, nil
+		case TypeDummy:
+			return NewDummy(meterSettings.PowerMeterDummy)
 		default:
 			return nil, ErrPowerMeterUnsupported
 		}

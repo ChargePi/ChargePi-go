@@ -6,12 +6,10 @@ package indicator
 import (
 	"encoding/binary"
 	"encoding/hex"
-	"strconv"
+	"errors"
 	"time"
 
 	ws2811 "github.com/rpi-ws281x/rpi-ws281x-go"
-	ocppManager "github.com/xBlaz3kx/ocppManager-go"
-	"github.com/xBlaz3kx/ocppManager-go/configuration"
 )
 
 const (
@@ -35,6 +33,7 @@ type WS281x struct {
 	numberOfLEDs int
 	dataPin      int
 	ws2811       *ws2811.WS2811
+	brightness   int
 }
 
 // NewWS281xStrip create a new LED strip object with the specified number of LEDs and the data pin.
@@ -54,8 +53,6 @@ func NewWS281xStrip(numberOfLEDs int, dataPin int) (*WS281x, error) {
 	opt.Channels[0].GpioPin = dataPin
 	opt.Frequency = freq
 
-	setLightIntensity(opt)
-
 	// Create a new strip
 	ledStrip, err := ws2811.MakeWS2811(&opt)
 	if err != nil {
@@ -72,6 +69,7 @@ func NewWS281xStrip(numberOfLEDs int, dataPin int) (*WS281x, error) {
 		dataPin:      dataPin,
 		numberOfLEDs: numberOfLEDs,
 		ws2811:       ledStrip,
+		brightness:   brightness,
 	}, nil
 }
 
@@ -131,6 +129,20 @@ func (ws *WS281x) GetType() string {
 	return TypeWS281x
 }
 
+func (ws *WS281x) SetBrightness(brightness int) error {
+	if brightness < 0 || brightness > 100 {
+		return errors.New("brightness must be between 0 and 100")
+	}
+
+	ws.brightness = brightness / 100 * 255
+	ws.ws2811.SetBrightness(0, ws.brightness)
+	return nil
+}
+
+func (ws *WS281x) GetBrightness() int {
+	return ws.brightness / 255 * 100
+}
+
 func getColorAsHex(color Color) uint32 {
 	switch color {
 	case White:
@@ -154,18 +166,5 @@ func getColorAsHex(color Color) uint32 {
 		}
 
 		return binary.LittleEndian.Uint32(customColor)
-	}
-}
-
-func setLightIntensity(opts ws2811.Option) {
-	lightIntensity, confErr := ocppManager.GetConfigurationValue(configuration.LightIntensity.String())
-	if confErr == nil {
-		intensity, err := strconv.ParseFloat(*lightIntensity, 32)
-		if err != nil {
-			return
-		}
-
-		// Light intensity is in percent
-		opts.Channels[0].Brightness = int(intensity / 100 * 255)
 	}
 }

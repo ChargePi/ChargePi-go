@@ -2,17 +2,32 @@ package settings
 
 type (
 	Indicator struct {
-		Enabled           bool                    `json:"enabled" yaml:"enabled" mapstructure:"enabled"`
-		IndicateCardRead  bool                    `json:"indicateCardRead,omitempty" yaml:"indicateCardRead,omitempty" mapstructure:"indicateCardRead,omitempty"`
-		Type              string                  `json:"type,omitempty" yaml:"type" mapstructure:"type"`
+
+		// Enable or disable the indicator
+		Enabled bool `json:"enabled" yaml:"enabled" mapstructure:"enabled"`
+
+		// Indicate card read
+		IndicateCardRead bool `json:"indicateCardRead,omitempty" yaml:"indicateCardRead,omitempty" mapstructure:"indicateCardRead,omitempty"`
+
+		// Type of indicator
+		Type string `json:"type,omitempty" yaml:"type" mapstructure:"type"`
+
+		// Statuses
 		IndicatorMappings *IndicatorStatusMapping `json:"statuses,omitempty" yaml:"statuses,omitempty" mapstructure:"statuses,omitempty"`
+
 		// Based on the type, get the connection details
 		WS281x *WS281x `json:"ws281x,omitempty" yaml:"ws281x,omitempty" mapstructure:"ws281x,omitempty"`
+
+		// Dummy indicator
+		IndicatorDummy *IndicatorDummy `json:"dummy,omitempty" yaml:"dummy,omitempty" mapstructure:"dummy,omitempty"`
 	}
 
 	WS281x struct {
 		DataPin int  `json:"dataPin,omitempty" yaml:"dataPin,omitempty" mapstructure:"dataPin,omitempty"`
 		Invert  bool `json:"invert,omitempty" yaml:"invert,omitempty" mapstructure:"invert,omitempty"`
+	}
+
+	IndicatorDummy struct {
 	}
 
 	IndicatorStatusMapping struct {

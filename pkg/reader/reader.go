@@ -5,16 +5,17 @@ import (
 	"errors"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/models/settings"
 )
 
 // Supported readers - by libnfc
 const (
-	PN532  = "PN532"
-	ACR122 = "ACR122"
-	PN533  = "PN533"
-	BR500  = "BR500"
-	R502   = "R502"
+	PN532     = "PN532"
+	ACR122    = "ACR122"
+	PN533     = "PN533"
+	BR500     = "BR500"
+	R502      = "R502"
+	TypeDummy = "dummy"
 )
 
 var (
@@ -38,6 +39,8 @@ func NewTagReader(reader settings.TagReader) (Reader, error) {
 		switch reader.ReaderModel {
 		case PN532, ACR122, PN533, BR500, R502:
 			return NewReader(reader.PN532.Device, reader.ReaderModel, reader.PN532.ResetPin)
+		case TypeDummy:
+			return NewDummy(reader.DummyReader)
 		default:
 			return nil, ErrReaderUnsupported
 		}

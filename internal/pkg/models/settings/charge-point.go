@@ -2,6 +2,7 @@ package settings
 
 import (
 	"github.com/xBlaz3kx/ChargePi-go/pkg/models/ocpp"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/models/settings"
 )
 
 type (
@@ -19,9 +20,9 @@ type (
 	}
 
 	Hardware struct {
-		Display   Display   `json:"display" yaml:"display" mapstructure:"display"`
-		TagReader TagReader `json:"reader" yaml:"reader" mapstructure:"reader"`
-		Indicator Indicator `json:"indicator" yaml:"indicator" mapstructure:"indicator"`
+		Display   settings.Display   `json:"display" yaml:"display" mapstructure:"display"`
+		TagReader settings.TagReader `json:"reader" yaml:"reader" mapstructure:"reader"`
+		Indicator settings.Indicator `json:"indicator" yaml:"indicator" mapstructure:"indicator"`
 	}
 
 	ConnectionSettings struct {

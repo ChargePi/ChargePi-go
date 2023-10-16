@@ -9,10 +9,7 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/auth"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/indicator"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/reader"
+	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/evse"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
@@ -20,6 +17,10 @@ import (
 	settings2 "github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 	"github.com/xBlaz3kx/ChargePi-go/internal/sessions/service/session"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/display"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/indicator"
+	hardwareSettings "github.com/xBlaz3kx/ChargePi-go/pkg/models/settings"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/reader"
 )
 
 type ChargePoint struct {
@@ -37,7 +38,7 @@ type ChargePoint struct {
 	tagReader        reader.Reader
 	indicator        indicator.Indicator
 	display          display.Display
-	indicatorMapping settings.IndicatorStatusMapping
+	indicatorMapping hardwareSettings.IndicatorStatusMapping
 
 	// Software components
 	evseManager        evse.Manager

@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
+	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/evse"
 )
 
 func (cp *ChargePoint) OnReserveNow(request *reservation.ReserveNowRequest) (confirmation *reservation.ReserveNowConfirmation, err error) {

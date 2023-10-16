@@ -13,7 +13,7 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/display"
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/auth"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
+	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/evse"
 	ocppManager "github.com/xBlaz3kx/ocppManager-go"
 	v16 "github.com/xBlaz3kx/ocppManager-go/configuration"
 )

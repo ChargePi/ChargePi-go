@@ -8,9 +8,9 @@ import (
 
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/display"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/indicator"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/indicator"
+	hardwareSettings "github.com/xBlaz3kx/ChargePi-go/pkg/models/settings"
 )
 
 // DisplayMessage sends/shows a message on the display.
@@ -99,7 +99,7 @@ Listener:
 }
 
 // colorMapping Maps a ChargePointStatus to a color based on the indicator mapping.
-func colorMapping(indicatorMapping settings.IndicatorStatusMapping, status core.ChargePointStatus) (*indicator.Color, error) {
+func colorMapping(indicatorMapping hardwareSettings.IndicatorStatusMapping, status core.ChargePointStatus) (*indicator.Color, error) {
 	var color indicator.Color
 	switch status {
 	case core.ChargePointStatusFaulted:

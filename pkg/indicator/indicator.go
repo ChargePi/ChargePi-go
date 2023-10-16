@@ -4,8 +4,8 @@ import (
 	"errors"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/models/settings"
 )
 
 // color constants
@@ -22,6 +22,7 @@ const (
 // Supported types
 const (
 	TypeWS281x = "WS281x"
+	TypeDummy  = "dummy"
 )
 
 var (
@@ -37,6 +38,8 @@ type (
 	Indicator interface {
 		ChangeColor(index int, color Color) error
 		Blink(index int, times int, color Color) error
+		SetBrightness(brightness int) error
+		GetBrightness() int
 		Cleanup()
 		GetType() string
 	}
@@ -65,6 +68,8 @@ func NewIndicator(stripLength int, indicator settings.Indicator) Indicator {
 			}
 
 			return ledStrip
+		case TypeDummy:
+			return NewDummy(indicator.IndicatorDummy)
 		default:
 			return nil
 		}

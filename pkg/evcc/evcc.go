@@ -10,6 +10,7 @@ const (
 	PhoenixEMCPPPETH = "EM-CP-PP-ETH"
 	Relay            = "Relay"
 	Western          = "Western"
+	TypeDummy        = "Dummy"
 )
 
 type EVCC interface {
@@ -34,9 +35,11 @@ type EVCC interface {
 func NewEVCCFromType(evccSettings settings.EVCC) (EVCC, error) {
 	switch evccSettings.Type {
 	case Relay:
-		return NewRelay(evccSettings.RelayPin, evccSettings.InverseLogic)
+		return NewRelay(evccSettings.Relay)
 	case Western:
 		return NewWesternController(1, evccSettings.Serial)
+	case TypeDummy:
+		return NewDummy(evccSettings.Dummy)
 	default:
 		return nil, nil
 	}

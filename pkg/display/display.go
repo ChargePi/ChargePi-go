@@ -5,12 +5,13 @@ import (
 
 	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/display"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/models/settings"
 )
 
 const (
 	DriverHD44780 = "hd44780"
+	TypeDummy     = "dummy"
 )
 
 var (
@@ -47,6 +48,8 @@ func NewDisplay(lcdSettings settings.Display) (Display, error) {
 			}
 
 			return lcd, nil
+		case TypeDummy:
+			return NewDummy(lcdSettings.DisplayDummy)
 		default:
 			return nil, ErrDisplayUnsupported
 		}

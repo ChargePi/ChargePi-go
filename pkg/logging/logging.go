@@ -30,7 +30,7 @@ func Setup(logger *log.Logger, loggingConfig settings.Logging, isDebug bool) {
 	logger.SetLevel(logLevel)
 
 	// Setup file logging
-	fileLogging(logger, "/var/log/chargepi.log")
+	fileLogging(logger, "/var/log/chargepi/chargepi.log")
 
 	// Setup remote logging, if configured
 	for _, logType := range loggingConfig.LogTypes {
