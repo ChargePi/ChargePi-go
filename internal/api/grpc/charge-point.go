@@ -5,12 +5,12 @@ import (
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	cfg "github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/display"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/grpc"
 	commonSettings "github.com/xBlaz3kx/ChargePi-go/pkg/models/settings"
+	settings2 "github.com/xBlaz3kx/ChargePi-go/pkg/models/settings"
 	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
 )
 
@@ -202,8 +202,8 @@ func toConfiguration(key core.ConfigurationKey) *grpc.OcppVariable {
 	}
 }
 
-func toDisplay(display *grpc.Display) settings.Display {
-	return settings.Display{
+func toDisplay(display *grpc.Display) settings2.Display {
+	return settings2.Display{
 		IsEnabled: false,
 		Driver:    display.Type,
 		Language:  *display.Language,

@@ -25,6 +25,9 @@ type (
 	}
 
 	PowerMeterDummy struct {
-		Voltage float64 `json:"voltage,omitempty" yaml:"voltage,omitempty" mapstructure:"voltage,omitempty"`
+		Voltage          float64 `json:"voltage,omitempty" yaml:"voltage,omitempty" mapstructure:"voltage,omitempty"`
+		VoltageBehaviour string  `json:"voltageBehaviour,omitempty" yaml:"voltageBehaviour,omitempty" mapstructure:"voltageBehaviour,omitempty"`
+		BaseCurrent      float64 `json:"baseCurrent,omitempty" yaml:"baseCurrent,omitempty" mapstructure:"baseCurrent,omitempty"`
+		CurrentBehaviour string  `json:"currentBehaviour,omitempty" yaml:"currentBehaviour,omitempty" mapstructure:"currentBehaviour,omitempty"`
 	}
 )

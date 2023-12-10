@@ -90,7 +90,7 @@ Listener:
 		case <-ctx.Done():
 			break Listener
 		default:
-			cp.logger.Trace("Waiting for tag...")
+			cp.logger.Debug("Waiting for tag...")
 			time.Sleep(time.Millisecond * 200)
 		}
 	}

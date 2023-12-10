@@ -14,5 +14,6 @@ type (
 	}
 
 	DummyReader struct {
+		TagIds []string `json:"tagIds,omitempty" yaml:"tagIds,omitempty" mapstructure:"tagIds,omitempty"`
 	}
 )

@@ -3,12 +3,11 @@ package database
 import log "github.com/sirupsen/logrus"
 
 type Logger struct {
-	logger *log.Logger
+	logger log.FieldLogger
 }
 
 func newLogger() *Logger {
-	logger := log.New()
-	logger.SetLevel(log.FatalLevel)
+	logger := log.StandardLogger().WithField("component", "database")
 	return &Logger{
 		logger: logger,
 	}

@@ -8,7 +8,7 @@ import (
 	"github.com/dgraph-io/badger/v3"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
+	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/evse"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/database"
 	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
 	v16 "github.com/xBlaz3kx/ocppManager-go/configuration"

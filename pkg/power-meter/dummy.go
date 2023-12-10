@@ -10,7 +10,7 @@ import (
 )
 
 type Dummy struct {
-	logger     *log.Logger
+	logger     log.FieldLogger
 	settings   settings.PowerMeterDummy
 	energy     int64
 	lastSample *time.Time
@@ -19,7 +19,7 @@ type Dummy struct {
 func NewDummy(settings *settings.PowerMeterDummy) (*Dummy, error) {
 	return &Dummy{
 		settings: *settings,
-		logger:   log.StandardLogger(),
+		logger:   log.StandardLogger().WithField("component", "power-meter-dummy"),
 		energy:   0,
 	}, nil
 }
@@ -34,27 +34,34 @@ func (d *Dummy) Reset() {
 }
 
 func (d *Dummy) GetEnergy() (*types.SampledValue, error) {
-
+	d.logger.Info("Getting energy")
 	return nil, nil
 }
 
 func (d *Dummy) GetPower(phase int) (*types.SampledValue, error) {
+	d.logger.WithField("phase", phase).Info("Getting power")
+
 	return nil, nil
 }
 
 func (d *Dummy) GetReactivePower(phase int) (*types.SampledValue, error) {
+	d.logger.WithField("phase", phase).Info("Getting reactive power")
 	return nil, nil
 }
 
 func (d *Dummy) GetApparentPower(phase int) (*types.SampledValue, error) {
+	d.logger.WithField("phase", phase).Info("Getting apparent power")
 	return nil, nil
 }
 
 func (d *Dummy) GetCurrent(phase int) (*types.SampledValue, error) {
+	d.logger.WithField("phase", phase).Info("Getting current")
+
 	return nil, nil
 }
 
 func (d *Dummy) GetVoltage(phase int) (*types.SampledValue, error) {
+	d.logger.WithField("phase", phase).Info("Getting voltage")
 	return nil, nil
 }
 

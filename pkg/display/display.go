@@ -42,7 +42,7 @@ func NewDisplay(lcdSettings settings.Display) (Display, error) {
 				return nil, ErrInvalidConnectionDetails
 			}
 
-			lcd, err := NewHD44780(lcdSettings.HD44780.I2C.Address, lcdSettings.HD44780.I2C.Bus)
+			lcd, err := NewHD44780(*lcdSettings.HD44780)
 			if err != nil {
 				return nil, err
 			}

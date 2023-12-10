@@ -191,7 +191,25 @@ Loop:
 
 				// todo
 			case core.ChargePointStatusSuspendedEV:
+
+				switch msg.State {
+				case evcc.StateC1:
+					state = core.ChargePointStatusFinishing
+				case evcc.StateB1:
+					state = core.ChargePointStatusPreparing
+				}
+
 			case core.ChargePointStatusSuspendedEVSE:
+
+				switch msg.State {
+				case evcc.StateC2:
+					state = core.ChargePointStatusCharging
+				case evcc.StateB1:
+					state = core.ChargePointStatusFinishing
+				case evcc.StateA1:
+					state = core.ChargePointStatusAvailable
+				}
+
 			case core.ChargePointStatusFaulted:
 			}
 

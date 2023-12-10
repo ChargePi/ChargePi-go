@@ -10,6 +10,7 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/display"
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/models/settings"
 )
 
 type HD44780 struct {
@@ -19,15 +20,15 @@ type HD44780 struct {
 }
 
 // NewHD44780 Create a new HD44780 struct.
-func NewHD44780(i2cAddress string, i2cBus int) (*HD44780, error) {
+func NewHD44780(settings settings.HD44780) (*HD44780, error) {
 	// Decode the I2C address from hex to uint8
-	decodeString, err := strconv.ParseUint(i2cAddress, 16, 8)
+	decodeString, err := strconv.ParseUint(settings.I2C.Address, 16, 8)
 	if err != nil {
 		return nil, err
 	}
 
 	// Establish I2C connection
-	i2cDev, err := i2c.NewI2C(uint8(decodeString), i2cBus)
+	i2cDev, err := i2c.NewI2C(uint8(decodeString), settings.I2C.Bus)
 	if err != nil {
 		return nil, err
 	}

@@ -7,7 +7,7 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/samber/lo"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/evse"
+	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/evse"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/grpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
