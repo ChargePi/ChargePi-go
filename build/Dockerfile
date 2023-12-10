@@ -3,12 +3,12 @@ FROM golang:1.18 as base
 COPY . /ChargePi/src
 WORKDIR /ChargePi/src
 
-ARG READER_CONNECTION_TYPE
-ENV READER_CONNECTION_TYPE=$READER_CONNECTION_TYPE
+ARG READER_TYPE
+ENV READER_TYPE=$READER_TYPE
 
 # Install dependencies
 RUN chmod +x ./scripts/install-dependencies.sh
-RUN ./scripts/install-dependencies.sh $READER_CONNECTION_TYPE 0
+RUN ./scripts/install-dependencies.sh $READER_TYPE 0
 
 ENV GOOS=linux
 ENV GOARCH=arm64
@@ -32,11 +32,11 @@ FROM alpine as chargepi
 WORKDIR /etc/ChargePi
 
 ARG READER_CONNECTION_TYPE
-ENV READER_CONNECTION_TYPE=$READER_CONNECTION_TYPE
+ENV READER_CONNECTION_TYPE=$READER_TYPE
 
 # Install dependencies
 RUN chmod +x ./scripts/install-dependencies.sh
-RUN ./scripts/install-dependencies.sh $READER_CONNECTION_TYPE 0
+RUN ./scripts/install-dependencies.sh $READER_TYPE 0
 
 # Copy the xecutable
 COPY --from=base /ChargePi/src/configs /etc/ChargePi/configs
