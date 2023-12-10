@@ -7,15 +7,10 @@ apt-get upgrade -y
 apt-get install cmake make autoconf libtool libpcsclite-dev libusb-dev bzip2 -y
 
 # Download libnfc
-cd ~ && mkdir libnfc
-cd libnfc/
 wget https://github.com/nfc-tools/libnfc/releases/download/libnfc-1.8.0/libnfc-1.8.0.tar.bz2
 tar -xvjf libnfc-1.8.0.tar.bz2
-mkdir /etc/nfc /etc/nfc/devices.d
+mkdir -p /etc/nfc /etc/nfc/devices.d
 cd libnfc-1.8.0
-
-# Configure and install libnfc
-autoreconf -vis
 
 if [ "$1" = "pn532_i2c" ]; then
   # Add configuration for PN532_I2C
@@ -46,10 +41,10 @@ make clean
 make install all
 
 # Install WS281x drivers
-cd ~
+cd ..
 git clone https://github.com/jgarff/rpi_ws281x
-cd rpi_ws281x && mkdir build
-cd build
+cd rpi_ws281x && mkdir -p build && cd build
+
 cmake -D BUILD_SHARED=OFF -D BUILD_TEST=ON ..
 cmake --build .
 make install

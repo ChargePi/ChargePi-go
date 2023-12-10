@@ -5,3 +5,5 @@ proto:
 		--go-grpc_out=./pkg/grpc --go-grpc_opt=paths=source_relative \
 		pkg/proto/*.proto
 
+install-dependencies:
+	sudo sh ./scripts/install-dependencies.sh pn532_uart 0
