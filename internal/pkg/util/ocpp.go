@@ -9,13 +9,10 @@ import (
 	"time"
 
 	"github.com/agrison/go-commons-lang/stringUtils"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/lorenzodonini/ocpp-go/ws"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
-	ocppManager "github.com/xBlaz3kx/ocppManager-go"
-	"github.com/xBlaz3kx/ocppManager-go/configuration"
 )
 
 // CreateConnectionUrl creates a connection url from the provided settings
@@ -33,15 +30,14 @@ func CreateConnectionUrl(connectionSettings settings.ConnectionSettings) string 
 }
 
 // CreateClient creates a Websocket client based on the settings.
-func CreateClient(connectionSettings settings.ConnectionSettings) (*ws.Client, error) {
+func CreateClient(connectionSettings settings.ConnectionSettings, pingInterval *string) (*ws.Client, error) {
 	log.Debug("Creating a websocket client")
 
 	client := ws.NewClient()
 	clientConfig := ws.NewClientTimeoutConfig()
 
-	// Fetch the ping interval from the manager
-	pingInterval, err := ocppManager.GetConfigurationValue(configuration.WebSocketPingInterval.String())
-	if err == nil {
+	if pingInterval != nil {
+		// Set the ping interval
 		duration, err := time.ParseDuration(fmt.Sprintf("%ss", *pingInterval))
 		if err == nil {
 			clientConfig.PingPeriod = duration
@@ -86,23 +82,4 @@ func CreateClient(connectionSettings settings.ConnectionSettings) (*ws.Client, e
 
 	client.SetTimeoutConfig(clientConfig)
 	return client, nil
-}
-
-// GetTypesToSample get the measurands to sample from the OCPP configuration.
-func GetTypesToSample() []types.Measurand {
-	var (
-		measurands []types.Measurand
-		// Get the types to sample
-		measurandsString, err = ocppManager.GetConfigurationValue(configuration.MeterValuesSampledData.String())
-	)
-
-	if err != nil {
-		return measurands
-	}
-
-	for _, measurand := range strings.Split(*measurandsString, ",") {
-		measurands = append(measurands, types.Measurand(measurand))
-	}
-
-	return measurands
 }

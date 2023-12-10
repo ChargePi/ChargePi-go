@@ -2,17 +2,18 @@ package settings
 
 import (
 	"encoding/json"
+	"fmt"
 	"sync"
 
+	"github.com/dgraph-io/badger/v3"
 	"github.com/go-playground/validator/v10"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-
-	"github.com/dgraph-io/badger/v3"
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/database"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
-	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
-	"github.com/xBlaz3kx/ocppManager-go/configuration"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/models/ocpp"
+	"github.com/xBlaz3kx/ocppManager-go/ocpp_v16"
 )
 
 var (
@@ -39,9 +40,8 @@ func GetManager() Manager {
 
 type (
 	Manager interface {
-		SetupOcppConfiguration(version configuration.ProtocolVersion, supportedProfiles ...string)
-		GetOcppConfiguration(version configuration.ProtocolVersion) ([]core.ConfigurationKey, error)
-		GetOcppConfigurationWithKey(version configuration.ProtocolVersion, key string) (*core.ConfigurationKey, error)
+		GetOcppV16Manager() ocpp_v16.Manager
+		SetOcppV16Manager(manager ocpp_v16.Manager) error
 		GetChargePointSettings() settings.ChargePoint
 		SetChargePointSettings(settings settings.ChargePoint) error
 		SetSettings(settings settings.Settings) error
@@ -49,37 +49,29 @@ type (
 	}
 
 	Impl struct {
-		db                  *badger.DB
-		ocppVariableManager ocppConfigManager.Manager
-		logger              log.FieldLogger
+		db                    *badger.DB
+		ocpp16VariableManager ocpp_v16.Manager
+		logger                log.FieldLogger
 	}
 )
 
-func NewManager(db *badger.DB) *Impl {
-	return &Impl{
-		db:                  db,
-		ocppVariableManager: ocppConfigManager.GetManager(),
-		logger:              log.WithField("component", "settings-manager"),
-	}
+func (i *Impl) GetOcppV16Manager() ocpp_v16.Manager {
+	return i.ocpp16VariableManager
 }
 
-func (i *Impl) SetupOcppConfiguration(version configuration.ProtocolVersion, supportedProfiles ...string) {
-	logInfo := i.logger.WithField("version", version)
-	logInfo.Info("Setting up OCPP configuration")
-
-	i.ocppVariableManager.SetVersion(version)
-	i.ocppVariableManager.SetSupportedProfiles(supportedProfiles...)
-
-	ocppConfig, err := loadConfiguration(i.db, i.ocppVariableManager, version)
-	if err != nil {
-		logInfo.WithError(err).Errorf("Error loading the configuration from the database")
-		return
+func (i *Impl) SetOcppV16Manager(manager ocpp_v16.Manager) error {
+	if util.IsNilInterfaceOrPointer(manager) {
+		return fmt.Errorf("manager cannot be nil")
 	}
 
-	err = i.ocppVariableManager.SetConfiguration(*ocppConfig)
-	if err != nil {
-		logInfo.WithError(err).Errorf("Error setting the configuration to the manager")
-		return
+	i.ocpp16VariableManager = manager
+	return nil
+}
+
+func NewManager(db *badger.DB) *Impl {
+	return &Impl{
+		db:     db,
+		logger: log.WithField("component", "settings-manager"),
 	}
 }
 
@@ -160,33 +152,33 @@ func (i *Impl) GetSettings() (*settings.Settings, error) {
 	return &settingsS, nil
 }
 
-func (i *Impl) GetOcppConfiguration(version configuration.ProtocolVersion) ([]core.ConfigurationKey, error) {
+func (i *Impl) GetOcppConfiguration(version ocpp.ProtocolVersion) ([]core.ConfigurationKey, error) {
 	i.logger.WithField("version", version).Debug("Getting OCPP configuration")
 
-	config, err := loadConfiguration(i.db, i.ocppVariableManager, version)
-	if err != nil {
-		return nil, err
-	}
-
-	err = i.ocppVariableManager.SetConfiguration(*config)
-	if err != nil {
-		i.logger.WithError(err).Errorf("Error setting the configuration to the manager")
-	}
-
 	switch version {
-	case configuration.OCPP16:
-		return i.ocppVariableManager.GetConfiguration()
+	case ocpp.OCPP16:
+		config, err := loadConfiguration(i.db, i.ocpp16VariableManager)
+		if err != nil {
+			return nil, err
+		}
+
+		err = i.ocpp16VariableManager.SetConfiguration(*config)
+		if err != nil {
+			i.logger.WithError(err).Errorf("Error setting the configuration to the manager")
+		}
+
+		return i.ocpp16VariableManager.GetConfiguration()
 	default:
-		return nil, nil
+		return nil, fmt.Errorf("unsupported OCPP version: %v", version)
 	}
 }
 
-func (i *Impl) GetOcppConfigurationWithKey(version configuration.ProtocolVersion, key string) (*core.ConfigurationKey, error) {
+func (i *Impl) GetOcppConfigurationWithKey(version ocpp.ProtocolVersion, key string) (*core.ConfigurationKey, error) {
 	i.logger.WithField("version", version).Debug("Getting OCPP configuration with key")
 
 	switch version {
-	case configuration.OCPP16:
-		value, err := i.ocppVariableManager.GetConfigurationValue(key)
+	case ocpp.OCPP16:
+		value, err := i.ocpp16VariableManager.GetConfigurationValue(ocpp_v16.Key(key))
 		if err != nil {
 			return nil, err
 		}
@@ -197,17 +189,17 @@ func (i *Impl) GetOcppConfigurationWithKey(version configuration.ProtocolVersion
 			Value:    value,
 		}, nil
 	default:
-		return nil, nil
+		return nil, fmt.Errorf("unsupported OCPP version: %v", version)
 	}
 }
 
-func loadConfiguration(db *badger.DB, ocppVariableManager ocppConfigManager.Manager, version configuration.ProtocolVersion) (*configuration.Config, error) {
-	var ocppConfig configuration.Config
+func loadConfiguration(db *badger.DB, ocppVariableManager ocpp_v16.Manager) (*ocpp_v16.Config, error) {
+	var ocppConfig ocpp_v16.Config
 
 	// Read the configuration from the database
 	err := db.View(func(txn *badger.Txn) error {
 
-		config, err := txn.Get(database.GetOcppConfigurationKey(version))
+		config, err := txn.Get(database.GetOcppConfigurationKey(ocpp.OCPP16))
 		if err != nil {
 			return err
 		}

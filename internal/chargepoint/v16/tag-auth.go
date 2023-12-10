@@ -5,8 +5,7 @@ import (
 
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
-	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
-	v16 "github.com/xBlaz3kx/ocppManager-go/configuration"
+	"github.com/xBlaz3kx/ocppManager-go/ocpp_v16"
 )
 
 // isTagAuthorized Check if the tag is authorized for charging. If the authentication cache is enabled and if it can preauthorize from cache,
@@ -15,7 +14,7 @@ import (
 func (cp *ChargePoint) isTagAuthorized(tagId string) bool {
 	var (
 		response             = false
-		localPreAuthorize, _ = ocppConfigManager.GetConfigurationValue(v16.LocalPreAuthorize.String())
+		localPreAuthorize, _ = cp.settingsManager.GetOcppV16Manager().GetConfigurationValue(ocpp_v16.LocalPreAuthorize)
 		logInfo              = cp.logger.WithField("tag", tagId)
 	)
 
@@ -75,7 +74,7 @@ func (cp *ChargePoint) sendAuthorizeRequest(tagId string) (*types.IdTagInfo, err
 
 		// An error occurred probably due network issues.
 		// If LocalAuthOffline is enabled, try to authenticate from cache or localAuthList.
-		localAuthOffline, _ := ocppConfigManager.GetConfigurationValue(v16.LocalAuthorizeOffline.String())
+		localAuthOffline, _ := cp.settingsManager.GetOcppV16Manager().GetConfigurationValue(ocpp_v16.LocalAuthorizeOffline)
 		if localAuthOffline != nil && *localAuthOffline == "true" {
 			logInfo.Warn("Offline authorization enabled, getting tag")
 			tag, err := cp.tagManager.GetTag(tagId)
@@ -96,7 +95,7 @@ func (cp *ChargePoint) sendAuthorizeRequest(tagId string) (*types.IdTagInfo, err
 		types.AuthorizationStatusInvalid:
 
 		// Stop the transaction and charging process if the StopTransactionOnInvalidId is enabled.
-		stopTransactionOnInvalidId, _ := ocppConfigManager.GetConfigurationValue(v16.StopTransactionOnInvalidId.String())
+		stopTransactionOnInvalidId, _ := cp.settingsManager.GetOcppV16Manager().GetConfigurationValue(ocpp_v16.StopTransactionOnInvalidId)
 		if stopTransactionOnInvalidId != nil && *stopTransactionOnInvalidId == "true" {
 			logInfo.Warn("Tag status invalid or expired, stopping any charging session with the tag")
 

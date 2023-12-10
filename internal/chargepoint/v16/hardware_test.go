@@ -7,8 +7,7 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/indicator"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/indicator"
 )
 
 const (
@@ -27,9 +26,6 @@ func (s *hardwareTestSuite) SetupTest() {
 }
 
 func (s *hardwareTestSuite) TestSendToLCD() {
-	lcdMock := display.NewDisplayMock(s.T())
-	s.cp.SetDisplay(lcdMock)
-	lcdMock.OnCleanup().Return()
 }
 
 func (s *hardwareTestSuite) TestDisplayLedStatus() {

@@ -97,16 +97,25 @@ func (cp *ChargePoint) SetIndicatorSettings(settings settings2.IndicatorStatusMa
 }
 
 func (cp *ChargePoint) SetAvailability(availabilityType core.AvailabilityType) error {
+	cp.logger.WithField("availability", availabilityType).Debug("Setting availability")
+
 	// Check if there are ongoing transactions
 	_, sessionErr := cp.sessionManager.GetSession(0, nil)
 	switch sessionErr {
 	case nil:
+		// Set availability status and notify the backend
 		cp.availability = availabilityType
+
+		switch availabilityType {
+		case core.AvailabilityTypeInoperative:
+			cp.notifyConnectorStatus(0, core.ChargePointStatusUnavailable, core.NoError)
+		case core.AvailabilityTypeOperative:
+			cp.notifyConnectorStatus(0, core.ChargePointStatusAvailable, core.NoError)
+		}
+
 	default:
 		return errors.New("error checking for ongoing transactions")
 	}
-
-	cp.logger.WithField("availability", availabilityType).Debug("Setting availability")
 
 	return nil
 }

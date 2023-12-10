@@ -7,16 +7,15 @@ import (
 	"sync"
 
 	"github.com/go-co-op/gocron"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/evcc"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/power-meter"
-
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/evcc"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/power-meter"
 )
 
 var (
@@ -38,7 +37,7 @@ type (
 		SetMaxChargingTime(time *int)
 		GetMaxChargingPower() float64
 
-		StartCharging(connectorId *int) error
+		StartCharging(connectorId *int, measurands []types.Measurand, sampleInterval string) error
 		StopCharging(reason core.Reason) error
 		Lock()
 		Unlock()
@@ -226,7 +225,7 @@ Loop:
 }
 
 // StartCharging Start charging an evse if evse is available and session could be started.
-func (evse *Impl) StartCharging(connectorId *int) error {
+func (evse *Impl) StartCharging(connectorId *int, measurands []types.Measurand, sampleInterval string) error {
 	logInfo := evse.logger.WithField("connectorId", connectorId)
 	logInfo.Debugf("Trying to start charging on evse")
 
@@ -244,7 +243,7 @@ func (evse *Impl) StartCharging(connectorId *int) error {
 	evse.evcc.Lock()
 
 	// Prepare power meter and schedule sampling
-	sampleError := evse.preparePowerMeter()
+	sampleError := evse.scheduleMeterValueUpdates(measurands, sampleInterval)
 	if sampleError != nil {
 		logInfo.WithError(sampleError).Error("Cannot sample evse")
 	}

@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/dgraph-io/badger/v3"
+	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/database"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
@@ -40,7 +41,7 @@ type (
 		GetAvailableEVSE() (EVSE, error)
 		GetEVSEWithReservationId(reservationId int) (EVSE, error)
 
-		StartCharging(evseId int, connectorId *int) error
+		StartCharging(evseId int, connectorId *int, measurands []types.Measurand, sampleInterval string) error
 		StopCharging(evseId int, connectorId *int, reason core.Reason) error
 		StopAllEVSEs(reason core.Reason) error
 		RestoreEVSEs() error
@@ -172,10 +173,12 @@ func (m *managerImpl) GetAvailableEVSE() (EVSE, error) {
 	return availableConnector, nil
 }
 
-func (m *managerImpl) StartCharging(evseId int, connectorId *int) error {
+func (m *managerImpl) StartCharging(evseId int, connectorId *int, measurands []types.Measurand, sampleInterval string) error {
 	m.logger.WithFields(log.Fields{
-		"evseId":      evseId,
-		"connectorId": connectorId,
+		"evseId":         evseId,
+		"connectorId":    connectorId,
+		"measurands":     measurands,
+		"sampleInterval": sampleInterval,
 	}).Debug("Attempting to start charging")
 
 	c, err := m.GetEVSE(evseId)
@@ -183,7 +186,7 @@ func (m *managerImpl) StartCharging(evseId int, connectorId *int) error {
 		return err
 	}
 
-	return c.StartCharging(connectorId)
+	return c.StartCharging(connectorId, measurands, sampleInterval)
 }
 
 func (m *managerImpl) StopCharging(evseId int, connectorId *int, reason core.Reason) error {

@@ -9,9 +9,9 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/evse"
 	chargePoint "github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
+	cfg "github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
 	userDatabase "github.com/xBlaz3kx/ChargePi-go/internal/users/pkg/database"
 	"github.com/xBlaz3kx/ChargePi-go/internal/users/service"
-	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
 )
 
 // SetupApi Runs a gRPC API server at a specified address if it is enabled. The API is protected by an authentication layer.
@@ -22,7 +22,7 @@ func SetupApi(
 	handler chargePoint.ChargePoint,
 	tagManager auth.TagManager,
 	manager evse.Manager,
-	ocppVariableManager ocppConfigManager.Manager,
+	settingsManager cfg.Manager,
 ) {
 	if !api.Enabled {
 		log.Info("API is disabled")
@@ -36,7 +36,7 @@ func SetupApi(
 	userService := service.NewUserService(userDb)
 
 	// Expose the API endpoints
-	server := grpc.NewServer(api, handler, tagManager, manager, ocppVariableManager, userService)
+	server := grpc.NewServer(api, handler, tagManager, manager, settingsManager, userService)
 	server.Run()
 }
 

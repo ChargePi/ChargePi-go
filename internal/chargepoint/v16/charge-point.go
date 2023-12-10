@@ -76,15 +76,17 @@ func (cp *ChargePoint) Connect(ctx context.Context, serverUrl string) {
 		cp.chargePoint.Stop()
 	}
 
-	logInfo := log.WithFields(log.Fields{
+	logInfo := cp.logger.WithFields(log.Fields{
 		"chargePointId": cp.connectionSettings.Id,
 	})
 
-	wsClient, err := util.CreateClient(cp.connectionSettings)
+	// Create a new websocket client
+	wsClient, err := util.CreateClient(cp.connectionSettings, nil)
 	if err != nil {
 		logInfo.WithError(err).Panic("Cannot create a new websocket client")
 	}
 
+	// Create a new OCPP charge point handler
 	cp.chargePoint = ocpp16.NewChargePoint(cp.connectionSettings.Id, nil, wsClient)
 
 	// Set profiles
@@ -147,7 +149,6 @@ func (cp *ChargePoint) Reset(resetType string) error {
 
 	// Todo check if conditions are met
 	var err error
-
 	switch resetType {
 	case string(core.ResetTypeHard):
 		_, err = cp.scheduler.Every(3).Seconds().LimitRunsTo(1).Do(cp.CleanUp, core.ReasonHardReset)

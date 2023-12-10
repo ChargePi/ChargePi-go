@@ -13,7 +13,8 @@ import (
 	"github.com/spf13/viper"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/database"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
-	"github.com/xBlaz3kx/ocppManager-go/configuration"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/models/ocpp"
+	"github.com/xBlaz3kx/ocppManager-go/ocpp_v16"
 )
 
 var importer Importer
@@ -34,8 +35,8 @@ func GetImporter() Importer {
 type Importer interface {
 	ImportEVSESettings(settings []settings.EVSE) error
 	ImportEVSESettingsFromPath(path string) error
-	ImportOcppConfiguration(version configuration.ProtocolVersion, config configuration.Config) error
-	ImportOcppConfigurationFromPath(version configuration.ProtocolVersion, path string) error
+	ImportOcppConfiguration(version ocpp.ProtocolVersion, config ocpp_v16.Config) error
+	ImportOcppConfigurationFromPath(version ocpp.ProtocolVersion, path string) error
 	ImportLocalAuthList(list settings.AuthList) error
 	ImportLocalAuthListFromPath(path string) error
 	ImportChargePointSettings(point settings.Settings) error
@@ -77,7 +78,7 @@ func (i *ImporterImpl) ImportEVSESettings(settings []settings.EVSE) error {
 	})
 }
 
-func (i *ImporterImpl) ImportOcppConfiguration(version configuration.ProtocolVersion, config configuration.Config) error {
+func (i *ImporterImpl) ImportOcppConfiguration(version ocpp.ProtocolVersion, config ocpp_v16.Config) error {
 	i.logger.Debug("Importing ocpp configuration to the database")
 
 	// Validate the settings
@@ -216,10 +217,13 @@ func (i *ImporterImpl) ImportChargePointSettingsFromPath(path string) error {
 	return i.ImportChargePointSettings(cpSettings)
 }
 
-func (i *ImporterImpl) ImportOcppConfigurationFromPath(version configuration.ProtocolVersion, path string) error {
+func (i *ImporterImpl) ImportOcppConfigurationFromPath(version ocpp.ProtocolVersion, path string) error {
 	i.logger.Infof("Importing OCPP configuration from %s", path)
 
-	var ocppConfiguration configuration.Config
+	switch version {
+
+	}
+	var ocppConfiguration ocpp_v16.Config
 	config := viper.New()
 
 	// Read the settings from the file.

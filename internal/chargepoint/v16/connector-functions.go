@@ -11,8 +11,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/display"
-	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
-	"github.com/xBlaz3kx/ocppManager-go/configuration"
+	"github.com/xBlaz3kx/ocppManager-go/ocpp_v16"
 )
 
 // restoreState After connecting to the central system, try to restore the previous state of each EVSE and notify
@@ -106,7 +105,7 @@ func (cp *ChargePoint) handleStatusUpdate(ctx context.Context, evseId int, statu
 	logInfo.Debug("Handling status update")
 
 	cp.indicateStatusChange(evseId-1, status)
-
+	cp.displayStatusChangeOnDisplay(evseId-1, status)
 	// Todo design a plugin/middleware interface
 
 	switch status {
@@ -131,9 +130,8 @@ func (cp *ChargePoint) handleStatusUpdate(ctx context.Context, evseId int, statu
 	case core.ChargePointStatusSuspendedEVSE:
 		// Todo indicate that the EVSE has halted charging
 	case core.ChargePointStatusFinishing:
-		stopTransactionOnEVDisconnect, err := ocppConfigManager.GetConfigurationValue(configuration.StopTransactionOnEVSideDisconnect.String())
-
 		// If EV disconnects and the StopTransactionOnEVDisconnect is enabled, stop the transaction
+		stopTransactionOnEVDisconnect, err := cp.settingsManager.GetOcppV16Manager().GetConfigurationValue(ocpp_v16.StopTransactionOnEVSideDisconnect)
 		if stopTransactionOnEVDisconnect != nil && *stopTransactionOnEVDisconnect == "true" {
 			stopChargingErr := cp.StopCharging(evseId, 1, core.ReasonEVDisconnected)
 			if stopChargingErr != nil {
@@ -160,7 +158,9 @@ func (cp *ChargePoint) StartChargingFreeMode(evseId int) error {
 	logInfo := cp.logger.WithField("evseId", evseId)
 	logInfo.Info("Free mode enabled, starting charging")
 
-	return cp.evseManager.StartCharging(evseId, nil)
+	measurements, sampleInterval := cp.getSessionParameters()
+
+	return cp.evseManager.StartCharging(evseId, nil, measurements, sampleInterval)
 }
 
 // authenticateWithRfidCard waits for a tag to be tapped and starts charging if the tag is valid.

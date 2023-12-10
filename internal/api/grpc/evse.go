@@ -8,7 +8,6 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/samber/lo"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/evse"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/grpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -84,8 +83,9 @@ Loop:
 		case <-ctx.Done():
 			break Loop
 		default:
+
 			// Sample power meter
-			samples := evseWithId.SamplePowerMeter(util.GetTypesToSample())
+			samples := evseWithId.SamplePowerMeter([]types.Measurand{types.MeasurandEnergyActiveImportRegister})
 
 			// Convert to grpc samples
 			var samplesToReturn []*grpc.Sample

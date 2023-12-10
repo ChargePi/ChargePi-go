@@ -2,13 +2,16 @@ package v16
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/lorenzodonini/ocpp-go/ocpp"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
+	"github.com/samber/lo"
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
+	"github.com/xBlaz3kx/ocppManager-go/ocpp_v16"
 )
 
 func (cp *ChargePoint) StartCharging(evseId, connectorId int, tagId string) error {
@@ -28,6 +31,8 @@ func (cp *ChargePoint) StartCharging(evseId, connectorId int, tagId string) erro
 	if !cp.isTagAuthorized(tagId) {
 		return chargePoint.ErrTagUnauthorized
 	}
+
+	// todo sample power meter to get current energy value
 
 	request := core.NewStartTransactionRequest(
 		evseId,
@@ -54,8 +59,11 @@ func (cp *ChargePoint) StartCharging(evseId, connectorId int, tagId string) erro
 				return
 			}
 
+			// Get metering parameters
+			measurands, sampleInterval := cp.getSessionParameters()
+
 			// Start the charging on EVSE
-			err = cp.evseManager.StartCharging(evseId, nil)
+			err = cp.evseManager.StartCharging(evseId, nil, measurands, sampleInterval)
 			if err != nil {
 				logInfo.WithError(err).Error("Unable to start charging on EVSE")
 				return
@@ -76,4 +84,26 @@ func (cp *ChargePoint) StartCharging(evseId, connectorId int, tagId string) erro
 	}
 
 	return cp.sendRequest(request, callback)
+}
+
+func (cp *ChargePoint) getSessionParameters() ([]types.Measurand, string) {
+
+	// Get metering parameters
+	variableManager := cp.settingsManager.GetOcppV16Manager()
+	sampleInterval, err := variableManager.GetConfigurationValue(ocpp_v16.MeterValueSampleInterval)
+	if err != nil {
+		sampleInterval = lo.ToPtr("90s")
+	}
+
+	measurandsString, err := variableManager.GetConfigurationValue(ocpp_v16.MeterValuesSampledData)
+	if err != nil {
+		measurandsString = lo.ToPtr("Energy.Active.Import.Register")
+	}
+
+	var measurands []types.Measurand
+	for _, measurand := range strings.Split(*measurandsString, ",") {
+		measurands = append(measurands, types.Measurand(measurand))
+	}
+
+	return measurands, *sampleInterval
 }

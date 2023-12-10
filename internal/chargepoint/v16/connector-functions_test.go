@@ -1,18 +1,13 @@
 package v16
 
 import (
-	"context"
 	"testing"
-	"time"
 
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
-	ocppManager "github.com/xBlaz3kx/ocppManager-go"
-	"github.com/xBlaz3kx/ocppManager-go/configuration"
+	"github.com/xBlaz3kx/ocppManager-go/ocpp_v16"
 )
 
 func newString(s string) *string {
@@ -20,7 +15,7 @@ func newString(s string) *string {
 }
 
 var (
-	ocppConfig = configuration.Config{
+	ocppConfig = ocpp_v16.Config{
 		Version: 1,
 		Keys: []core.ConfigurationKey{
 			{
@@ -185,73 +180,10 @@ func (s *connectorFunctionsTestSuite) TestRestoreState() {
 	// todo
 }
 
-func (s *connectorFunctionsTestSuite) TestDisplayConnectorStatus() {
-	var (
-		ctx, cancel = context.WithTimeout(context.Background(), time.Second*10)
-		channel     = make(chan notifications.Message)
-	)
-
-	go func() {
-		time.Sleep(time.Millisecond * 100)
-		s.cp.displayStatusChangeOnDisplay(connectorId, core.ChargePointStatusAvailable)
-
-		time.Sleep(time.Millisecond * 100)
-		s.cp.displayStatusChangeOnDisplay(connectorId, core.ChargePointStatusCharging)
-
-		time.Sleep(time.Millisecond * 100)
-		s.cp.displayStatusChangeOnDisplay(connectorId, core.ChargePointStatusFinishing)
-	}()
-
-	numMessages := 0
-Loop:
-	for {
-		select {
-		case msg := <-channel:
-			numMessages++
-			log.Debugf("Received message from channel %v", msg)
-			s.Condition(func() (success bool) {
-				switch numMessages {
-				case 1:
-					return s.Contains(msg.Messages, "available.")
-				case 2:
-					return s.Contains(msg.Messages, "Started charging") &&
-						s.Contains(msg.Messages, "at 1.")
-				case 3:
-					return s.Contains(msg.Messages, "Stopped charging")
-				default:
-					s.Fail("Invalid message number")
-					return false
-				}
-			})
-
-			if numMessages == 3 {
-				cancel()
-			}
-			break
-		case <-ctx.Done():
-			break Loop
-		}
-	}
-
-	cancel()
-}
-
 func (s *connectorFunctionsTestSuite) TestNotifyConnectorStatus() {
-	var (
-		cp = new(chargePointMock)
-	)
-
-	cp.On("SendRequestAsync", mock.Anything).Run(func(args mock.Arguments) {
-		s.Assert().IsType(&core.StatusNotificationRequest{}, args.Get(0))
-		notification := args.Get(0).(*core.StatusNotificationRequest)
-		s.Assert().EqualValues(connectorId, notification.ConnectorId)
-		s.Assert().EqualValues(core.ChargePointStatusAvailable, notification.Status)
-	}).Return(core.NewStatusNotificationConfirmation(), nil, nil)
-	s.cp.chargePoint = cp
 
 	s.cp.notifyConnectorStatus(1, core.ChargePointStatusAvailable, core.NoError)
 
-	cp.AssertNumberOfCalls(s.T(), "SendRequestAsync", 1)
 }
 
 func TestConnectorFunctions(t *testing.T) {

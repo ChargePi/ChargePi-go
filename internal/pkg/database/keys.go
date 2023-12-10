@@ -3,7 +3,7 @@ package database
 import (
 	"fmt"
 
-	"github.com/xBlaz3kx/ocppManager-go/configuration"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/models/ocpp"
 )
 
 func GetEvseKey(evseId int) string {
@@ -22,7 +22,7 @@ func GetSmartChargingProfile(profileId int) []byte {
 	return []byte(fmt.Sprintf("profile-%d", profileId))
 }
 
-func GetOcppConfigurationKey(version configuration.ProtocolVersion) []byte {
+func GetOcppConfigurationKey(version ocpp.ProtocolVersion) []byte {
 	return []byte(fmt.Sprintf("ocpp-configuration-%s", version))
 }
 

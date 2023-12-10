@@ -12,9 +12,9 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/evse"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
+	cfg "github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/users/service"
 	grpc2 "github.com/xBlaz3kx/ChargePi-go/pkg/grpc"
-	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
@@ -36,7 +36,7 @@ func NewServer(
 	point chargePoint.ChargePoint,
 	authCache auth.TagManager,
 	manager evse.Manager,
-	configurationManager ocppConfigManager.Manager,
+	settingsManager cfg.Manager,
 	userService service.Service,
 ) *Server {
 	var opts []grpc.ServerOption
@@ -74,7 +74,7 @@ func NewServer(
 		address:            settings.Address,
 		service:            NewEvseService(manager),
 		authService:        NewAuthService(authCache),
-		chargePointService: NewChargePointService(point, configurationManager),
+		chargePointService: NewChargePointService(point, settingsManager),
 		logService:         NewLogService(),
 		userService:        NewUserService(userService),
 	}

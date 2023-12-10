@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	cfg "github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
-	"github.com/xBlaz3kx/ocppManager-go/configuration"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/models/ocpp"
 )
 
 var (
@@ -41,7 +41,7 @@ func importCommand() *cobra.Command {
 
 			// If the flag was set, import OCPP configuration to the ChargePi
 			if ocppFlag {
-				err := importer.ImportOcppConfigurationFromPath(configuration.ProtocolVersion(*ocppVersionFlag), *ocppConfigurationFilePath)
+				err := importer.ImportOcppConfigurationFromPath(ocpp.ProtocolVersion(*ocppVersionFlag), *ocppConfigurationFilePath)
 				if err != nil {
 					return fmt.Errorf("could not import OCPP configuration: %v", err)
 				}

@@ -11,21 +11,19 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/pkg/grpc"
 	commonSettings "github.com/xBlaz3kx/ChargePi-go/pkg/models/settings"
 	settings2 "github.com/xBlaz3kx/ChargePi-go/pkg/models/settings"
-	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
+	"github.com/xBlaz3kx/ocppManager-go/ocpp_v16"
 )
 
 type ChargePointService struct {
 	grpc.UnimplementedChargePointServer
 	point           chargePoint.ChargePoint
-	ocppManager     ocppConfigManager.Manager
 	settingsManager cfg.Manager
 }
 
-func NewChargePointService(point chargePoint.ChargePoint, ocppManager ocppConfigManager.Manager) *ChargePointService {
+func NewChargePointService(point chargePoint.ChargePoint, settingsManager cfg.Manager) *ChargePointService {
 	return &ChargePointService{
 		point:           point,
-		ocppManager:     ocppManager,
-		settingsManager: cfg.GetManager(),
+		settingsManager: settingsManager,
 	}
 }
 
@@ -136,7 +134,7 @@ func (s *ChargePointService) ChangeChargePointDetails(ctx context.Context, reque
 func (s *ChargePointService) GetOCPPVariables(ctx context.Context, e *empty.Empty) (*grpc.GetVariablesResponse, error) {
 	response := &grpc.GetVariablesResponse{}
 
-	configuration, err := s.ocppManager.GetConfiguration()
+	configuration, err := s.settingsManager.GetOcppV16Manager().GetConfiguration()
 	if err != nil {
 		return nil, err
 	}
@@ -167,7 +165,7 @@ func (s *ChargePointService) SetOCPPVariables(ctx context.Context, request *grpc
 	for _, variable := range request.GetVariables() {
 		status := "Failed"
 
-		err := s.ocppManager.UpdateKey(variable.Key, variable.Value)
+		err := s.settingsManager.GetOcppV16Manager().UpdateKey(ocpp_v16.Key(variable.Key), variable.Value)
 		if err == nil {
 			status = "Success"
 		}
@@ -179,7 +177,7 @@ func (s *ChargePointService) SetOCPPVariables(ctx context.Context, request *grpc
 }
 
 func (s *ChargePointService) GetOCPPVariable(ctx context.Context, request *grpc.GetVariableRequest) (*grpc.OcppVariable, error) {
-	value, err := s.ocppManager.GetConfigurationValue(request.GetKey())
+	value, err := s.settingsManager.GetOcppV16Manager().GetConfigurationValue(ocpp_v16.Key(request.GetKey()))
 	if err != nil {
 		return nil, err
 	}

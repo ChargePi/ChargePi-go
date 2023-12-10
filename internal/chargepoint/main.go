@@ -6,26 +6,19 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/xBlaz3kx/ChargePi-go/internal/diagnostics"
-	database2 "github.com/xBlaz3kx/ChargePi-go/internal/sessions/pkg/database"
-	"github.com/xBlaz3kx/ChargePi-go/internal/sessions/service/session"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/logging"
-
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/localauth"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/remotetrigger"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
+	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
+	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/auth"
+	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/evse"
+	"github.com/xBlaz3kx/ChargePi-go/internal/diagnostics"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/database"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	cfg "github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
-	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
-	"github.com/xBlaz3kx/ocppManager-go/configuration"
-
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/evse"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
+	database2 "github.com/xBlaz3kx/ChargePi-go/internal/sessions/pkg/database"
+	"github.com/xBlaz3kx/ChargePi-go/internal/sessions/service/session"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/logging"
 )
 
 func Run(debug bool, config *settings.Settings) {
@@ -48,17 +41,8 @@ func Run(debug bool, config *settings.Settings) {
 	// Create a database for EVSE, tags, users and settings
 	db := database.Get()
 
-	// Setup OCPP configuration from the database
 	settingsManager := cfg.GetManager()
-	settingsManager.SetupOcppConfiguration(
-		configuration.ProtocolVersion(protocolVersion),
-		core.ProfileName,
-		reservation.ProfileName,
-		remotetrigger.ProfileName,
-		localauth.ProfileName,
-	)
 
-	ocppVariableManager := ocppConfigManager.GetManager()
 	evseManager := evse.GetManager()
 	diagnosticsManager := diagnostics.NewManager()
 	tagManager := auth.NewTagManager(db)
@@ -76,7 +60,7 @@ func Run(debug bool, config *settings.Settings) {
 	defer parentCancel()
 
 	// Set the settings
-	handler = CreateChargePoint(parentCtxForOcpp, protocolVersion, logger, evseManager, tagManager, sessionManager, diagnosticsManager, hardware)
+	handler = CreateChargePoint(parentCtxForOcpp, protocolVersion, logger, evseManager, tagManager, sessionManager, settingsManager, diagnosticsManager, hardware)
 	err = handler.SetSettings(chargePointInfo)
 	if err != nil {
 		logger.WithError(err).Fatal("Unable to set the charge point settings")
@@ -91,7 +75,7 @@ func Run(debug bool, config *settings.Settings) {
 	go handler.ListenForConnectorStatusChange(ctx, evseManager.GetNotificationChannel())
 
 	// Start the UI and API
-	go SetupApi(db, config.Api, handler, tagManager, evseManager, ocppVariableManager)
+	go SetupApi(db, config.Api, handler, tagManager, evseManager, settingsManager)
 	go SetupUi(config.Ui)
 	go setupHealthcheck()
 

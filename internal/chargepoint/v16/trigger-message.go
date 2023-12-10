@@ -1,14 +1,16 @@
 package v16
 
 import (
+	"strings"
 	"time"
 
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/firmware"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/remotetrigger"
+	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/evse"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
+	"github.com/xBlaz3kx/ocppManager-go/ocpp_v16"
 )
 
 func (cp *ChargePoint) OnTriggerMessage(request *remotetrigger.TriggerMessageRequest) (confirmation *remotetrigger.TriggerMessageConfirmation, err error) {
@@ -101,7 +103,16 @@ func (cp *ChargePoint) getMeasurements(evseId int) error {
 		return err
 	}
 
+	value, err := cp.settingsManager.GetOcppV16Manager().GetConfigurationValue(ocpp_v16.MeterValuesSampledData)
+	if err != nil {
+		return err
+	}
+
+	var measurands []types.Measurand
+	for _, measurand := range strings.Split(*value, ",") {
+		measurands = append(measurands, types.Measurand(measurand))
+	}
 	// Todo sample
-	_ = requestedEvse.SamplePowerMeter(util.GetTypesToSample())
+	_ = requestedEvse.SamplePowerMeter(measurands)
 	return nil
 }

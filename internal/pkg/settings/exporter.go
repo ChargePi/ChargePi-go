@@ -13,7 +13,7 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/auth"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/database"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
-	"github.com/xBlaz3kx/ocppManager-go/configuration"
+	"github.com/xBlaz3kx/ocppManager-go/ocpp_v16"
 )
 
 var exporter Exporter
@@ -36,7 +36,7 @@ func GetExporter() Exporter {
 type Exporter interface {
 	ExportEVSESettings() []settings.EVSE
 	ExportEVSESettingsToFile(path string) error
-	ExportOcppConfiguration() configuration.Config
+	ExportOcppConfiguration() ocpp_v16.Config
 	ExportOcppConfigurationToFile(path string) error
 	ExportLocalAuthList() (*settings.AuthList, error)
 	ExportLocalAuthListToFile(path string) error
@@ -56,10 +56,10 @@ func (i *ExporterImpl) ExportEVSESettings() []settings.EVSE {
 	return database.GetEvseSettings(i.db)
 }
 
-func (i *ExporterImpl) ExportOcppConfiguration() configuration.Config {
-	i.logger.Debug("Exporting OCPP configuration from the database")
-	getConfiguration, _ := i.settingsManager.GetOcppConfiguration(configuration.OCPP16)
-	return configuration.Config{
+func (i *ExporterImpl) ExportOcppConfiguration() ocpp_v16.Config {
+	i.logger.Debug("Exporting OCPP configuration from database")
+	getConfiguration, _ := i.settingsManager.GetOcppV16Manager().GetConfiguration()
+	return ocpp_v16.Config{
 		Version: 1,
 		Keys:    getConfiguration,
 	}

@@ -14,8 +14,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/auth"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/evse"
-	ocppManager "github.com/xBlaz3kx/ocppManager-go"
-	v16 "github.com/xBlaz3kx/ocppManager-go/configuration"
+	"github.com/xBlaz3kx/ocppManager-go/ocpp_v16"
 )
 
 func (cp *ChargePoint) OnChangeAvailability(request *core.ChangeAvailabilityRequest) (confirmation *core.ChangeAvailabilityConfirmation, err error) {
@@ -56,14 +55,9 @@ func (cp *ChargePoint) OnChangeConfiguration(request *core.ChangeConfigurationRe
 	var response = core.ConfigurationStatusRejected
 
 	// todo rework this
-	err = ocppManager.UpdateKey(request.Key, &request.Value)
+	err = cp.settingsManager.GetOcppV16Manager().UpdateKey(ocpp_v16.Key(request.Key), &request.Value)
 	if err == nil {
 		response = core.ConfigurationStatusAccepted
-	}
-
-	err = ocppManager.UpdateConfigurationFile()
-	if err != nil {
-		response = core.ConfigurationStatusRejected
 	}
 
 	return core.NewChangeConfigurationConfirmation(response), nil
@@ -128,7 +122,7 @@ func (cp *ChargePoint) OnGetConfiguration(request *core.GetConfigurationRequest)
 		unknownKeys            []string
 		configArray            = []core.ConfigurationKey{}
 		response               = core.NewGetConfigurationConfirmation(configArray)
-		configuration, confErr = ocppManager.GetConfiguration()
+		configuration, confErr = cp.settingsManager.GetOcppV16Manager().GetConfiguration()
 	)
 
 	if confErr != nil || configuration == nil {
@@ -150,7 +144,7 @@ func (cp *ChargePoint) OnGetConfiguration(request *core.GetConfigurationRequest)
 
 		// Note: redundant looping, should've just created an ocpp.ConfigurationKey function
 		// Check if the key exists
-		_, keyErr := ocppManager.GetConfigurationValue(key)
+		_, keyErr := cp.settingsManager.GetOcppV16Manager().GetConfigurationValue(ocpp_v16.Key(key))
 		if keyErr != nil {
 			unknownKeys = append(unknownKeys, key)
 			continue
@@ -174,7 +168,7 @@ func (cp *ChargePoint) OnReset(request *core.ResetRequest) (confirmation *core.R
 	var response = core.ResetStatusRejected
 	var retries = 3
 
-	resetRetries, _ := ocppManager.GetConfigurationValue(v16.ResetRetries.String())
+	resetRetries, _ := cp.settingsManager.GetOcppV16Manager().GetConfigurationValue(ocpp_v16.ResetRetries)
 	if resetRetries != nil {
 		aRetries, err := strconv.Atoi(*resetRetries)
 		if err == nil {
@@ -277,7 +271,7 @@ func (cp *ChargePoint) remoteStart(evseId, connectorId int, tagId string) {
 		return
 	}
 
-	authorizeRemoteTx, _ := ocppManager.GetManager().GetConfigurationValue(v16.AuthorizeRemoteTxRequests.String())
+	authorizeRemoteTx, _ := cp.settingsManager.GetOcppV16Manager().GetConfigurationValue(ocpp_v16.AuthorizeRemoteTxRequests)
 	if authorizeRemoteTx != nil && *authorizeRemoteTx == "true" {
 		logInfo.Info("Authorizing RemoteStart transaction")
 
@@ -304,9 +298,9 @@ func (cp *ChargePoint) remoteStart(evseId, connectorId int, tagId string) {
 
 		switch startTransactionConf.IdTagInfo.Status {
 		case types.AuthorizationStatusAccepted, types.AuthorizationStatusConcurrentTx:
-
 			// Attempt to start charging
-			err := cp.evseManager.StartCharging(evseId, nil)
+			measurements, sampleInterval := cp.getSessionParameters()
+			err := cp.evseManager.StartCharging(evseId, nil, measurements, sampleInterval)
 			if err != nil {
 				logInfo.WithError(err).Errorf("Unable to start charging connector")
 				return

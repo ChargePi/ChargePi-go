@@ -8,8 +8,6 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/power-meter"
-	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
-	"github.com/xBlaz3kx/ocppManager-go/configuration"
 )
 
 func (evse *Impl) GetPowerMeter() powerMeter.PowerMeter {
@@ -96,15 +94,12 @@ func (evse *Impl) SamplePowerMeter(measurands []types.Measurand) []types.Sampled
 	return samples
 }
 
-func (evse *Impl) samplePowerMeterAndSend() {
+func (evse *Impl) sendMeterValueUpdate(measurands []types.Measurand) {
 	evse.logger.Debug("Sampling power meter")
-
-	measurands := util.GetTypesToSample()
-	samples := evse.SamplePowerMeter(measurands)
 
 	meterValue := types.MeterValue{
 		Timestamp:    types.NewDateTime(time.Now()),
-		SampledValue: samples,
+		SampledValue: evse.SamplePowerMeter(measurands),
 	}
 
 	// Notify a MeterValue update
@@ -115,27 +110,18 @@ func (evse *Impl) samplePowerMeterAndSend() {
 	}
 }
 
-// preparePowerMeter
-func (evse *Impl) preparePowerMeter() error {
+// scheduleMeterValueUpdates
+func (evse *Impl) scheduleMeterValueUpdates(measurands []types.Measurand, samplingInterval string) error {
 	if util.IsNilInterfaceOrPointer(evse.powerMeter) {
 		return ErrPowerMeterNotEnabled
 	}
 
 	evse.logger.Debug("Preparing power meter")
 
-	var (
-		sampleTime          = "30s"
-		sampleInterval, err = ocppConfigManager.GetConfigurationValue(configuration.MeterValueSampleInterval.String())
-	)
-
-	if err == nil && sampleInterval != nil {
-		sampleTime = fmt.Sprintf("%ss", *sampleInterval)
-	}
-
 	// Schedule the sampling
-	_, err = evse.scheduler.Every(sampleTime).
+	_, err := evse.scheduler.Every(samplingInterval).
 		Tag("evse", "sampling", fmt.Sprintf("%d", evse.evseId)).
-		Do(evse.samplePowerMeterAndSend)
+		Do(evse.sendMeterValueUpdate, measurands)
 
 	return err
 }

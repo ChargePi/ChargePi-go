@@ -10,8 +10,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/evse"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/database"
-	ocppConfigManager "github.com/xBlaz3kx/ocppManager-go"
-	v16 "github.com/xBlaz3kx/ocppManager-go/configuration"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
+	"github.com/xBlaz3kx/ocppManager-go/ocpp_v16"
 )
 
 var (
@@ -33,6 +33,8 @@ type (
 		numEvses           int
 		maxCurrent         int
 		evseManager        evse.Manager
+		settingsManager    settings.Manager
+		logger             log.FieldLogger
 		compositeSchedules map[int][]ScheduleInterval
 	}
 )
@@ -41,6 +43,7 @@ func NewManager(db *badger.DB, maxCurrent int) *Impl {
 	return &Impl{
 		db:         db,
 		maxCurrent: maxCurrent,
+		logger:     log.StandardLogger().WithField("component", "smart-charging"),
 	}
 }
 
@@ -62,6 +65,7 @@ func (m *Impl) storeProfile(profile *types.ChargingProfile) error {
 }
 
 func (m *Impl) AddProfile(profile *types.ChargingProfile) error {
+	m.logger.WithField("profile", profile).Info("Adding profile")
 	if profile == nil {
 		return nil
 	}
@@ -96,22 +100,25 @@ Store:
 }
 
 func (m *Impl) canApplyProfile(profile *types.ChargingProfile) bool {
+	m.logger.WithField("profile", profile).Info("Checking if profile can be applied")
+
+	ocppManager := m.settingsManager.GetOcppV16Manager()
 	// Get max stack level
-	stackLevelStr, err := ocppConfigManager.GetConfigurationValue(v16.ChargeProfileMaxStackLevel.String())
+	stackLevelStr, err := ocppManager.GetConfigurationValue(ocpp_v16.ChargeProfileMaxStackLevel)
 	if err != nil {
 	}
 
 	stackLevel, _ := strconv.Atoi(*stackLevelStr)
 
 	// Get max profiles
-	maxProfilesStr, err := ocppConfigManager.GetConfigurationValue(v16.MaxChargingProfilesInstalled.String())
+	maxProfilesStr, err := ocppManager.GetConfigurationValue(ocpp_v16.MaxChargingProfilesInstalled)
 	if err != nil {
 	}
 
 	maxProfiles, _ := strconv.Atoi(*maxProfilesStr)
 
 	// Get max charging schedule periods
-	maxPeriodsStr, err := ocppConfigManager.GetConfigurationValue(v16.ChargingScheduleMaxPeriods.String())
+	maxPeriodsStr, err := ocppManager.GetConfigurationValue(ocpp_v16.ChargingScheduleMaxPeriods)
 	if err != nil {
 	}
 
@@ -136,6 +143,8 @@ func (m *Impl) canApplyProfile(profile *types.ChargingProfile) bool {
 }
 
 func (m *Impl) RemoveProfile(profileId int) error {
+	m.logger.WithField("profile", profileId).Info("Removing profile")
+
 	return m.db.Update(func(txn *badger.Txn) error {
 		err := txn.Delete(database.GetSmartChargingProfile(profileId))
 		if err != nil {
@@ -147,6 +156,8 @@ func (m *Impl) RemoveProfile(profileId int) error {
 }
 
 func (m *Impl) GetProfile(profileId int) (*types.ChargingProfile, error) {
+	m.logger.WithField("profile", profileId).Info("Getting a profile")
+
 	var profile types.ChargingProfile
 
 	err := m.db.View(func(txn *badger.Txn) error {
@@ -169,6 +180,8 @@ func (m *Impl) GetProfile(profileId int) (*types.ChargingProfile, error) {
 }
 
 func (m *Impl) GetProfiles() []types.ChargingProfile {
+	m.logger.Info("Getting profiles")
+
 	var profiles []types.ChargingProfile
 
 	// Query the database for EVSE settings.
@@ -199,6 +212,7 @@ func (m *Impl) GetProfiles() []types.ChargingProfile {
 }
 
 func (m *Impl) GetCompositeSchedule() []ScheduleInterval {
+	m.logger.Info("Getting composite schedule")
 	return nil
 }
 
