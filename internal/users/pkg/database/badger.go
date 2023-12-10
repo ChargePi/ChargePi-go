@@ -90,6 +90,7 @@ func (b *UserDbBadger) AddUser(user models.User) error {
 			return ErrUserExists
 		}
 
+		// todo hash & salt passwords
 		marshal, err := json.Marshal(user)
 		if err != nil {
 			return err

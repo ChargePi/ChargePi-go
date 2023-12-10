@@ -46,8 +46,9 @@ func (evse *Impl) SetAvailability(isAvailable bool) {
 }
 
 func (evse *Impl) SetStatus(status core.ChargePointStatus, errCode core.ChargePointErrorCode) {
-	logInfo := log.WithFields(log.Fields{
-		"evseId": evse.evseId,
+	logInfo := evse.logger.WithFields(log.Fields{
+		"status": status,
+		"err":    errCode,
 	})
 	logInfo.Debugf("Setting evse status %s with err %s", status, errCode)
 
@@ -59,6 +60,7 @@ func (evse *Impl) SetStatus(status core.ChargePointStatus, errCode core.ChargePo
 
 	// Notify the channel that a status was updated
 	if evse.notificationChannel != nil {
+		logInfo.Debug("Sending status notification")
 		evse.notificationChannel <- notifications.NewStatusNotification(evse.evseId, string(status), string(errCode))
 	}
 }

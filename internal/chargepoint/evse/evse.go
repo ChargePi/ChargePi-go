@@ -86,6 +86,8 @@ type (
 		powerMeterEnabled bool
 		powerMeter        powerMeter.PowerMeter
 		evcc              evcc.EVCC
+
+		logger log.FieldLogger
 	}
 )
 
@@ -114,10 +116,12 @@ func NewEvse(evseId int, evcc evcc.EVCC, powerMeter powerMeter.PowerMeter, maxPo
 		maxPower:        maxPower,
 		status:          core.ChargePointStatusAvailable,
 		scheduler:       scheduler.NewScheduler(),
+		logger:          log.StandardLogger().WithField("component", "evse").WithField("evseId", evseId),
 	}, nil
 }
 
 func (evse *Impl) Init(ctx context.Context) error {
+	evse.logger.Info("Initializing evse")
 	// Init EVCC
 	err := evse.evcc.Init(ctx)
 	if err != nil {
@@ -139,6 +143,8 @@ func (evse *Impl) Init(ctx context.Context) error {
 }
 
 func (evse *Impl) listenForStatusUpdates(ctx context.Context) {
+	evse.logger.Debug("Listening for evcc status updates")
+
 	statusChan := evse.evcc.GetStatusChangeChannel()
 	if statusChan == nil {
 		log.Panic("Cannot listen for evcc status updates")
@@ -203,9 +209,7 @@ Loop:
 
 // StartCharging Start charging an evse if evse is available and session could be started.
 func (evse *Impl) StartCharging(connectorId *int) error {
-	logInfo := log.WithFields(log.Fields{
-		"evseId": evse.evseId,
-	})
+	logInfo := evse.logger.WithField("connectorId", connectorId)
 	logInfo.Debugf("Trying to start charging on evse")
 
 	// Check if evse is available
@@ -241,10 +245,7 @@ func (evse *Impl) StartCharging(connectorId *int) error {
 
 // StopCharging Stops charging an evse if evse is charging
 func (evse *Impl) StopCharging(reason core.Reason) error {
-	logInfo := log.WithFields(log.Fields{
-		"evseId": evse.evseId,
-		"reason": reason,
-	})
+	logInfo := evse.logger.WithField("reason", reason)
 
 	if evse.IsCharging() || evse.IsPreparing() {
 		logInfo.Debugf("Stopping charging")
@@ -265,18 +266,22 @@ func (evse *Impl) StopCharging(reason core.Reason) error {
 }
 
 func (evse *Impl) GetEvseId() int {
+	evse.logger.Debugf("Getting evse id")
 	return evse.evseId
 }
 
 func (evse *Impl) GetMaxChargingTime() *int {
+	evse.logger.Debugf("Getting max charging time")
 	return evse.maxChargingTime
 }
 
 func (evse *Impl) SetMaxChargingTime(time *int) {
+	evse.logger.WithField("time", time).Debugf("Setting max charging time")
 	evse.maxChargingTime = time
 }
 
 func (evse *Impl) GetMaxChargingPower() float64 {
+	evse.logger.Debugf("Getting max charging power")
 	return evse.maxPower
 }
 

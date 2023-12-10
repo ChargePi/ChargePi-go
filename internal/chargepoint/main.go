@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/xBlaz3kx/ChargePi-go/internal/diagnostics"
 	database2 "github.com/xBlaz3kx/ChargePi-go/internal/sessions/pkg/database"
 	"github.com/xBlaz3kx/ChargePi-go/internal/sessions/service/session"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/logging"
@@ -59,6 +60,7 @@ func Run(debug bool, config *settings.Settings) {
 
 	ocppVariableManager := ocppConfigManager.GetManager()
 	evseManager := evse.GetManager()
+	diagnosticsManager := diagnostics.NewManager()
 	tagManager := auth.NewTagManager(db)
 	sessionRepository := database2.NewSessionBadgerDb(db)
 	sessionManager := session.NewSessionManager(sessionRepository)
@@ -74,7 +76,7 @@ func Run(debug bool, config *settings.Settings) {
 	defer parentCancel()
 
 	// Set the settings
-	handler = CreateChargePoint(parentCtxForOcpp, protocolVersion, logger, evseManager, tagManager, sessionManager, hardware)
+	handler = CreateChargePoint(parentCtxForOcpp, protocolVersion, logger, evseManager, tagManager, sessionManager, diagnosticsManager, hardware)
 	err = handler.SetSettings(chargePointInfo)
 	if err != nil {
 		logger.WithError(err).Fatal("Unable to set the charge point settings")

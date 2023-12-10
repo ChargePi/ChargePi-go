@@ -7,6 +7,7 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/auth"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/evse"
 	v16 "github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/v16"
+	"github.com/xBlaz3kx/ChargePi-go/internal/diagnostics"
 	chargePoint "github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/sessions/service/session"
@@ -18,10 +19,11 @@ import (
 func CreateChargePoint(
 	ctx context.Context,
 	protocolVersion ocpp.ProtocolVersion,
-	logger *log.Logger,
+	logger log.FieldLogger,
 	manager evse.Manager,
 	tagManager auth.TagManager,
 	sessionManager session.Manager,
+	diagnosticsManager diagnostics.Manager,
 	hardware settings.Hardware,
 ) chargePoint.ChargePoint {
 
@@ -43,6 +45,7 @@ func CreateChargePoint(
 			manager,
 			tagManager,
 			sessionManager,
+			diagnosticsManager,
 			opts...,
 		)
 	case ocpp.OCPP201:

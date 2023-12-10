@@ -14,7 +14,7 @@ import (
 type Options func(point ChargePoint)
 
 // WithLogger add logger to the ChargePoint
-func WithLogger(logger *log.Logger) Options {
+func WithLogger(logger log.FieldLogger) Options {
 	return func(point ChargePoint) {
 		if logger != nil {
 			point.SetLogger(logger)

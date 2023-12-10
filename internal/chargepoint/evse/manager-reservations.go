@@ -6,7 +6,7 @@ import (
 )
 
 func (m *managerImpl) GetEVSEWithReservationId(reservationId int) (EVSE, error) {
-	logInfo := log.WithField("reservationId", reservationId)
+	logInfo := m.logger.WithField("reservationId", reservationId)
 	logInfo.Debugf("Finding evse with reservation id")
 
 	evseId, isFound := m.reservations[reservationId]
@@ -23,7 +23,7 @@ func (m *managerImpl) GetEVSEWithReservationId(reservationId int) (EVSE, error) 
 }
 
 func (m *managerImpl) Reserve(evseId int, connectorId *int, reservationId int, tagId string) error {
-	logInfo := log.WithFields(log.Fields{
+	logInfo := m.logger.WithFields(log.Fields{
 		"evseId":        evseId,
 		"tagId":         tagId,
 		"reservationId": reservationId,
@@ -40,6 +40,9 @@ func (m *managerImpl) Reserve(evseId int, connectorId *int, reservationId int, t
 }
 
 func (m *managerImpl) RemoveReservation(reservationId int) error {
+	logInfo := m.logger.WithField("reservationId", reservationId)
+	logInfo.Debugf("Removing reservation")
+
 	_, isFound := m.reservations[reservationId]
 	if !isFound {
 		return ErrReservationNotFound
@@ -49,9 +52,6 @@ func (m *managerImpl) RemoveReservation(reservationId int) error {
 	if err != nil {
 		return err
 	}
-
-	logInfo := log.WithField("reservationId", reservationId)
-	logInfo.Debugf("Removing reservation")
 
 	m.reservations[reservationId] = nil
 	evse.SetStatus(core.ChargePointStatusAvailable, core.NoError)

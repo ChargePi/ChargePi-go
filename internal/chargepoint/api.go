@@ -54,5 +54,6 @@ func SetupUi(uiSettings settings.Ui) {
 // Creates a healthcheck endpoint
 func setupHealthcheck() {
 	log.Infof("Starting application healthcheck at localhost:8081")
-	http.NewAppServer().Serve(":8081")
+	httpServer := http.NewAppServer()
+	httpServer.Serve(":8081")
 }

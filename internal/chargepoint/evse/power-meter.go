@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
-	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/power-meter"
@@ -25,21 +24,21 @@ func (evse *Impl) SetPowerMeter(meter powerMeter.PowerMeter) error {
 // SamplePowerMeter Get a sample from the power meter. The measurands argument takes the list of all the types of the measurands to sample.
 // It will add all the samples to the evse's Session if it is active.
 func (evse *Impl) SamplePowerMeter(measurands []types.Measurand) []types.SampledValue {
-	logInfo := log.WithFields(log.Fields{
-		"evseId": evse.evseId,
-	})
+	logInfo := evse.logger
 
 	if util.IsNilInterfaceOrPointer(evse.powerMeter) {
 		logInfo.Warn("Sampling the power meter unavailable")
 		return nil
 	}
 
-	logInfo.Debugf("Sampling EVSE with: %v", measurands)
+	logInfo.Debugf("Sampling EVSE for measurands %v", measurands)
 
 	var samples []types.SampledValue
 
 	// Get value for each supported measureand
 	for _, measurand := range measurands {
+		logInfo.Debugf("Sampling measurand %v", measurand)
+
 		switch measurand {
 		case types.MeasurandPowerActiveImport, types.MeasurandPowerActiveExport:
 			power, err := evse.powerMeter.GetPower(1)
@@ -98,6 +97,8 @@ func (evse *Impl) SamplePowerMeter(measurands []types.Measurand) []types.Sampled
 }
 
 func (evse *Impl) samplePowerMeterAndSend() {
+	evse.logger.Debug("Sampling power meter")
+
 	measurands := util.GetTypesToSample()
 	samples := evse.SamplePowerMeter(measurands)
 
@@ -108,6 +109,7 @@ func (evse *Impl) samplePowerMeterAndSend() {
 
 	// Notify a MeterValue update
 	if evse.meterValuesChannel != nil {
+		evse.logger.Debugf("Sending meter value notification")
 		// todo get transaction id evse.GetTransactionId()
 		evse.meterValuesChannel <- notifications.NewMeterValueNotification(evse.evseId, &evse.evseId, nil, meterValue)
 	}
@@ -118,6 +120,8 @@ func (evse *Impl) preparePowerMeter() error {
 	if util.IsNilInterfaceOrPointer(evse.powerMeter) {
 		return ErrPowerMeterNotEnabled
 	}
+
+	evse.logger.Debug("Preparing power meter")
 
 	var (
 		sampleTime          = "30s"

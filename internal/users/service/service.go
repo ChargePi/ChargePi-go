@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/casbin/casbin/v2"
+	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/users/pkg/database"
 	"github.com/xBlaz3kx/ChargePi-go/internal/users/pkg/models"
 )
@@ -26,6 +27,7 @@ type (
 	UserService struct {
 		database database.Database
 		enforcer *casbin.Enforcer
+		logger   log.FieldLogger
 	}
 )
 
@@ -52,10 +54,13 @@ func NewUserService(db database.Database) *UserService {
 
 	return &UserService{
 		database: db,
+		// enforcer: e,
+		logger: log.WithField("component", "user-service"),
 	}
 }
 
 func (u *UserService) GetUser(username string) (*models.User, error) {
+	u.logger.WithField("user", username).Info("Getting user")
 	// todo check for access
 
 	/*enforce, err := u.enforcer.Enforce(username)
@@ -72,6 +77,7 @@ func (u *UserService) GetUser(username string) (*models.User, error) {
 }
 
 func (u *UserService) GetUsers() ([]models.User, error) {
+	u.logger.Info("Getting users")
 	// todo check for access
 
 	/*enforce, err := u.enforcer.Enforce(username)
@@ -83,6 +89,8 @@ func (u *UserService) GetUsers() ([]models.User, error) {
 }
 
 func (u *UserService) AddUser(username, password, role string) error {
+	u.logger.WithField("username", username).Info("Adding a user")
+
 	user := models.User{
 		Username: username,
 		Password: password,
@@ -104,6 +112,7 @@ func (u *UserService) AddUser(username, password, role string) error {
 }
 
 func (u *UserService) UpdateUser(username string, password, role *string) (*models.User, error) {
+	u.logger.WithField("username", username).Info("Updating a user")
 	// todo check for access
 
 	/*enforce, err := u.enforcer.Enforce(username)
@@ -128,6 +137,7 @@ func (u *UserService) UpdateUser(username string, password, role *string) (*mode
 }
 
 func (u *UserService) DeleteUser(username string) error {
+	u.logger.WithField("username", username).Info("Deleting a user")
 	// todo check for access
 
 	/*enforce, err := u.enforcer.Enforce(username)
@@ -139,6 +149,7 @@ func (u *UserService) DeleteUser(username string) error {
 }
 
 func (u *UserService) CheckPassword(username, password string) bool {
+	u.logger.WithField("username", username).Info("Checking user password")
 	user, err := u.database.GetUser(username)
 	if err != nil {
 		return false

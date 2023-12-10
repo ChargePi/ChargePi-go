@@ -12,10 +12,11 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/display"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/indicator"
+	settings2 "github.com/xBlaz3kx/ChargePi-go/pkg/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/reader"
 )
 
-func (cp *ChargePoint) SetLogger(logger *log.Logger) {
+func (cp *ChargePoint) SetLogger(logger log.FieldLogger) {
 	cp.logger = logger
 }
 
@@ -24,6 +25,7 @@ func (cp *ChargePoint) SetReader(reader reader.Reader) error {
 		return nil
 	}
 
+	cp.logger.Debugf("Setting reader")
 	cp.tagReader = reader
 	return nil
 }
@@ -33,6 +35,7 @@ func (cp *ChargePoint) SetDisplay(display display.Display) error {
 		return nil
 	}
 
+	cp.logger.Debug("Setting display")
 	cp.display = display
 	cp.display.Clear()
 	return nil
@@ -43,6 +46,7 @@ func (cp *ChargePoint) SetIndicator(indicator indicator.Indicator) error {
 		return nil
 	}
 
+	cp.logger.Debug("Setting indicator")
 	cp.indicator = indicator
 	return nil
 }
@@ -53,6 +57,7 @@ func (cp *ChargePoint) SetSettings(settings settings.Info) error {
 		return err
 	}
 
+	cp.logger.Debug("Setting charge point settings")
 	cp.info = settings
 	return nil
 }
@@ -67,6 +72,7 @@ func (cp *ChargePoint) SetConnectionSettings(settings settings.ConnectionSetting
 		return err
 	}
 
+	cp.logger.Debug("Setting backend connection settings")
 	cp.connectionSettings = settings
 	return nil
 }
@@ -75,16 +81,17 @@ func (cp *ChargePoint) GetSettings() settings.Info {
 	return cp.info
 }
 
-func (cp *ChargePoint) GetIndicatorSettings() settings.IndicatorStatusMapping {
+func (cp *ChargePoint) GetIndicatorSettings() settings2.IndicatorStatusMapping {
 	return cp.indicatorMapping
 }
 
-func (cp *ChargePoint) SetIndicatorSettings(settings settings.IndicatorStatusMapping) error {
+func (cp *ChargePoint) SetIndicatorSettings(settings settings2.IndicatorStatusMapping) error {
 	err := validator.New().StructCtx(context.Background(), settings)
 	if err != nil {
 		return err
 	}
 
+	cp.logger.Debug("Setting indicator settings")
 	cp.indicatorMapping = settings
 	return nil
 }
@@ -98,6 +105,8 @@ func (cp *ChargePoint) SetAvailability(availabilityType core.AvailabilityType) e
 	default:
 		return errors.New("error checking for ongoing transactions")
 	}
+
+	cp.logger.WithField("availability", availabilityType).Debug("Setting availability")
 
 	return nil
 }

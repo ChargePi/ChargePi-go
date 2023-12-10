@@ -1,13 +1,18 @@
 package diagnostics
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/jlaffaye/ftp"
+	log "github.com/sirupsen/logrus"
 )
+
+const logFileName = "chargepi.log"
+const logFileDir = "/var/log/chargepi"
 
 type Manager interface {
 	GetLogs() ([]byte, error)
@@ -16,15 +21,20 @@ type Manager interface {
 }
 
 type ManagerImpl struct {
+	logger       log.FieldLogger
+	uploadStatus string
 }
 
 func NewManager() *ManagerImpl {
-	return &ManagerImpl{}
+	return &ManagerImpl{
+		logger: log.WithField("component", "diagnostics-manager"),
+	}
 }
 
 func (m *ManagerImpl) GetLogs() ([]byte, error) {
-	specificName := "chargepi.log"
-	files, err := os.ReadDir("/var/log/chargepi")
+	m.logger.Debug("Getting logs")
+
+	files, err := os.ReadDir(logFileDir)
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +43,7 @@ func (m *ManagerImpl) GetLogs() ([]byte, error) {
 
 	// Search for files with specific name
 	for _, file := range files {
-		if strings.HasPrefix(file.Name(), specificName) {
+		if strings.HasPrefix(file.Name(), logFileName) {
 			names = append(names, file.Name())
 		}
 	}
@@ -42,8 +52,9 @@ func (m *ManagerImpl) GetLogs() ([]byte, error) {
 }
 
 func (m *ManagerImpl) GetLogsByDate(startDate, stopDate *time.Time) ([]byte, error) {
-	specificName := "chargepi.log"
-	files, err := os.ReadDir("/var/log/chargepi")
+	m.logger.Debug("Getting logs by date")
+
+	files, err := os.ReadDir(logFileDir)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +68,7 @@ func (m *ManagerImpl) GetLogsByDate(startDate, stopDate *time.Time) ([]byte, err
 			return nil, err
 		}
 
-		if strings.HasPrefix(info.Name(), specificName) && info.ModTime().After(*startDate) && info.ModTime().Before(*stopDate) {
+		if strings.HasPrefix(info.Name(), logFileName) && info.ModTime().After(*startDate) && info.ModTime().Before(*stopDate) {
 			names = append(names, file.Name())
 		}
 
@@ -67,10 +78,10 @@ func (m *ManagerImpl) GetLogsByDate(startDate, stopDate *time.Time) ([]byte, err
 }
 
 func (m *ManagerImpl) UploadLogs(url string, startDate, stopDate *time.Time) error {
+	m.logger.Debug("Uploading logs to FTP server")
 	// todo filter logs by date
 
-	filePath := "chargepi.log"
-	err := m.joinLogs([]string{}, filePath)
+	err := m.joinLogs([]string{}, logFileName)
 	if err != nil {
 		return err
 	}
@@ -93,7 +104,7 @@ func (m *ManagerImpl) UploadLogs(url string, startDate, stopDate *time.Time) err
 	}
 
 	// Open the local file.
-	file, err := os.Open(filePath)
+	file, err := os.Open(fmt.Sprintf("%s/%s", logFileDir, logFileName))
 	if err != nil {
 		panic(err)
 	}

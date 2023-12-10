@@ -10,6 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/auth"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/evse"
+	"github.com/xBlaz3kx/ChargePi-go/internal/diagnostics"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
@@ -43,22 +44,24 @@ type ChargePoint struct {
 	// Software components
 	evseManager        evse.Manager
 	sessionManager     session.Manager
+	diagnosticsManager diagnostics.Manager
 	meterValuesChannel chan notifications.MeterValueNotification
 	scheduler          *gocron.Scheduler
 	tagManager         auth.TagManager
-	logger             *log.Logger
+	logger             log.FieldLogger
 }
 
 // NewChargePoint creates a new ChargePoint for OCPP version 1.6.
-func NewChargePoint(manager evse.Manager, tagManager auth.TagManager, sessionManager session.Manager, opts ...chargePoint.Options) *ChargePoint {
+func NewChargePoint(manager evse.Manager, tagManager auth.TagManager, sessionManager session.Manager, diagnosticsManager diagnostics.Manager, opts ...chargePoint.Options) *ChargePoint {
 	cp := &ChargePoint{
-		availability:    core.AvailabilityTypeInoperative,
-		scheduler:       scheduler.NewScheduler(),
-		evseManager:     manager,
-		tagManager:      tagManager,
-		sessionManager:  sessionManager,
-		settingsManager: settings2.GetManager(),
-		logger:          log.StandardLogger(),
+		availability:       core.AvailabilityTypeInoperative,
+		scheduler:          scheduler.NewScheduler(),
+		evseManager:        manager,
+		tagManager:         tagManager,
+		sessionManager:     sessionManager,
+		settingsManager:    settings2.GetManager(),
+		diagnosticsManager: diagnosticsManager,
+		logger:             log.StandardLogger().WithField("component", "chargepoint"),
 	}
 
 	cp.ApplyOpts(opts...)

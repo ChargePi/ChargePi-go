@@ -26,6 +26,7 @@ func GetExporter() Exporter {
 			db:              db,
 			tagManager:      auth.NewTagManager(db),
 			settingsManager: GetManager(),
+			logger:          log.StandardLogger().WithField("component", "settings-exporter"),
 		}
 	}
 
@@ -47,15 +48,16 @@ type ExporterImpl struct {
 	db              *badger.DB
 	tagManager      auth.TagManager
 	settingsManager Manager
+	logger          log.FieldLogger
 }
 
 func (i *ExporterImpl) ExportEVSESettings() []settings.EVSE {
-	log.Debug("Exporting EVSE settings from the database")
+	i.logger.Debug("Exporting EVSE settings from the database")
 	return database.GetEvseSettings(i.db)
 }
 
 func (i *ExporterImpl) ExportOcppConfiguration() configuration.Config {
-	log.Debug("Exporting OCPP configuration from the database")
+	i.logger.Debug("Exporting OCPP configuration from the database")
 	getConfiguration, _ := i.settingsManager.GetOcppConfiguration(configuration.OCPP16)
 	return configuration.Config{
 		Version: 1,
@@ -64,7 +66,7 @@ func (i *ExporterImpl) ExportOcppConfiguration() configuration.Config {
 }
 
 func (i *ExporterImpl) ExportLocalAuthList() (*settings.AuthList, error) {
-	log.Debug("Exporting Local auth list from the database")
+	i.logger.Debug("Exporting Local auth list from the database")
 	return &settings.AuthList{
 		Version: i.tagManager.GetAuthListVersion(),
 		Tags:    i.tagManager.GetTags(),
@@ -72,12 +74,12 @@ func (i *ExporterImpl) ExportLocalAuthList() (*settings.AuthList, error) {
 }
 
 func (i *ExporterImpl) ExportChargePointSettings() (*settings.Settings, error) {
-	log.Debug("Exporting charge point settings from the database")
+	i.logger.Debug("Exporting charge point settings from the database")
 	return i.settingsManager.GetSettings()
 }
 
 func (i *ExporterImpl) ExportEVSESettingsToFile(path string) error {
-	log.Infof("Exporting EVSE settings to %s", path)
+	i.logger.Infof("Exporting EVSE settings to %s", path)
 
 	evseSettings := i.ExportEVSESettings()
 	config := viper.New()
@@ -107,7 +109,7 @@ func (i *ExporterImpl) ExportEVSESettingsToFile(path string) error {
 }
 
 func (i *ExporterImpl) ExportOcppConfigurationToFile(path string) error {
-	log.Infof("Exporting OCPP configuration to %s", path)
+	i.logger.Infof("Exporting OCPP configuration to %s", path)
 
 	ocppConfiguration := exporter.ExportOcppConfiguration()
 	config := viper.New()
@@ -128,7 +130,7 @@ func (i *ExporterImpl) ExportOcppConfigurationToFile(path string) error {
 }
 
 func (i *ExporterImpl) ExportLocalAuthListToFile(path string) error {
-	log.Infof("Exporting tags to %s", path)
+	i.logger.Infof("Exporting tags to %s", path)
 
 	localAuthList, _ := exporter.ExportLocalAuthList()
 	config := viper.New()
@@ -149,7 +151,7 @@ func (i *ExporterImpl) ExportLocalAuthListToFile(path string) error {
 }
 
 func (i *ExporterImpl) ExportChargePointSettingsToFile(path string) error {
-	log.Infof("Exporting settings to %s", path)
+	i.logger.Infof("Exporting settings to %s", path)
 
 	ocppConfiguration, err := i.ExportChargePointSettings()
 	if err != nil {

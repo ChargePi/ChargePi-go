@@ -51,6 +51,7 @@ type (
 	Impl struct {
 		db                  *badger.DB
 		ocppVariableManager ocppConfigManager.Manager
+		logger              log.FieldLogger
 	}
 )
 
@@ -58,11 +59,12 @@ func NewManager(db *badger.DB) *Impl {
 	return &Impl{
 		db:                  db,
 		ocppVariableManager: ocppConfigManager.GetManager(),
+		logger:              log.WithField("component", "settings-manager"),
 	}
 }
 
 func (i *Impl) SetupOcppConfiguration(version configuration.ProtocolVersion, supportedProfiles ...string) {
-	logInfo := log.WithField("version", version)
+	logInfo := i.logger.WithField("version", version)
 	logInfo.Info("Setting up OCPP configuration")
 
 	i.ocppVariableManager.SetVersion(version)
@@ -82,6 +84,7 @@ func (i *Impl) SetupOcppConfiguration(version configuration.ProtocolVersion, sup
 }
 
 func (i *Impl) GetChargePointSettings() settings.ChargePoint {
+	i.logger.Debug("Getting charge point settings")
 	var settingsS settings.ChargePoint
 
 	err := i.db.View(func(txn *badger.Txn) error {
@@ -102,16 +105,21 @@ func (i *Impl) GetChargePointSettings() settings.ChargePoint {
 }
 
 func (i *Impl) SetChargePointSettings(settings settings.ChargePoint) error {
+	i.logger.Debug("Setting charge point settings")
+
 	// Validate the settings
 	validationErr := validator.New().Struct(settings)
 	if validationErr != nil {
 		return validationErr
 	}
 
+	// todo me
 	return nil
 }
 
 func (i *Impl) SetSettings(settings settings.Settings) error {
+	i.logger.Debug("Applying global settings")
+
 	// Validate the settings
 	validationErr := validator.New().Struct(settings)
 	if validationErr != nil {
@@ -131,6 +139,8 @@ func (i *Impl) SetSettings(settings settings.Settings) error {
 }
 
 func (i *Impl) GetSettings() (*settings.Settings, error) {
+	i.logger.Debug("Getting global settings")
+
 	var settingsS settings.Settings
 
 	err := i.db.View(func(txn *badger.Txn) error {
@@ -151,6 +161,8 @@ func (i *Impl) GetSettings() (*settings.Settings, error) {
 }
 
 func (i *Impl) GetOcppConfiguration(version configuration.ProtocolVersion) ([]core.ConfigurationKey, error) {
+	i.logger.WithField("version", version).Debug("Getting OCPP configuration")
+
 	config, err := loadConfiguration(i.db, i.ocppVariableManager, version)
 	if err != nil {
 		return nil, err
@@ -158,7 +170,7 @@ func (i *Impl) GetOcppConfiguration(version configuration.ProtocolVersion) ([]co
 
 	err = i.ocppVariableManager.SetConfiguration(*config)
 	if err != nil {
-		log.WithError(err).Errorf("Error setting the configuration to the manager")
+		i.logger.WithError(err).Errorf("Error setting the configuration to the manager")
 	}
 
 	switch version {
@@ -170,6 +182,8 @@ func (i *Impl) GetOcppConfiguration(version configuration.ProtocolVersion) ([]co
 }
 
 func (i *Impl) GetOcppConfigurationWithKey(version configuration.ProtocolVersion, key string) (*core.ConfigurationKey, error) {
+	i.logger.WithField("version", version).Debug("Getting OCPP configuration with key")
+
 	switch version {
 	case configuration.OCPP16:
 		value, err := i.ocppVariableManager.GetConfigurationValue(key)

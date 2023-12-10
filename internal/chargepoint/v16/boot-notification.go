@@ -50,7 +50,7 @@ func (cp *ChargePoint) bootNotification() {
 			cp.restoreState()
 		case core.RegistrationStatusPending, core.RegistrationStatusRejected:
 			// Schedule a new boot notification in 1 minute
-			_, err := cp.scheduler.Every(1).Minute().LimitRunsTo(1).Tag("bootNotification").Do(cp.bootNotification)
+			_, err := cp.scheduler.Every(bootConf.Interval).Seconds().LimitRunsTo(1).Tag("bootNotification").Do(cp.bootNotification)
 			if err != nil {
 				cp.logger.WithError(err).Errorf("Error rescheduling BootNotification")
 			}

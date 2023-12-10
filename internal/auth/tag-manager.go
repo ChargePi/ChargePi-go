@@ -32,6 +32,7 @@ type (
 		cache                Cache
 		authCacheEnabled     bool
 		localAuthListEnabled bool
+		logger               log.FieldLogger
 	}
 )
 
@@ -43,11 +44,14 @@ func NewTagManager(db *badger.DB) *TagManagerImpl {
 		authCacheEnabled: true,
 		cache:            cache,
 		authList:         authList,
+		logger:           log.StandardLogger().WithField("component", "tag-manager"),
 	}
 }
 
 // AddTag adds a tag to the auth cache, if enabled.
 func (t *TagManagerImpl) AddTag(tagId string, tagInfo *types.IdTagInfo) error {
+	t.logger.WithField("tagId", tagId).Debug("Adding a tag to system")
+
 	if t.authCacheEnabled {
 		t.cache.AddTag(tagId, tagInfo)
 	}
@@ -57,6 +61,8 @@ func (t *TagManagerImpl) AddTag(tagId string, tagInfo *types.IdTagInfo) error {
 
 // ClearCache clears the auth cache, if enabled.
 func (t *TagManagerImpl) ClearCache() error {
+	t.logger.Debug("Clearing the tag cache")
+
 	if t.authCacheEnabled {
 		t.cache.RemoveCachedTags()
 		return nil
@@ -67,13 +73,15 @@ func (t *TagManagerImpl) ClearCache() error {
 
 // SetMaxTags sets the maximum number of tags that can be cached.
 func (t *TagManagerImpl) SetMaxTags(number int) {
+	t.logger.Debug("Setting the maximum number of stored tags")
+
 	t.authList.SetMaxTags(number)
 	t.cache.SetMaxCachedTags(number)
 }
 
 // GetTag returns a tag from either the Local Auth List or the auth cache. If both are disabled, an error is returned.
 func (t *TagManagerImpl) GetTag(tagId string) (*types.IdTagInfo, error) {
-	logInfo := log.WithField("tagId", tagId)
+	logInfo := t.logger.WithField("tagId", tagId)
 
 	// Check the localAuthList first
 	if t.localAuthListEnabled {
@@ -98,6 +106,8 @@ CheckCache:
 
 // GetTags returns all tags (only from the Local Auth List). The cached tags are not returned.
 func (t *TagManagerImpl) GetTags() []localauth.AuthorizationData {
+	t.logger.Debug("Getting all tags from localAuthList")
+
 	if !t.localAuthListEnabled {
 		return []localauth.AuthorizationData{}
 	}
@@ -107,6 +117,8 @@ func (t *TagManagerImpl) GetTags() []localauth.AuthorizationData {
 
 // GetAuthListVersion returns the current version of the local auth list.
 func (t *TagManagerImpl) GetAuthListVersion() int {
+	t.logger.Debug("Getting the local auth list version")
+
 	if !t.localAuthListEnabled {
 		return -1
 	}
@@ -116,6 +128,8 @@ func (t *TagManagerImpl) GetAuthListVersion() int {
 
 // RemoveTag removes a tag from the auth cache, if enabled.
 func (t *TagManagerImpl) RemoveTag(tagId string) error {
+	t.logger.WithField("tagId", tagId).Debug("Removing a tag from system")
+
 	if !t.localAuthListEnabled {
 		return ErrLocalAuthListNotEnabled
 	}
@@ -125,6 +139,10 @@ func (t *TagManagerImpl) RemoveTag(tagId string) error {
 
 // UpdateLocalAuthList updates the local auth list with the given tags.
 func (t *TagManagerImpl) UpdateLocalAuthList(version int, updateType localauth.UpdateType, tags []localauth.AuthorizationData) error {
+	t.logger.WithField("version", version).
+		WithField("updateType", updateType).
+		Debug("Updating the local auth list")
+
 	if !t.localAuthListEnabled {
 		return ErrLocalAuthListNotEnabled
 	}

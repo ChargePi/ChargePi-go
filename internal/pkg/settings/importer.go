@@ -24,6 +24,7 @@ func GetImporter() Importer {
 		importer = &ImporterImpl{
 			db:              database.Get(),
 			settingsManager: GetManager(),
+			logger:          log.WithField("component", "importer"),
 		}
 	}
 
@@ -44,10 +45,11 @@ type Importer interface {
 type ImporterImpl struct {
 	db              *badger.DB
 	settingsManager Manager
+	logger          log.FieldLogger
 }
 
 func (i *ImporterImpl) ImportEVSESettings(settings []settings.EVSE) error {
-	log.Debug("Importing connectors to the database")
+	i.logger.Debug("Importing connectors to the database")
 
 	for _, setting := range settings {
 		// Validate the EVSE settings
@@ -76,7 +78,7 @@ func (i *ImporterImpl) ImportEVSESettings(settings []settings.EVSE) error {
 }
 
 func (i *ImporterImpl) ImportOcppConfiguration(version configuration.ProtocolVersion, config configuration.Config) error {
-	log.Debug("Importing ocpp configuration to the database")
+	i.logger.Debug("Importing ocpp configuration to the database")
 
 	// Validate the settings
 	validationErr := validator.New().Struct(config)
@@ -96,7 +98,7 @@ func (i *ImporterImpl) ImportOcppConfiguration(version configuration.ProtocolVer
 }
 
 func (i *ImporterImpl) ImportLocalAuthList(list settings.AuthList) error {
-	log.Debug("Importing local auth list to the database")
+	i.logger.Debug("Importing local auth list to the database")
 
 	// Validate the settings
 	validationErr := validator.New().Struct(list)
@@ -132,12 +134,12 @@ func (i *ImporterImpl) ImportLocalAuthList(list settings.AuthList) error {
 }
 
 func (i *ImporterImpl) ImportChargePointSettings(settings settings.Settings) error {
-	log.Debug("Importing charge point settings to the database")
+	i.logger.Debug("Importing charge point settings to the database")
 	return i.settingsManager.SetSettings(settings)
 }
 
 func (i *ImporterImpl) ImportEVSESettingsFromPath(path string) error {
-	log.Infof("Importing EVSE settings from %s", path)
+	i.logger.Infof("Importing EVSE settings from %s", path)
 
 	var evseSettings []settings.EVSE
 
@@ -175,7 +177,7 @@ func (i *ImporterImpl) ImportEVSESettingsFromPath(path string) error {
 }
 
 func (i *ImporterImpl) ImportLocalAuthListFromPath(path string) error {
-	log.Infof("Importing tags from %s", path)
+	i.logger.Infof("Importing tags from %s", path)
 
 	var tagList settings.AuthList
 	config := viper.New()
@@ -194,7 +196,7 @@ func (i *ImporterImpl) ImportLocalAuthListFromPath(path string) error {
 }
 
 func (i *ImporterImpl) ImportChargePointSettingsFromPath(path string) error {
-	log.Infof("Importing settings from %s", path)
+	i.logger.Infof("Importing settings from %s", path)
 
 	var cpSettings settings.Settings
 
@@ -215,7 +217,7 @@ func (i *ImporterImpl) ImportChargePointSettingsFromPath(path string) error {
 }
 
 func (i *ImporterImpl) ImportOcppConfigurationFromPath(version configuration.ProtocolVersion, path string) error {
-	log.Infof("Importing OCPP configuration from %s", path)
+	i.logger.Infof("Importing OCPP configuration from %s", path)
 
 	var ocppConfiguration configuration.Config
 	config := viper.New()

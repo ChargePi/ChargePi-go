@@ -5,15 +5,15 @@ import (
 	"errors"
 
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/indicator"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/reader"
-	data "github.com/xBlaz3kx/ChargePi-go/pkg/models/ocpp"
-
 	ocppDisplay "github.com/lorenzodonini/ocpp-go/ocpp2.0.1/display"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/components/hardware/display"
+	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/display"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/indicator"
+	data "github.com/xBlaz3kx/ChargePi-go/pkg/models/ocpp"
+	settings2 "github.com/xBlaz3kx/ChargePi-go/pkg/models/settings"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/reader"
 )
 
 var (
@@ -39,7 +39,7 @@ type ChargePoint interface {
 	ListenForConnectorStatusChange(ctx context.Context, ch <-chan notifications.StatusNotification)
 
 	// Options
-	SetLogger(logger *log.Logger)
+	SetLogger(logger log.FieldLogger)
 
 	// Display APIs
 	SetDisplay(display display.Display) error
@@ -47,8 +47,8 @@ type ChargePoint interface {
 
 	// Indicator APIs
 	SetIndicator(indicator indicator.Indicator) error
-	SetIndicatorSettings(settings settings.IndicatorStatusMapping) error
-	GetIndicatorSettings() settings.IndicatorStatusMapping
+	SetIndicatorSettings(settings settings2.IndicatorStatusMapping) error
+	GetIndicatorSettings() settings2.IndicatorStatusMapping
 
 	// Reader
 	SetReader(reader reader.Reader) error

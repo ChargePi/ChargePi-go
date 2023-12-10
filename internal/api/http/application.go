@@ -13,8 +13,10 @@ type App struct {
 }
 
 func NewAppServer() *App {
+	ginRouter := gin.Default()
+
 	return &App{
-		router: gin.Default(),
+		router: ginRouter,
 	}
 }
 

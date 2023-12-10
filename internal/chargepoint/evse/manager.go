@@ -64,6 +64,7 @@ type (
 		reservations        map[int]*int
 		notificationChannel chan notifications.StatusNotification
 		meterValuesChannel  chan notifications.MeterValueNotification
+		logger              log.FieldLogger
 	}
 )
 
@@ -86,6 +87,7 @@ func NewManager(notificationChannel chan notifications.StatusNotification) Manag
 	return &managerImpl{
 		db:                  database.Get(),
 		notificationChannel: notificationChannel,
+		logger:              log.StandardLogger().WithField("component", "evse-manager"),
 	}
 }
 
@@ -94,7 +96,7 @@ func getKey(evseId int) string {
 }
 
 func (m *managerImpl) InitAll(ctx context.Context) error {
-	log.Info("Initializing EVSEs")
+	m.logger.Info("Initializing EVSEs")
 
 	// Create EVSEs from settings stored in the database.
 	for _, c := range database.GetEvseSettings(m.db) {
@@ -108,6 +110,7 @@ func (m *managerImpl) InitAll(ctx context.Context) error {
 }
 
 func (m *managerImpl) GetEVSEs() []EVSE {
+	m.logger.Debug("Getting all EVSEs")
 	var connectors []EVSE
 
 	m.connectors.Range(func(key, value interface{}) bool {
@@ -138,6 +141,8 @@ func (m *managerImpl) SetMeterValuesChannel(notificationChannel chan notificatio
 }
 
 func (m *managerImpl) GetEVSE(evseId int) (EVSE, error) {
+	m.logger.WithField("evseId", evseId).Debug("Getting EVSE")
+
 	c, isFound := m.connectors.Load(getKey(evseId))
 	if isFound {
 		return c.(EVSE), nil
@@ -147,6 +152,7 @@ func (m *managerImpl) GetEVSE(evseId int) (EVSE, error) {
 }
 
 func (m *managerImpl) GetAvailableEVSE() (EVSE, error) {
+	m.logger.Debug("Getting available EVSEs")
 	var availableConnector EVSE
 
 	m.connectors.Range(func(key, value interface{}) bool {
@@ -167,6 +173,11 @@ func (m *managerImpl) GetAvailableEVSE() (EVSE, error) {
 }
 
 func (m *managerImpl) StartCharging(evseId int, connectorId *int) error {
+	m.logger.WithFields(log.Fields{
+		"evseId":      evseId,
+		"connectorId": connectorId,
+	}).Debug("Attempting to start charging")
+
 	c, err := m.GetEVSE(evseId)
 	if err != nil {
 		return err
@@ -176,6 +187,12 @@ func (m *managerImpl) StartCharging(evseId int, connectorId *int) error {
 }
 
 func (m *managerImpl) StopCharging(evseId int, connectorId *int, reason core.Reason) error {
+	m.logger.WithFields(log.Fields{
+		"evseId":      evseId,
+		"connectorId": connectorId,
+		"reason":      reason,
+	}).Debug("Attempting to stop charging")
+
 	c, err := m.GetEVSE(evseId)
 	if err != nil {
 		return err
@@ -185,7 +202,7 @@ func (m *managerImpl) StopCharging(evseId int, connectorId *int, reason core.Rea
 }
 
 func (m *managerImpl) StopAllEVSEs(reason core.Reason) error {
-	log.Debugf("Stopping all evses: %s", reason)
+	m.logger.Debugf("Stopping all evses: %s", reason)
 
 	var err error
 
@@ -209,7 +226,7 @@ func (m *managerImpl) AddEVSE(ctx context.Context, c EVSE) error {
 		return err
 	}
 
-	logInfo := log.WithField("evseId", c.GetEvseId())
+	logInfo := m.logger.WithField("evseId", c.GetEvseId())
 	logInfo.Debugf("Adding an EVSE to manager")
 
 	c.SetNotificationChannel(m.notificationChannel)
@@ -221,8 +238,8 @@ func (m *managerImpl) AddEVSE(ctx context.Context, c EVSE) error {
 }
 
 func (m *managerImpl) addEVSEFromSettings(ctx context.Context, c settings.EVSE) error {
-	logInfo := log.WithField("evseId", c.EvseId)
-	logInfo.Debugf("Creating evcc")
+	logInfo := m.logger.WithField("evseId", c.EvseId)
+	logInfo.Debugf("Creating an Evcc from settings")
 
 	// Create EVSE from settings
 	evccFromType, err := evcc.NewEVCCFromType(c.EVCC)
@@ -236,11 +253,11 @@ func (m *managerImpl) addEVSEFromSettings(ctx context.Context, c settings.EVSE) 
 	// Create a PowerMeter from settings
 	logInfo.Debugf("Creating power meter")
 	meter, powerMeterErr := powerMeter.NewPowerMeter(c.PowerMeter)
-	switch powerMeterErr {
-	case nil:
-	case powerMeter.ErrPowerMeterDisabled:
+	switch {
+	case powerMeterErr == nil:
+	case errors.Is(powerMeterErr, powerMeter.ErrPowerMeterDisabled):
 		logInfo.WithError(powerMeterErr).Warn("Power meter disabled")
-	case powerMeter.ErrPowerMeterUnsupported, powerMeter.ErrInvalidConnectionSettings:
+	case errors.Is(powerMeterErr, powerMeter.ErrPowerMeterUnsupported), errors.Is(powerMeterErr, powerMeter.ErrInvalidConnectionSettings):
 		fallthrough
 	default:
 		logInfo.WithError(powerMeterErr).Error("Cannot instantiate power meter for evse")
@@ -262,22 +279,25 @@ func (m *managerImpl) addEVSEFromSettings(ctx context.Context, c settings.EVSE) 
 }
 
 func (m *managerImpl) UpdateEVSE(ctx context.Context, c EVSE) error {
+	m.logger.WithField("evseId", c.GetEvseId()).Debugf("Updating an EVSE")
 	// todo implement me
 	return nil
 }
 
 func (m *managerImpl) RemoveEVSE(evseId int) error {
+	m.logger.WithField("evseId", evseId).Debugf("Removing an EVSE")
+
 	m.connectors.Delete(getKey(evseId))
 	return nil
 }
 
 func (m *managerImpl) RestoreEVSEs() error {
-	log.Debugf("Attempting to restore EVSEs")
+	m.logger.Debugf("Attempting to restore EVSEs")
 
 	for _, s := range database.GetEvseSettings(m.db) {
 		err := m.restoreEVSEStatus(s)
 		if err != nil {
-			log.WithError(err).WithField("id", s.EvseId).Error("Error restoring an EVSE")
+			m.logger.WithError(err).WithField("id", s.EvseId).Error("Error restoring an EVSE")
 			continue
 		}
 	}
@@ -286,7 +306,7 @@ func (m *managerImpl) RestoreEVSEs() error {
 }
 
 func (m *managerImpl) restoreEVSEStatus(c settings.EVSE) error {
-	logInfo := log.WithFields(log.Fields{
+	logInfo := m.logger.WithFields(log.Fields{
 		"evseId": c.EvseId,
 	})
 	logInfo.Debugf("Attempting to restore connector status")
