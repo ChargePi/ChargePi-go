@@ -3,6 +3,7 @@ package diagnostics
 import (
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -77,7 +78,7 @@ func (m *ManagerImpl) GetLogsByDate(startDate, stopDate *time.Time) ([]byte, err
 	return nil, nil
 }
 
-func (m *ManagerImpl) UploadLogs(url string, startDate, stopDate *time.Time) error {
+func (m *ManagerImpl) UploadLogs(location string, startDate, stopDate *time.Time) error {
 	m.logger.Debug("Uploading logs to FTP server")
 	// todo filter logs by date
 
@@ -86,19 +87,24 @@ func (m *ManagerImpl) UploadLogs(url string, startDate, stopDate *time.Time) err
 		return err
 	}
 
-	settings, err := m.getFtpUploadSettings(url)
+	parse, err := url.Parse(location)
 	if err != nil {
 		return err
 	}
 
 	// Connect to the FTP server.
-	connection, err := ftp.Dial(settings["address"], ftp.DialWithTimeout(10*time.Second))
+	connection, err := ftp.Dial(parse.Hostname(), ftp.DialWithTimeout(10*time.Second))
 	if err != nil {
 		return err
 	}
 
+	pass, hasPassword := parse.User.Password()
+	if hasPassword {
+		return nil
+	}
+
 	// Login to the FTP server.
-	err = connection.Login(settings["username"], settings["password"])
+	err = connection.Login(parse.User.Username(), pass)
 	if err != nil {
 		return err
 	}
@@ -111,7 +117,7 @@ func (m *ManagerImpl) UploadLogs(url string, startDate, stopDate *time.Time) err
 	defer file.Close()
 
 	// Upload the local file to the remote FTP server.
-	return connection.Stor(settings["path"], file)
+	return connection.Stor(parse.Path, file)
 }
 
 func (m *ManagerImpl) joinLogs(files []string, destFile string) error {
@@ -143,9 +149,4 @@ func (m *ManagerImpl) joinLogs(files []string, destFile string) error {
 	}
 
 	return nil
-}
-
-func (m *ManagerImpl) getFtpUploadSettings(url string) (map[string]string, error) {
-
-	return nil, nil
 }
