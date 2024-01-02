@@ -10,6 +10,7 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/evse"
+	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
 	"github.com/xBlaz3kx/ocppManager-go/ocpp_v16"
 )
 
@@ -112,7 +113,15 @@ func (cp *ChargePoint) getMeasurements(evseId int) error {
 	for _, measurand := range strings.Split(*value, ",") {
 		measurands = append(measurands, types.Measurand(measurand))
 	}
-	// Todo sample
-	_ = requestedEvse.SamplePowerMeter(measurands)
+
+	meterValues := types.MeterValue{
+		Timestamp:    types.NewDateTime(time.Now()),
+		SampledValue: requestedEvse.SamplePowerMeter(measurands),
+	}
+
+	if cp.meterValuesChannel != nil {
+		cp.meterValuesChannel <- notifications.MeterValueNotification{MeterValues: []types.MeterValue{meterValues}, EvseId: evseId}
+	}
+
 	return nil
 }

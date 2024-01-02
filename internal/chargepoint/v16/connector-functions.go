@@ -90,10 +90,12 @@ Listener:
 
 // displayStatusChangeOnDisplay sends an update to the Display based on the EVSE status change.
 func (cp *ChargePoint) displayStatusChangeOnDisplay(connectorId int, status core.ChargePointStatus) {
+	logInfo := cp.logger.WithField("connectorId", connectorId).WithField("status", status)
+	logInfo.Debug("Updating status on display")
 
 	switch cp.display.GetType() {
 	case display.DriverHD44780:
-
+		// cp.display.DisplayMessage(connectorId, status)
 	default:
 		cp.logger.Errorf("Display unsupported")
 	}

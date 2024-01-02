@@ -54,7 +54,52 @@ func (cp *ChargePoint) OnChangeConfiguration(request *core.ChangeConfigurationRe
 	cp.logger.Infof("Received request %s", request.GetFeatureName())
 	var response = core.ConfigurationStatusRejected
 
-	// todo rework this
+	// Process the change configuration request
+	switch request.Key {
+	case ocpp_v16.AuthorizeRemoteTxRequests.String():
+		// Just update
+	case ocpp_v16.AllowOfflineTxForUnknownId.String():
+		// Just update
+	case ocpp_v16.AuthorizationCacheEnabled.String():
+		cp.tagManager.ToggleAuthCache(request.Value == "true")
+	case ocpp_v16.LocalAuthListMaxLength.String():
+		val, err := strconv.Atoi(request.Value)
+		if err != nil {
+			return core.NewChangeConfigurationConfirmation(response), errors.New("invalid value")
+		}
+
+		cp.tagManager.SetMaxTags(val)
+	case ocpp_v16.LocalAuthListEnabled.String():
+		cp.tagManager.ToggleLocalAuthList(request.Value == "true")
+	case ocpp_v16.SendLocalListMaxLength.String():
+	case ocpp_v16.LightIntensity.String():
+		brightness, err := strconv.Atoi(request.Value)
+		if err != nil {
+			return core.NewChangeConfigurationConfirmation(response), errors.New("invalid value")
+		}
+
+		err = cp.indicator.SetBrightness(brightness)
+		if err != nil {
+			return core.NewChangeConfigurationConfirmation(response), nil
+		}
+
+	case ocpp_v16.HeartbeatInterval.String():
+		interval, err := strconv.Atoi(request.Value)
+		if err != nil {
+			return core.NewChangeConfigurationConfirmation(response), errors.New("invalid value")
+		}
+
+		cp.setHeartbeat(interval)
+	case ocpp_v16.MeterValueSampleInterval.String():
+
+	case ocpp_v16.MeterValuesSampledData.String():
+
+	case ocpp_v16.AuthorizeRemoteTxRequests.String():
+		// Just update
+	default:
+		return core.NewChangeConfigurationConfirmation(response), errors.New("unknown key")
+	}
+
 	err = cp.settingsManager.GetOcppV16Manager().UpdateKey(ocpp_v16.Key(request.Key), &request.Value)
 	if err == nil {
 		response = core.ConfigurationStatusAccepted
@@ -139,6 +184,7 @@ func (cp *ChargePoint) OnGetConfiguration(request *core.GetConfigurationRequest)
 	}
 
 	configArray2 := []core.ConfigurationKey{}
+
 	// Get only the requested variables
 	for _, key := range request.Key {
 

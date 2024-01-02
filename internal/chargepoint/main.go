@@ -18,7 +18,7 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 	database2 "github.com/xBlaz3kx/ChargePi-go/internal/sessions/pkg/database"
 	"github.com/xBlaz3kx/ChargePi-go/internal/sessions/service/session"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/logging"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/observability/logging"
 )
 
 func Run(debug bool, config *settings.Settings) {

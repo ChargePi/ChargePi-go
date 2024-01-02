@@ -2,6 +2,7 @@ package auth
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/dgraph-io/badger/v3"
@@ -45,7 +46,7 @@ func (c *CacheImpl) AddTag(tagId string, tagInfo *types.IdTagInfo) {
 	// Add a tag if it doesn't exist in the cache.
 	err := c.db.Update(func(txn *badger.Txn) error {
 		_, err := txn.Get(getTagKey(tagId))
-		if err != badger.ErrKeyNotFound {
+		if !errors.Is(err, badger.ErrKeyNotFound) {
 			return err
 		}
 
@@ -127,7 +128,7 @@ func (c *CacheImpl) GetTag(tagId string) (*types.IdTagInfo, error) {
 
 	err := c.db.View(func(txn *badger.Txn) error {
 		item, err := txn.Get(getTagKey(tagId))
-		if err != badger.ErrKeyNotFound {
+		if !errors.Is(err, badger.ErrKeyNotFound) {
 			return err
 		}
 

@@ -87,6 +87,7 @@ func (cp *ChargePoint) StartCharging(evseId, connectorId int, tagId string) erro
 }
 
 func (cp *ChargePoint) getSessionParameters() ([]types.Measurand, string) {
+	cp.logger.Debug("Getting session sampling parameters")
 
 	// Get metering parameters
 	variableManager := cp.settingsManager.GetOcppV16Manager()
@@ -97,7 +98,7 @@ func (cp *ChargePoint) getSessionParameters() ([]types.Measurand, string) {
 
 	measurandsString, err := variableManager.GetConfigurationValue(ocpp_v16.MeterValuesSampledData)
 	if err != nil {
-		measurandsString = lo.ToPtr("Energy.Active.Import.Register")
+		measurandsString = lo.ToPtr(string(types.MeasurandEnergyActiveImportRegister))
 	}
 
 	var measurands []types.Measurand

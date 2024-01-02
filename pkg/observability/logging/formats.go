@@ -7,7 +7,6 @@ type (
 
 const (
 	RemoteLogging  = LogType("remote")
-	FileLogging    = LogType("file")
 	ConsoleLogging = LogType("console")
 
 	Syslog = LogFormat("syslog")

@@ -23,6 +23,8 @@ type (
 		RemoveTag(tagId string) error
 		ClearCache() error
 		SetMaxTags(number int)
+		ToggleAuthCache(enabled bool)
+		ToggleLocalAuthList(enabled bool)
 		UpdateLocalAuthList(version int, updateType localauth.UpdateType, tags []localauth.AuthorizationData) error
 		GetAuthListVersion() int
 	}
@@ -41,10 +43,11 @@ func NewTagManager(db *badger.DB) *TagManagerImpl {
 	authList := NewLocalAuthList(db, 10)
 
 	return &TagManagerImpl{
-		authCacheEnabled: true,
-		cache:            cache,
-		authList:         authList,
-		logger:           log.StandardLogger().WithField("component", "tag-manager"),
+		authCacheEnabled:     true,
+		localAuthListEnabled: false,
+		cache:                cache,
+		authList:             authList,
+		logger:               log.StandardLogger().WithField("component", "tag-manager"),
 	}
 }
 
@@ -169,4 +172,12 @@ func (t *TagManagerImpl) UpdateLocalAuthList(version int, updateType localauth.U
 
 	t.authList.SetVersion(version)
 	return nil
+}
+
+func (t *TagManagerImpl) ToggleAuthCache(enabled bool) {
+	t.authCacheEnabled = enabled
+}
+
+func (t *TagManagerImpl) ToggleLocalAuthList(enabled bool) {
+	t.localAuthListEnabled = enabled
 }

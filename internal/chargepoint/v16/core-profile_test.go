@@ -6,11 +6,9 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
-	ocppManager "github.com/xBlaz3kx/ocppManager-go"
-	"github.com/xBlaz3kx/ocppManager-go/configuration"
+	"github.com/xBlaz3kx/ocppManager-go/ocpp_v16"
 )
 
 type coreTestSuite struct {
@@ -38,7 +36,7 @@ func (s *coreTestSuite) TestChangeAvailability() {
 
 func (s *coreTestSuite) TestOnChangeConfiguration() {
 	// Ok case
-	resp, err := s.cp.OnChangeConfiguration(core.NewChangeConfigurationRequest(configuration.AuthorizationCacheEnabled.String(), "false"))
+	resp, err := s.cp.OnChangeConfiguration(core.NewChangeConfigurationRequest(ocpp_v16.AuthorizationCacheEnabled.String(), "false"))
 	s.Assert().NoError(err)
 	s.Assert().EqualValues(core.ConfigurationStatusAccepted, resp.Status)
 
@@ -48,7 +46,7 @@ func (s *coreTestSuite) TestOnChangeConfiguration() {
 	s.Assert().EqualValues(core.ConfigurationStatusRejected, resp.Status)
 
 	// Readonly key
-	resp, err = s.cp.OnChangeConfiguration(core.NewChangeConfigurationRequest(configuration.SupportedFeatureProfiles.String(), ""))
+	resp, err = s.cp.OnChangeConfiguration(core.NewChangeConfigurationRequest(ocpp_v16.SupportedFeatureProfiles.String(), ""))
 	s.Assert().NoError(err)
 	s.Assert().EqualValues(core.ConfigurationStatusRejected, resp.Status)
 }
@@ -68,7 +66,7 @@ func (s *coreTestSuite) TestGetConfiguration() {
 	s.Assert().Len(resp.UnknownKey, 0)
 
 	// Get only specific keys
-	resp, err = s.cp.OnGetConfiguration(core.NewGetConfigurationRequest([]string{configuration.SupportedFeatureProfiles.String()}))
+	resp, err = s.cp.OnGetConfiguration(core.NewGetConfigurationRequest([]string{ocpp_v16.SupportedFeatureProfiles.String()}))
 	s.Assert().NoError(err)
 	s.Assert().Len(resp.ConfigurationKey, 1)
 	s.Assert().Len(resp.UnknownKey, 0)
@@ -160,8 +158,7 @@ func (s *coreTestSuite) TestOnRemoteStartTransaction() {
 func TestCore(t *testing.T) {
 	log.SetLevel(log.DebugLevel)
 
-	err := ocppManager.GetManager().SetConfiguration(ocppConfig)
-	assert.NoError(t, err)
+	ocpp_v16.NewEmptyConfiguration()
 
 	suite.Run(t, new(coreTestSuite))
 }

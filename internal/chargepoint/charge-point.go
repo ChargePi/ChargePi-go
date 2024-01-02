@@ -21,6 +21,13 @@ import (
 	"github.com/xBlaz3kx/ocppManager-go/ocpp_v16"
 )
 
+var supportedOcppV16Profiles = []string{
+	core.ProfileName,
+	reservation.ProfileName,
+	remotetrigger.ProfileName,
+	localauth.ProfileName,
+}
+
 // CreateChargePoint Creates a OCPP-enabled charge point based on the protocol version
 func CreateChargePoint(
 	ctx context.Context,
@@ -48,13 +55,10 @@ func CreateChargePoint(
 	switch protocolVersion {
 	case ocpp.OCPP16:
 		// Setup OCPP configuration from the database
-		ocppVariableManager, err := ocpp_v16.NewV16ConfigurationManager(
-			ocpp_v16.NewEmptyConfiguration(),
-			core.ProfileName,
-			reservation.ProfileName,
-			remotetrigger.ProfileName,
-			localauth.ProfileName,
-		)
+		ocppVariableManager, err := ocpp_v16.NewV16ConfigurationManager(ocpp_v16.DefaultConfiguration(supportedOcppV16Profiles...), supportedOcppV16Profiles...)
+		if err != nil {
+			logger.WithError(err).Fatal("Cannot create OCPP configuration manager")
+		}
 
 		// Create the OCPP 1.6 Charge Point
 		err = settingsManager.SetOcppV16Manager(ocppVariableManager)

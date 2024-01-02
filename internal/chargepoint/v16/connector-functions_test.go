@@ -5,7 +5,6 @@ import (
 
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	log "github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/xBlaz3kx/ocppManager-go/ocpp_v16"
 )
@@ -188,9 +187,6 @@ func (s *connectorFunctionsTestSuite) TestNotifyConnectorStatus() {
 
 func TestConnectorFunctions(t *testing.T) {
 	log.SetLevel(log.DebugLevel)
-
-	err := ocppManager.GetManager().SetConfiguration(ocppConfig)
-	assert.NoError(t, err)
 
 	suite.Run(t, new(connectorFunctionsTestSuite))
 }

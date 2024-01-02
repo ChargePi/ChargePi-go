@@ -22,6 +22,7 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/pkg/indicator"
 	hardwareSettings "github.com/xBlaz3kx/ChargePi-go/pkg/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/pkg/reader"
+	"github.com/xBlaz3kx/ocppManager-go/ocpp_v16"
 )
 
 type ChargePoint struct {
@@ -54,14 +55,14 @@ type ChargePoint struct {
 // NewChargePoint creates a new ChargePoint for OCPP version 1.6.
 func NewChargePoint(manager evse.Manager, tagManager auth.TagManager, sessionManager session.Manager, diagnosticsManager diagnostics.Manager, opts ...chargePoint.Options) *ChargePoint {
 	cp := &ChargePoint{
-		availability:       core.AvailabilityTypeInoperative,
+		availability:       core.AvailabilityTypeOperative,
 		scheduler:          scheduler.NewScheduler(),
 		evseManager:        manager,
 		tagManager:         tagManager,
 		sessionManager:     sessionManager,
 		settingsManager:    settings2.GetManager(),
 		diagnosticsManager: diagnosticsManager,
-		logger:             log.StandardLogger().WithField("component", "chargepoint"),
+		logger:             log.StandardLogger().WithField("component", "chargePointV16"),
 	}
 
 	cp.ApplyOpts(opts...)
@@ -76,12 +77,13 @@ func (cp *ChargePoint) Connect(ctx context.Context, serverUrl string) {
 		cp.chargePoint.Stop()
 	}
 
-	logInfo := cp.logger.WithFields(log.Fields{
-		"chargePointId": cp.connectionSettings.Id,
-	})
+	logInfo := cp.logger.WithFields(log.Fields{"chargePointId": cp.connectionSettings.Id})
+
+	// Get the ping interval from the configuration
+	pingInterval, _ := cp.settingsManager.GetOcppV16Manager().GetConfigurationValue(ocpp_v16.WebSocketPingInterval)
 
 	// Create a new websocket client
-	wsClient, err := util.CreateClient(cp.connectionSettings, nil)
+	wsClient, err := util.CreateClient(cp.connectionSettings, pingInterval)
 	if err != nil {
 		logInfo.WithError(err).Panic("Cannot create a new websocket client")
 	}

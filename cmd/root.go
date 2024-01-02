@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/logging"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/observability/logging"
 )
 
 var rootCmd = &cobra.Command{

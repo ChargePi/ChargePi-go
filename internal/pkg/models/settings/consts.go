@@ -28,6 +28,6 @@ const (
 	SettingsFlag       = "settings"
 	EvseFlag           = "evse"
 	AuthFileFlag       = "auth"
-	OcppConfigPathFlag = "ocppCfg"
+	OcppConfigPathFlag = "ocpp"
 	OcppVersion        = "v"
 )
