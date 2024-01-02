@@ -1,9 +1,9 @@
-# OCPP 1.6
+# OCPP 1.6 configuration
 
 The default/reference configuration for protocol version 1.6 can be found [here](../../../../configs/ocpp-config.yaml).
 
-Each OCPP 1.6 configuration variable is represented as a dictionary with key equal to **variable name**, the **value** and
-**permission** attributes. For more information regarding OCPP 1.6 configuration,
+Each OCPP 1.6 configuration variable is represented as a dictionary with key equal to **variable name**, the **value**
+and **permission** attributes. For more information regarding OCPP 1.6 configuration,
 visit [this link](https://www.oasis-open.org/committees/download.php/58944/ocpp-1.6.pdf).
 
 ```json

@@ -1,12 +1,4 @@
-# 🛠️ Configuration
-
-There are three types of configurations:
-
-1. [charge point](#the-charge-point-configuration)
-2. [ocpp](../configuration/ocpp/ocpp-16.md#ocpp-16)
-3. [evse](evse-configuration.md#the-evse-configuration)
-
-## The `charge point` configuration
+# 🛠️ Charge point general configuration
 
 The charge point configuration contains basic information about the charge point and its operative details, such as:
 
@@ -136,7 +128,3 @@ chargePoint:
       indicateCardRead: true
       invert: false
 ```
-
-## Importing
-
-## Exporting

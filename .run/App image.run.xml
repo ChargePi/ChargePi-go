@@ -1,0 +1,21 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="App image" type="docker-deploy" factoryName="dockerfile" server-name="Docker">
+    <deployment type="dockerfile">
+      <settings>
+        <option name="buildArgs">
+          <list>
+            <DockerEnvVarImpl>
+              <option name="name" value="READER_CONNECTION_TYPE" />
+              <option name="value" value="$env:pn532_uart" />
+            </DockerEnvVarImpl>
+          </list>
+        </option>
+        <option name="buildCliOptions" value="--target chargepi" />
+        <option name="buildKitEnabled" value="true" />
+        <option name="buildOnly" value="true" />
+        <option name="sourceFilePath" value="build/Dockerfile" />
+      </settings>
+    </deployment>
+    <method v="2" />
+  </configuration>
+</component>

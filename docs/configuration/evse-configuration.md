@@ -65,7 +65,3 @@ powerMeter:
     shuntOffset: 0.055
     voltageDividerOffset: 1333
 ```
-
-## Importing
-
-## Exporting

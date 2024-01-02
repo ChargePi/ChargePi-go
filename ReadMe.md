@@ -25,8 +25,8 @@ support,an intuitive UI for easy management and an API for custom integrations.
 ## 🔌 Hardware support
 
 All contributions for hardware support are welcome. If you want to add support for a new hardware component, please
-check out the [hardware support guide](/docs/getting-started/hardware/hardware-support.md). The more hardware is
-supported, the more customizable the ChargePi is.
+check out the [hardware support guide](/docs/hardware/hardware-support.md). The more hardware is supported, the more
+customizable the ChargePi is.
 
 ### RFID/NFC readers
 
@@ -65,16 +65,22 @@ supported, the more customizable the ChargePi is.
 
 1. Choose the desired functionality and hardware.
 
-2. Wire your hardware according to the provided [schematics](/docs/getting-started/hardware/hardware-support.md) (if
-   applicable).
+2. Wire your hardware according to the provided [schematics](/docs/hardware/hardware-support.md) (if the hardware is
+   supported - otherwise, seek professional guidance or contribute to the project!).
 
-3. If deploying on a host machine, install the [dependencies](/docs/getting-started/installation/libraries.md).
+   > [!CAUTION]
+   > The hardware part of the project requires fairly good electrical knowledge. Make at your own risk or seek
+   professional
+   guidance. The project is not responsible for any damage caused by the hardware and will not take responsibility for
+   any
+   software misconfiguration or misbehavior.
 
-4. Configure the settings files according to the hardware and desired functionality:
-    - [client configuration](/docs/getting-started/configuration/configuration.md)
-    - [OCPP configuration](/docs/getting-started/configuration/ocpp/ocpp-16.md)
 
-5. Run the client. ChargePi-go can be deployed/run in multiple ways:
+3. Configure the settings files according to the hardware and desired functionality:
+    - [client configuration](/docs/configuration/configuration.md)
+    - [OCPP configuration](/docs/configuration/ocpp/ocpp-16.md)
+
+4. Run the client. ChargePi-go can be deployed/run in multiple ways:
 
     - standalone (host machine)
     - Docker 🐳 and docker-compose
@@ -84,12 +90,14 @@ the [client startup guide](docs/getting-started/installation/running-the-client.
 
 ### 🛠️ Configuration and settings
 
-To configure the ChargePi, check out
-the [configuration guide](/docs/getting-started/configuration/configuration.md).
+To configure the ChargePi, check out the [configuration guide](/docs/configuration/configuration.md).
 Client comes with default settings which require minimal configuration.
 
-## Note
+## Contributing
 
-The hardware part of the project requires fairly good electrical knowledge. Make at your own risk or seek professional
-guidance. The project is not responsible for any damage caused by the hardware and will not take responsibility for any
-software misconfiguration or misbehavior.
+Contributions are welcome! Please check out the [contributing guide](/docs/contributing/contributing.md) for more
+information.
+
+## License
+
+ChargePi-go is licensed under the [MIT License](LICENSE.txt).

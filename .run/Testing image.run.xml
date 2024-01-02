@@ -1,0 +1,13 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Testing image" type="docker-deploy" factoryName="dockerfile" server-name="Docker">
+    <deployment type="dockerfile">
+      <settings>
+        <option name="buildCliOptions" value="--target test" />
+        <option name="buildKitEnabled" value="true" />
+        <option name="buildOnly" value="true" />
+        <option name="sourceFilePath" value="build/Dockerfile" />
+      </settings>
+    </deployment>
+    <method v="2" />
+  </configuration>
+</component>

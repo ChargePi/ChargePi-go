@@ -39,4 +39,4 @@ the charging current limit.
 ## Contributing
 
 If you want to add support for any type of hardware, read the
-contribution [guide](../../contribution/hardware/adding-support-for-hardware.md).
+contribution [guide](../contribution/hardware/adding-support-for-hardware.md).
