@@ -146,7 +146,7 @@ func (evse *Impl) listenForStatusUpdates(ctx context.Context) {
 
 	statusChan := evse.evcc.GetStatusChangeChannel()
 	if statusChan == nil {
-		log.Panic("Cannot listen for evcc status updates")
+		evse.logger.Panic("Cannot listen for evcc status updates")
 	}
 
 Loop:
@@ -251,7 +251,7 @@ func (evse *Impl) StartCharging(connectorId *int, measurands []types.Measurand, 
 	// Schedule a stop charging after the maxChargingTime, if provided
 	if evse.maxChargingTime != nil {
 		// Schedule a stop charging after the maxChargingTime
-		_, err := evse.scheduler.Every(*evse.maxChargingTime).Minutes().Tag("evse", fmt.Sprintf("%d", evse.GetEvseId()), "chargingTimer").Do(evse.StopCharging, core.ReasonLocal)
+		_, err := evse.scheduler.Every(*evse.maxChargingTime).Minutes().Tag(fmt.Sprintf("evse-%d-chargingTimer", evse.GetEvseId())).Do(evse.StopCharging, core.ReasonLocal)
 		if err != nil {
 			logInfo.WithError(err).Error("Cannot schedule stop charging")
 		}
@@ -271,7 +271,7 @@ func (evse *Impl) StopCharging(reason core.Reason) error {
 		evse.evcc.Unlock()
 
 		// Remove any jobs scheduled for this evse
-		schedulerErr := evse.scheduler.RemoveByTag(fmt.Sprintf("%d", evse.GetEvseId()))
+		schedulerErr := evse.scheduler.RemoveByTag(fmt.Sprintf("evse-%d-chargingTimer", evse.GetEvseId()))
 		if schedulerErr != nil {
 			logInfo.WithError(schedulerErr).Errorf("Cannot remove sampling schedule")
 		}

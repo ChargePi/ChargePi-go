@@ -2,6 +2,7 @@ package powerMeter
 
 import (
 	"context"
+	"sync/atomic"
 	"time"
 
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
@@ -12,15 +13,19 @@ import (
 type Dummy struct {
 	logger     log.FieldLogger
 	settings   settings.PowerMeterDummy
-	energy     int64
+	energy     atomic.Int64
 	lastSample *time.Time
 }
 
 func NewDummy(settings *settings.PowerMeterDummy) (*Dummy, error) {
+	if settings == nil {
+		return nil, ErrInvalidConnectionSettings
+	}
+
 	return &Dummy{
 		settings: *settings,
 		logger:   log.StandardLogger().WithField("component", "power-meter-dummy"),
-		energy:   0,
+		energy:   atomic.Int64{},
 	}, nil
 }
 

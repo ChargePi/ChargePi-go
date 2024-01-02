@@ -24,7 +24,7 @@ func NewDummy(settings *settings.EvccDummy) (*Dummy, error) {
 }
 
 func (d *Dummy) Init(ctx context.Context) error {
-	d.logger.Info("Initializing dummy connector")
+	d.logger.Info("Initializing dummy EVCC")
 	return nil
 }
 

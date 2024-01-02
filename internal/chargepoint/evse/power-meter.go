@@ -105,7 +105,6 @@ func (evse *Impl) sendMeterValueUpdate(measurands []types.Measurand) {
 	// Notify a MeterValue update
 	if evse.meterValuesChannel != nil {
 		evse.logger.Debugf("Sending meter value notification")
-		// todo get transaction id evse.GetTransactionId()
 		evse.meterValuesChannel <- notifications.NewMeterValueNotification(evse.evseId, &evse.evseId, nil, meterValue)
 	}
 }
