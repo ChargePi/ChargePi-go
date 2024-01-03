@@ -1,19 +1,17 @@
 package diagnostics
 
 import (
-	"fmt"
-	"io"
+	"bytes"
 	"net/url"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/jlaffaye/ftp"
+	"github.com/samber/lo"
 	log "github.com/sirupsen/logrus"
+	"github.com/xBlaz3kx/ChargePi-go/pkg/observability/logging"
 )
-
-const logFileName = "chargepi.log"
-const logFileDir = "/var/log/chargepi"
 
 type Manager interface {
 	GetLogs() ([]byte, error)
@@ -32,57 +30,60 @@ func NewManager() *ManagerImpl {
 	}
 }
 
+// GetLogs gets the logs of the application.
 func (m *ManagerImpl) GetLogs() ([]byte, error) {
 	m.logger.Debug("Getting logs")
 
-	files, err := os.ReadDir(logFileDir)
+	files, err := os.ReadDir(logging.LogFileDir)
 	if err != nil {
 		return nil, err
 	}
 
-	names := []string{}
-
 	// Search for files with specific name
-	for _, file := range files {
-		if strings.HasPrefix(file.Name(), logFileName) {
-			names = append(names, file.Name())
-		}
+	names := lo.FilterMap(files, func(file os.DirEntry, index int) (string, bool) {
+		return file.Name(), strings.HasPrefix(file.Name(), logging.LogFileName)
+	})
+
+	logs, err := m.joinLogs(names)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil, nil
+	return logs, nil
 }
 
+// GetLogsByDate gets the logs of the application from the given date range.
 func (m *ManagerImpl) GetLogsByDate(startDate, stopDate *time.Time) ([]byte, error) {
 	m.logger.Debug("Getting logs by date")
 
-	files, err := os.ReadDir(logFileDir)
+	files, err := os.ReadDir(logging.LogFileDir)
 	if err != nil {
 		return nil, err
 	}
 
-	names := []string{}
-
-	// Search for files with specific name and between specific dates
-	for _, file := range files {
+	// Search for files with specific name
+	names := lo.FilterMap(files, func(file os.DirEntry, index int) (string, bool) {
 		info, err := file.Info()
 		if err != nil {
-			return nil, err
+			return "", false
 		}
 
-		if strings.HasPrefix(info.Name(), logFileName) && info.ModTime().After(*startDate) && info.ModTime().Before(*stopDate) {
-			names = append(names, file.Name())
-		}
+		return file.Name(), strings.HasPrefix(file.Name(), logging.LogFileName) && info.ModTime().After(*startDate) && info.ModTime().Before(*stopDate)
+	})
 
+	logs, err := m.joinLogs(names)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil, nil
+	return logs, nil
 }
 
+// UploadLogs uploads the logs to the given FTP server.
 func (m *ManagerImpl) UploadLogs(location string, startDate, stopDate *time.Time) error {
 	m.logger.Debug("Uploading logs to FTP server")
-	// todo filter logs by date
 
-	err := m.joinLogs([]string{}, logFileName)
+	logStream, err := m.GetLogsByDate(startDate, stopDate)
 	if err != nil {
 		return err
 	}
@@ -99,8 +100,8 @@ func (m *ManagerImpl) UploadLogs(location string, startDate, stopDate *time.Time
 	}
 
 	pass, hasPassword := parse.User.Password()
-	if hasPassword {
-		return nil
+	if !hasPassword {
+		pass = ""
 	}
 
 	// Login to the FTP server.
@@ -109,44 +110,23 @@ func (m *ManagerImpl) UploadLogs(location string, startDate, stopDate *time.Time
 		return err
 	}
 
-	// Open the local file.
-	file, err := os.Open(fmt.Sprintf("%s/%s", logFileDir, logFileName))
-	if err != nil {
-		panic(err)
-	}
-	defer file.Close()
-
 	// Upload the local file to the remote FTP server.
-	return connection.Stor(parse.Path, file)
+	return connection.Stor(parse.Path, bytes.NewReader(logStream))
 }
 
-func (m *ManagerImpl) joinLogs(files []string, destFile string) error {
-	out, err := os.Create(destFile)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
+// joinLogs joins the logs from the given files into one byte array.
+func (m *ManagerImpl) joinLogs(files []string) ([]byte, error) {
+	var combinedLogs []byte
 
 	for _, file := range files {
 		in, err := os.Open(file)
 		if err != nil {
-			return err
-		}
-
-		_, err = io.Copy(out, in)
-		if err != nil {
-			// Remove the output file on error
-			err := os.Remove(destFile)
-			if err != nil {
-				return err
-			}
-
-			return err
+			return nil, err
 		}
 
 		in.Close()
 
 	}
 
-	return nil
+	return combinedLogs, nil
 }

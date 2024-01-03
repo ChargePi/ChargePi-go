@@ -1,6 +1,7 @@
 package logging
 
 import (
+	"fmt"
 	"log/syslog"
 
 	graylog "github.com/gemnasium/logrus-graylog-hook/v3"
@@ -12,6 +13,9 @@ import (
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 )
+
+const LogFileName = "chargepi.log"
+const LogFileDir = "/var/log/chargepi"
 
 // Setup setup logs
 func Setup(logger *log.Logger, loggingConfig settings.Logging, isDebug bool) {
@@ -30,7 +34,7 @@ func Setup(logger *log.Logger, loggingConfig settings.Logging, isDebug bool) {
 	logger.SetLevel(logLevel)
 
 	// Setup file logging
-	fileLogging(logger, "/var/log/chargepi/chargepi.log")
+	fileLogging(logger, fmt.Sprintf("%s/%s", LogFileDir, LogFileName))
 
 	// Setup remote logging, if configured
 	for _, logType := range loggingConfig.LogTypes {
