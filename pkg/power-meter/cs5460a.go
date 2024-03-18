@@ -343,6 +343,13 @@ func (receiver *C5460A) GetType() string {
 	return TypeC5460A
 }
 
+func (receiver *C5460A) Cleanup() {
+	err := receiver.chipSelect.Close()
+	if err != nil {
+		log.WithError(err).Error("Cannot close chip select")
+	}
+}
+
 func getPhase(phase int) types.Phase {
 	switch phase {
 	case 1:

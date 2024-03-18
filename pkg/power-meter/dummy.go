@@ -73,3 +73,7 @@ func (d *Dummy) GetVoltage(phase int) (*types.SampledValue, error) {
 func (d *Dummy) GetType() string {
 	return TypeDummy
 }
+
+func (d *Dummy) Cleanup() {
+	d.logger.Info("Cleaning up power meter")
+}

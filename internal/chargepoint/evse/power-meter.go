@@ -15,6 +15,17 @@ func (evse *Impl) GetPowerMeter() powerMeter.PowerMeter {
 }
 
 func (evse *Impl) SetPowerMeter(meter powerMeter.PowerMeter) error {
+	if util.IsNilInterfaceOrPointer(meter) {
+		return fmt.Errorf("power meter cannot be nil")
+	}
+
+	evse.logger.Debug("Setting power meter")
+	// Cleanup previous power meter
+	if !util.IsNilInterfaceOrPointer(evse.powerMeter) {
+		evse.powerMeter.Cleanup()
+	}
+
+	// Set new power meter
 	evse.powerMeter = meter
 	return nil
 }
@@ -39,11 +50,13 @@ func (evse *Impl) SamplePowerMeter(measurands []types.Measurand) []types.Sampled
 
 		switch measurand {
 		case types.MeasurandPowerActiveImport, types.MeasurandPowerActiveExport:
-			power, err := evse.powerMeter.GetPower(1)
+			// Get the total power
+			current, err := evse.powerMeter.GetPower(1)
 			if err != nil {
-				continue
+				break
 			}
-			samples = append(samples, *power)
+
+			samples = append(samples, *current)
 		case types.MeasurandEnergyActiveImportInterval, types.MeasurandEnergyActiveImportRegister,
 			types.MeasurandEnergyActiveExportInterval, types.MeasurandEnergyActiveExportRegister:
 			energy, err := evse.powerMeter.GetEnergy()
@@ -53,41 +66,25 @@ func (evse *Impl) SamplePowerMeter(measurands []types.Measurand) []types.Sampled
 
 			samples = append(samples, *energy)
 		case types.MeasurandCurrentImport, types.MeasurandCurrentExport:
-			current, err := evse.powerMeter.GetCurrent(1)
-			if err != nil {
-				continue
-			}
-			samples = append(samples, *current)
+			// Get current for each phase
+			for i := 1; i < 4; i++ {
+				current, err := evse.powerMeter.GetCurrent(i)
+				if err != nil {
+					break
+				}
 
-			current, err = evse.powerMeter.GetCurrent(2)
-			if err != nil {
-				continue
+				samples = append(samples, *current)
 			}
-			samples = append(samples, *current)
-
-			current, err = evse.powerMeter.GetCurrent(3)
-			if err != nil {
-				continue
-			}
-			samples = append(samples, *current)
 		case types.MeasurandVoltage:
-			voltage, err := evse.powerMeter.GetVoltage(1)
-			if err != nil {
-				continue
-			}
-			samples = append(samples, *voltage)
+			// Get voltage for each phase
+			for i := 1; i < 4; i++ {
+				current, err := evse.powerMeter.GetVoltage(i)
+				if err != nil {
+					break
+				}
 
-			voltage, err = evse.powerMeter.GetVoltage(2)
-			if err != nil {
-				continue
+				samples = append(samples, *current)
 			}
-			samples = append(samples, *voltage)
-
-			voltage, err = evse.powerMeter.GetVoltage(3)
-			if err != nil {
-				continue
-			}
-			samples = append(samples, *voltage)
 		}
 	}
 

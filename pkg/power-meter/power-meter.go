@@ -25,6 +25,7 @@ var (
 // PowerMeter is an abstraction for measurement hardware.
 type PowerMeter interface {
 	Init(ctx context.Context) error
+	Cleanup()
 	Reset()
 	GetEnergy() (*types.SampledValue, error)
 	GetPower(phase int) (*types.SampledValue, error)

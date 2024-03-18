@@ -40,5 +40,12 @@ func (evse *Impl) GetEvcc() evcc.EVCC {
 
 func (evse *Impl) SetEvcc(e evcc.EVCC) {
 	evse.logger.Debugf("Setting EVCC")
+
+	// Cleanup the previous EVCC
+	err := evse.evcc.Cleanup()
+	if err != nil {
+		evse.logger.Errorf("Error cleaning up EVCC: %s", err)
+	}
+
 	evse.evcc = e
 }
