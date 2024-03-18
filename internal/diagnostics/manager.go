@@ -119,13 +119,13 @@ func (m *ManagerImpl) joinLogs(files []string) ([]byte, error) {
 	var combinedLogs []byte
 
 	for _, file := range files {
-		in, err := os.Open(file)
+		in, err := os.ReadFile(file)
 		if err != nil {
 			return nil, err
 		}
 
-		in.Close()
-
+		// Append the file content to the existing byte array
+		combinedLogs = append(combinedLogs, in...)
 	}
 
 	return combinedLogs, nil
