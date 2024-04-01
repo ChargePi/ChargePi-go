@@ -1,10 +1,10 @@
 package database
 
 import (
+	userDatabase "github.com/ChargePi/ChargePi-go/internal/users/pkg/database"
+	"github.com/ChargePi/ChargePi-go/internal/users/pkg/models"
 	"github.com/dgraph-io/badger/v3"
 	log "github.com/sirupsen/logrus"
-	userDatabase "github.com/xBlaz3kx/ChargePi-go/internal/users/pkg/database"
-	"github.com/xBlaz3kx/ChargePi-go/internal/users/pkg/models"
 )
 
 // Initialize the database with default settings.

@@ -10,3 +10,7 @@ type (
 		Imsi                    string `json:"imsi,omitempty" yaml:"imsi,omitempty" mapstructure:"imsi"`
 	}
 )
+
+const (
+	ISO15118PnCEnabledConfigurationKey = "ISO15118PnCEnabled"
+)

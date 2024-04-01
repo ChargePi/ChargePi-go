@@ -2,23 +2,23 @@ package chargepoint
 
 import (
 	"context"
+	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
 	"os"
 	"os/signal"
 	"time"
 
+	"github.com/ChargePi/ChargePi-go/internal/auth"
+	"github.com/ChargePi/ChargePi-go/internal/diagnostics"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/database"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/models/charge-point"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/models/settings"
+	cfg "github.com/ChargePi/ChargePi-go/internal/pkg/settings"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/util"
+	database2 "github.com/ChargePi/ChargePi-go/internal/sessions/pkg/database"
+	"github.com/ChargePi/ChargePi-go/internal/sessions/service/session"
+	"github.com/ChargePi/ChargePi-go/pkg/observability/logging"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/auth"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/evse"
-	"github.com/xBlaz3kx/ChargePi-go/internal/diagnostics"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/database"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
-	cfg "github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
-	database2 "github.com/xBlaz3kx/ChargePi-go/internal/sessions/pkg/database"
-	"github.com/xBlaz3kx/ChargePi-go/internal/sessions/service/session"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/observability/logging"
 )
 
 func Run(debug bool, config *settings.Settings) {
@@ -43,7 +43,7 @@ func Run(debug bool, config *settings.Settings) {
 
 	settingsManager := cfg.GetManager()
 
-	evseManager := evse.GetManager()
+	evseManager := manager.GetManager()
 	diagnosticsManager := diagnostics.NewManager()
 	tagManager := auth.NewTagManager(db)
 	sessionRepository := database2.NewSessionBadgerDb(db)

@@ -1,8 +1,8 @@
 package evse
 
 import (
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/evcc"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/models/settings"
+	"github.com/ChargePi/ChargePi-go/pkg/evcc"
 )
 
 func (evse *Impl) Lock() {

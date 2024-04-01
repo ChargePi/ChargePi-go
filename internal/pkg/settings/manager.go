@@ -5,15 +5,15 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/ChargePi/ChargePi-go/internal/pkg/database"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/models/settings"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/util"
+	"github.com/ChargePi/ChargePi-go/pkg/models/ocpp"
+	"github.com/ChargePi/ocppManager-go/ocpp_v16"
 	"github.com/dgraph-io/badger/v3"
 	"github.com/go-playground/validator/v10"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/database"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/models/ocpp"
-	"github.com/xBlaz3kx/ocppManager-go/ocpp_v16"
 )
 
 var (

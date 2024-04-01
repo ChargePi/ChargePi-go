@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ChargePi/ChargePi-go/pkg/observability/logging"
 	"github.com/jlaffaye/ftp"
 	"github.com/samber/lo"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/observability/logging"
 )
 
 type Manager interface {

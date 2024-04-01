@@ -4,16 +4,16 @@ import (
 	"context"
 	"errors"
 
+	"github.com/ChargePi/ChargePi-go/internal/pkg/models/charge-point"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/models/settings"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/util"
+	"github.com/ChargePi/ChargePi-go/pkg/display"
+	"github.com/ChargePi/ChargePi-go/pkg/indicator"
+	settings2 "github.com/ChargePi/ChargePi-go/pkg/models/settings"
+	"github.com/ChargePi/ChargePi-go/pkg/reader"
 	"github.com/go-playground/validator/v10"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/display"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/indicator"
-	settings2 "github.com/xBlaz3kx/ChargePi-go/pkg/models/settings"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/reader"
 )
 
 func (cp *ChargePoint) SetLogger(logger log.FieldLogger) {

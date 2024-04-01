@@ -1,17 +1,17 @@
 package chargepoint
 
 import (
+	"github.com/ChargePi/ChargePi-go/internal/api/grpc"
+	"github.com/ChargePi/ChargePi-go/internal/api/http"
+	"github.com/ChargePi/ChargePi-go/internal/auth"
+	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
+	chargePoint "github.com/ChargePi/ChargePi-go/internal/pkg/models/charge-point"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/models/settings"
+	cfg "github.com/ChargePi/ChargePi-go/internal/pkg/settings"
+	userDatabase "github.com/ChargePi/ChargePi-go/internal/users/pkg/database"
+	"github.com/ChargePi/ChargePi-go/internal/users/service"
 	"github.com/dgraph-io/badger/v3"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/api/grpc"
-	"github.com/xBlaz3kx/ChargePi-go/internal/api/http"
-	"github.com/xBlaz3kx/ChargePi-go/internal/auth"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/evse"
-	chargePoint "github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
-	cfg "github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
-	userDatabase "github.com/xBlaz3kx/ChargePi-go/internal/users/pkg/database"
-	"github.com/xBlaz3kx/ChargePi-go/internal/users/service"
 )
 
 // SetupApi Runs a gRPC API server at a specified address if it is enabled. The API is protected by an authentication layer.
@@ -20,8 +20,8 @@ func SetupApi(
 	db *badger.DB,
 	api settings.Api,
 	handler chargePoint.ChargePoint,
-	tagManager auth.TagManager,
-	manager evse.Manager,
+	tagManager auth.Manager,
+	manager manager.Manager,
 	settingsManager cfg.Manager,
 ) {
 	if !api.Enabled {

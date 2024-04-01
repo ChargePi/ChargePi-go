@@ -1,12 +1,13 @@
-package auth
+package list
 
 import (
+	"github.com/ChargePi/ChargePi-go/internal/auth"
 	"testing"
 
+	"github.com/ChargePi/ChargePi-go/internal/pkg/database"
+	"github.com/ChargePi/ChargePi-go/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/database"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/util"
 )
 
 type localAuthListTestSuite struct {
@@ -21,11 +22,11 @@ func (s *localAuthListTestSuite) SetupTest() {
 
 func (s *localAuthListTestSuite) TestAddTag() {
 	tagId := util.GenerateRandomTag()
-	err := s.authList.AddTag(tagId, okTag)
+	err := s.authList.AddTag(tagId, auth.okTag)
 	s.Assert().NoError(err)
 
 	tagId = util.GenerateRandomTag()
-	err = s.authList.AddTag(tagId, blockedTag)
+	err = s.authList.AddTag(tagId, auth.blockedTag)
 	s.Assert().NoError(err)
 
 	tagId = util.GenerateRandomTag()
@@ -47,7 +48,7 @@ func (s *localAuthListTestSuite) TestUpdateTag() {
 
 func (s *localAuthListTestSuite) TestRemoveTag() {
 	tagId := util.GenerateRandomTag()
-	err := s.authList.AddTag(tagId, blockedTag)
+	err := s.authList.AddTag(tagId, auth.blockedTag)
 	s.Require().NoError(err)
 
 	err = s.authList.RemoveTag(tagId)

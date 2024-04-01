@@ -5,9 +5,9 @@ package database
 import (
 	"testing"
 
+	session "github.com/ChargePi/ChargePi-go/internal/sessions/pkg/models"
 	"github.com/dgraph-io/badger/v3"
 	"github.com/stretchr/testify/assert"
-	session "github.com/xBlaz3kx/ChargePi-go/internal/sessions/pkg/models"
 )
 
 func TestSessionRepository(t *testing.T) {

@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"sync"
 
+	"github.com/ChargePi/ChargePi-go/internal/pkg/models/settings"
 	"github.com/dgraph-io/badger/v3"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 )
 
 var (

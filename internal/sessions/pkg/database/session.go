@@ -1,7 +1,7 @@
 package database
 
 import (
-	session "github.com/xBlaz3kx/ChargePi-go/internal/sessions/pkg/models"
+	session "github.com/ChargePi/ChargePi-go/internal/sessions/pkg/models"
 )
 
 type SessionRepository interface {

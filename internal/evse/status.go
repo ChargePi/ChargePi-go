@@ -1,9 +1,9 @@
 package evse
 
 import (
+	"github.com/ChargePi/ChargePi-go/internal/pkg/models/notifications"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
 )
 
 func (evse *Impl) IsAvailable() bool {

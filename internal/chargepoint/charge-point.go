@@ -2,23 +2,23 @@ package chargepoint
 
 import (
 	"context"
+	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
 
+	"github.com/ChargePi/ChargePi-go/internal/auth"
+	v16 "github.com/ChargePi/ChargePi-go/internal/chargepoint/v16"
+	"github.com/ChargePi/ChargePi-go/internal/diagnostics"
+	chargePoint "github.com/ChargePi/ChargePi-go/internal/pkg/models/charge-point"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/models/settings"
+	cfg "github.com/ChargePi/ChargePi-go/internal/pkg/settings"
+	"github.com/ChargePi/ChargePi-go/internal/sessions/service/session"
+	"github.com/ChargePi/ChargePi-go/pkg/indicator"
+	"github.com/ChargePi/ChargePi-go/pkg/models/ocpp"
+	"github.com/ChargePi/ocppManager-go/ocpp_v16"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/localauth"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/remotetrigger"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/auth"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/evse"
-	v16 "github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/v16"
-	"github.com/xBlaz3kx/ChargePi-go/internal/diagnostics"
-	chargePoint "github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
-	cfg "github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
-	"github.com/xBlaz3kx/ChargePi-go/internal/sessions/service/session"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/indicator"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/models/ocpp"
-	"github.com/xBlaz3kx/ocppManager-go/ocpp_v16"
 )
 
 var supportedOcppV16Profiles = []string{
@@ -33,8 +33,8 @@ func CreateChargePoint(
 	ctx context.Context,
 	protocolVersion ocpp.ProtocolVersion,
 	logger log.FieldLogger,
-	manager evse.Manager,
-	tagManager auth.TagManager,
+	manager manager.Manager,
+	tagManager auth.Manager,
 	sessionManager session.Manager,
 	settingsManager cfg.Manager,
 	diagnosticsManager diagnostics.Manager,

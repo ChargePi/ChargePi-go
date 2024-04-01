@@ -1,23 +1,23 @@
-package evse
+package manager
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/ChargePi/ChargePi-go/internal/evse"
 	"sync"
 
+	"github.com/ChargePi/ChargePi-go/internal/pkg/database"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/models/notifications"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/models/settings"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/scheduler"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/util"
+	"github.com/ChargePi/ChargePi-go/pkg/evcc"
+	"github.com/ChargePi/ChargePi-go/pkg/power-meter"
 	"github.com/dgraph-io/badger/v3"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/database"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/evcc"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/power-meter"
-
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
+	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 )
 
 var (
@@ -33,13 +33,13 @@ var (
 type (
 	Manager interface {
 		InitAll(ctx context.Context) error
-		AddEVSE(ctx context.Context, c EVSE) error
-		UpdateEVSE(ctx context.Context, c EVSE) error
+		AddEVSE(ctx context.Context, c evse.EVSE) error
+		UpdateEVSE(ctx context.Context, c evse.EVSE) error
 		RemoveEVSE(evseId int) error
-		GetEVSEs() []EVSE
-		GetEVSE(evseId int) (EVSE, error)
-		GetAvailableEVSE() (EVSE, error)
-		GetEVSEWithReservationId(reservationId int) (EVSE, error)
+		GetEVSEs() []evse.EVSE
+		GetEVSE(evseId int) (evse.EVSE, error)
+		GetAvailableEVSE() (evse.EVSE, error)
+		GetEVSEWithReservationId(reservationId int) (evse.EVSE, error)
 
 		StartCharging(evseId int, connectorId *int, measurands []types.Measurand, sampleInterval string) error
 		StopCharging(evseId int, connectorId *int, reason core.Reason) error
@@ -110,12 +110,12 @@ func (m *managerImpl) InitAll(ctx context.Context) error {
 	return nil
 }
 
-func (m *managerImpl) GetEVSEs() []EVSE {
+func (m *managerImpl) GetEVSEs() []evse.EVSE {
 	m.logger.Debug("Getting all EVSEs")
-	var connectors []EVSE
+	var connectors []evse.EVSE
 
 	m.connectors.Range(func(key, value interface{}) bool {
-		c, canCast := value.(EVSE)
+		c, canCast := value.(evse.EVSE)
 		if canCast {
 			connectors = append(connectors, c)
 		}
@@ -141,23 +141,23 @@ func (m *managerImpl) SetMeterValuesChannel(notificationChannel chan notificatio
 	}
 }
 
-func (m *managerImpl) GetEVSE(evseId int) (EVSE, error) {
+func (m *managerImpl) GetEVSE(evseId int) (evse.EVSE, error) {
 	m.logger.WithField("evseId", evseId).Debug("Getting EVSE")
 
 	c, isFound := m.connectors.Load(getKey(evseId))
 	if isFound {
-		return c.(EVSE), nil
+		return c.(evse.EVSE), nil
 	}
 
 	return nil, ErrConnectorNotFound
 }
 
-func (m *managerImpl) GetAvailableEVSE() (EVSE, error) {
+func (m *managerImpl) GetAvailableEVSE() (evse.EVSE, error) {
 	m.logger.Debug("Getting available EVSEs")
-	var availableConnector EVSE
+	var availableConnector evse.EVSE
 
 	m.connectors.Range(func(key, value interface{}) bool {
-		c, canCast := value.(EVSE)
+		c, canCast := value.(evse.EVSE)
 		if canCast && c.IsAvailable() {
 			availableConnector = c
 			return false
@@ -219,7 +219,7 @@ func (m *managerImpl) StopAllEVSEs(reason core.Reason) error {
 	return err
 }
 
-func (m *managerImpl) AddEVSE(ctx context.Context, c EVSE) error {
+func (m *managerImpl) AddEVSE(ctx context.Context, c evse.EVSE) error {
 	if util.IsNilInterfaceOrPointer(c) {
 		return ErrConnectorNil
 	}
@@ -269,7 +269,7 @@ func (m *managerImpl) addEVSEFromSettings(ctx context.Context, c settings.EVSE) 
 
 	// Create EVSE from EVCC and Power Meter
 	logInfo.Debugf("Creating EVSE")
-	evse, err := NewEvse(c.EvseId, evccFromType, meter, float64(c.MaxPower), nil)
+	evse, err := evse.NewEvse(c.EvseId, evccFromType, meter, float64(c.MaxPower), nil)
 	if err != nil {
 		return err
 	}
@@ -281,7 +281,7 @@ func (m *managerImpl) addEVSEFromSettings(ctx context.Context, c settings.EVSE) 
 	return m.AddEVSE(ctx, evse)
 }
 
-func (m *managerImpl) UpdateEVSE(ctx context.Context, c EVSE) error {
+func (m *managerImpl) UpdateEVSE(ctx context.Context, c evse.EVSE) error {
 	m.logger.WithField("evseId", c.GetEvseId()).Debugf("Updating an EVSE")
 	// todo implement me
 	return nil

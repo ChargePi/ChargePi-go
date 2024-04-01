@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"strings"
 
+	"github.com/ChargePi/ChargePi-go/internal/pkg/settings"
 	"github.com/go-playground/validator/v10"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
 
+	settingsModel "github.com/ChargePi/ChargePi-go/internal/pkg/models/settings"
 	"github.com/agrison/go-commons-lang/stringUtils"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	settingsModel "github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 )
 
 func InitSettings(settingsFilePath string) {

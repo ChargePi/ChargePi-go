@@ -1,9 +1,9 @@
 package cmd
 
 import (
+	chargePoint "github.com/ChargePi/ChargePi-go/internal/pkg/models/charge-point"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	chargePoint "github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
 )
 
 // versionCmd represents the version command

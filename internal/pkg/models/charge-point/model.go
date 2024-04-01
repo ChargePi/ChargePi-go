@@ -4,16 +4,16 @@ import (
 	"context"
 	"errors"
 
+	"github.com/ChargePi/ChargePi-go/internal/pkg/models/notifications"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/models/settings"
+	"github.com/ChargePi/ChargePi-go/pkg/display"
+	"github.com/ChargePi/ChargePi-go/pkg/indicator"
+	data "github.com/ChargePi/ChargePi-go/pkg/models/ocpp"
+	settings2 "github.com/ChargePi/ChargePi-go/pkg/models/settings"
+	"github.com/ChargePi/ChargePi-go/pkg/reader"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	ocppDisplay "github.com/lorenzodonini/ocpp-go/ocpp2.0.1/display"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/display"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/indicator"
-	data "github.com/xBlaz3kx/ChargePi-go/pkg/models/ocpp"
-	settings2 "github.com/xBlaz3kx/ChargePi-go/pkg/models/settings"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/reader"
 )
 
 var (

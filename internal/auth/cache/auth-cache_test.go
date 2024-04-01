@@ -1,17 +1,18 @@
-package auth
+package cache
 
 import (
+	"github.com/ChargePi/ChargePi-go/internal/auth"
 	"testing"
 
+	"github.com/ChargePi/ChargePi-go/internal/pkg/database"
+	"github.com/ChargePi/ChargePi-go/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/database"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/util"
 )
 
 type authCacheTestSuite struct {
 	suite.Suite
-	authCache *CacheImpl
+	authCache *BadgerCache
 }
 
 func (s *authCacheTestSuite) SetupTest() {
@@ -24,22 +25,22 @@ func (s *authCacheTestSuite) TestAddTag() {
 	s.authCache.SetMaxCachedTags(1)
 
 	tagId := util.GenerateRandomTag()
-	s.authCache.AddTag(tagId, okTag)
+	s.authCache.AddTag(tagId, auth.okTag)
 
 	// Test cached tag limit
 	tagId = util.GenerateRandomTag()
-	s.authCache.AddTag(tagId, expiredTag)
+	s.authCache.AddTag(tagId, auth.expiredTag)
 }
 
 func (s *authCacheTestSuite) TestRemoveCachedTags() {
 	tagId1 := util.GenerateRandomTag()
-	s.authCache.AddTag(tagId1, okTag)
+	s.authCache.AddTag(tagId1, auth.okTag)
 
 	tagId2 := util.GenerateRandomTag()
-	s.authCache.AddTag(tagId2, expiredTag)
+	s.authCache.AddTag(tagId2, auth.expiredTag)
 
 	tagId3 := util.GenerateRandomTag()
-	s.authCache.AddTag(tagId3, blockedTag)
+	s.authCache.AddTag(tagId3, auth.blockedTag)
 
 	s.authCache.RemoveCachedTags()
 
@@ -55,10 +56,10 @@ func (s *authCacheTestSuite) TestRemoveCachedTags() {
 
 func (s *authCacheTestSuite) TestGetTag() {
 	tagId := util.GenerateRandomTag()
-	s.authCache.AddTag(tagId, okTag)
+	s.authCache.AddTag(tagId, auth.okTag)
 	tag, err := s.authCache.GetTag(tagId)
 	s.Assert().NoError(err)
-	s.Assert().EqualValues(*okTag, *tag)
+	s.Assert().EqualValues(*auth.okTag, *tag)
 
 	tagId = util.GenerateRandomTag()
 	_, err = s.authCache.GetTag(tagId)

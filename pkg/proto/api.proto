@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package api;
-option go_package = "github.com/xBlaz3kx/ChargePi-go/pkg/grpc";
+option go_package = "github.com/ChargePi/ChargePi-go/pkg/grpc";
 
 import "hardware.proto";
 import "charge-point.proto";

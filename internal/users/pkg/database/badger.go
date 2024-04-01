@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/ChargePi/ChargePi-go/internal/users/pkg/models"
 	"github.com/dgraph-io/badger/v3"
-	"github.com/xBlaz3kx/ChargePi-go/internal/users/pkg/models"
 )
 
 var (

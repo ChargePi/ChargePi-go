@@ -3,10 +3,10 @@ package service
 import (
 	"errors"
 
+	"github.com/ChargePi/ChargePi-go/internal/users/pkg/database"
+	"github.com/ChargePi/ChargePi-go/internal/users/pkg/models"
 	"github.com/casbin/casbin/v2"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/users/pkg/database"
-	"github.com/xBlaz3kx/ChargePi-go/internal/users/pkg/models"
 )
 
 var (

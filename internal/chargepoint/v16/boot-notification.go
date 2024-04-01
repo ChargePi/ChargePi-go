@@ -3,10 +3,10 @@ package v16
 import (
 	"fmt"
 
+	"github.com/ChargePi/ChargePi-go/internal/pkg/models/charge-point"
+	"github.com/ChargePi/ocppManager-go/ocpp_v16"
 	"github.com/lorenzodonini/ocpp-go/ocpp"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
-	"github.com/xBlaz3kx/ocppManager-go/ocpp_v16"
 )
 
 // bootNotification Notify the central system that the charging point is online. Set the setHeartbeat interval and call restoreState.

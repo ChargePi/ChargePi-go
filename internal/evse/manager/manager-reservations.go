@@ -1,11 +1,12 @@
-package evse
+package manager
 
 import (
+	"github.com/ChargePi/ChargePi-go/internal/evse"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	log "github.com/sirupsen/logrus"
 )
 
-func (m *managerImpl) GetEVSEWithReservationId(reservationId int) (EVSE, error) {
+func (m *managerImpl) GetEVSEWithReservationId(reservationId int) (evse.EVSE, error) {
 	logInfo := m.logger.WithField("reservationId", reservationId)
 	logInfo.Debugf("Finding evse with reservation id")
 

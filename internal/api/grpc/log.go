@@ -1,8 +1,8 @@
 package grpc
 
 import (
+	"github.com/ChargePi/ChargePi-go/pkg/grpc"
 	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/grpc"
 )
 
 type LogService struct {

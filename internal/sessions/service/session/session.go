@@ -1,10 +1,10 @@
 package session
 
 import (
+	"github.com/ChargePi/ChargePi-go/internal/sessions/pkg/database"
+	session "github.com/ChargePi/ChargePi-go/internal/sessions/pkg/models"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/sessions/pkg/database"
-	session "github.com/xBlaz3kx/ChargePi-go/internal/sessions/pkg/models"
 )
 
 type (

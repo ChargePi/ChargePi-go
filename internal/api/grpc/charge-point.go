@@ -3,15 +3,15 @@ package grpc
 import (
 	"context"
 
+	"github.com/ChargePi/ChargePi-go/internal/pkg/models/charge-point"
+	cfg "github.com/ChargePi/ChargePi-go/internal/pkg/settings"
+	"github.com/ChargePi/ChargePi-go/pkg/display"
+	"github.com/ChargePi/ChargePi-go/pkg/grpc"
+	commonSettings "github.com/ChargePi/ChargePi-go/pkg/models/settings"
+	settings2 "github.com/ChargePi/ChargePi-go/pkg/models/settings"
+	"github.com/ChargePi/ocppManager-go/ocpp_v16"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
-	cfg "github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/display"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/grpc"
-	commonSettings "github.com/xBlaz3kx/ChargePi-go/pkg/models/settings"
-	settings2 "github.com/xBlaz3kx/ChargePi-go/pkg/models/settings"
-	"github.com/xBlaz3kx/ocppManager-go/ocpp_v16"
 )
 
 type ChargePointService struct {

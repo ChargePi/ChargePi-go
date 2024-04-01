@@ -6,11 +6,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ChargePi/ChargePi-go/internal/pkg/util"
+	"github.com/ChargePi/ChargePi-go/pkg/indicator"
+	hardwareSettings "github.com/ChargePi/ChargePi-go/pkg/models/settings"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/display"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/indicator"
-	hardwareSettings "github.com/xBlaz3kx/ChargePi-go/pkg/models/settings"
 )
 
 // DisplayMessage sends/shows a message on the display.

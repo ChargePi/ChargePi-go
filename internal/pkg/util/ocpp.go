@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ChargePi/ChargePi-go/internal/pkg/models/settings"
 	"github.com/agrison/go-commons-lang/stringUtils"
 	"github.com/lorenzodonini/ocpp-go/ws"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 )
 
 // CreateConnectionUrl creates a connection url from the provided settings

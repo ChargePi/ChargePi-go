@@ -3,7 +3,7 @@ package evcc
 import (
 	"context"
 
-	"github.com/xBlaz3kx/ChargePi-go/pkg/models/settings"
+	"github.com/ChargePi/ChargePi-go/pkg/models/settings"
 )
 
 const (
@@ -36,8 +36,6 @@ func NewEVCCFromType(evccSettings settings.EVCC) (EVCC, error) {
 	switch evccSettings.Type {
 	case Relay:
 		return NewRelay(evccSettings.Relay)
-	case Western:
-		return NewWesternController(1, evccSettings.Serial)
 	case TypeDummy:
 		return NewDummy(evccSettings.Dummy)
 	default:

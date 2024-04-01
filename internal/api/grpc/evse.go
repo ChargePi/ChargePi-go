@@ -2,22 +2,23 @@ package grpc
 
 import (
 	"context"
+	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
 	"time"
 
+	"github.com/ChargePi/ChargePi-go/internal/evse"
+	"github.com/ChargePi/ChargePi-go/pkg/grpc"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/samber/lo"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/evse"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/grpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type Service struct {
 	grpc.UnimplementedEvseServer
-	evseManager evse.Manager
+	evseManager manager.Manager
 }
 
-func NewEvseService(manager evse.Manager) *Service {
+func NewEvseService(manager manager.Manager) *Service {
 	return &Service{
 		evseManager: manager,
 	}

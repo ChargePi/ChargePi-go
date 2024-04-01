@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	session "github.com/ChargePi/ChargePi-go/internal/sessions/pkg/models"
 	"github.com/dgraph-io/badger/v3"
 	log "github.com/sirupsen/logrus"
-	session "github.com/xBlaz3kx/ChargePi-go/internal/sessions/pkg/models"
 )
 
 type SessionBadgerDb struct {

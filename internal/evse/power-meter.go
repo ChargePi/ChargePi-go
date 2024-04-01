@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ChargePi/ChargePi-go/internal/pkg/models/notifications"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/util"
+	"github.com/ChargePi/ChargePi-go/pkg/power-meter"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/power-meter"
 )
 
 func (evse *Impl) GetPowerMeter() powerMeter.PowerMeter {

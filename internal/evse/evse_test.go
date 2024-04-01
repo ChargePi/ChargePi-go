@@ -4,10 +4,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/evcc"
-	powerMeter "github.com/xBlaz3kx/ChargePi-go/pkg/power-meter"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/util"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/models/notifications"
+	"github.com/ChargePi/ChargePi-go/pkg/evcc"
+	powerMeter "github.com/ChargePi/ChargePi-go/pkg/power-meter"
+	"github.com/ChargePi/ChargePi-go/pkg/util"
 
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"

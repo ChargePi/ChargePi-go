@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 
+	"github.com/ChargePi/ChargePi-go/pkg/models/settings"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	log "github.com/sirupsen/logrus"
 	"github.com/warthog618/gpiod"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/models/settings"
 )
 
 var (

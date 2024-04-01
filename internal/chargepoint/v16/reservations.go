@@ -3,9 +3,9 @@ package v16
 import (
 	"errors"
 	"fmt"
+	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
 
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/evse"
 )
 
 func (cp *ChargePoint) OnReserveNow(request *reservation.ReserveNowRequest) (confirmation *reservation.ReserveNowConfirmation, err error) {
@@ -21,7 +21,7 @@ func (cp *ChargePoint) OnReserveNow(request *reservation.ReserveNowRequest) (con
 		}
 
 		return reservation.NewReserveNowConfirmation(reservation.ReservationStatusAccepted), nil
-	case errors.Is(err, evse.ErrConnectorStatusInvalid):
+	case errors.Is(err, manager.ErrConnectorStatusInvalid):
 		return reservation.NewReserveNowConfirmation(reservation.ReservationStatusOccupied), nil
 	default:
 		return reservation.NewReserveNowConfirmation(reservation.ReservationStatusRejected), nil

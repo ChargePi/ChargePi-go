@@ -3,9 +3,9 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/ChargePi/ChargePi-go/internal/pkg/models/settings"
+	cfg "github.com/ChargePi/ChargePi-go/internal/pkg/settings"
 	"github.com/spf13/cobra"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
-	cfg "github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
 )
 
 var (

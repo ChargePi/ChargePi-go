@@ -6,15 +6,15 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/ChargePi/ChargePi-go/internal/auth"
+	"github.com/ChargePi/ChargePi-go/internal/evse"
+	"github.com/ChargePi/ocppManager-go/ocpp_v16"
 	"github.com/avast/retry-go"
 	"github.com/lorenzodonini/ocpp-go/ocpp"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/display"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/auth"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/evse"
-	"github.com/xBlaz3kx/ocppManager-go/ocpp_v16"
 )
 
 func (cp *ChargePoint) OnChangeAvailability(request *core.ChangeAvailabilityRequest) (confirmation *core.ChangeAvailabilityConfirmation, err error) {
@@ -56,6 +56,9 @@ func (cp *ChargePoint) OnChangeConfiguration(request *core.ChangeConfigurationRe
 
 	// Process the change configuration request
 	switch request.Key {
+	case iso15118.ISO15118PnCEnabledConfigurationKey:
+		// Check if any EVCC is supporting it
+		// Update the key
 	case ocpp_v16.AuthorizeRemoteTxRequests.String():
 		// Just update
 	case ocpp_v16.AllowOfflineTxForUnknownId.String():
@@ -130,7 +133,7 @@ func (cp *ChargePoint) OnClearCache(request *core.ClearCacheRequest) (confirmati
 
 func (cp *ChargePoint) OnDataTransfer(request *core.DataTransferRequest) (confirmation *core.DataTransferConfirmation, err error) {
 	cp.logger.Infof("Received request %s", request.GetFeatureName())
-	var response = core.DataTransferStatusRejected
+	response := core.NewDataTransferConfirmation(core.DataTransferStatusRejected)
 
 	// Supporting direct display control over custom data transfer messages, based on the messages in OCPP 2.0.1.
 	if request.VendorId != cp.settingsManager.GetChargePointSettings().Info.OCPPDetails.Vendor {
@@ -151,7 +154,6 @@ func (cp *ChargePoint) OnDataTransfer(request *core.DataTransferRequest) (confir
 		displayErr := cp.DisplayMessage(req.Message)
 		if displayErr != nil {
 			cp.logger.WithError(displayErr).Warn("Failed to display requested message")
-			response = core.DataTransferStatusRejected
 		}
 	default:
 		response = core.DataTransferStatusUnknownMessageId
@@ -164,12 +166,12 @@ func (cp *ChargePoint) OnGetConfiguration(request *core.GetConfigurationRequest)
 	cp.logger.Infof("Received request %s", request.GetFeatureName())
 
 	var (
-		unknownKeys            []string
-		configArray            = []core.ConfigurationKey{}
-		response               = core.NewGetConfigurationConfirmation(configArray)
-		configuration, confErr = cp.settingsManager.GetOcppV16Manager().GetConfiguration()
+		unknownKeys []string
+		configArray = []core.ConfigurationKey{}
+		response    = core.NewGetConfigurationConfirmation(configArray)
 	)
 
+	configuration, confErr := cp.settingsManager.GetOcppV16Manager().GetConfiguration()
 	if confErr != nil || configuration == nil {
 		return response, nil
 	}

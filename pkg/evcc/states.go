@@ -9,7 +9,7 @@ const (
 	StateB1 = CarState("B1")
 	StateB2 = CarState("B2")
 
-	// Car wants to charge
+	// Car requests to charge
 	StateC1 = CarState("C1")
 	// EVCC allowed charging
 	StateC2 = CarState("C2")

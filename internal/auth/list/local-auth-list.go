@@ -1,15 +1,14 @@
-package auth
+package list
 
 import (
 	"encoding/binary"
 	"encoding/json"
 	"errors"
-
+	"github.com/ChargePi/ChargePi-go/internal/pkg/database"
 	"github.com/dgraph-io/badger/v3"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/localauth"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/database"
 )
 
 var (
@@ -29,7 +28,7 @@ type (
 		SetVersion(version int)
 	}
 
-	LocalAuthListImpl struct {
+	BadgerLocalAuthList struct {
 		db      *badger.DB
 		numTags int
 		maxTags int
@@ -37,8 +36,8 @@ type (
 	}
 )
 
-func NewLocalAuthList(db *badger.DB, maxTags int) *LocalAuthListImpl {
-	return &LocalAuthListImpl{
+func NewLocalAuthList(db *badger.DB, maxTags int) *BadgerLocalAuthList {
+	return &BadgerLocalAuthList{
 		db:      db,
 		numTags: 0,
 		maxTags: maxTags,
@@ -47,7 +46,7 @@ func NewLocalAuthList(db *badger.DB, maxTags int) *LocalAuthListImpl {
 }
 
 // AddTag Add a tag to the global authorization cache.
-func (l *LocalAuthListImpl) AddTag(tagId string, tagInfo *types.IdTagInfo) error {
+func (l *BadgerLocalAuthList) AddTag(tagId string, tagInfo *types.IdTagInfo) error {
 	logInfo := l.logger.WithField("tagId", tagId)
 	logInfo.Debug("Adding a tag to local auth list")
 
@@ -76,7 +75,7 @@ func (l *LocalAuthListImpl) AddTag(tagId string, tagInfo *types.IdTagInfo) error
 }
 
 // RemoveTag Remove a tag with the ID from the Local Auth List.
-func (l *LocalAuthListImpl) RemoveTag(tagId string) error {
+func (l *BadgerLocalAuthList) RemoveTag(tagId string) error {
 	logInfo := l.logger.WithField("tagId", tagId)
 	logInfo.Debug("Removing a tag from local auth list")
 
@@ -91,7 +90,7 @@ func (l *LocalAuthListImpl) RemoveTag(tagId string) error {
 }
 
 // RemoveAll Remove all tags.
-func (l *LocalAuthListImpl) RemoveAll() {
+func (l *BadgerLocalAuthList) RemoveAll() {
 	l.logger.Debugf("Removing local auth list")
 
 	// Remove all cached keys from database
@@ -115,7 +114,7 @@ func (l *LocalAuthListImpl) RemoveAll() {
 }
 
 // GetTag Get a tag
-func (l *LocalAuthListImpl) GetTag(tagId string) (*types.IdTagInfo, error) {
+func (l *BadgerLocalAuthList) GetTag(tagId string) (*types.IdTagInfo, error) {
 	logInfo := l.logger.WithField("tag", tagId)
 	logInfo.Info("Fetching the tag")
 
@@ -147,7 +146,7 @@ func (l *LocalAuthListImpl) GetTag(tagId string) (*types.IdTagInfo, error) {
 }
 
 // GetTags Get all tags stored in the Local Auth store.
-func (l *LocalAuthListImpl) GetTags() []localauth.AuthorizationData {
+func (l *BadgerLocalAuthList) GetTags() []localauth.AuthorizationData {
 	l.logger.Infof("Fetching tags")
 	var tags []localauth.AuthorizationData
 
@@ -179,7 +178,7 @@ func (l *LocalAuthListImpl) GetTags() []localauth.AuthorizationData {
 }
 
 // UpdateTag Update a tag in the Local Auth store.
-func (l *LocalAuthListImpl) UpdateTag(tagId string, tagInfo *types.IdTagInfo) error {
+func (l *BadgerLocalAuthList) UpdateTag(tagId string, tagInfo *types.IdTagInfo) error {
 	logInfo := l.logger.WithField("tagId", tagId)
 	logInfo.Info("Updating tag")
 
@@ -190,7 +189,7 @@ func (l *LocalAuthListImpl) UpdateTag(tagId string, tagInfo *types.IdTagInfo) er
 }
 
 // GetVersion Get the current version of the Local Auth list.
-func (l *LocalAuthListImpl) GetVersion() int {
+func (l *BadgerLocalAuthList) GetVersion() int {
 	l.logger.Info("Fetching list version")
 	version := -1
 
@@ -219,7 +218,7 @@ func (l *LocalAuthListImpl) GetVersion() int {
 }
 
 // SetVersion Set the current version of the Local Auth list.
-func (l *LocalAuthListImpl) SetVersion(version int) {
+func (l *BadgerLocalAuthList) SetVersion(version int) {
 	logInfo := l.logger.WithField("version", version)
 	logInfo.Info("Updating list version")
 
@@ -242,9 +241,24 @@ func (l *LocalAuthListImpl) SetVersion(version int) {
 }
 
 // SetMaxTags Set the maximum number of tags that can be stored in the Local Auth list.
-func (l *LocalAuthListImpl) SetMaxTags(number int) {
+func (l *BadgerLocalAuthList) SetMaxTags(number int) {
 	if number > 0 {
 		l.logger.Debugf("Set max tags to %d", number)
 		l.maxTags = number
 	}
+}
+
+// getTag transforms a tag struct into a byte array.
+func getTag(tagId string, tagInfo *types.IdTagInfo) []byte {
+	authTag := localauth.AuthorizationData{
+		IdTag:     tagId,
+		IdTagInfo: tagInfo,
+	}
+
+	tag, err := json.Marshal(authTag)
+	if err != nil {
+		return nil
+	}
+
+	return tag
 }

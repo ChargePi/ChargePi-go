@@ -1,9 +1,9 @@
 package v16
 
 import (
+	data "github.com/ChargePi/ChargePi-go/pkg/models/ocpp"
 	"github.com/lorenzodonini/ocpp-go/ocpp"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	data "github.com/xBlaz3kx/ChargePi-go/pkg/models/ocpp"
 )
 
 // sendHeartBeat Send a setHeartbeat to the central system.

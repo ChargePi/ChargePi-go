@@ -3,15 +3,15 @@ package smartCharging
 import (
 	"encoding/json"
 	"errors"
+	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
 	"strconv"
 
+	"github.com/ChargePi/ChargePi-go/internal/pkg/database"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/settings"
+	"github.com/ChargePi/ocppManager-go/ocpp_v16"
 	"github.com/dgraph-io/badger/v3"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/evse"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/database"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
-	"github.com/xBlaz3kx/ocppManager-go/ocpp_v16"
 )
 
 var (
@@ -32,7 +32,7 @@ type (
 		db                 *badger.DB
 		numEvses           int
 		maxCurrent         int
-		evseManager        evse.Manager
+		evseManager        manager.Manager
 		settingsManager    settings.Manager
 		logger             log.FieldLogger
 		compositeSchedules map[int][]ScheduleInterval

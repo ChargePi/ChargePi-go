@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"log/syslog"
 
+	"github.com/ChargePi/ChargePi-go/internal/pkg/models/settings"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/util"
 	graylog "github.com/gemnasium/logrus-graylog-hook/v3"
 	"github.com/lorenzodonini/ocpp-go/ocppj"
 	"github.com/lorenzodonini/ocpp-go/ws"
 	"github.com/orandin/lumberjackrus"
 	log "github.com/sirupsen/logrus"
 	lSyslog "github.com/sirupsen/logrus/hooks/syslog"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
 )
 
 const LogFileName = "chargepi.log"

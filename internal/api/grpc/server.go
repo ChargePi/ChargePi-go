@@ -2,19 +2,19 @@ package grpc
 
 import (
 	"context"
+	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
 	"net"
 
+	"github.com/ChargePi/ChargePi-go/internal/auth"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/models/charge-point"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/models/settings"
+	cfg "github.com/ChargePi/ChargePi-go/internal/pkg/settings"
+	"github.com/ChargePi/ChargePi-go/internal/users/service"
+	grpc2 "github.com/ChargePi/ChargePi-go/pkg/grpc"
 	grpcmiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpcauth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	grpcrecovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/auth"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/evse"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
-	cfg "github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
-	"github.com/xBlaz3kx/ChargePi-go/internal/users/service"
-	grpc2 "github.com/xBlaz3kx/ChargePi-go/pkg/grpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
@@ -35,7 +35,7 @@ func NewServer(
 	settings settings.Api,
 	point chargePoint.ChargePoint,
 	authCache auth.TagManager,
-	manager evse.Manager,
+	manager manager.Manager,
 	settingsManager cfg.Manager,
 	userService service.Service,
 ) *Server {

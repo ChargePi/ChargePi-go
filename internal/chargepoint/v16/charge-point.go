@@ -2,27 +2,27 @@ package v16
 
 import (
 	"context"
+	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
 	"os/exec"
 
+	"github.com/ChargePi/ChargePi-go/internal/auth"
+	"github.com/ChargePi/ChargePi-go/internal/diagnostics"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/models/charge-point"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/models/notifications"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/models/settings"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/scheduler"
+	settings2 "github.com/ChargePi/ChargePi-go/internal/pkg/settings"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/util"
+	"github.com/ChargePi/ChargePi-go/internal/sessions/service/session"
+	"github.com/ChargePi/ChargePi-go/pkg/display"
+	"github.com/ChargePi/ChargePi-go/pkg/indicator"
+	hardwareSettings "github.com/ChargePi/ChargePi-go/pkg/models/settings"
+	"github.com/ChargePi/ChargePi-go/pkg/reader"
+	"github.com/ChargePi/ocppManager-go/ocpp_v16"
 	"github.com/go-co-op/gocron"
 	ocpp16 "github.com/lorenzodonini/ocpp-go/ocpp1.6"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/auth"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint/evse"
-	"github.com/xBlaz3kx/ChargePi-go/internal/diagnostics"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/charge-point"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
-	settings2 "github.com/xBlaz3kx/ChargePi-go/internal/pkg/settings"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/util"
-	"github.com/xBlaz3kx/ChargePi-go/internal/sessions/service/session"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/display"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/indicator"
-	hardwareSettings "github.com/xBlaz3kx/ChargePi-go/pkg/models/settings"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/reader"
-	"github.com/xBlaz3kx/ocppManager-go/ocpp_v16"
 )
 
 type ChargePoint struct {
@@ -43,17 +43,17 @@ type ChargePoint struct {
 	indicatorMapping hardwareSettings.IndicatorStatusMapping
 
 	// Software components
-	evseManager        evse.Manager
+	evseManager        manager.Manager
 	sessionManager     session.Manager
 	diagnosticsManager diagnostics.Manager
 	meterValuesChannel chan notifications.MeterValueNotification
 	scheduler          *gocron.Scheduler
-	tagManager         auth.TagManager
+	tagManager         auth.Manager
 	logger             log.FieldLogger
 }
 
 // NewChargePoint creates a new ChargePoint for OCPP version 1.6.
-func NewChargePoint(manager evse.Manager, tagManager auth.TagManager, sessionManager session.Manager, diagnosticsManager diagnostics.Manager, opts ...chargePoint.Options) *ChargePoint {
+func NewChargePoint(manager manager.Manager, tagManager auth.Manager, sessionManager session.Manager, diagnosticsManager diagnostics.Manager, opts ...chargePoint.Options) *ChargePoint {
 	cp := &ChargePoint{
 		availability:       core.AvailabilityTypeOperative,
 		scheduler:          scheduler.NewScheduler(),

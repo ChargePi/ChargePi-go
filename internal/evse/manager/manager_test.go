@@ -1,4 +1,4 @@
-package evse
+package manager
 
 import (
 	"testing"

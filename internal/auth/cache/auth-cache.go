@@ -1,4 +1,4 @@
-package auth
+package cache
 
 import (
 	"encoding/json"
@@ -19,15 +19,15 @@ type (
 		RemoveCachedTags()
 	}
 
-	CacheImpl struct {
+	BadgerCache struct {
 		db      *badger.DB
 		maxTags int
 		logger  log.FieldLogger
 	}
 )
 
-func NewAuthCache(db *badger.DB) *CacheImpl {
-	return &CacheImpl{
+func NewAuthCache(db *badger.DB) *BadgerCache {
+	return &BadgerCache{
 		db:      db,
 		maxTags: 0,
 		logger:  log.StandardLogger().WithField("component", "auth-cache"),
@@ -39,7 +39,7 @@ func getTagKey(tagId string) []byte {
 }
 
 // AddTag Add a tag to the authorization cache.
-func (c *CacheImpl) AddTag(tagId string, tagInfo *types.IdTagInfo) {
+func (c *BadgerCache) AddTag(tagId string, tagInfo *types.IdTagInfo) {
 	logInfo := c.logger.WithField("tagId", tagId)
 	logInfo.Debug("Adding a tag to cache")
 
@@ -69,7 +69,7 @@ func (c *CacheImpl) AddTag(tagId string, tagInfo *types.IdTagInfo) {
 }
 
 // RemoveTag Remove a tag from the authorization cache.
-func (c *CacheImpl) RemoveTag(tagId string) {
+func (c *BadgerCache) RemoveTag(tagId string) {
 	logInfo := c.logger.WithField("tagId", tagId)
 	logInfo.Debug("Removing a tag from cache")
 
@@ -87,7 +87,7 @@ func (c *CacheImpl) RemoveTag(tagId string) {
 }
 
 // RemoveCachedTags Remove all Tags from the authorization cache.
-func (c *CacheImpl) RemoveCachedTags() {
+func (c *BadgerCache) RemoveCachedTags() {
 	log.Debugf("Flushing auth cache")
 
 	// Remove all cached keys from database
@@ -111,7 +111,7 @@ func (c *CacheImpl) RemoveCachedTags() {
 }
 
 // SetMaxCachedTags Set the maximum number of Tags allowed in the authorization cache.
-func (c *CacheImpl) SetMaxCachedTags(number int) {
+func (c *BadgerCache) SetMaxCachedTags(number int) {
 	c.logger.Debugf("Set max cached tags to %d", number)
 
 	if number > 0 {
@@ -120,7 +120,7 @@ func (c *CacheImpl) SetMaxCachedTags(number int) {
 }
 
 // GetTag Get a tag from cache based on the tag ID.
-func (c *CacheImpl) GetTag(tagId string) (*types.IdTagInfo, error) {
+func (c *BadgerCache) GetTag(tagId string) (*types.IdTagInfo, error) {
 	logInfo := c.logger.WithField("tagId", tagId)
 	logInfo.Info("Getting a tag from cache")
 

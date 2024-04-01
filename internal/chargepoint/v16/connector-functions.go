@@ -5,13 +5,13 @@ import (
 	"errors"
 	"time"
 
+	"github.com/ChargePi/ChargePi-go/internal/pkg/models/notifications"
+	"github.com/ChargePi/ChargePi-go/pkg/display"
+	"github.com/ChargePi/ocppManager-go/ocpp_v16"
 	"github.com/lorenzodonini/ocpp-go/ocpp"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/display"
-	"github.com/xBlaz3kx/ocppManager-go/ocpp_v16"
 )
 
 // restoreState After connecting to the central system, try to restore the previous state of each EVSE and notify

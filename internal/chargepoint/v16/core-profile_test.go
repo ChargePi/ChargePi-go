@@ -3,12 +3,12 @@ package v16
 import (
 	"testing"
 
+	"github.com/ChargePi/ChargePi-go/internal/pkg/scheduler"
+	"github.com/ChargePi/ocppManager-go/ocpp_v16"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
-	"github.com/xBlaz3kx/ocppManager-go/ocpp_v16"
 )
 
 type coreTestSuite struct {

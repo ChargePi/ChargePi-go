@@ -3,10 +3,10 @@ package grpc
 import (
 	"context"
 
+	"github.com/ChargePi/ChargePi-go/internal/users/pkg/models"
+	"github.com/ChargePi/ChargePi-go/internal/users/service"
+	"github.com/ChargePi/ChargePi-go/pkg/grpc"
 	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/xBlaz3kx/ChargePi-go/internal/users/pkg/models"
-	"github.com/xBlaz3kx/ChargePi-go/internal/users/service"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/grpc"
 )
 
 type UserService struct {

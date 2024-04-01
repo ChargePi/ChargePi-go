@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/xBlaz3kx/ChargePi-go/cmd"
+	"github.com/ChargePi/ChargePi-go/cmd"
 )
 
 func main() {

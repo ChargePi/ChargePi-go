@@ -3,8 +3,8 @@ package evcc
 import (
 	"context"
 
+	"github.com/ChargePi/ChargePi-go/pkg/models/settings"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/models/settings"
 )
 
 type Dummy struct {

@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 
+	"github.com/ChargePi/ChargePi-go/pkg/display"
+	"github.com/ChargePi/ChargePi-go/pkg/indicator"
+	"github.com/ChargePi/ChargePi-go/pkg/models/settings"
+	"github.com/ChargePi/ChargePi-go/pkg/reader"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/display"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/indicator"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/models/settings"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/reader"
 )
 
 type Options func(point ChargePoint)

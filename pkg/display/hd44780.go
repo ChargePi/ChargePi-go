@@ -4,13 +4,13 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/ChargePi/ChargePi-go/internal/pkg/scheduler"
+	"github.com/ChargePi/ChargePi-go/pkg/models/settings"
 	"github.com/d2r2/go-hd44780"
 	"github.com/d2r2/go-i2c"
 	"github.com/go-co-op/gocron"
 	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/display"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/models/settings"
 )
 
 type HD44780 struct {

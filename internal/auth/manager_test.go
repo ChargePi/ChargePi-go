@@ -3,10 +3,10 @@ package auth
 import (
 	"testing"
 
+	"github.com/ChargePi/ChargePi-go/pkg/util"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
-	"github.com/xBlaz3kx/ChargePi-go/pkg/util"
 )
 
 type tagManagerTestSuite struct {
@@ -22,7 +22,7 @@ func (s *tagManagerTestSuite) TestAddTag() {
 	tagId := util.GenerateRandomTag()
 	authCacheMock.OnAddTag(tagId, &types.IdTagInfo{}).Return(nil)
 
-	tagManager := &TagManagerImpl{
+	tagManager := &ManagerV1{
 		authList:             authListMock,
 		cache:                authCacheMock,
 		authCacheEnabled:     true,
@@ -40,7 +40,7 @@ func (s *tagManagerTestSuite) TestGetTag() {
 	tagId := util.GenerateRandomTag()
 	authCacheMock.OnGetTag(tagId).Return(nil, nil)
 
-	tagManager := &TagManagerImpl{
+	tagManager := &ManagerV1{
 		authList:             authListMock,
 		cache:                authCacheMock,
 		authCacheEnabled:     true,
@@ -58,7 +58,7 @@ func (s *tagManagerTestSuite) TestGetTags() {
 
 	// authCacheMock().Return([]localauth.AuthorizationData{})
 
-	tagManager := &TagManagerImpl{
+	tagManager := &ManagerV1{
 		authList:             authListMock,
 		cache:                authCacheMock,
 		authCacheEnabled:     true,
@@ -76,7 +76,7 @@ func (s *tagManagerTestSuite) TestRemoveTag() {
 
 	// authCacheMock.OnRemoveTag("").Return(nil)
 
-	tagManager := &TagManagerImpl{
+	tagManager := &ManagerV1{
 		authList:             authListMock,
 		cache:                authCacheMock,
 		authCacheEnabled:     true,
@@ -91,7 +91,7 @@ func (s *tagManagerTestSuite) TestClearCache() {
 	authListMock := NewLocalAuthListMock(s.T())
 	authCacheMock := NewCacheMock(s.T())
 
-	tagManager := &TagManagerImpl{
+	tagManager := &ManagerV1{
 		authList:             authListMock,
 		cache:                authCacheMock,
 		authCacheEnabled:     true,
@@ -108,7 +108,7 @@ func (s *tagManagerTestSuite) TestUpdateLocalAuthList() {
 	authListMock := NewLocalAuthListMock(s.T())
 	authCacheMock := NewCacheMock(s.T())
 
-	tagManager := &TagManagerImpl{
+	tagManager := &ManagerV1{
 		authList:             authListMock,
 		cache:                authCacheMock,
 		authCacheEnabled:     true,
@@ -122,7 +122,7 @@ func (s *tagManagerTestSuite) TestSetMaxTags() {
 	authListMock := NewLocalAuthListMock(s.T())
 	authCacheMock := NewCacheMock(s.T())
 
-	tagManager := &TagManagerImpl{
+	tagManager := &ManagerV1{
 		authList:             authListMock,
 		cache:                authCacheMock,
 		authCacheEnabled:     true,

@@ -1,11 +1,11 @@
 package cmd
 
 import (
+	"github.com/ChargePi/ChargePi-go/internal/chargepoint"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/configuration"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/models/settings"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/xBlaz3kx/ChargePi-go/internal/chargepoint"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/configuration"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
 )
 
 var (

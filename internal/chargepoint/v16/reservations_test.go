@@ -4,11 +4,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ChargePi/ChargePi-go/internal/pkg/scheduler"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/scheduler"
 )
 
 const (

@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ChargePi/ocppManager-go/ocpp_v16"
 	"github.com/avast/retry-go"
 	"github.com/lorenzodonini/ocpp-go/ocpp"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/firmware"
@@ -13,7 +14,6 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/smartcharging"
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ocppManager-go/ocpp_v16"
 )
 
 // sendRequest is a middleware function that implements a retry mechanism for sending requests. If the max attempts is reached, return an error

@@ -3,10 +3,10 @@ package v16
 import (
 	"testing"
 
+	"github.com/ChargePi/ocppManager-go/ocpp_v16"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
-	"github.com/xBlaz3kx/ocppManager-go/ocpp_v16"
 )
 
 func newString(s string) *string {
