@@ -12,7 +12,7 @@ import (
 	"context"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/settings"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/models/settings"
 )
 
 // Supported readers - by libnfc

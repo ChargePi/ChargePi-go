@@ -12,7 +12,7 @@ package evcc
 import (
 	"context"
 
-	"github.com/xBlaz3kx/ChargePi-go/pkg/models/settings"
+	"github.com/ChargePi/ChargePi-go/pkg/models/settings"
 )
 
 const (

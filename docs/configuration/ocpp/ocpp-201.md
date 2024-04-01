@@ -1,7 +1,7 @@
 # OCPP 2.0.1
 
 The default/reference configuration for protocol version 2.0.1 is not yet available. This document is a reference for
-the [Python version](https://github.com/xBlaz3kx/ChargePi).
+the [Python version](https://github.com/ChargePi/ChargePi).
 
 In the protocol version 2.0.1, configuration variables are nested in Controllers (postfix - Ctrlr). Each controller has
 variables represented as a dictionary with attributes: **readOnly**, **value** and _optionally_ **unit**. Some

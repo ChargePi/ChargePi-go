@@ -10,7 +10,7 @@ necessary logic that returns a pointer to the struct.
 package display
 
 import (
-	"github.com/xBlaz3kx/ChargePi-go/internal/pkg/models/notifications"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/models/notifications"
 )
 
 const (

@@ -17,10 +17,10 @@ support,an intuitive UI for easy management and an API for custom integrations.
 
 ## 🔌 Charge point software specifications
 
-| OCPP version  | Core functionalities | Reservations | LocalAuthList | SmartCharging | FirmwareUpdate |
-|:-------------:|:--------------------:|:------------:|:-------------:|:-------------:|:--------------:|
-|  1.6 JSON/WS  |          ✔️          |      ✔️      |      ✔️       |    Planned    |  ✔️ (partial)  |
-| 2.0.1 JSON/WS |       Planned        |   Planned    |    Planned    |    Planned    |    Planned     |
+| OCPP version  | Core functionalities | Reservations | LocalAuthList | SmartCharging | FirmwareUpdate |       Security Extension        | ISO 15118 (Plug and Charge) |
+|:-------------:|:--------------------:|:------------:|:-------------:|:-------------:|:--------------:|:-------------------------------:|:---------------------------:|
+|  1.6 JSON/WS  |          ✔️          |      ✔️      |      ✔️       |    Planned    |  ✔️ (partial)  |             Planned             |           Planned           |
+| 2.0.1 JSON/WS |       Planned        |   Planned    |    Planned    |    Planned    |    Planned     | Certificate management included |          Included           |
 
 ## 🔌 Hardware support
 
@@ -72,10 +72,8 @@ customizable the ChargePi is.
    > The hardware part of the project requires fairly good electrical knowledge. Make at your own risk or seek
    professional
    guidance. The project is not responsible for any damage caused by the hardware and will not take responsibility for
-   any
-   software misconfiguration or misbehavior.
-
-
+   any software misconfiguration or misbehavior.
+   
 3. Configure the settings files according to the hardware and desired functionality:
     - [client configuration](/docs/configuration/configuration.md)
     - [OCPP configuration](/docs/configuration/ocpp/ocpp-16.md)
