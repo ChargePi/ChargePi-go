@@ -32,7 +32,7 @@ require (
 	github.com/tavsec/gin-healthcheck v1.6.1
 	github.com/warthog618/gpiod v0.8.2
 	golang.org/x/net v0.22.0
-	golang.org/x/text v0.14.0
+	golang.org/x/text v0.15.0
 	google.golang.org/grpc v1.59.0
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -41,7 +41,6 @@ require (
 )
 
 require (
-	github.com/jacobsa/go-serial v0.0.0-20180131005756-15cf729a72d4
 	github.com/jlaffaye/ftp v0.2.0
 	github.com/orandin/lumberjackrus v1.0.1
 	github.com/pkg/errors v0.9.1
