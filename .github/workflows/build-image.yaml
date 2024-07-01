@@ -59,7 +59,7 @@ jobs:
       - name: inject go-build-cache into docker
         # v1 was composed of two actions: "inject" and "extract".
         # v2 is unified to a single action.
-        uses: reproducible-containers/buildkit-cache-dance@v3.1.1
+        uses: reproducible-containers/buildkit-cache-dance@v3.1.2
         with:
           cache-source: go-build-cache
 
