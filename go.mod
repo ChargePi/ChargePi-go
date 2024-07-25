@@ -32,7 +32,7 @@ require (
 	github.com/tavsec/gin-healthcheck v1.6.1
 	github.com/warthog618/gpiod v0.8.2
 	golang.org/x/net v0.25.0
-	golang.org/x/text v0.15.0
+	golang.org/x/text v0.16.0
 	google.golang.org/grpc v1.65.0
 	google.golang.org/protobuf v1.34.1
 	gopkg.in/yaml.v3 v3.0.1
