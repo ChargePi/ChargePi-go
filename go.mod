@@ -3,7 +3,7 @@ module github.com/ChargePi/ChargePi-go
 go 1.18
 
 require (
-	github.com/ChargePi/ocppManager-go v1.1.1
+	github.com/ChargePi/ocppManager-go v1.1.2
 	github.com/agrison/go-commons-lang v0.0.0-20240106075236-2e001e6401ef
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/casbin/casbin/v2 v2.77.2
@@ -24,7 +24,7 @@ require (
 	github.com/nicksnyder/go-i18n/v2 v2.2.1
 	github.com/op/go-logging v0.0.0-20160315200505-970db520ece7 // indirect
 	github.com/rpi-ws281x/rpi-ws281x-go v1.0.10
-	github.com/samber/lo v1.39.0
+	github.com/samber/lo v1.46.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
