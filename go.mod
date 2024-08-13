@@ -34,7 +34,7 @@ require (
 	golang.org/x/net v0.25.0
 	golang.org/x/text v0.16.0
 	google.golang.org/grpc v1.65.0
-	google.golang.org/protobuf v1.34.1
+	google.golang.org/protobuf v1.34.2
 	gopkg.in/yaml.v3 v3.0.1
 	periph.io/x/conn/v3 v3.6.10
 	periph.io/x/host/v3 v3.7.2
