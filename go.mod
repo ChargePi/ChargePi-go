@@ -3,7 +3,7 @@ module github.com/ChargePi/ChargePi-go
 go 1.18
 
 require (
-	github.com/ChargePi/ocppManager-go v1.1.2
+	github.com/ChargePi/ocppManager-go v1.1.3
 	github.com/agrison/go-commons-lang v0.0.0-20240106075236-2e001e6401ef
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/casbin/casbin/v2 v2.98.0
