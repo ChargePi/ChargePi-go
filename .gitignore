@@ -10,3 +10,6 @@
 configs
 !configs/casbin/*
 .DS_Store
+rpi_ws281x
+ui/.next
+ui/build
