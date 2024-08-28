@@ -21,16 +21,27 @@ connecting to the backend.
 
 ## 📦 Features
 
-- **OCPP 1.6 with planned 2.0.1 support** - ChargePi supports OCPP 1.6, the most common protocol for EV charging
+- **OCPP 1.6** - ChargePi supports OCPP 1.6, the most common protocol for EV charging
   stations. OCPP 2.0.1 support is planned.
 - **Easily configurable** - ChargePi is easy to configure and customize. It comes with default settings that require
   minimal configuration.
 - **Easy replication** - ChargePi is easy to replicate. It can be deployed on a Raspberry Pi or any other Linux-based
   device. Configurations can be easily exported from an existing device to other devices.
-- **Mix and match hardware** - ChargePi supports a variety of hardware components. You can mix and match the hardware
+- **Hardware-agnostic** - ChargePi supports a variety of hardware components. You can mix and match the hardware
   components to create a charging station that suits your needs.
+- **API** - ChargePi comes with an API that allows you to integrate it with other systems.
+
+## Roadmap
+
+- **OCPP 1.6 Extension** - Security extension for OCPP 1.6, which adds additional security features to the protocol.
+- **OCPP 2.0.1 Support** - Support for OCPP 2.0.1, the latest version of the OCPP protocol.
+- **Simulator** - ChargePi offers a simulator mode, which allows you to simulate events such as charging, stopping
+  charging, and RFID authentication. Mostly used for testing purposes.
+- **Demo mode** - a functional charging station that can be used for demonstration purposes, runs with emulated
+  hardware.
+- **Smart charging** - Smart charging functionality, which allows you to optimize the charging process
+  based on factors such as energy prices, grid load, and user preferences.
 - **Customizable UI** - ChargePi comes with a customizable UI that allows you to easily manage your charging station.
-- **API for custom integrations** - ChargePi comes with an API that allows you to integrate it with other systems.
 
 ## 🔌 Hardware support
 
