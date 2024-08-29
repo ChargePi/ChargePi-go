@@ -12,7 +12,7 @@ require (
 	github.com/d2r2/go-i2c v0.0.0-20191123181816-73a8a799d6bc
 	github.com/d2r2/go-logger v0.0.0-20210606094344-60e9d1233e22 // indirect
 	github.com/dgraph-io/badger/v3 v3.2103.5
-	github.com/gemnasium/logrus-graylog-hook/v3 v3.2.0
+	github.com/gemnasium/logrus-graylog-hook/v3 v3.2.1
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-co-op/gocron v1.37.0
 	github.com/go-playground/validator/v10 v10.20.0
