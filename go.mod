@@ -36,7 +36,7 @@ require (
 	google.golang.org/grpc v1.65.0
 	google.golang.org/protobuf v1.34.2
 	gopkg.in/yaml.v3 v3.0.1
-	periph.io/x/conn/v3 v3.6.10
+	periph.io/x/conn/v3 v3.7.1
 	periph.io/x/host/v3 v3.7.2
 )
 
