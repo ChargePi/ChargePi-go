@@ -38,8 +38,8 @@ It is sent to the Central System after loading all the EVSE settings to the Char
 
 ### Displaying messages
 
-The ChargePi supports displaying messages on the display's screen. For forward-compatibility, all the payloads are the
-same as in OCPP 2.0.1 specification.
+The ChargePi supports remote display management, allowing to remotely change screens on the charge point.
+For forward-compatibility, all requests in OCPP 1.6 Data Transfer are the same as in OCPP 2.0.1 specification.
 
-The VendorID must be the same as the vendor id on the charge point. The message ID is the same as declared in the
+The VendorID must match the vendor id on the charge point. The message ID is the same as declared in the
 OCPP 2.0.1 specification.

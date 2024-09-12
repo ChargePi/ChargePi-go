@@ -1,12 +1,75 @@
-# 🛠️ Charge point general configuration
+# 🛠️ Charge point configuration
 
 The charge point configuration contains basic information about the charge point and its operative details, such as:
 
-- Charge Point ID,
 - Connectivity details (central system URI and OCPP protocol version, etc.)
-- OCPP information (vendor, model, firmware, etc.),
+- OCPP information (vendor, model, etc.),
 - logging settings,
 - hardware settings
+
+The configuration file is required to be present at runtime. The connection details will be persisted in the database,
+while API and logging settings will be used at runtime.
+
+```yaml
+api:
+  enabled: true
+  address: 0.0.0.0:8080
+
+logging:
+  type:
+    - remote
+    - file
+  format: gelf
+  host: logging.example.com
+  port: 12201
+
+
+chargePoint:
+  connectionSettings:
+    id: ChargePi
+    protocolVersion: '1.6'
+    serverUri: example.com
+    auth:
+      type: basic
+      basic:
+        username: ''
+        password: ''
+    tls:
+      isEnabled: false
+      CACertificatePath: /usr/share/certs/rootCA.crt
+      clientCertificatePath: /usr/share/certs/charge-point.crt
+      clientKeyPath: /usr/share/certs/charge-point.key
+
+  info:
+    type: AC
+    maxPower: 11
+    maxChargingTime: 5
+    ocpp:
+      vendor: UL FE
+      model: ChargePi
+
+  hardware:
+    display:
+      enabled: true
+      driver: hd44780
+      i2c:
+        address: '0x27'
+        bus: 1
+      language: en
+    reader:
+      enabled: true
+      readerModel: PN532
+      device: /dev/ttyS0
+      resetPin: 19
+    indicator:
+      enabled: true
+      type: WS281x
+      dataPin: 18
+      indicateCardRead: true
+      invert: false
+```
+
+## Configuration attributes
 
 The following tables represent attributes, their values and descriptions that require more attention and might not be
 self-explanatory. Some attributes can have multiple possible values, if any are empty, they will be treated as disabled
@@ -71,60 +134,3 @@ or might not work properly.
 |     dataPin      |    URI of the Central System with the port and endpoint.    | Default: "172.0.1.121:8080/steve/websocket/CentralSystemService" |
 | indicateCardRead | Max charging time allowed on the Charging point in minutes. |                           Default:180                            |
 |      invert      |                 RFID/NFC reader model used.                 |                           "PN532", ""                            | 
-
-Example settings:
-
-```yaml
-api:
-  enabled: true
-  address: 0.0.0.0:8080
-
-chargePoint:
-  connectionSettings:
-    id: ChargePi
-    protocolVersion: '1.6'
-    serverUri: example.com
-    basicAuthUser: ''
-    basicAuthPass: ''
-    tls:
-      isEnabled: false
-      CACertificatePath: /usr/share/certs/rootCA.crt
-      clientCertificatePath: /usr/share/certs/charge-point.crt
-      clientKeyPath: /usr/share/certs/charge-point.key
-
-  info:
-    type: AC
-    maxPower: 11
-    maxChargingTime: 5
-    ocpp:
-      vendor: ChargePi
-      model: ChargePi
-
-  logging:
-    type:
-      - remote
-      - file
-    format: gelf
-    host: logging.example.com
-    port: 12201
-
-  hardware:
-    display:
-      enabled: true
-      driver: hd44780
-      i2c:
-        address: '0x27'
-        bus: 1
-      language: en
-    reader:
-      enabled: true
-      readerModel: PN532
-      device: /dev/ttyS0
-      resetPin: 19
-    indicator:
-      enabled: true
-      type: WS281x
-      dataPin: 18
-      indicateCardRead: true
-      invert: false
-```

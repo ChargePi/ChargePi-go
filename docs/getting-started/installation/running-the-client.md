@@ -11,7 +11,7 @@ registered. Also, **libnfc** should be installed (a convenience script is availa
 Running the client:
 
    ```bash
-   go run -tags=rpi .
+   go run -tags=raspberrypi4 .
    ```
 
 or compiling and executing the client:
@@ -42,6 +42,8 @@ or compiling and executing the client:
    ```bash
    docker run --device /dev/ttyAMA0:/dev/ttyAMA0 --device /dev/mem:/dev/mem --privileged chargepi
    ```
+
+   This will mount the necessary devices and give the container the necessary permissions to run.
 
 ## Deploying using docker-compose
 

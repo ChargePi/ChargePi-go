@@ -6,6 +6,10 @@
 
 ## Authentication manager
 
+### Authentication cache
+
+### Local Authentication List
+
 ## EVSE Manager
 
 ### EVSE
@@ -14,7 +18,9 @@
 
 ### Power Meter
 
-### Session
+## Session
+
+## Diagnostics
 
 ## Hardware
 

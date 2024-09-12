@@ -1,9 +1,37 @@
 # The EVSE configuration
 
-To add and configure the EVSEs, simply add a new file with the file structure as in the example. The client will scan
-the folder at boot, validate the configuration files and add the EVSE with the provided configuration.
+Before starting the ChargePi client, it is recommended that you import EVSE configurations. Each configuration will be
+validated and persisted in the database. The configuration files are in the YAML format and have the following
+structure:
 
-## Attributes
+```yaml
+evseId: 1
+maxPower: 6.2
+connectors:
+  - connectorId: 1
+    type: Schuko
+    status: Available
+
+evcc:
+  type: Relay
+  relay:
+    pin: 26
+    inverseLogic: false
+
+powerMeter:
+  enabled: false
+  type: CS5460A
+  cs5460a:
+    spi:
+      bus: 0
+      pin: 25
+    shuntOffset: 0.055
+    voltageDividerOffset: 1333
+```
+
+Check the list of attributes for details on each section.
+
+## List of attributes
 
 | Attribute  |                Description                | Possible values | 
 |:----------:|:-----------------------------------------:|:---------------:|
@@ -44,24 +72,3 @@ the folder at boot, validate the configuration files and add the EVSE with the p
 
 Example EVSE configuration:
 
-```yaml
-evseId: 1
-maxPower: 6.2
-connectors:
-  - connectorId: 1
-    type: Schuko
-    status: Available
-evcc:
-  type: Relay
-  relayPin: 26
-  inverseLogic: false
-powerMeter:
-  enabled: false
-  type: CS5460A
-  spi:
-    bus: 0
-    pin: 25
-  cs5460a:
-    shuntOffset: 0.055
-    voltageDividerOffset: 1333
-```

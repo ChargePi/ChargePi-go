@@ -26,5 +26,13 @@ Available flags:
 ## Exporting
 
 ```bash
-chargepi import <configuration-type> <path-to-configuration-file>
+chargepi export <configuration-type> 
 ```
+
+Available flags:
+
+|   Flag   |                                Description                                | Default value | 
+|:--------:|:-------------------------------------------------------------------------:|:-------------:|
+|  --evse  |                      EVSE configuration folder path                       |               |
+|  --ocpp  | OCPP configuration file path. Requires the --version flag to also be set. |               |
+| --config |                     ChargePi configuration file path                      |               |
