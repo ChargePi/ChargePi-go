@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package settings;
+option go_package = "github.com/ChargePi/ChargePi-go/pkg/proto/v1/grpc";
+
+import "google/protobuf/empty.proto";
+
+service Settings{
+  // OCPP configuration variable management
+  rpc GetOCPPVariables(google.protobuf.Empty) returns (GetVariablesResponse) {}
+  rpc SetOCPPVariables(SetVariablesRequest) returns (SetVariablesResponse) {}
+  rpc GetOCPPVariable(GetVariableRequest) returns (OcppVariable) {}
+}
+
+/*------------------ OCPP variables ------------------------ */
+
+message GetVariableRequest {
+  string Key = 1;
+}
+
+message GetVariablesResponse {
+  repeated OcppVariable Variables = 1;
+}
+
+message SetVariablesRequest {
+  repeated OcppVariable Variables = 1;
+}
+
+message SetVariablesResponse {
+  repeated string Statuses = 1;
+}
+
+message OcppVariable{
+  string Key = 1;
+  bool Readonly = 2;
+  optional string Value = 3;
+}

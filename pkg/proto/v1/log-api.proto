@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package api;
+option go_package = "github.com/ChargePi/ChargePi-go/pkg/proto/v1/grpc";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+// Log API
+service Log {
+  rpc GetLogs(google.protobuf.Empty) returns (stream LogResponse) {}
+}
+
+message LogResponse {
+  string message = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  string level = 3;
+  optional string error = 4;
+}
