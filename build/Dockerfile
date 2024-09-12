@@ -90,7 +90,7 @@ COPY --from=base /ChargePi/src/ChargePi /usr/bin/ChargePi
 COPY --from=build-ui /ui/build/* /usr/bin/ui/build/*
 
 EXPOSE 8080
-HEALTHCHECK --interval=5s --timeout=3s CMD curl --fail http://localhost:8081/healthz || exit 1
+HEALTHCHECK --interval=5s --timeout=3s CMD curl --fail http://localhost:8080/healthz || exit 1
 
 ENTRYPOINT ["ChargePi"]
 CMD ["-c", "/etc/ChargePi/configs/config.yaml", "run"]

@@ -12,5 +12,6 @@ services:
       - /dev/ttyAMA0:/dev/ttyAMA0
       - /dev/mem:/dev/mem
     privileged: true
+
 volumes:
   data:
