@@ -1,4 +1,4 @@
-package logging
+package observability
 
 import (
 	"fmt"
@@ -8,8 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/ChargePi/ChargePi-go/internal/pkg/models/settings"
-	"github.com/ChargePi/ChargePi-go/internal/pkg/util"
+	"github.com/ChargePi/ChargePi-go/pkg/util"
 )
 
 const (
