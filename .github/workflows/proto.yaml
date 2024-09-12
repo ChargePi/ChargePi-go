@@ -1,0 +1,43 @@
+name: "Protobuf"
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - "**.proto"
+      - "**/buf.yaml"
+      - "**/buf.lock"
+      - "**/buf.md"
+      - "**/README.md"
+      - "**/LICENSE"
+
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+    branches:
+      - main
+      - master
+    paths:
+      - "**.proto"
+      - "**/buf.yaml"
+      - "**/buf.lock"
+      - "**/buf.md"
+      - "**/README.md"
+      - "**/LICENSE"
+
+  workflow_dispatch:
+
+jobs:
+  proto:
+    name: "Proto"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: bufbuild/buf-action@v1
+        with:
+          input: 'pkg/proto'
+          # Run lint and format checks for Protobuf sources against all branches
+          lint: ${{ github.event_name == 'push' }}
+          format: ${{ github.event_name == 'push' }}
