@@ -1,0 +1,8 @@
+ConnectorAvailable: Connector {{.Id}} is available. Plug in your vehicle to start charging!
+ConnectorUnavailable: Connector {{.Id}} is unavailable. Please try another connector.
+ConnectorCharging: Started charging on connector {{.Id}}.
+ConnectorFaulted: Connector {{.Id}} has encountered an error. Please contact the station operator.
+ConnectorFinishing: Finishing charging on connector {{.Id}}.
+WelcomeMessage: Welcome to {{.StationName}}. Please plug in your vehicle to start charging.
+AuthenticateWithRFID: To start charging, tap your RFID card on the reader.
+AuthenticateWithApp: To start charging, open the {{.AppName}} app and scan the QR code.

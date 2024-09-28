@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/ChargePi/ChargePi-go/internal/evse"
-	"github.com/ChargePi/ChargePi-go/internal/pkg/models/notifications"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/notifications"
 	"github.com/ChargePi/ocppManager-go/ocpp_v16"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/firmware"
@@ -68,7 +68,7 @@ func (cp *ChargePoint) OnTriggerMessage(request *remotetrigger.TriggerMessageReq
 				time.Sleep(time.Second)
 				for _, c := range cp.evseManager.GetEVSEs() {
 					cpStatus, errCode := c.GetStatus()
-					go cp.notifyConnectorStatus(c.GetEvseId(), cpStatus, errCode)
+					go cp.notifyStatus(c.GetEvseId(), cpStatus, errCode)
 				}
 			}()
 
@@ -84,7 +84,7 @@ func (cp *ChargePoint) OnTriggerMessage(request *remotetrigger.TriggerMessageReq
 				defer func(c evse.EVSE) {
 					time.Sleep(time.Second)
 					cpStatus, errCode := c.GetStatus()
-					cp.notifyConnectorStatus(c.GetEvseId(), cpStatus, errCode)
+					cp.notifyStatus(c.GetEvseId(), cpStatus, errCode)
 				}(c)
 
 				status = remotetrigger.TriggerMessageStatusAccepted
@@ -99,12 +99,14 @@ func (cp *ChargePoint) OnTriggerMessage(request *remotetrigger.TriggerMessageReq
 }
 
 func (cp *ChargePoint) getMeasurements(evseId int) error {
+	// Get EVSE
 	requestedEvse, err := cp.evseManager.GetEVSE(evseId)
 	if err != nil {
 		return err
 	}
 
-	value, err := cp.settingsManager.GetOcppV16Manager().GetConfigurationValue(ocpp_v16.MeterValuesSampledData)
+	// Get measurands from OCPP configuration
+	value, err := cp.settingsManager.GetConfigurationValue(ocpp_v16.MeterValuesSampledData)
 	if err != nil {
 		return err
 	}
@@ -114,12 +116,19 @@ func (cp *ChargePoint) getMeasurements(evseId int) error {
 		measurands = append(measurands, types.Measurand(measurand))
 	}
 
-	meterValues := types.MeterValue{
-		Timestamp:    types.NewDateTime(time.Now()),
-		SampledValue: requestedEvse.SamplePowerMeter(measurands),
+	// Sample the power meter
+	meter, err := requestedEvse.SamplePowerMeter(measurands)
+	if err != nil {
+		return err
 	}
 
+	// Send the meter values
 	if cp.meterValuesChannel != nil {
+		meterValues := types.MeterValue{
+			Timestamp:    types.NewDateTime(time.Now()),
+			SampledValue: meter,
+		}
+
 		cp.meterValuesChannel <- notifications.MeterValueNotification{MeterValues: []types.MeterValue{meterValues}, EvseId: evseId}
 	}
 

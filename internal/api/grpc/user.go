@@ -81,6 +81,6 @@ func toUser(user models.User) *grpc.User {
 	return &grpc.User{
 		Username: user.Username,
 		Password: user.Password,
-		Role:     user.Role,
+		Role:     string(user.Role),
 	}
 }

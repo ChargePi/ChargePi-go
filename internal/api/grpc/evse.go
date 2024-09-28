@@ -44,7 +44,10 @@ func (s *EvseHandler) AddEVSE(ctx context.Context, request *grpc.AddEVSERequest)
 	}
 
 	// todo
-	// s.evseManager.AddEVSE()
+	err := s.evseManager.AddEVSEFromSettings(ctx, evse.Settings{})
+	if err != nil {
+		return nil, err
+	}
 
 	return response, nil
 }
@@ -63,6 +66,14 @@ func (s *EvseHandler) GetEVSE(ctx context.Context, request *grpc.GetEVSERequest)
 
 func (s *EvseHandler) SetEVCC(ctx context.Context, request *grpc.SetEVCCRequest) (*grpc.SetEVCCResponse, error) {
 	// todo
+
+	evse, err := s.evseManager.GetEVSE(int(request.EvseId))
+	if err != nil {
+		return nil, err
+	}
+
+	evse.SetEvcc(nil)
+
 	return nil, nil
 }
 
@@ -87,7 +98,10 @@ Loop:
 		default:
 
 			// Sample power meter
-			samples := evseWithId.SamplePowerMeter([]types.Measurand{types.MeasurandEnergyActiveImportRegister})
+			samples, err := evseWithId.SamplePowerMeter([]types.Measurand{types.MeasurandEnergyActiveImportRegister})
+			if err != nil {
+				return err
+			}
 
 			// Convert to grpc samples
 			var samplesToReturn []*commonv1.Sample
@@ -95,7 +109,7 @@ Loop:
 				samplesToReturn = append(samplesToReturn, toSample(sample))
 			}
 
-			err := server.Send(&grpc.GetUsageForEVSEResponse{
+			err = server.Send(&grpc.GetUsageForEVSEResponse{
 				Samples: samplesToReturn,
 			})
 			if err != nil {

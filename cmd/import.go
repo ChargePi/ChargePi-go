@@ -3,9 +3,13 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/ChargePi/ChargePi-go/internal/pkg/models/settings"
-	cfg "github.com/ChargePi/ChargePi-go/internal/pkg/settings"
-	"github.com/ChargePi/ChargePi-go/pkg/models/ocpp"
+	"github.com/ChargePi/ChargePi-go/internal/chargepoint"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/badger"
+	cfg "github.com/ChargePi/ChargePi-go/internal/pkg/configuration"
+	importer2 "github.com/ChargePi/ChargePi-go/internal/pkg/configuration/importer"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/configuration/manager"
+	"github.com/ChargePi/ChargePi-go/pkg/ocpp"
+	"github.com/ChargePi/ocppManager-go/ocpp_v16"
 	"github.com/spf13/cobra"
 )
 
@@ -20,16 +24,32 @@ var (
 // importCmd represents the import command
 func importCommand() *cobra.Command {
 	importCmd := &cobra.Command{
-		Use:   "import",
-		Short: "Import configurations to ChargePi.",
-		Long:  ``,
+		Use:     "import",
+		Short:   "Import configurations to ChargePi.",
+		Long:    ``,
+		Version: chargepoint.FirmwareVersion,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			importer := cfg.GetImporter()
+			db, err := badger.NewBadgerDb(*databasePath)
+			if err != nil {
+				return fmt.Errorf("could not create database: %v", err)
+			}
 
-			evseFlag := cmd.Flags().Lookup(settings.EvseFlag).Changed
-			ocppFlag := cmd.Flags().Lookup(settings.OcppConfigPathFlag).Changed
-			authFlag := cmd.Flags().Lookup(settings.AuthFileFlag).Changed
-			settingsFlag := cmd.Flags().Lookup(settings.SettingsFlag).Changed
+			configurationManager, err := ocpp_v16.NewV16ConfigurationManager(ocpp_v16.NewEmptyConfiguration())
+			if err != nil {
+				return fmt.Errorf("could not create OCPP configuration manager: %v", err)
+			}
+
+			settingsManager, err := manager.NewManager(db, db, configurationManager)
+			if err != nil {
+				return fmt.Errorf("could not create settings manager: %v", err)
+			}
+
+			importer := importer2.NewImporter(settingsManager, db, db)
+
+			evseFlag := cmd.Flags().Lookup(cfg.EvseFlag).Changed
+			ocppFlag := cmd.Flags().Lookup(cfg.OcppConfigPathFlag).Changed
+			authFlag := cmd.Flags().Lookup(cfg.AuthFileFlag).Changed
+			settingsFlag := cmd.Flags().Lookup(cfg.SettingsFlag).Changed
 
 			if evseFlag {
 				// If a directory is specified, (try to) import all the files in that directory.
@@ -66,11 +86,11 @@ func importCommand() *cobra.Command {
 		},
 	}
 
-	evseFolderPath = importCmd.Flags().String(settings.EvseFlag, "", "evse folder path")
-	ocppConfigurationFilePath = importCmd.Flags().String(settings.OcppConfigPathFlag, "", "OCPP config file path")
-	ocppVersionFlag = importCmd.Flags().StringP(settings.OcppVersion, "v", "1.6", "OCPP config file path")
-	authFilePath = importCmd.Flags().String(settings.AuthFileFlag, "", "authorization file path")
-	importSettingsFilePath = importCmd.Flags().String(settings.SettingsFlag, "", "settings file path")
+	evseFolderPath = importCmd.Flags().String(cfg.EvseFlag, "", "evse folder path")
+	ocppConfigurationFilePath = importCmd.Flags().String(cfg.OcppConfigPathFlag, "", "OCPP config file path")
+	ocppVersionFlag = importCmd.Flags().StringP(cfg.OcppVersion, "v", "1.6", "OCPP config file path")
+	authFilePath = importCmd.Flags().String(cfg.AuthFileFlag, "", "authorization file path")
+	importSettingsFilePath = importCmd.Flags().String(cfg.SettingsFlag, "", "settings file path")
 
 	return importCmd
 }
