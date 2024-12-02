@@ -6,7 +6,7 @@ require (
 	github.com/ChargePi/ocppManager-go v1.1.3
 	github.com/agrison/go-commons-lang v0.0.0-20240106075236-2e001e6401ef
 	github.com/avast/retry-go v3.0.0+incompatible
-	github.com/casbin/casbin/v2 v2.98.0
+	github.com/casbin/casbin/v2 v2.102.0
 	github.com/clausecker/nfc/v2 v2.2.0
 	github.com/d2r2/go-hd44780 v0.0.0-20181002113701-74cc28c83a3e
 	github.com/d2r2/go-i2c v0.0.0-20191123181816-73a8a799d6bc
@@ -49,6 +49,7 @@ require (
 
 require (
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
+	github.com/bmatcuk/doublestar/v4 v4.6.1 // indirect
 	github.com/bytedance/sonic v1.11.6 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
 	github.com/casbin/govaluate v1.2.0 // indirect
