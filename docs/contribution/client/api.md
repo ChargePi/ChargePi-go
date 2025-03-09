@@ -12,8 +12,5 @@ on `localhost:4269`.
 Compiling the protobuf:
 
 ```bash
-protoc --go_out=./internal/api --go_opt=paths=source_relative \
-    --proto_path=pkg/proto \
-    --go-grpc_out=./internal/api --go-grpc_opt=paths=source_relative \
-    pkg/proto/*.proto
+buf generate
 ```
