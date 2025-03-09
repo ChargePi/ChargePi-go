@@ -1,6 +1,7 @@
 module github.com/ChargePi/ChargePi-go
 
 go 1.22.1
+toolchain go1.23.7
 
 require (
 	github.com/ChargePi/ocppManager-go v1.2.0
@@ -32,7 +33,7 @@ require (
 	github.com/tavsec/gin-healthcheck v1.6.3
 	github.com/warthog618/gpiod v0.8.2
 	golang.org/x/net v0.29.0
-	golang.org/x/text v0.18.0
+	golang.org/x/text v0.23.0
 	google.golang.org/grpc v1.65.0
 	google.golang.org/protobuf v1.36.5
 	gopkg.in/yaml.v3 v3.0.1
@@ -116,7 +117,7 @@ require (
 	golang.org/x/arch v0.8.0 // indirect
 	golang.org/x/crypto v0.27.0 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
-	golang.org/x/sync v0.8.0 // indirect
+	golang.org/x/sync v0.12.0 // indirect
 	golang.org/x/sys v0.25.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240528184218-531527333157 // indirect
 	gopkg.in/go-playground/validator.v9 v9.30.0 // indirect
