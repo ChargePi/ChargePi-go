@@ -19,7 +19,7 @@ ENV GOARCH=arm64
 ENV CGO=1
 
 # Compile the client
-RUN -mount=type=cache,target=/root/.cache/go-build go mod download
+RUN --mount=type=cache,target=/root/.cache/go-build go mod download
 RUN go mod verify
 RUN --mount=type=cache,target="/root/.cache/go-build" go build -o ChargePi .
 
