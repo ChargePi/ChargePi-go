@@ -56,9 +56,9 @@ func (cp *ChargePoint) OnChangeConfiguration(request *core.ChangeConfigurationRe
 
 	// Process the change configuration request
 	switch request.Key {
-	case iso15118.ISO15118PnCEnabledConfigurationKey:
-		// Check if any EVCC is supporting it
-		// Update the key
+	// case ocpp_v16.ISO15118PnCEnabledConfigurationKey:
+	// Check if any EVCC is supporting it
+	// Update the key
 	case ocpp_v16.AuthorizeRemoteTxRequests.String():
 		// Just update
 	case ocpp_v16.AllowOfflineTxForUnknownId.String():
@@ -133,7 +133,7 @@ func (cp *ChargePoint) OnClearCache(request *core.ClearCacheRequest) (confirmati
 
 func (cp *ChargePoint) OnDataTransfer(request *core.DataTransferRequest) (confirmation *core.DataTransferConfirmation, err error) {
 	cp.logger.Infof("Received request %s", request.GetFeatureName())
-	response := core.NewDataTransferConfirmation(core.DataTransferStatusRejected)
+	response := core.DataTransferStatusRejected
 
 	// Supporting direct display control over custom data transfer messages, based on the messages in OCPP 2.0.1.
 	if request.VendorId != cp.settingsManager.GetChargePointSettings().Info.OCPPDetails.Vendor {
