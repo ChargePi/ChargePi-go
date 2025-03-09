@@ -76,7 +76,8 @@ jobs:
         with:
           context: .
           target: chargepi
-          build-args: --build-arg READER_CONNECTION_TYPE="pn532_uart"
+          build-args: |
+            READER_CONNECTION_TYPE="pn532_uart"
           file: ./build/Dockerfile
           platforms: linux/arm64
           push: true
