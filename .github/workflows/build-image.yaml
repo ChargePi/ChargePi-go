@@ -11,6 +11,7 @@ on:
       - '*.md'
     branches:
       - main
+      - v2
   push:
     paths-ignore:
       - '.run/**'
@@ -20,6 +21,7 @@ on:
       - '*.md'
     branches:
       - main
+      - v2
 
 jobs:
   build:
