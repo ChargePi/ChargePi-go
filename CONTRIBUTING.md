@@ -51,6 +51,9 @@ If you would like to add support for new hardware to the project, please follow 
 7. Create documentation for the new hardware, describing features, installation and usage.
 8. (Optional) Write some guidelines on how to use, handle and maintain the new hardware.
 
+For more details, check out
+the [hardware support guidelines](./docs/contribution/hardware/adding-support-for-hardware.md).
+
 ## Any contributions you make will be under the MIT Software License
 
 In short, when you submit code changes, your submissions are understood to be under the

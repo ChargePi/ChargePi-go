@@ -121,7 +121,7 @@ Client comes with default settings which require minimal configuration.
 Contributions are welcome! Whether you want to add support for new hardware components, improve the documentation,
 found a bug or have an idea for a new feature, we appreciate your help!
 
-Please check out the [contributing guide](/docs/contribution/contributing.md) for more information on how to contribute.
+Please check out the [contributing guide](CONTRIBUTING.md) for more information on how to contribute.
 
 ## License
 
