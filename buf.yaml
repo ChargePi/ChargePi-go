@@ -1,0 +1,19 @@
+version: v2
+modules:
+  - path: proto
+    lint:
+      use:
+        - STANDARD
+        - FILE_LOWER_SNAKE_CASE
+        - PACKAGE_NO_IMPORT_CYCLE
+        - PACKAGE_SAME_GO_PACKAGE
+        - FIELD_LOWER_SNAKE_CASE
+        - ENUM_VALUE_UPPER_SNAKE_CASE
+        - PACKAGE_LOWER_SNAKE_CASE
+      except:
+        - FIELD_NOT_REQUIRED
+      enum_zero_value_suffix: _UNSPECIFIED
+      rpc_allow_same_request_response: false
+      rpc_allow_google_protobuf_empty_requests: true
+      rpc_allow_google_protobuf_empty_responses: true
+      service_suffix: Service

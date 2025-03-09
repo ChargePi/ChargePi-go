@@ -4,14 +4,13 @@ import (
 	"context"
 	"net"
 
-	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
-
+	grpc2 "github.com/ChargePi/ChargePi-go/gen/proto/v1"
 	"github.com/ChargePi/ChargePi-go/internal/auth"
+	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
 	"github.com/ChargePi/ChargePi-go/internal/pkg/models/charge-point"
 	"github.com/ChargePi/ChargePi-go/internal/pkg/models/settings"
 	cfg "github.com/ChargePi/ChargePi-go/internal/pkg/settings"
 	"github.com/ChargePi/ChargePi-go/internal/users/service"
-	grpc2 "github.com/ChargePi/ChargePi-go/pkg/grpc"
 	grpcmiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpcauth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	grpcrecovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"

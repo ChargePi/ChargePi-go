@@ -3,9 +3,9 @@ package grpc
 import (
 	"context"
 
+	grpc "github.com/ChargePi/ChargePi-go/gen/proto/v1"
 	"github.com/ChargePi/ChargePi-go/internal/users/pkg/models"
 	"github.com/ChargePi/ChargePi-go/internal/users/service"
-	"github.com/ChargePi/ChargePi-go/pkg/grpc"
 	"github.com/golang/protobuf/ptypes/empty"
 )
 

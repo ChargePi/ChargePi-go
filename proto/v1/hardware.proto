@@ -1,7 +1,6 @@
 syntax = "proto3";
 
-package api;
-option go_package = "github.com/ChargePi/ChargePi-go/pkg/grpc";
+package v1.api;
 
 message EVCC {
   string type = 1;
@@ -47,7 +46,7 @@ message Spi {
 
 message Modbus {
   string protocol = 1;
-  string deviceAddress = 2 ;
+  string deviceAddress = 2;
 }
 
 message I2c {

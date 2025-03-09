@@ -1,0 +1,24 @@
+version: v2
+managed:
+  disable:
+    # Don't modify any file option or field option for googleapis
+    - module: buf.build/googleapis/googleapis
+  enabled: true
+  override:
+    - file_option: go_package_prefix
+      value: github.com/ChargePi/ChargePi-go/gen/proto
+
+inputs:
+  - directory: ./proto
+plugins:
+  #- remote: buf.build/protocolbuffers/go:v1.31.0
+  - local: protoc-gen-go
+    out: gen/proto
+    opt:
+      - paths=source_relative
+  #- remote: buf.build/grpc/go:v1.5.1
+  - local: protoc-gen-go-grpc
+    out: gen/proto
+    opt:
+      - paths=source_relative
+

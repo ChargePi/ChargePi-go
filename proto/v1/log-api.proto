@@ -1,7 +1,6 @@
 syntax = "proto3";
 
-package api;
-option go_package = "github.com/ChargePi/ChargePi-go/pkg/grpc";
+package v1.api;
 
 import "google/protobuf/empty.proto";
 
@@ -10,6 +9,4 @@ service Log {
   rpc GetLogs(google.protobuf.Empty) returns (stream LogResponse) {}
 }
 
-message LogResponse {
-
-}
+message LogResponse {}

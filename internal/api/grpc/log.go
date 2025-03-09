@@ -1,7 +1,7 @@
 package grpc
 
 import (
-	"github.com/ChargePi/ChargePi-go/pkg/grpc"
+	grpc "github.com/ChargePi/ChargePi-go/gen/proto/v1"
 	"github.com/golang/protobuf/ptypes/empty"
 )
 

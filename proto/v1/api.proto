@@ -1,24 +1,23 @@
 syntax = "proto3";
 
-package api;
-option go_package = "github.com/ChargePi/ChargePi-go/pkg/grpc";
+package v1.api;
 
-import "hardware.proto";
-import "charge-point.proto";
 import "google/protobuf/empty.proto";
+import "v1/charge-point.proto";
+import "v1/hardware.proto";
 
 service ChargePoint {
   // Display settings
-  rpc SetDisplaySettings (SetDisplaySettingsRequest) returns (SetDisplaySettingsResponse) {}
-  rpc GetDisplaySettings (google.protobuf.Empty) returns (GetDisplaySettingsResponse) {}
+  rpc SetDisplaySettings(SetDisplaySettingsRequest) returns (SetDisplaySettingsResponse) {}
+  rpc GetDisplaySettings(google.protobuf.Empty) returns (GetDisplaySettingsResponse) {}
 
   // Reader settings
-  rpc SetReaderSettings (SetReaderSettingsRequest) returns (SetReaderSettingsResponse) {}
-  rpc GetReaderSettings (google.protobuf.Empty) returns (GetReaderSettingsResponse) {}
+  rpc SetReaderSettings(SetReaderSettingsRequest) returns (SetReaderSettingsResponse) {}
+  rpc GetReaderSettings(google.protobuf.Empty) returns (GetReaderSettingsResponse) {}
 
   // LED indicator
-  rpc SetIndicatorSettings (SetIndicatorSettingsRequest) returns (SetIndicatorSettingsResponse) {}
-  rpc GetIndicatorSettings (google.protobuf.Empty) returns (GetIndicatorSettingsResponse) {}
+  rpc SetIndicatorSettings(SetIndicatorSettingsRequest) returns (SetIndicatorSettingsResponse) {}
+  rpc GetIndicatorSettings(google.protobuf.Empty) returns (GetIndicatorSettingsResponse) {}
 
   // Connection settings
   rpc GetConnectionDetails(google.protobuf.Empty) returns (GetConnectionDetailsResponse) {}
@@ -31,7 +30,7 @@ service ChargePoint {
   // OCPP configuration variable management
   rpc GetOCPPVariables(google.protobuf.Empty) returns (GetVariablesResponse) {}
   rpc SetOCPPVariables(SetVariablesRequest) returns (SetVariablesResponse) {}
-  rpc GetOCPPVariable(GetVariableRequest) returns (OcppVariable) {}
+  rpc GetOCPPVariable(GetVariableRequest) returns (v1.api.OcppVariable) {}
 
   // Details
   rpc GetVersion(google.protobuf.Empty) returns (GetVersionResponse) {}
@@ -43,11 +42,11 @@ service ChargePoint {
 /*------------------ ConnectionDetails ------------------------ */
 
 message GetConnectionDetailsResponse {
-  ConnectionSettings ConnectionSettings = 1;
+  v1.api.ConnectionSettings ConnectionSettings = 1;
 }
 
 message ChangeConnectionDetailsRequest {
-  ConnectionSettings ConnectionSettings = 1;
+  v1.api.ConnectionSettings ConnectionSettings = 1;
 }
 
 message ChangeConnectionDetailsResponse {
@@ -145,4 +144,3 @@ message SetVariablesRequest {
 message SetVariablesResponse {
   repeated string Statuses = 1;
 }
-

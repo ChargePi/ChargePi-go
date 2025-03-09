@@ -1,7 +1,6 @@
 syntax = "proto3";
 
-package api;
-option go_package = "github.com/ChargePi/ChargePi-go/pkg/grpc";
+package v1.api;
 
 import "google/protobuf/empty.proto";
 
@@ -13,7 +12,7 @@ service Users {
   rpc RemoveUser(RemoveUserRequest) returns (RemoveUserResponse) {}
 }
 
-message User{
+message User {
   string Username = 1;
   string Password = 2;
   string Role = 3;

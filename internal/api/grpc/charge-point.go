@@ -3,10 +3,10 @@ package grpc
 import (
 	"context"
 
+	grpc "github.com/ChargePi/ChargePi-go/gen/proto/v1"
 	"github.com/ChargePi/ChargePi-go/internal/pkg/models/charge-point"
 	cfg "github.com/ChargePi/ChargePi-go/internal/pkg/settings"
 	"github.com/ChargePi/ChargePi-go/pkg/display"
-	"github.com/ChargePi/ChargePi-go/pkg/grpc"
 	commonSettings "github.com/ChargePi/ChargePi-go/pkg/models/settings"
 	settings2 "github.com/ChargePi/ChargePi-go/pkg/models/settings"
 	"github.com/ChargePi/ocppManager-go/ocpp_v16"
