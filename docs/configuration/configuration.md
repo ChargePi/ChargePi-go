@@ -97,7 +97,7 @@ chargePoint:
     maxPower: 11
     maxChargingTime: 5
     ocpp:
-      vendor: UL FE
+      vendor: ChargePi
       model: ChargePi
 
   logging:

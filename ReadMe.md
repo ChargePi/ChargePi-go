@@ -28,8 +28,12 @@ connecting to the backend.
 - **Easy replication** - ChargePi is easy to replicate. It can be deployed on a Raspberry Pi or any other Linux-based
   device. Configurations can be easily exported from an existing device to other devices.
 - **Hardware-agnostic** - ChargePi supports a variety of hardware components. You can mix and match the hardware
-  components to create a charging station that suits your needs.
-- **API** - ChargePi comes with an API that allows you to integrate it with other systems.
+  components to create a charging station that suits your needs. You can also write custom drivers for currently
+  unsupported hardware. We are always looking for contributors to add support for new hardware components.
+- **Modular** - ChargePi is modular, allowing you to add or remove components as needed, based on your use case. You can
+  easily add new hardware components or functionalities to your charging station.
+- **API** - ChargePi comes with an API that allows you to integrate it with other systems or implement custom
+  functionality.
 
 ## Roadmap
 
@@ -114,8 +118,10 @@ Client comes with default settings which require minimal configuration.
 
 ## Contributing
 
-Contributions are welcome! Please check out the [contributing guide](/docs/contributing/contributing.md) for more
-information.
+Contributions are welcome! Whether you want to add support for new hardware components, improve the documentation,
+found a bug or have an idea for a new feature, we appreciate your help!
+
+Please check out the [contributing guide](/docs/contribution/contributing.md) for more information on how to contribute.
 
 ## License
 
