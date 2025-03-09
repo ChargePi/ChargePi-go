@@ -1,12 +1,10 @@
 syntax = "proto3";
 
-import "enums.proto";
-import "hardware.proto";
+package v1.api;
+
 import "google/protobuf/timestamp.proto";
-
-package api;
-
-option go_package = "github.com/ChargePi/ChargePi-go/pkg/grpc";
+import "v1/enums.proto";
+import "v1/hardware.proto";
 
 message EVSE {
   int32 Id = 1;
@@ -23,7 +21,7 @@ message Session {
   string Consumption = 4;
 }
 
-message Sample{
+message Sample {
   Consumption Consumption = 1;
   string Measureand = 2;
   optional string Phase = 3;
@@ -32,7 +30,7 @@ message Sample{
   google.protobuf.Timestamp Timestamp = 6;
 }
 
-message Consumption{
+message Consumption {
   string Unit = 1;
   float Value = 2;
 }

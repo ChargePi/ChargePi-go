@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - v2
     paths-ignore:
       - '.run/**'
       - 'docs/**'
@@ -13,6 +14,7 @@ on:
   pull_request:
     branches:
       - main
+      - v2
     types: [ opened, synchronize ]
     paths-ignore:
       - '.run/**'
@@ -22,18 +24,33 @@ on:
 
 jobs:
   lint:
-    name: "Run linter"
+    name: Lint Go code
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
+      - uses: actions/setup-go@v5
         with:
-          go-version: 1.21.1
+          go-version: 1.23.0
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
-          version: latest
+          version: v1.62.0
+          args: --timeout=3m
+
+  buf:
+    name: Run buf
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - uses: bufbuild/buf-action@v1
+        with:
+          github_token: ${{ github.token }}

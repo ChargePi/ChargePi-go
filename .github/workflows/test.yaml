@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - v2
     paths-ignore:
       - '.run/**'
       - 'docs/**'
@@ -14,6 +15,7 @@ on:
   pull_request:
     branches:
       - main
+      - v2
     types: [ opened, synchronize ]
     paths-ignore:
       - '.run/**'
@@ -23,21 +25,38 @@ on:
       - '*.md'
 
 jobs:
-  test:
+  # Run unit tests
+  unit:
     name: "Run unit tests"
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Go
+      - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: "^1.21.1"
+          go-version: 1.23.0
 
-      - name: Install dependencies
-        run: go mod download
+        # todo skip mocks coverage
+      - name: Install dependencies and run tests
+        run: |
+          go mod download
+          go test -v ./... -coverpkg=./... -short -coverprofile=unit_coverage.out
 
-      - name: Test
-        run: go test --short -v ./...
+  integration:
+    name: "Run integration tests"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.23.0
+
+      - name: Install dependencies and run tests
+        run: |
+          go mod download
+          go test -v -run 'Integration$' ./... -coverpkg=./... -coverprofile=integration_coverage.out

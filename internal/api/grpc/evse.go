@@ -2,11 +2,11 @@ package grpc
 
 import (
 	"context"
-	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
 	"time"
 
+	grpc "github.com/ChargePi/ChargePi-go/gen/proto/v1"
 	"github.com/ChargePi/ChargePi-go/internal/evse"
-	"github.com/ChargePi/ChargePi-go/pkg/grpc"
+	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/samber/lo"

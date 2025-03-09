@@ -1,26 +1,25 @@
 syntax = "proto3";
 
-package api;
-option go_package = "github.com/ChargePi/ChargePi-go/pkg/grpc";
+package v1.api;
 
-import "connector.proto";
-import "hardware.proto";
 import "google/protobuf/empty.proto";
+import "v1/connector.proto";
+import "v1/hardware.proto";
 
 // Evse settings
 service Evse {
-  rpc AddEVSE (AddEvseRequest) returns (AddEvseResponse) {}
-  rpc GetEVSEs (google.protobuf.Empty) returns (GetEvsesResponse) {}
-  rpc GetEVSE (GetEvseRequest) returns (GetEvseResponse) {}
-  rpc SetEVCC (SetEVCCRequest) returns (SetEvccResponse) {}
-  rpc SetPowerMeter (SetPowerMeterRequest) returns (SetPowerMeterResponse) {}
-  rpc GetUsageForEVSE (GetUsageForEVSERequest) returns (stream GetUsageForEVSEResponse) {}
+  rpc AddEVSE(AddEvseRequest) returns (AddEvseResponse) {}
+  rpc GetEVSEs(google.protobuf.Empty) returns (GetEvsesResponse) {}
+  rpc GetEVSE(GetEvseRequest) returns (GetEvseResponse) {}
+  rpc SetEVCC(SetEVCCRequest) returns (SetEvccResponse) {}
+  rpc SetPowerMeter(SetPowerMeterRequest) returns (SetPowerMeterResponse) {}
+  rpc GetUsageForEVSE(GetUsageForEVSERequest) returns (stream GetUsageForEVSEResponse) {}
 }
 
 /*------------------ GetEVSEs ------------------------ */
 
 message GetEvsesResponse {
-  repeated EVSE EVSEs = 1;
+  repeated v1.api.EVSE EVSEs = 1;
 }
 
 /*------------------ GetEVSE ------------------------ */
@@ -30,7 +29,7 @@ message GetEvseRequest {
 }
 
 message GetEvseResponse {
-  EVSE EVSE = 1;
+  v1.api.EVSE EVSE = 1;
 }
 
 /*------------------ addEVSE ------------------------ */

@@ -3,8 +3,8 @@ package grpc
 import (
 	"context"
 
+	grpc "github.com/ChargePi/ChargePi-go/gen/proto/v1"
 	"github.com/ChargePi/ChargePi-go/internal/auth"
-	"github.com/ChargePi/ChargePi-go/pkg/grpc"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"google.golang.org/protobuf/types/known/timestamppb"

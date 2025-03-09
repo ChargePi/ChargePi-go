@@ -1,10 +1,8 @@
 syntax = "proto3";
 
-package api;
+package v1.api;
 
-option go_package = "github.com/ChargePi/ChargePi-go/pkg/grpc";
-
-enum ProtocolVersion{
+enum ProtocolVersion {
   OCPP16 = 0;
   OCPP201 = 1;
 }
@@ -19,7 +17,7 @@ enum ConnectorStatus {
   SuspendedEV = 6;
   Reserved = 7;
   Faulted = 8;
-};
+}
 
 enum ErrorCode {
   NoError = 0;
@@ -40,9 +38,9 @@ enum ErrorCode {
   WeakSignal = 16;
 }
 
-enum ConnectorType{
+enum ConnectorType {
   TYPE1 = 0;
   TYPE2 = 1;
   SCHUKO = 2;
   CHADEMO = 3;
-};
+}
