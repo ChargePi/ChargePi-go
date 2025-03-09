@@ -12,10 +12,10 @@ import (
 
 type AuthService struct {
 	grpc.UnimplementedTagServer
-	tagManager auth.TagManager
+	tagManager auth.Manager
 }
 
-func NewAuthService(tagManager auth.TagManager) *AuthService {
+func NewAuthService(tagManager auth.Manager) *AuthService {
 	return &AuthService{
 		tagManager: tagManager,
 	}

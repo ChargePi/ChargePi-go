@@ -2,13 +2,13 @@ package chargepoint
 
 import (
 	"context"
-	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
 	"os"
 	"os/signal"
 	"time"
 
 	"github.com/ChargePi/ChargePi-go/internal/auth"
 	"github.com/ChargePi/ChargePi-go/internal/diagnostics"
+	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
 	"github.com/ChargePi/ChargePi-go/internal/pkg/database"
 	"github.com/ChargePi/ChargePi-go/internal/pkg/models/charge-point"
 	"github.com/ChargePi/ChargePi-go/internal/pkg/models/settings"
