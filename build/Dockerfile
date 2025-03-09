@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM golang:1.22.1 AS base
+FROM --platform=$BUILDPLATFORM golang:1.23.0 AS base
 
 WORKDIR /ChargePi/src
 COPY . /ChargePi/src
