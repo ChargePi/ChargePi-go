@@ -2,8 +2,8 @@ syntax = "proto3";
 
 package v1.api;
 
-import "v1/enums.proto";
 import "google/protobuf/timestamp.proto";
+import "v1/enums.proto";
 
 message ConnectionSettings {
   optional string chargePointId = 1;

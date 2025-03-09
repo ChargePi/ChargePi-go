@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package v1.api;
 
-enum ProtocolVersion{
+enum ProtocolVersion {
   OCPP16 = 0;
   OCPP201 = 1;
 }
@@ -17,7 +17,7 @@ enum ConnectorStatus {
   SuspendedEV = 6;
   Reserved = 7;
   Faulted = 8;
-};
+}
 
 enum ErrorCode {
   NoError = 0;
@@ -38,9 +38,9 @@ enum ErrorCode {
   WeakSignal = 16;
 }
 
-enum ConnectorType{
+enum ConnectorType {
   TYPE1 = 0;
   TYPE2 = 1;
   SCHUKO = 2;
   CHADEMO = 3;
-};
+}
