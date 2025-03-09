@@ -1,7 +1,7 @@
 FROM --platform=$BUILDPLATFORM golang:1.22.1 AS base
 
-COPY . /ChargePi/src
 WORKDIR /ChargePi/src
+COPY . /ChargePi/src
 
 ARG READER_TYPE
 ENV READER_TYPE=$READER_TYPE

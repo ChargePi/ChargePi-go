@@ -68,6 +68,7 @@ jobs:
             type=ref,event=branch
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
+            type=sha,event=pr
           flavor: |
             latest=true 
 
@@ -80,5 +81,5 @@ jobs:
             READER_CONNECTION_TYPE="pn532_uart"
           file: ./build/Dockerfile
           platforms: linux/arm64
-          push: true
+          push: ${{ github.event_name == 'push' }}
           tags: ${{ steps.meta.outputs.tags }}
