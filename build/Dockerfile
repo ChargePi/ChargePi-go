@@ -6,6 +6,10 @@ COPY . /ChargePi/src
 ARG READER_TYPE
 ENV READER_TYPE=$READER_TYPE
 
+ENV GOCACHE=/root/.cache/go-build
+ENV GOMODCACHE=/root/.cache/go-build
+ENV GO111MODULE=on
+
 # Install dependencies
 RUN chmod +x /ChargePi/src/scripts/install-dependencies.sh
 RUN /ChargePi/src/scripts/install-dependencies.sh $READER_TYPE 0
@@ -15,16 +19,18 @@ ENV GOARCH=arm64
 ENV CGO=1
 
 # Compile the client
-RUN go mod download
+RUN -mount=type=cache,target=/root/.cache/go-build go mod download
 RUN go mod verify
-RUN go build -o ChargePi .
+RUN --mount=type=cache,target="/root/.cache/go-build" go build -o ChargePi .
 
 FROM node:19 as build-ui
 
-COPY ./ui /ui
 WORKDIR /ui
 
-RUN npm install
+COPY ./ui/package*.json .
+COPY ./ui .
+
+RUN --mount=type=cache,target=/root/.npm npm install
 RUN npm run build
 
 # Test the client
