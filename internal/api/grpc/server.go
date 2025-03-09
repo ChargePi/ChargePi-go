@@ -2,8 +2,9 @@ package grpc
 
 import (
 	"context"
-	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
 	"net"
+
+	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
 
 	"github.com/ChargePi/ChargePi-go/internal/auth"
 	"github.com/ChargePi/ChargePi-go/internal/pkg/models/charge-point"
@@ -34,7 +35,7 @@ type Server struct {
 func NewServer(
 	settings settings.Api,
 	point chargePoint.ChargePoint,
-	authCache auth.TagManager,
+	authCache auth.Manager,
 	manager manager.Manager,
 	settingsManager cfg.Manager,
 	userService service.Service,

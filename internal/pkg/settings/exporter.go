@@ -46,7 +46,7 @@ type Exporter interface {
 
 type ExporterImpl struct {
 	db              *badger.DB
-	tagManager      auth.TagManager
+	tagManager      auth.Manager
 	settingsManager Manager
 	logger          log.FieldLogger
 }

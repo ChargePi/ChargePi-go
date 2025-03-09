@@ -2,6 +2,7 @@ package chargepoint
 
 import (
 	"context"
+
 	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
 
 	"github.com/ChargePi/ChargePi-go/internal/auth"
@@ -55,7 +56,12 @@ func CreateChargePoint(
 	switch protocolVersion {
 	case ocpp.OCPP16:
 		// Setup OCPP configuration from the database
-		ocppVariableManager, err := ocpp_v16.NewV16ConfigurationManager(ocpp_v16.DefaultConfiguration(supportedOcppV16Profiles...), supportedOcppV16Profiles...)
+		defaultOcppConfig, err := ocpp_v16.DefaultConfigurationFromProfiles(supportedOcppV16Profiles...)
+		if err != nil {
+			logger.WithError(err).Fatal("Cannot create OCPP configuration")
+		}
+
+		ocppVariableManager, err := ocpp_v16.NewV16ConfigurationManager(*defaultOcppConfig, supportedOcppV16Profiles...)
 		if err != nil {
 			logger.WithError(err).Fatal("Cannot create OCPP configuration manager")
 		}
