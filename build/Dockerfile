@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM golang:1.22.1 as base
+FROM --platform=$BUILDPLATFORM golang:1.22.1 AS base
 
 COPY . /ChargePi/src
 WORKDIR /ChargePi/src
@@ -28,7 +28,7 @@ RUN npm install
 RUN npm run build
 
 # Test the client
-FROM --platform=$BUILDPLATFORM vektra/mockery:v2.9.4 as test
+FROM --platform=$BUILDPLATFORM vektra/mockery:v2.9.4 AS test
 
 COPY --from=base /ChargePi/src /ChargePi/src
 WORKDIR /ChargePi/src
@@ -44,7 +44,7 @@ RUN mockery
 # Run tests
 CMD ["go", "test","-v","./..."]
 
-FROM --platform=$BUILDPLATFORM alpine as chargepi
+FROM --platform=$BUILDPLATFORM alpine AS chargepi
 
 WORKDIR /etc/ChargePi
 
