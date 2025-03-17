@@ -84,7 +84,7 @@ jobs:
       actions: read
       pull-requests: write # write permission needed to comment on PR
     steps:
-      - uses: fgrosse/go-coverage-report@v1.1.1
+      - uses: fgrosse/go-coverage-report@v1.2.0
         with:
           coverage-artifact-name: code-coverage
           coverage-file-name: unit_coverage.out
