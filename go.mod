@@ -23,7 +23,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/lorenzodonini/ocpp-go v0.19.0
 	github.com/mandrigin/gin-spa v0.0.0-20200212133200-790d0c0c7335
-	github.com/nicksnyder/go-i18n/v2 v2.2.1
+	github.com/nicksnyder/go-i18n/v2 v2.6.0
 	github.com/op/go-logging v0.0.0-20160315200505-970db520ece7 // indirect
 	github.com/rpi-ws281x/rpi-ws281x-go v1.0.10
 	github.com/samber/lo v1.49.1
