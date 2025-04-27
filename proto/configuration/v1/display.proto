@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package configuration.v1;
+
+import "common/v1/hardware.proto";
+import "google/protobuf/empty.proto";
+
+service DisplayService {
+  rpc SetDisplaySettings(SetDisplaySettingsRequest) returns (SetDisplaySettingsResponse) {}
+  rpc GetDisplaySettings(google.protobuf.Empty) returns (GetDisplaySettingsResponse) {}
+}
+/*------------------ Display ------------------------ */
+
+message SetDisplaySettingsRequest {
+  Display display = 1;
+}
+
+message SetDisplaySettingsResponse {
+  string status = 1;
+}
+
+message GetDisplaySettingsResponse {
+  Display display = 1;
+}
+
+message Display {
+  string type = 1;
+  bool enabled = 2;
+  optional string language = 3;
+  optional common.v1.I2c i2c = 4;
+}

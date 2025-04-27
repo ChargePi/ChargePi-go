@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package common.v1;
+
+enum ProtocolVersion {
+  PROTOCOL_VERSION_UNSPECIFIED = 0;
+  PROTOCOL_VERSION_OCPP_16 = 1;
+  PROTOCOL_VERSION_OCPP_201 = 2;
+}

@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+package charge_point.v1;
+
+import "common/v1/charge_point.proto";
+import "google/protobuf/empty.proto";
+
+service ChargePointService {
+  rpc GetChargePointDetails(google.protobuf.Empty) returns (GetChargePointDetailsResponse) {}
+  rpc ChangeChargePointDetails(ChangeChargePointDetailsRequest) returns (ChangeChargePointDetailsResponse) {}
+  rpc GetVersion(google.protobuf.Empty) returns (GetVersionResponse) {}
+  rpc GetStatus(google.protobuf.Empty) returns (GetStatusResponse) {}
+  rpc Restart(RestartRequest) returns (google.protobuf.Empty) {}
+}
+
+message ChangeChargePointDetailsRequest {
+  ChargePointInfo charge_point_info = 1;
+}
+
+message ChangeChargePointDetailsResponse {
+  string status = 2;
+}
+
+message GetChargePointDetailsResponse {
+  ChargePointInfo charge_point_info = 1;
+}
+
+message GetVersionResponse {
+  string version = 1;
+}
+
+message GetStatusResponse {
+  bool connected = 1;
+  string status = 2;
+}
+
+message RestartRequest {
+  string type = 1;
+}
+
+message ConnectionSettings {
+  optional string charge_point_id = 1;
+  optional string url = 2;
+  common.v1.ProtocolVersion protocol_version = 3;
+  optional string basic_auth_username = 4;
+  optional string basic_auth_password = 5;
+  optional string tls_ca_certificate = 6;
+  optional string tls_client_certificate = 7;
+  optional string tls_client_private_key = 8;
+}
+
+message ChargePointInfo {
+  optional string type = 1;
+  optional float max_power = 2;
+  OcppInfo ocpp_info = 4;
+  FreeCharging free_charging = 5;
+}
+
+message OcppInfo {
+  string vendor = 1;
+  string model = 2;
+  optional string iccid = 3;
+  optional string imsi = 4;
+  optional string charge_box_serial_number = 5;
+  optional string charge_point_serial_number = 6;
+}
+
+message FreeCharging {
+  bool enabled = 1;
+  optional int32 max_charging_time = 2;
+}

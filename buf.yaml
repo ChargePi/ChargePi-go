@@ -1,9 +1,12 @@
 version: v2
+breaking:
+  ignore:
+    - "*.proto"
 modules:
   - path: proto
     lint:
       use:
-        - STANDARD
+        - DEFAULT
         - FILE_LOWER_SNAKE_CASE
         - PACKAGE_NO_IMPORT_CYCLE
         - PACKAGE_SAME_GO_PACKAGE

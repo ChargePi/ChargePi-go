@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package connection.v1;
+
+import "common/v1/charge_point.proto";
+import "google/protobuf/empty.proto";
+
+service ConnectionService {
+  // Connection settings
+  rpc GetConnectionDetails(google.protobuf.Empty) returns (GetConnectionDetailsResponse) {}
+  rpc ChangeConnectionDetails(ChangeConnectionDetailsRequest) returns (ChangeConnectionDetailsResponse) {}
+}
+
+/*------------------ ConnectionDetails ------------------------ */
+
+message GetConnectionDetailsResponse {
+  ConnectionSettings connection_settings = 1;
+}
+
+message ChangeConnectionDetailsRequest {
+  ConnectionSettings connection_settings = 1;
+}
+
+message ChangeConnectionDetailsResponse {
+  ConnectionSettings connection_settings = 1;
+  string status = 2;
+}
+
+message ConnectionSettings {
+  optional string charge_point_id = 1;
+  optional string url = 2;
+  common.v1.ProtocolVersion protocol_version = 3;
+  optional string basic_auth_username = 4;
+  optional string basic_auth_password = 5;
+  optional string tls_ca_certificate = 6;
+  optional string tls_client_certificate = 7;
+  optional string tls_client_private_key = 8;
+}

@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package common.v1;
+
+import "google/protobuf/timestamp.proto";
+
+message Sample {
+  Consumption consumption = 1;
+  string measureand = 2;
+  optional string phase = 3;
+  optional string location = 4;
+  optional string context = 5;
+  google.protobuf.Timestamp timestamp = 6;
+}
+
+message Consumption {
+  string unit = 1;
+  float value = 2;
+}

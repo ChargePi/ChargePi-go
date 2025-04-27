@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package configuration.v1;
+
+import "google/protobuf/empty.proto";
+
+service TagReaderService {
+  rpc SetReaderSettings(SetReaderSettingsRequest) returns (SetReaderSettingsResponse) {}
+  rpc GetReaderSettings(google.protobuf.Empty) returns (GetReaderSettingsResponse) {}
+}
+
+message SetReaderSettingsRequest {
+  Reader reader = 1;
+}
+
+message SetReaderSettingsResponse {
+  string status = 1;
+}
+
+message GetReaderSettingsResponse {
+  Reader reader = 1;
+}
+
+message Reader {
+  string type = 1;
+  bool enabled = 2;
+  optional string device_address = 3;
+  optional int32 reset_pin = 4;
+}

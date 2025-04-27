@@ -1,0 +1,83 @@
+syntax = "proto3";
+
+package evse.v1;
+
+import "common/v1/connector.proto";
+import "common/v1/session.proto";
+import "evse/v1/evcc.proto";
+import "evse/v1/power_meter.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+service EvseService {
+  rpc AddEVSE(AddEVSERequest) returns (AddEVSEResponse) {}
+  rpc GetEVSEs(google.protobuf.Empty) returns (GetEVSEsResponse) {}
+  rpc GetEVSE(GetEVSERequest) returns (GetEVSEResponse) {}
+  rpc SetEVCC(SetEVCCRequest) returns (SetEVCCResponse) {}
+  rpc SetPowerMeter(SetPowerMeterRequest) returns (SetPowerMeterResponse) {}
+  rpc GetUsageForEVSE(GetUsageForEVSERequest) returns (stream GetUsageForEVSEResponse) {}
+}
+
+message GetEVSEsResponse {
+  repeated EVSE evses = 1;
+}
+
+message GetEVSERequest {
+  int32 evse_id = 1;
+}
+
+message GetEVSEResponse {
+  EVSE evse = 1;
+}
+
+message AddEVSERequest {
+  int32 evse_id = 1;
+  EVCC evcc = 2;
+  optional PowerMeter power_meter = 3;
+}
+
+message AddEVSEResponse {
+  string status = 1;
+  EVSE evse = 2;
+}
+
+message SetEVCCRequest {
+  int32 evse_id = 1;
+  EVCC evcc = 2;
+}
+
+message SetEVCCResponse {
+  string type = 1;
+}
+
+message SetPowerMeterRequest {
+  int32 evse_id = 1;
+  PowerMeter power_meter = 2;
+}
+
+message SetPowerMeterResponse {
+  string status = 1;
+}
+
+message GetUsageForEVSERequest {
+  int32 evse_id = 1;
+}
+
+message GetUsageForEVSEResponse {
+  repeated common.v1.Sample samples = 1;
+}
+
+message EVSE {
+  int32 id = 1;
+  EVCC evcc = 2;
+  PowerMeter power_meter = 3;
+  common.v1.ConnectorStatus status = 4;
+  optional Session session = 5;
+}
+
+message Session {
+  string transaction_id = 1;
+  string tag_id = 2;
+  google.protobuf.Timestamp started = 3;
+  string consumption = 4;
+}

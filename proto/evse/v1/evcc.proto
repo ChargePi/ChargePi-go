@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package evse.v1;
+
+import "common/v1/hardware.proto";
+
+message EVCC {
+  string type = 1;
+  string status = 2;
+  string error = 3;
+  optional common.v1.Serial serial = 4;
+  optional common.v1.Modbus modbus = 5;
+}
