@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package evse.v1;
+
+import "common/v1/hardware.proto";
+
+message PowerMeter {
+  string type = 1;
+  bool enabled = 2;
+  optional common.v1.Modbus modbus = 3;
+  optional common.v1.Spi spi = 4;
+}

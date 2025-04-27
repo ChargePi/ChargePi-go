@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package configuration.v1;
+
+import "google/protobuf/empty.proto";
+
+service ConfigurationService {
+  rpc GetVariables(google.protobuf.Empty) returns (GetVariablesResponse) {}
+  rpc SetVariables(SetVariablesRequest) returns (SetVariablesResponse) {}
+  rpc GetVariable(GetVariableRequest) returns (GetVariableResponse) {}
+}
+
+message GetVariableRequest {
+  string key = 1;
+}
+
+message GetVariableResponse {
+  string key = 1;
+  bool read_only = 2;
+  optional string value = 3;
+}
+
+message GetVariablesResponse {
+  repeated OcppVariable variables = 1;
+}
+
+message SetVariablesRequest {
+  repeated OcppVariable variables = 1;
+}
+
+message SetVariablesResponse {
+  repeated string statuses = 1;
+}
+
+message OcppVariable {
+  string key = 1;
+  bool read_only = 2;
+  optional string value = 3;
+}

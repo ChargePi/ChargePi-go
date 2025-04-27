@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package common.v1;
+
+message EVCC {
+  string type = 1;
+  string status = 2;
+  string error = 3;
+  optional Serial serial = 4;
+  optional Modbus modbus = 5;
+}
+
+message PowerMeter {
+  string type = 1;
+  bool enabled = 2;
+  optional Modbus modbus = 3;
+  optional Spi spi = 4;
+}
+
+message Display {
+  string type = 1;
+  bool enabled = 2;
+  optional string language = 3;
+  optional I2c i2c = 4;
+}
+
+message TagReader {
+  string type = 1;
+  bool enabled = 2;
+  optional string device_address = 3;
+  optional int32 reset_pin = 4;
+}
+
+message Indicator {
+  string type = 1;
+  bool enabled = 2;
+  optional bool indicate_card_read = 3;
+  optional int32 data_pin = 4;
+  optional bool invert = 5;
+}
+
+message Spi {
+  int32 chip_select = 1;
+  int32 bus = 2;
+}
+
+message Modbus {
+  string protocol = 1;
+  string device_address = 2;
+}
+
+message I2c {
+  string address = 1;
+  int32 bus = 2;
+}
+
+message Serial {
+  string device_address = 1;
+  uint32 baud_rate = 2;
+  uint32 parity = 3;
+  uint32 data_bits = 4;
+  uint32 stop_bits = 5;
+}

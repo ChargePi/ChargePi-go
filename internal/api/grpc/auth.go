@@ -3,7 +3,7 @@ package grpc
 import (
 	"context"
 
-	grpc "github.com/ChargePi/ChargePi-go/gen/proto/v1"
+	tagsv1 "github.com/ChargePi/ChargePi-go/gen/proto/tags/v1"
 	"github.com/ChargePi/ChargePi-go/internal/auth"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
@@ -11,7 +11,7 @@ import (
 )
 
 type AuthService struct {
-	grpc.UnimplementedTagServer
+	tagsv1.UnimplementedTagServiceServer
 	tagManager auth.Manager
 }
 
@@ -21,9 +21,9 @@ func NewAuthService(tagManager auth.Manager) *AuthService {
 	}
 }
 
-func (s *AuthService) GetAuthorizedCards(ctx context.Context, empty *empty.Empty) (*grpc.GetAuthorizedCardsResponse, error) {
-	response := &grpc.GetAuthorizedCardsResponse{
-		AuthorizedCards: []*grpc.AuthorizedCard{},
+func (s *AuthService) GetAuthorizedCards(ctx context.Context, empty *empty.Empty) (*tagsv1.GetAuthorizedCardsResponse, error) {
+	response := &tagsv1.GetAuthorizedCardsResponse{
+		AuthorizedCards: []*tagsv1.AuthorizedCard{},
 	}
 
 	// Get all tags from the database
@@ -36,7 +36,7 @@ func (s *AuthService) GetAuthorizedCards(ctx context.Context, empty *empty.Empty
 			timestamp = timestamppb.New(tag.IdTagInfo.ExpiryDate.Time)
 		}
 
-		card := &grpc.AuthorizedCard{
+		card := &tagsv1.AuthorizedCard{
 			TagId:      tag.IdTag,
 			Status:     string(tag.IdTagInfo.Status),
 			ExpiryDate: timestamp,
@@ -47,12 +47,12 @@ func (s *AuthService) GetAuthorizedCards(ctx context.Context, empty *empty.Empty
 	return response, nil
 }
 
-func (s *AuthService) AddAuthorizedCards(ctx context.Context, request *grpc.AddAuthorizedCardsRequest) (*grpc.AddAuthorizedCardsResponse, error) {
-	response := &grpc.AddAuthorizedCardsResponse{Status: []string{}}
+func (s *AuthService) AddAuthorizedCards(ctx context.Context, request *tagsv1.AddAuthorizedCardsRequest) (*tagsv1.AddAuthorizedCardsResponse, error) {
+	response := &tagsv1.AddAuthorizedCardsResponse{Status: []string{}}
 
 	for _, tag := range request.GetAuthorizedCards() {
 		// Add the tag to the database
-		err := s.tagManager.AddTag(tag.TagId, types.NewIdTagInfo(types.AuthorizationStatus(tag.Status)))
+		err := s.tagManager.AddTag(tag.GetTagId(), types.NewIdTagInfo(types.AuthorizationStatus(tag.GetStatus())))
 		if err != nil {
 			response.Status = append(response.Status, "Failed")
 			continue
@@ -64,8 +64,8 @@ func (s *AuthService) AddAuthorizedCards(ctx context.Context, request *grpc.AddA
 	return response, nil
 }
 
-func (s *AuthService) RemoveAuthorizedCard(ctx context.Context, request *grpc.RemoveCardRequest) (*grpc.RemoveCardResponse, error) {
-	response := &grpc.RemoveCardResponse{
+func (s *AuthService) RemoveAuthorizedCard(ctx context.Context, request *tagsv1.RemoveAuthorizedCardRequest) (*tagsv1.RemoveAuthorizedCardResponse, error) {
+	response := &tagsv1.RemoveAuthorizedCardResponse{
 		Status: "Failed",
 	}
 
@@ -79,5 +79,5 @@ func (s *AuthService) RemoveAuthorizedCard(ctx context.Context, request *grpc.Re
 	return response, nil
 }
 
-func (s *UserService) mustEmbedUnimplementedTagServer() {
+func (s *UserHandler) mustEmbedUnimplementedTagServer() {
 }

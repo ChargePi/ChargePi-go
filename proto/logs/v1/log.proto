@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package logs.v1;
+
+import "google/protobuf/empty.proto";
+
+service LogService {
+  rpc GetLogs(google.protobuf.Empty) returns (stream GetLogsResponse) {}
+}
+
+message GetLogsResponse {}

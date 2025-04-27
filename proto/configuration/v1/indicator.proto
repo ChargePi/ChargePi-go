@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package configuration.v1;
+
+import "google/protobuf/empty.proto";
+
+service IndicatorService {
+  // LED indicator
+  rpc SetIndicatorSettings(SetIndicatorSettingsRequest) returns (SetIndicatorSettingsResponse) {}
+  rpc GetIndicatorSettings(google.protobuf.Empty) returns (GetIndicatorSettingsResponse) {}
+}
+
+/*------------------ Indication ------------------------ */
+
+message SetIndicatorSettingsRequest {
+  Indicator indicator = 1;
+}
+
+message SetIndicatorSettingsResponse {
+  string status = 1;
+}
+
+message GetIndicatorSettingsResponse {
+  Indicator indicator = 1;
+}
+
+message Indicator {
+  string type = 1;
+  bool enabled = 2;
+  optional bool indicate_card_read = 3;
+  optional int32 data_pin = 4;
+  optional bool invert = 5;
+}

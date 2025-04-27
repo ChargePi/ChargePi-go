@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package tags.v1;
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+// Local auth list
+service TagService {
+  rpc GetAuthorizedCards(google.protobuf.Empty) returns (GetAuthorizedCardsResponse) {}
+  rpc AddAuthorizedCards(AddAuthorizedCardsRequest) returns (AddAuthorizedCardsResponse) {}
+  rpc RemoveAuthorizedCard(RemoveAuthorizedCardRequest) returns (RemoveAuthorizedCardResponse) {}
+}
+
+message AddAuthorizedCardsRequest {
+  repeated AuthorizedCard authorized_cards = 1;
+}
+
+message AddAuthorizedCardsResponse {
+  repeated string status = 1;
+}
+
+message GetAuthorizedCardsResponse {
+  int32 version = 1;
+  repeated AuthorizedCard authorized_cards = 2;
+}
+
+message RemoveAuthorizedCardRequest {
+  string tag_id = 1;
+}
+
+message RemoveAuthorizedCardResponse {
+  string status = 1;
+}
+
+message AuthorizedCard {
+  string tag_id = 1;
+  string status = 2;
+  optional google.protobuf.Timestamp expiry_date = 3;
+}
