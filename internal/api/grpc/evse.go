@@ -4,7 +4,8 @@ import (
 	"context"
 	"time"
 
-	grpc "github.com/ChargePi/ChargePi-go/gen/proto/v1"
+	commonv1 "github.com/ChargePi/ChargePi-go/gen/proto/common/v1"
+	grpc "github.com/ChargePi/ChargePi-go/gen/proto/evse/v1"
 	"github.com/ChargePi/ChargePi-go/internal/evse"
 	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
 	"github.com/golang/protobuf/ptypes/empty"
@@ -13,32 +14,32 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-type Service struct {
-	grpc.UnimplementedEvseServer
+type EvseHandler struct {
+	grpc.UnimplementedEvseServiceServer
 	evseManager manager.Manager
 }
 
-func NewEvseService(manager manager.Manager) *Service {
-	return &Service{
+func NewEvseHandler(manager manager.Manager) *EvseHandler {
+	return &EvseHandler{
 		evseManager: manager,
 	}
 }
 
-func (s *Service) GetEVSEs(ctx context.Context, empty *empty.Empty) (*grpc.GetEvsesResponse, error) {
-	response := &grpc.GetEvsesResponse{
-		EVSEs: []*grpc.EVSE{},
+func (s *EvseHandler) GetEVSEs(ctx context.Context, empty *empty.Empty) (*grpc.GetEVSEsResponse, error) {
+	response := &grpc.GetEVSEsResponse{
+		Evses: []*grpc.EVSE{},
 	}
 
 	for _, e := range s.evseManager.GetEVSEs() {
 		evSe := toEvse(e)
-		response.EVSEs = append(response.EVSEs, evSe)
+		response.Evses = append(response.Evses, evSe)
 	}
 
 	return response, nil
 }
 
-func (s *Service) AddEVSE(ctx context.Context, request *grpc.AddEvseRequest) (*grpc.AddEvseResponse, error) {
-	response := &grpc.AddEvseResponse{
+func (s *EvseHandler) AddEVSE(ctx context.Context, request *grpc.AddEVSERequest) (*grpc.AddEVSEResponse, error) {
+	response := &grpc.AddEVSEResponse{
 		Status: "Failed",
 	}
 
@@ -48,29 +49,29 @@ func (s *Service) AddEVSE(ctx context.Context, request *grpc.AddEvseRequest) (*g
 	return response, nil
 }
 
-func (s *Service) GetEVSE(ctx context.Context, request *grpc.GetEvseRequest) (*grpc.GetEvseResponse, error) {
-	res := &grpc.GetEvseResponse{}
+func (s *EvseHandler) GetEVSE(ctx context.Context, request *grpc.GetEVSERequest) (*grpc.GetEVSEResponse, error) {
+	res := &grpc.GetEVSEResponse{}
 
-	findEVSE, err := s.evseManager.GetEVSE(int(request.EvseId))
+	findEVSE, err := s.evseManager.GetEVSE(int(request.GetEvseId()))
 	if err != nil {
 		return res, nil
 	}
 
-	res.EVSE = toEvse(findEVSE)
+	res.Evse = toEvse(findEVSE)
 	return res, nil
 }
 
-func (s *Service) SetEVCC(ctx context.Context, request *grpc.SetEVCCRequest) (*grpc.SetEvccResponse, error) {
+func (s *EvseHandler) SetEVCC(ctx context.Context, request *grpc.SetEVCCRequest) (*grpc.SetEVCCResponse, error) {
 	// todo
 	return nil, nil
 }
 
-func (s *Service) SetPowerMeter(ctx context.Context, request *grpc.SetPowerMeterRequest) (*grpc.SetPowerMeterResponse, error) {
+func (s *EvseHandler) SetPowerMeter(ctx context.Context, request *grpc.SetPowerMeterRequest) (*grpc.SetPowerMeterResponse, error) {
 	// todo
 	return nil, nil
 }
 
-func (s *Service) GetUsageForEVSE(request *grpc.GetUsageForEVSERequest, server grpc.Evse_GetUsageForEVSEServer) error {
+func (s *EvseHandler) GetUsageForEVSE(request *grpc.GetUsageForEVSERequest, server grpc.EvseService_GetUsageForEVSEServer) error {
 	evseWithId, err := s.evseManager.GetEVSE(int(request.EvseId))
 	if err != nil {
 		return err
@@ -89,7 +90,7 @@ Loop:
 			samples := evseWithId.SamplePowerMeter([]types.Measurand{types.MeasurandEnergyActiveImportRegister})
 
 			// Convert to grpc samples
-			var samplesToReturn []*grpc.Sample
+			var samplesToReturn []*commonv1.Sample
 			for _, sample := range samples {
 				samplesToReturn = append(samplesToReturn, toSample(sample))
 			}
@@ -107,13 +108,13 @@ Loop:
 	return nil
 }
 
-func (s *Service) mustEmbedUnimplementedEvseServer() {
+func (s *EvseHandler) mustEmbedUnimplementedEvseServer() {
 }
 
 func toEvse(e evse.EVSE) *grpc.EVSE {
 	return &grpc.EVSE{
 		Id: int32(e.GetEvseId()),
-		EVCC: &grpc.EVCC{
+		Evcc: &grpc.EVCC{
 			Type:   e.GetEvcc().GetType(),
 			Status: string(e.GetEvcc().GetState()),
 		},
@@ -126,12 +127,12 @@ func toEvse(e evse.EVSE) *grpc.EVSE {
 	}
 }
 
-func toSample(sample types.SampledValue) *grpc.Sample {
-	consumption := &grpc.Consumption{
+func toSample(sample types.SampledValue) *commonv1.Sample {
+	consumption := &commonv1.Consumption{
 		Unit: string(sample.Unit),
 		// Value: sample.Value,
 	}
-	return &grpc.Sample{
+	return &commonv1.Sample{
 		Consumption: consumption,
 		Measureand:  string(sample.Measurand),
 		Phase:       lo.ToPtr(string(sample.Phase)),

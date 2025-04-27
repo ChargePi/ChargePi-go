@@ -4,7 +4,13 @@ import (
 	"context"
 	"net"
 
-	grpc2 "github.com/ChargePi/ChargePi-go/gen/proto/v1"
+	charge_pointv1 "github.com/ChargePi/ChargePi-go/gen/proto/charge_point/v1"
+	configurationv1 "github.com/ChargePi/ChargePi-go/gen/proto/configuration/v1"
+	connectionv1 "github.com/ChargePi/ChargePi-go/gen/proto/connection/v1"
+	evsev1 "github.com/ChargePi/ChargePi-go/gen/proto/evse/v1"
+	logsv1 "github.com/ChargePi/ChargePi-go/gen/proto/logs/v1"
+	tagsv1 "github.com/ChargePi/ChargePi-go/gen/proto/tags/v1"
+	usersv1 "github.com/ChargePi/ChargePi-go/gen/proto/users/v1"
 	"github.com/ChargePi/ChargePi-go/internal/auth"
 	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
 	"github.com/ChargePi/ChargePi-go/internal/pkg/models/charge-point"
@@ -22,13 +28,15 @@ import (
 )
 
 type Server struct {
-	server             *grpc.Server
-	address            string
-	service            *Service
-	authService        *AuthService
-	chargePointService *ChargePointService
-	logService         *LogService
-	userService        *UserService
+	server               *grpc.Server
+	address              string
+	evseHandler          *EvseHandler
+	authHandler          *AuthService
+	chargePointHandler   *ChargePointHandler
+	logHandler           *LogHandler
+	userHandler          *UserHandler
+	configurationHandler *ConfigurationHandler
+	connectivityHandler  *ConnectivityHandler
 }
 
 func NewServer(
@@ -70,22 +78,26 @@ func NewServer(
 	)))
 
 	return &Server{
-		server:             grpc.NewServer(opts...),
-		address:            settings.Address,
-		service:            NewEvseService(manager),
-		authService:        NewAuthService(authCache),
-		chargePointService: NewChargePointService(point, settingsManager),
-		logService:         NewLogService(),
-		userService:        NewUserService(userService),
+		server:               grpc.NewServer(opts...),
+		address:              settings.Address,
+		evseHandler:          NewEvseHandler(manager),
+		authHandler:          NewAuthService(authCache),
+		chargePointHandler:   NewChargePointService(point, settingsManager),
+		logHandler:           NewLogHandler(),
+		userHandler:          NewUserHandler(userService),
+		configurationHandler: NewConfigurationHandler(settingsManager),
+		connectivityHandler:  NewConnectivityHandler(),
 	}
 }
 
 func (s *Server) Run() {
-	grpc2.RegisterChargePointServer(s.server, s.chargePointService)
-	grpc2.RegisterEvseServer(s.server, s.service)
-	grpc2.RegisterLogServer(s.server, s.logService)
-	grpc2.RegisterTagServer(s.server, s.authService)
-	grpc2.RegisterUsersServer(s.server, s.userService)
+	charge_pointv1.RegisterChargePointServiceServer(s.server, s.chargePointHandler)
+	evsev1.RegisterEvseServiceServer(s.server, s.evseHandler)
+	logsv1.RegisterLogServiceServer(s.server, s.logHandler)
+	tagsv1.RegisterTagServiceServer(s.server, s.authHandler)
+	usersv1.RegisterUserServiceServer(s.server, s.userHandler)
+	configurationv1.RegisterConfigurationServiceServer(s.server, s.configurationHandler)
+	connectionv1.RegisterConnectionServiceServer(s.server, s.connectivityHandler)
 
 	log.Infof("Exposing API endpoints at %s", s.address)
 

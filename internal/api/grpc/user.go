@@ -3,24 +3,24 @@ package grpc
 import (
 	"context"
 
-	grpc "github.com/ChargePi/ChargePi-go/gen/proto/v1"
+	grpc "github.com/ChargePi/ChargePi-go/gen/proto/users/v1"
 	"github.com/ChargePi/ChargePi-go/internal/users/pkg/models"
 	"github.com/ChargePi/ChargePi-go/internal/users/service"
 	"github.com/golang/protobuf/ptypes/empty"
 )
 
-type UserService struct {
-	grpc.UnimplementedUsersServer
+type UserHandler struct {
+	grpc.UnimplementedUserServiceServer
 	userService service.Service
 }
 
-func NewUserService(userService service.Service) *UserService {
-	return &UserService{
+func NewUserHandler(userService service.Service) *UserHandler {
+	return &UserHandler{
 		userService: userService,
 	}
 }
 
-func (s *UserService) AddUser(ctx context.Context, user *grpc.User) (*grpc.AddUserResponse, error) {
+func (s *UserHandler) AddUser(ctx context.Context, user *grpc.User) (*grpc.AddUserResponse, error) {
 	response := &grpc.AddUserResponse{
 		Status: "Failed",
 	}
@@ -33,7 +33,7 @@ func (s *UserService) AddUser(ctx context.Context, user *grpc.User) (*grpc.AddUs
 	return response, nil
 }
 
-func (s *UserService) GetUser(ctx context.Context, request *grpc.GetUserRequest) (*grpc.User, error) {
+func (s *UserHandler) GetUser(ctx context.Context, request *grpc.GetUserRequest) (*grpc.User, error) {
 	user, err := s.userService.GetUser(request.GetUsername())
 	if err != nil {
 		return nil, err
@@ -42,7 +42,7 @@ func (s *UserService) GetUser(ctx context.Context, request *grpc.GetUserRequest)
 	return toUser(*user), nil
 }
 
-func (s *UserService) GetUsers(ctx context.Context, e *empty.Empty) (*grpc.GetUsersResponse, error) {
+func (s *UserHandler) GetUsers(ctx context.Context, e *empty.Empty) (*grpc.GetUsersResponse, error) {
 	response := &grpc.GetUsersResponse{}
 
 	getUsers, err := s.userService.GetUsers()
@@ -57,7 +57,7 @@ func (s *UserService) GetUsers(ctx context.Context, e *empty.Empty) (*grpc.GetUs
 	return response, nil
 }
 
-func (s *UserService) RemoveUser(ctx context.Context, request *grpc.RemoveUserRequest) (*grpc.RemoveUserResponse, error) {
+func (s *UserHandler) RemoveUser(ctx context.Context, request *grpc.RemoveUserRequest) (*grpc.RemoveUserResponse, error) {
 	response := &grpc.RemoveUserResponse{
 		Status: "Failed",
 	}
@@ -70,7 +70,7 @@ func (s *UserService) RemoveUser(ctx context.Context, request *grpc.RemoveUserRe
 	return response, nil
 }
 
-func (s *UserService) mustEmbedUnimplementedUsersServer() {
+func (s *UserHandler) mustEmbedUnimplementedUsersServer() {
 }
 
 func toUser(user models.User) *grpc.User {
