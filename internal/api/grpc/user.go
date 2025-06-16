@@ -20,12 +20,14 @@ func NewUserHandler(userService service.Service) *UserHandler {
 	}
 }
 
-func (s *UserHandler) AddUser(ctx context.Context, user *grpc.User) (*grpc.AddUserResponse, error) {
+func (s *UserHandler) AddUser(ctx context.Context, user *grpc.AddUserRequest) (*grpc.AddUserResponse, error) {
 	response := &grpc.AddUserResponse{
 		Status: "Failed",
 	}
 
-	err := s.userService.AddUser(user.GetUsername(), user.GetPassword(), user.GetRole())
+	u := user.GetUser()
+
+	err := s.userService.AddUser(u.GetUsername(), u.GetPassword(), u.GetRole())
 	if err == nil {
 		response.Status = "Success"
 	}
@@ -33,13 +35,15 @@ func (s *UserHandler) AddUser(ctx context.Context, user *grpc.User) (*grpc.AddUs
 	return response, nil
 }
 
-func (s *UserHandler) GetUser(ctx context.Context, request *grpc.GetUserRequest) (*grpc.User, error) {
+func (s *UserHandler) GetUser(ctx context.Context, request *grpc.GetUserRequest) (*grpc.GetUserResponse, error) {
 	user, err := s.userService.GetUser(request.GetUsername())
 	if err != nil {
 		return nil, err
 	}
 
-	return toUser(*user), nil
+	return &grpc.GetUserResponse{
+		User: toUser(*user),
+	}, nil
 }
 
 func (s *UserHandler) GetUsers(ctx context.Context, e *empty.Empty) (*grpc.GetUsersResponse, error) {
