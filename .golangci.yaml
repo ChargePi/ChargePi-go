@@ -1,0 +1,35 @@
+version: "2"
+linters:
+  default: all
+  enable:
+    - bodyclose
+    - copyloopvar
+    - errcheck
+    - goconst
+    - gocritic
+    - gosec
+    - govet
+    - ineffassign
+    - intrange
+    - misspell
+    - nestif
+    - nlreturn
+    - staticcheck
+    - testifylint
+    - unparam
+    - unused
+    - whitespace
+    - wrapcheck
+  exclusions:
+    generated: lax
+    paths:
+      - ./gen
+      - ./pkg/reader
+formatters:
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/ChargePi/ChargePi-go
+  enable:
+    - gofmt
+    - goimports
