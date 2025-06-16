@@ -1,39 +1,4 @@
 syntax = "proto3";
-
 package users.v1;
 
-import "google/protobuf/empty.proto";
-
-// User management API
-service UserService {
-  rpc AddUser(User) returns (AddUserResponse) {}
-  rpc GetUsers(google.protobuf.Empty) returns (GetUsersResponse) {}
-  rpc GetUser(GetUserRequest) returns (User) {}
-  rpc RemoveUser(RemoveUserRequest) returns (RemoveUserResponse) {}
-}
-
-message User {
-  string username = 1;
-  string password = 2;
-  string role = 3;
-}
-
-message AddUserResponse {
-  string status = 1;
-}
-
-message GetUsersResponse {
-  repeated User users = 1;
-}
-
-message GetUserRequest {
-  string username = 1;
-}
-
-message RemoveUserRequest {
-  string username = 1;
-}
-
-message RemoveUserResponse {
-  string status = 1;
-}
+import "google/protobuf/empty.proto"; // User management APIservice UserService {  rpc AddUser(AddUserRequest) returns (AddUserResponse) {}  rpc GetUsers(google.protobuf.Empty) returns (GetUsersResponse) {}  rpc GetUser(GetUserRequest) returns (GetUserResponse) {}  rpc RemoveUser(RemoveUserRequest) returns (RemoveUserResponse) {}}message AddUserRequest {  User user = 1;}message User {  string username = 1;  string password = 2;  string role = 3;}message AddUserResponse {  string status = 1;}message GetUsersResponse {  repeated User users = 1;}message GetUserRequest {  string username = 1;}message GetUserResponse {  User user = 1;}message RemoveUserRequest {  string username = 1;}message RemoveUserResponse {  string status = 1;}

@@ -1,15 +1,16 @@
-proto:
-	mkdir -p pkg/grpc
-	protoc --go_out=./pkg/grpc --go_opt=paths=source_relative \
-		--proto_path=pkg/proto \
-		--go-grpc_out=./pkg/grpc --go-grpc_opt=paths=source_relative \
-		pkg/proto/*.proto
+.PHONY: install-dependencies buf-lint buf-generate format lint
 
 install-dependencies:
 	sudo sh ./scripts/install-dependencies.sh pn532_uart 0
 
+buf-lint:
+	buf lint
+
+buf-generate:
+	buf generate
+
 format:
 	golangci-lint run --fix
 
-lint:
+lint: buf-lint
 	golangci-lint run
