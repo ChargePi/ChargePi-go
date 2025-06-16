@@ -1,0 +1,15 @@
+dir: gen/mocks/{{.InterfaceDirRelative|replaceAll "internal" ""}}
+structname: "{{.Mock}}{{.InterfaceName}}"
+pkgname: "mock_{{.SrcPackageName|snakecase}}"
+filename: "{{.InterfaceName|snakecase}}_mock.go"
+formatter: goimports
+template: testify
+recursive: true
+packages:
+  github.com/ChargePi/ChargePi-go/internal:
+    config:
+      all: true
+  github.com/ChargePi/ChargePi-go/pkg:
+    config:
+      all: true
+      dir: gen/mocks
