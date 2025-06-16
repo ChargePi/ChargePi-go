@@ -6,10 +6,14 @@ import "google/protobuf/empty.proto";
 
 // User management API
 service UserService {
-  rpc AddUser(User) returns (AddUserResponse) {}
+  rpc AddUser(AddUserRequest) returns (AddUserResponse) {}
   rpc GetUsers(google.protobuf.Empty) returns (GetUsersResponse) {}
-  rpc GetUser(GetUserRequest) returns (User) {}
+  rpc GetUser(GetUserRequest) returns (GetUserResponse) {}
   rpc RemoveUser(RemoveUserRequest) returns (RemoveUserResponse) {}
+}
+
+message AddUserRequest {
+  User user = 1;
 }
 
 message User {
@@ -28,6 +32,10 @@ message GetUsersResponse {
 
 message GetUserRequest {
   string username = 1;
+}
+
+message GetUserResponse  {
+  User user = 1;
 }
 
 message RemoveUserRequest {
