@@ -7,3 +7,9 @@ proto:
 
 install-dependencies:
 	sudo sh ./scripts/install-dependencies.sh pn532_uart 0
+
+format:
+	golangci-lint run --fix
+
+lint:
+	golangci-lint run
