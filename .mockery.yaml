@@ -12,4 +12,3 @@ packages:
   github.com/ChargePi/ChargePi-go/pkg:
     config:
       all: true
-      dir: gen/mocks
