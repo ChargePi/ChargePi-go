@@ -21,7 +21,7 @@ connecting to the backend.
 
 ## 📦 Features
 
-- **OCPP 1.6** - ChargePi supports OCPP 1.6, the most common protocol for EV charging
+- **OCPP support** - ChargePi implements and supports OCPP 1.6, the most common protocol for EV charging
   stations. OCPP 2.0.1 support is planned.
 - **Easily configurable** - ChargePi is easy to configure and customize. It comes with default settings that require
   minimal configuration.
@@ -31,21 +31,24 @@ connecting to the backend.
   components to create a charging station that suits your needs. You can also write custom drivers for currently
   unsupported hardware. We are always looking for contributors to add support for new hardware components.
 - **Modular** - ChargePi is modular, allowing you to add or remove components as needed, based on your use case. You can
-  easily add new hardware components or functionalities to your charging station.
+  add new hardware components or functionality to your charging station.
 - **API** - ChargePi comes with an API that allows you to integrate it with other systems or implement custom
   functionality.
 
 ## Roadmap
 
 - **OCPP 1.6 Extension** - Security extension for OCPP 1.6, which adds additional security features to the protocol.
-- **OCPP 2.0.1 Support** - Support for OCPP 2.0.1, the latest version of the OCPP protocol.
-- **Simulator** - ChargePi offers a simulator mode, which allows you to simulate events such as charging, stopping
-  charging, and RFID authentication. Mostly used for testing purposes.
+- **OCPP 2.0.1 Support** - Support for OCPP 2.0.1.
+- **OCPP 2.1 Support** - Support for OCPP 2.1, the latest version of the OCPP protocol.
+- **Simulator** - Simulate events such as charging, stopping charging, and RFID authentication. Useful for backend
+  testing and development and compliance checks.
 - **Demo mode** - a functional charging station that can be used for demonstration purposes, runs with emulated
   hardware.
 - **Smart charging** - Smart charging functionality, which allows you to optimize the charging process
   based on factors such as energy prices, grid load, and user preferences.
-- **Customizable UI** - ChargePi comes with a customizable UI that allows you to easily manage your charging station.
+- **Customizable UI** - Plans to create a customizable user interface that allows you to change the look and feel of
+  the charging station. This will allow you to create a unique charging station that suits your needs.
+- **OCMF** - OCMF uses signed meter values to ensure that the data is tamper-proof and can be used for billing purposes.
 
 ## 🔌 Hardware support
 
@@ -93,20 +96,17 @@ customizable the ChargePi is.
 2. Wire your hardware according to the provided [schematics](/docs/hardware/hardware-support.md) (if the hardware is
    supported - otherwise, seek professional guidance or contribute to the project!).
 
-   > [!CAUTION]
-   > The hardware part of the project requires fairly good electrical knowledge. Make at your own risk or seek
-   professional
-   guidance. The project is not responsible for any damage caused by the hardware and will not take responsibility for
-   any software misconfiguration or misbehavior.
+> [!WARNING]
+> The hardware part of the project requires fairly good electrical knowledge. Make at your own risk or seek
+> professional guidance. The project authors are not responsible for any damage caused by the hardware and will not
+> take responsibility for any software misconfiguration or misbehavior.
 
 3. Configure the settings files according to the hardware and desired functionality:
     - [client configuration](/docs/configuration/configuration.md)
-    - [OCPP configuration](/docs/configuration/ocpp/ocpp-16.md)
 
-4. Run the client. ChargePi-go can be deployed/run in multiple ways:
-
+4. ChargePi-go can be deployed/run in multiple ways:
     - standalone (host machine)
-    - Docker 🐳 and docker-compose
+    - in a containerized environment (Docker 🐳 and docker-compose)
 
 Details on how to run the client on are described in
 the [client startup guide](docs/getting-started/installation/running-the-client.md).
@@ -125,4 +125,4 @@ Please check out the [contributing guide](CONTRIBUTING.md) for more information 
 
 ## License
 
-ChargePi-go is licensed under the [MIT License](LICENSE.txt).
+ChargePi-go is licensed under the [MIT License](LICENSE.md).
