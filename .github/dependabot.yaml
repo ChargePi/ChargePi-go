@@ -3,26 +3,19 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
-    assignees:
-      - "xBlaz3kx"
-    reviewers:
-      - "xBlaz3kx"
+      interval: "monthly"
 
   - package-ecosystem: "docker"
     directory: "/build/package/"
     schedule:
-      interval: "weekly"
-    assignees:
-      - "xBlaz3kx"
-    reviewers:
-      - "xBlaz3kx"
+      interval: "monthly"
 
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
-      interval: "weekly"
-    assignees:
-      - "xBlaz3kx"
-    reviewers:
-      - "xBlaz3kx"
+      interval: "monthly"
+
+  - package-ecosystem: "npm"
+    directory: "./ui"
+    schedule:
+      interval: "monthly"
