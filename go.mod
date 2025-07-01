@@ -8,7 +8,7 @@ require (
 	github.com/ChargePi/ocppManager-go v1.2.0
 	github.com/agrison/go-commons-lang v0.0.0-20240106075236-2e001e6401ef
 	github.com/avast/retry-go v3.0.0+incompatible
-	github.com/casbin/casbin/v2 v2.107.0
+	github.com/casbin/casbin/v2 v2.108.0
 	github.com/clausecker/nfc/v2 v2.2.0
 	github.com/d2r2/go-hd44780 v0.0.0-20181002113701-74cc28c83a3e
 	github.com/d2r2/go-i2c v0.0.0-20191123181816-73a8a799d6bc
