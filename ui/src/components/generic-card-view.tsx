@@ -40,10 +40,10 @@ function GenericCardView<T extends { id: string | number }>({
 
   return (
     <>
-      <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 ${className || ''}`}>
-        {data.map((item) => (
-          <div
-            key={item.id}
+    <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 ${className || ''}`}>
+      {data.map((item) => (
+        <div
+          key={item.id}
             className="bg-card border border-border rounded-lg p-4 hover:shadow-md transition-shadow flex items-start gap-4 relative"
           >
             {/* Top right action buttons */}
@@ -69,24 +69,24 @@ function GenericCardView<T extends { id: string | number }>({
                 )}
               </div>
             )}
-            <div className="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-lg bg-accent-orange/10 mt-1">
-              <User className="h-7 w-7 text-accent-orange" />
-            </div>
-            <div className="flex-1 space-y-3">
-              {columns.map((col) => (
-                <div key={String(col.key)} className="flex flex-col items-start">
-                  <span className="text-sm font-medium text-accent-orange capitalize min-w-[90px] text-left">
-                    {col.label}:
-                  </span>
-                  <span className="text-sm ml-0 flex-1 text-white text-left">
-                    {renderValue(item, col)}
-                  </span>
-                </div>
-              ))}
-            </div>
+          <div className="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-lg bg-accent-orange/10 mt-1">
+            <User className="h-7 w-7 text-accent-orange" />
           </div>
-        ))}
-      </div>
+          <div className="flex-1 space-y-3">
+            {columns.map((col) => (
+                <div key={String(col.key)} className="flex flex-col items-start">
+                <span className="text-sm font-medium text-accent-orange capitalize min-w-[90px] text-left">
+                  {col.label}:
+                </span>
+                  <span className="text-sm ml-0 flex-1 text-white text-left">
+                  {renderValue(item, col)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
       {/* Single Delete confirmation modal rendered outside the card map */}
       {onDelete && deleteModalItem && (
         <Dialog open={!!deleteModalItem} onOpenChange={open => !open && setDeleteModalItem(null)}>

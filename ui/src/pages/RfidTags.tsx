@@ -161,29 +161,29 @@ const RfidTags: React.FC = () => {
       </header>
       <main className="flex-1 p-6 min-w-0">
         <div className="flex justify-end items-center gap-4 mb-4">
-          <ViewToggle view={view} onViewChange={setView} />
-          <AddSidebarButton<Tag>
-            buttonTitle="Add RFID Tag"
-            sidebarTitle="Add New RFID Tag"
-            columns={columns}
-            onAdd={tag => setTags([...tags, tag])}
-          />
-        </div>
-        {view === 'list' ? (
-          <GenericTable<Tag>
-            columns={columns}
-            data={tags}
-            filterInputClassName="w-1/4"
-            className="min-w-full text-sm"
-            columnVisibilityEnabled={true}
-            columnSearchEnabled={true}
+              <ViewToggle view={view} onViewChange={setView} />
+              <AddSidebarButton<Tag>
+                buttonTitle="Add RFID Tag"
+                sidebarTitle="Add New RFID Tag"
+                columns={columns}
+                onAdd={tag => setTags([...tags, tag])}
+              />
+          </div>
+          {view === 'list' ? (
+            <GenericTable<Tag>
+              columns={columns}
+              data={tags}
+              filterInputClassName="w-1/4"
+              className="min-w-full text-sm"
+              columnVisibilityEnabled={true}
+              columnSearchEnabled={true}
             onRowClick={handleRowClick}
-          />
-        ) : (
-          <GenericCardView<Tag>
-            data={tags}
-            columns={columns}
-            className="min-w-full"
+            />
+          ) : (
+            <GenericCardView<Tag>
+              data={tags}
+              columns={columns}
+              className="min-w-full"
             onEdit={handleRowClick}
             onDelete={tag => setTags(tags => tags.filter(t => t.id !== tag.id))}
           />
@@ -233,8 +233,8 @@ const RfidTags: React.FC = () => {
                 )}
                 {editErrors[col.key as string] && (
                   <p className="text-xs text-red-600 mt-1">{editErrors[col.key as string]}</p>
-                )}
-              </div>
+          )}
+        </div>
             ))}
           </form>
         </SettingsSidebar>

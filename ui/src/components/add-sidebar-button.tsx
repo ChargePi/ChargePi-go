@@ -123,14 +123,14 @@ const AddSidebarButton = <T extends { id: string | number }>({
                   </SelectContent>
                 </Select>
               ) : (
-                <input
-                  type={col.type || 'text'}
-                  className={`w-full px-3 py-2 border rounded bg-background ${errors[col.key as string] ? 'border-red-500' : 'border'} focus:outline-none`}
-                  value={form[col.key] as string || ''}
-                  onChange={e => handleChange(col.key, e.target.value)}
-                  placeholder={`Enter ${col.label}`}
-                  required={col.required}
-                />
+              <input
+                type={col.type || 'text'}
+                className={`w-full px-3 py-2 border rounded bg-background ${errors[col.key as string] ? 'border-red-500' : 'border'} focus:outline-none`}
+                value={form[col.key] as string || ''}
+                onChange={e => handleChange(col.key, e.target.value)}
+                placeholder={`Enter ${col.label}`}
+                required={col.required}
+              />
               )}
               {errors[col.key as string] && (
                 <p className="text-xs text-red-600 mt-1">{errors[col.key as string]}</p>

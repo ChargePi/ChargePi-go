@@ -35,7 +35,7 @@ const WidgetGrid: React.FC<WidgetGridProps> = ({
   widgets, 
   onLayoutChange, 
   onRemoveWidget, 
-  onAddWidgetClick
+  onAddWidgetClick 
 }) => {
   const [moveMode, setMoveMode] = useState<string | null>(null);
   
@@ -143,7 +143,7 @@ const WidgetGrid: React.FC<WidgetGridProps> = ({
                   : 'border-border bg-card'
               }`}
             >
-              {onRemoveWidget && widget.id !== 'add-widget' && (
+            {onRemoveWidget && widget.id !== 'add-widget' && (
                 <div className="absolute top-2 right-2 z-10">
                   <button
                     ref={buttonRef}
@@ -178,25 +178,25 @@ const WidgetGrid: React.FC<WidgetGridProps> = ({
                           <Move className="h-4 w-4" />
                           {moveMode === widget.id ? 'Exit Move' : 'Move'}
                         </button>
-                        <button
+              <button
                           onClick={() => {
                             onRemoveWidget(widget.id);
                             setShowTooltip(false);
                           }}
                           className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
-                        >
-                          <Trash className="h-4 w-4" />
+              >
+                <Trash className="h-4 w-4" />
                           Delete
-                        </button>
+              </button>
                       </div>
                     </div>
                   )}
                 </div>
-              )}
-              <div className="h-full overflow-hidden">
-                {widget.content}
-              </div>
+            )}
+            <div className="h-full overflow-hidden">
+              {widget.content}
             </div>
+          </div>
           );
         })}
       </ResponsiveGridLayout>

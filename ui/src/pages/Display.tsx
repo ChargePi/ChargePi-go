@@ -30,41 +30,41 @@ const Display: React.FC = () => {
   const [editForm, setEditForm] = useState<Partial<Display>>({});
   const [editErrors, setEditErrors] = useState<Record<string, string>>({});
 
-  const columns: TableColumn<Display>[] = [
-    {
-      key: 'id',
-      label: 'ID',
-      filterable: true,
-      editable: false,
-      required: false,
-      type: 'text',
-      render: (id: string) => (
+const columns: TableColumn<Display>[] = [
+  {
+    key: 'id',
+    label: 'ID',
+    filterable: true,
+    editable: false,
+    required: false,
+    type: 'text',
+    render: (id: string) => (
         <span className="flex items-center gap-2 relative">
-          <span>{id}</span>
-          <button
+        <span>{id}</span>
+        <button
             className="p-1 rounded hover:bg-muted relative"
-            onClick={e => {
-              e.stopPropagation();
-              navigator.clipboard.writeText(id);
+          onClick={e => {
+            e.stopPropagation();
+            navigator.clipboard.writeText(id);
               setCopiedId(id);
               setTimeout(() => setCopiedId(current => (current === id ? null : current)), 2000);
-            }}
-            title="Copy ID"
-          >
-            <Copy className="h-4 w-4" />
+          }}
+          title="Copy ID"
+        >
+          <Copy className="h-4 w-4" />
             {copiedId === id && (
               <span className="absolute left-1/2 -translate-x-1/2 top-8 bg-black text-white text-xs rounded px-2 py-1 shadow z-10 animate-fade-in">
                 Copied!
               </span>
             )}
-          </button>
-        </span>
-      ),
-    },
-    { key: 'name', label: 'Name', filterable: true, required: true, type: 'text' },
-    { key: 'status', label: 'Status', filterable: true, required: true, type: 'text' },
-    { key: 'location', label: 'Location', filterable: true, required: true, type: 'text' },
-  ];
+        </button>
+      </span>
+    ),
+  },
+  { key: 'name', label: 'Name', filterable: true, required: true, type: 'text' },
+  { key: 'status', label: 'Status', filterable: true, required: true, type: 'text' },
+  { key: 'location', label: 'Location', filterable: true, required: true, type: 'text' },
+];
 
   const validateField = (col: any, value: any) => {
     if (col.required && (!value || value === '')) {

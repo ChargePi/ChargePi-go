@@ -94,13 +94,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           {!collapsed && (
             <div className="flex items-center gap-3">
               <div className="flex flex-col items-center">
-                <Wifi className={`h-4 w-4 ${connectionState === 'connected' ? 'text-green-500' : 'text-red-500'}`} />
+              <Wifi className={`h-4 w-4 ${connectionState === 'connected' ? 'text-green-500' : 'text-red-500'}`} />
                 <span className={`text-[10px] font-medium capitalize mt-1 ${
-                  connectionState === 'connected' ? 'text-green-500' : 
-                  connectionState === 'connecting' ? 'text-yellow-500' : 'text-red-500'
-                }`}>
-                  {connectionState}
-                </span>
+                connectionState === 'connected' ? 'text-green-500' : 
+                connectionState === 'connecting' ? 'text-yellow-500' : 'text-red-500'
+              }`}>
+                {connectionState}
+              </span>
               </div>
               <span className="text-xs font-semibold text-accent-orange ml-2">v{version}</span>
             </div>

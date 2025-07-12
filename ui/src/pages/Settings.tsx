@@ -375,9 +375,9 @@ function Settings() {
               <div className="space-y-2">
                 <Label htmlFor="firmwareVersion">Firmware Version</Label>
                 <div className="relative group">
-                  <Input
-                    id="firmwareVersion"
-                    value={infoSettings.firmwareVersion}
+                <Input
+                  id="firmwareVersion"
+                  value={infoSettings.firmwareVersion}
                     readOnly
                     className="bg-muted cursor-not-allowed opacity-80 pr-10"
                     tabIndex={-1}
@@ -526,26 +526,26 @@ function Settings() {
                     {connectivityLoading ? 'Saving...' : 'Save'}
                   </Button>
                 </div>
-                {testConnectionResult && (
-                  <div className={`mt-3 p-3 rounded-lg border ${
-                    testConnectionResult === 'success' 
-                      ? 'bg-green-50 border-green-200 text-green-800 dark:bg-green-900/20 dark:border-green-800 dark:text-green-200' 
-                      : 'bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-800 dark:text-red-200'
-                  }`}>
-                    <div className="flex items-center gap-2">
-                      {testConnectionResult === 'success' ? (
-                        <div className="w-2 h-2 bg-green-500 rounded-full" />
-                      ) : (
-                        <AlertTriangle className="h-4 w-4" />
-                      )}
-                      <span className="text-sm font-medium">
-                        {testConnectionResult === 'success' 
-                          ? 'Connection test successful!' 
-                          : 'Connection test failed. Please check your settings.'}
-                      </span>
-                    </div>
-                  </div>
-                )}
+                  {testConnectionResult && (
+                    <div className={`mt-3 p-3 rounded-lg border ${
+                      testConnectionResult === 'success' 
+                        ? 'bg-green-50 border-green-200 text-green-800 dark:bg-green-900/20 dark:border-green-800 dark:text-green-200' 
+                        : 'bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-800 dark:text-red-200'
+                    }`}>
+                      <div className="flex items-center gap-2">
+                        {testConnectionResult === 'success' ? (
+                          <div className="w-2 h-2 bg-green-500 rounded-full" />
+                        ) : (
+                          <AlertTriangle className="h-4 w-4" />
+                        )}
+                        <span className="text-sm font-medium">
+                          {testConnectionResult === 'success' 
+                            ? 'Connection test successful!' 
+                            : 'Connection test failed. Please check your settings.'}
+                        </span>
+                      </div>
+                                         </div>
+                   )}
                 
                </CardContent>
              </Card>
@@ -802,16 +802,16 @@ function Settings() {
       );
     } else if (w.id === 'add-widget') {
       content = (
-        <button
-          className="w-full h-full flex flex-col items-center justify-center border-2 border-dashed border-accent-orange rounded-lg bg-card hover:bg-accent-orange/10 transition-colors focus:outline-none focus:ring-2 focus:ring-accent-orange opacity-60 pointer-events-auto"
-          onClick={() => setAddDialogOpen(true)}
-          type="button"
-          tabIndex={0}
-          aria-label="Add widget"
-        >
-          <Plus className="h-8 w-8 text-accent-orange mb-1" />
-          <span className="text-accent-orange font-medium">Add Widget</span>
-        </button>
+      <button
+        className="w-full h-full flex flex-col items-center justify-center border-2 border-dashed border-accent-orange rounded-lg bg-card hover:bg-accent-orange/10 transition-colors focus:outline-none focus:ring-2 focus:ring-accent-orange opacity-60 pointer-events-auto"
+        onClick={() => setAddDialogOpen(true)}
+        type="button"
+        tabIndex={0}
+        aria-label="Add widget"
+      >
+        <Plus className="h-8 w-8 text-accent-orange mb-1" />
+        <span className="text-accent-orange font-medium">Add Widget</span>
+      </button>
       );
     }
     return { ...w, content };

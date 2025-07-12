@@ -184,40 +184,40 @@ const Users: React.FC = () => {
       </header>
       <main className="flex-1 p-6 min-w-0">
         <div className="flex justify-end items-center gap-4 mb-4">
-          <ViewToggle view={view} onViewChange={setView} />
-          <AddSidebarButton<User>
-            buttonTitle="Add User"
-            sidebarTitle="Add New User"
-            columns={columns}
-            onAdd={user => setUsers([...users, user])}
-          />
-        </div>
-        <div className="overflow-x-auto">
-          {view === 'list' ? (
-            <GenericTable<User>
+              <ViewToggle view={view} onViewChange={setView} />
+              <AddSidebarButton<User>
+                buttonTitle="Add User"
+                sidebarTitle="Add New User"
+                columns={columns}
+                onAdd={user => setUsers([...users, user])}
+              />
+          </div>
+          <div className="overflow-x-auto">
+            {view === 'list' ? (
+              <GenericTable<User>
               columns={columns}
-              data={users}
-              filterInputClassName="w-1/4"
-              className="min-w-full text-sm"
-              columnVisibilityEnabled={true}
-              columnSearchEnabled={true}
+                data={users}
+                filterInputClassName="w-1/4"
+                className="min-w-full text-sm"
+                columnVisibilityEnabled={true}
+                columnSearchEnabled={true}
               onRowClick={handleRowClick}
-            />
-          ) : (
-            <GenericCardView<User>
-              data={users}
-              columns={columns}
-              className="min-w-full"
+              />
+            ) : (
+              <GenericCardView<User>
+                data={users}
+                columns={columns}
+                className="min-w-full"
               onEdit={handleRowClick}
               onDelete={user => setShowDelete(user)}
-            />
-          )}
-        </div>
-        {editing && (
-          <div className="flex gap-2 mt-4">
-            <Button size="sm" variant="accent" onClick={handleEditSave}><Check className="h-4 w-4 mr-1" />Save</Button>
-            <Button size="sm" variant="outline" onClick={handleEditCancel}><X className="h-4 w-4 mr-1" />Cancel</Button>
+              />
+            )}
           </div>
+          {editing && (
+            <div className="flex gap-2 mt-4">
+              <Button size="sm" variant="accent" onClick={handleEditSave}><Check className="h-4 w-4 mr-1" />Save</Button>
+              <Button size="sm" variant="outline" onClick={handleEditCancel}><X className="h-4 w-4 mr-1" />Cancel</Button>
+            </div>
         )}
         <SettingsSidebar
           open={editSidebarOpen}
@@ -263,8 +263,8 @@ const Users: React.FC = () => {
                 )}
                 {editErrors[col.key as string] && (
                   <p className="text-xs text-red-600 mt-1">{editErrors[col.key as string]}</p>
-                )}
-              </div>
+          )}
+        </div>
             ))}
           </form>
         </SettingsSidebar>
