@@ -34,7 +34,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10.11.0
+          version: 10.13.0
           run_install: 'true'
 
       - name: Run ESLint
@@ -55,7 +55,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10.11.0
+          version: 10.13.0
           run_install: 'true'
 
       - name: Run tests
@@ -89,7 +89,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10.11.0
+          version: 10.13.0
           run_install: 'true'
 
       - name: Build application
@@ -117,7 +117,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10.11.0
+          version: 10.13.0
           run_install: 'true'
 
       - name: Run TypeScript type check
@@ -144,7 +144,7 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with:
-          version: 10.11.0
+          version: 10.13.0
           run_install: true
 
       - name: Generate coverage report
