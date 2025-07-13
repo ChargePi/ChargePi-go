@@ -29,14 +29,19 @@ RUN go mod verify
 RUN --mount=type=cache,target="/root/.cache/go-build" \
      go build -o ChargePi -v -tags="linux" .
 
-FROM --platform=$BUILDPLATFORM node:19 AS build-ui
+FROM --platform=$BUILDPLATFORM node:24 AS build-ui
+
 WORKDIR /ui
 
-COPY ./ui/package*.json .
-COPY ./ui .
+RUN corepack enable pnpm
+RUN corepack install -g pnpm@10.13.0
+COPY ./ui/pnpm-lock.yaml ./
+RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store pnpm fetch --frozen-lockfile
+COPY ./ui/package*.json ./
+RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store pnpm install --frozen-lockfile --prod
 
-RUN --mount=type=cache,target=/root/.npm npm install
-RUN npm run build
+COPY ./ui .
+RUN pnpm build
 
 # Test the client
 FROM --platform=$TARGETPLATFORM golang:1.24.0-bookworm AS test
