@@ -19,13 +19,16 @@ apt-get update -y && apt-get install -y \
 # Download and install libnfc
 latest_tag=$(curl -s https://api.github.com/repos/nfc-tools/libnfc/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
 wget "https://github.com/nfc-tools/libnfc/releases/download/${latest_tag}/libnfc-${latest_tag#libnfc-}.tar.bz2"
-tar -xvjf "libnfc-${latest_tag}.tar.bz2"
-cd "libnfc-${latest_tag}"
+tar -xvjf "${latest_tag}.tar.bz2"
+cd "${latest_tag}"
 make clean
 make install all
 
 # Configure libnfc
 mkdir -p /etc/nfc /etc/nfc/devices.d
+
+# Default configuration for all drivers
+./configure --with-drivers=pn532_i2c,pn532_spi,pn532_uart --enable-serial-autoprobe --sysconfdir=/etc --prefix=/usr
 
 if [ "$1" = "pn532_i2c" ]; then
   # Add configuration for PN532_I2C
@@ -52,6 +55,9 @@ elif [ "$1" = "pn532_uart" ]; then
   ./configure --with-drivers=pn532_uart --enable-serial-autoprobe --sysconfdir=/etc --prefix=/usr
 fi
 
+make clean
+make install all
+
 # Install WS281x drivers
 cd ..
 git clone https://github.com/jgarff/rpi_ws281x
@@ -60,7 +66,8 @@ cd rpi_ws281x && mkdir -p build && cd build
 cmake -D BUILD_SHARED=OFF -D BUILD_TEST=ON ..
 cmake --build .
 make install
-
-# Copy libraries and headers to appropriate directories
 cp *.a /usr/local/lib
 cp *.h /usr/local/include
+
+# Update library cache
+ldconfig

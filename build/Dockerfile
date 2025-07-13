@@ -4,6 +4,8 @@ WORKDIR /ChargePi/src
 COPY . /ChargePi/src
 
 ARG READER_TYPE
+ARG TARGETOS
+ARG TARGETARCH
 ENV READER_TYPE=$READER_TYPE
 
 ENV GOOS=${TARGETOS}
@@ -13,6 +15,7 @@ ENV GOCACHE=/root/.cache/go-build
 ENV GOMODCACHE=/root/.cache/go-build
 ENV GO111MODULE=on
 ENV CC=aarch64-linux-gnu-gcc
+ENV PKG_CONFIG_PATH=/usr/lib/pkgconfig:/usr/local/lib/pkgconfig
 
 # Install dependencies
 RUN chmod +x /ChargePi/src/scripts/install-dependencies.sh
@@ -21,10 +24,10 @@ RUN /ChargePi/src/scripts/install-dependencies.sh $READER_TYPE
 # Compile the client
 RUN --mount=type=cache,target=/root/.cache/go-build go mod download
 RUN go mod verify
-RUN --mount=type=cache,target="/root/.cache/go-build" go build -o ChargePi .
+RUN --mount=type=cache,target="/root/.cache/go-build" \
+     go build -o ChargePi .
 
-FROM --platform=$BUILDPLATFORM node:19 as build-ui
-
+FROM --platform=$BUILDPLATFORM node:19 AS build-ui
 WORKDIR /ui
 
 COPY ./ui/package*.json .
@@ -57,7 +60,7 @@ RUN mockery
 # Run tests
 CMD ["go", "test","-v","./..."]
 
-FROM --platform=$BUILDPLATFORM alpine AS chargepi
+FROM --platform=$TARGETPLATFORM alpine AS chargepi
 
 WORKDIR /etc/ChargePi
 

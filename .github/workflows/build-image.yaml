@@ -34,7 +34,7 @@ jobs:
       matrix:
         platform:
           - linux/arm64/v8
-          - linux/arm64/v7
+          - linux/arm
           - linux/arm64
           - linux/amd64
 
@@ -88,8 +88,6 @@ jobs:
         with:
           context: .
           target: chargepi
-          build-args: |
-            READER_CONNECTION_TYPE="pn532_uart"
           file: ./build/Dockerfile
           platforms: ${{ matrix.platform }}
           push: ${{ github.event_name == 'push' }}
