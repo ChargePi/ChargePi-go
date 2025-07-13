@@ -6,24 +6,24 @@ COPY . /ChargePi/src
 ARG READER_TYPE
 ENV READER_TYPE=$READER_TYPE
 
+ENV GOOS=${TARGETOS}
+ENV GOARCH=${TARGETARCH}
+ENV CGO_ENABLED=1
 ENV GOCACHE=/root/.cache/go-build
 ENV GOMODCACHE=/root/.cache/go-build
 ENV GO111MODULE=on
+ENV CC=aarch64-linux-gnu-gcc
 
 # Install dependencies
 RUN chmod +x /ChargePi/src/scripts/install-dependencies.sh
-RUN /ChargePi/src/scripts/install-dependencies.sh $READER_TYPE 0
-
-ENV GOOS=linux
-ENV GOARCH=arm64
-ENV CGO=1
+RUN /ChargePi/src/scripts/install-dependencies.sh $READER_TYPE
 
 # Compile the client
 RUN --mount=type=cache,target=/root/.cache/go-build go mod download
 RUN go mod verify
 RUN --mount=type=cache,target="/root/.cache/go-build" go build -o ChargePi .
 
-FROM node:19 as build-ui
+FROM --platform=$BUILDPLATFORM node:19 as build-ui
 
 WORKDIR /ui
 
@@ -35,6 +35,13 @@ RUN npm run build
 
 # Test the client
 FROM --platform=$BUILDPLATFORM vektra/mockery:v2.9.4 AS test
+
+ENV GOOS=${TARGETOS}
+ENV GOARCH=${TARGETARCH}
+ENV CGO_ENABLED=1
+ENV GOCACHE=/root/.cache/go-build
+ENV GOMODCACHE=/root/.cache/go-build
+ENV GO111MODULE=on
 
 COPY --from=base /ChargePi/src /ChargePi/src
 WORKDIR /ChargePi/src
@@ -61,7 +68,7 @@ COPY --from=base /ChargePi/src/scripts /etc/ChargePi/scripts
 
 # Install dependencies
 RUN chmod +x ./scripts/install-dependencies.sh
-RUN ./scripts/install-dependencies.sh $READER_TYPE 0
+RUN ./scripts/install-dependencies.sh $READER_TYPE
 
 # Copy the executable
 COPY --from=base /ChargePi/src/configs /etc/ChargePi/configs
