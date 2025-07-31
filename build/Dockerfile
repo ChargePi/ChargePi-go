@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM golang:1.23.0 AS base
+FROM --platform=$TARGETPLATFORM golang:1.23.0-bookworm AS base
 
 WORKDIR /ChargePi/src
 COPY . /ChargePi/src
@@ -14,8 +14,10 @@ ENV CGO_ENABLED=1
 ENV GOCACHE=/root/.cache/go-build
 ENV GOMODCACHE=/root/.cache/go-build
 ENV GO111MODULE=on
-ENV CC=aarch64-linux-gnu-gcc
 ENV PKG_CONFIG_PATH=/usr/lib/pkgconfig:/usr/local/lib/pkgconfig
+ENV CGO_CFLAGS="-I/usr/local/include"
+ENV CGO_LDFLAGS="-L/usr/local/lib"
+ENV GOARM=7
 
 # Install dependencies
 RUN chmod +x /ChargePi/src/scripts/install-dependencies.sh
@@ -25,7 +27,7 @@ RUN /ChargePi/src/scripts/install-dependencies.sh $READER_TYPE
 RUN --mount=type=cache,target=/root/.cache/go-build go mod download
 RUN go mod verify
 RUN --mount=type=cache,target="/root/.cache/go-build" \
-     go build -o ChargePi .
+     go build -o ChargePi -v -tags="linux" .
 
 FROM --platform=$BUILDPLATFORM node:19 AS build-ui
 WORKDIR /ui
@@ -64,21 +66,18 @@ FROM --platform=$TARGETPLATFORM alpine AS chargepi
 
 WORKDIR /etc/ChargePi
 
-ARG READER_TYPE
-ENV READER_TYPE=$READER_TYPE
-
-COPY --from=base /ChargePi/src/scripts /etc/ChargePi/scripts
-
-# Install dependencies
-RUN chmod +x ./scripts/install-dependencies.sh
-RUN ./scripts/install-dependencies.sh $READER_TYPE
+# Copy installed C libraries and headers
+COPY --from=base /usr/local/bin/ /usr/local/bin/
+COPY --from=base /usr/local/lib/ /usr/local/lib/
+COPY --from=base /usr/local/include/ /usr/local/include/
+COPY --from=base /usr/lib/ /usr/lib/
 
 # Copy the executable
-COPY --from=base /ChargePi/src/configs /etc/ChargePi/configs
+#COPY --from=base /ChargePi/src/configs /etc/ChargePi/configs
 COPY --from=base /ChargePi/src/ChargePi /usr/bin/ChargePi
 
 # Copy the UI static files
-COPY --from=build-ui /ui/build/ /usr/bin/ChargePi/ui/build
+COPY --from=build-ui /ui/build/* /usr/bin/ui/build/*
 
 EXPOSE 8080
 HEALTHCHECK --interval=5s --timeout=3s CMD curl --fail http://localhost:8081/healthz || exit 1
