@@ -2,7 +2,7 @@ version: '3.7'
 services:
   chargepi:
     build:
-      dockerfile: ../../build/Dockerfile
+      dockerfile: ./build/Dockerfile
       context: ../..
       target: chargepi
     restart: always
