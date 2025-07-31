@@ -1,30 +1,35 @@
-FROM --platform=$BUILDPLATFORM golang:1.23.0 AS base
+FROM --platform=$TARGETPLATFORM golang:1.23.0-bookworm AS base
 
 WORKDIR /ChargePi/src
 COPY . /ChargePi/src
 
 ARG READER_TYPE
+ARG TARGETOS
+ARG TARGETARCH
 ENV READER_TYPE=$READER_TYPE
 
+ENV GOOS=${TARGETOS}
+ENV GOARCH=${TARGETARCH}
+ENV CGO_ENABLED=1
 ENV GOCACHE=/root/.cache/go-build
 ENV GOMODCACHE=/root/.cache/go-build
 ENV GO111MODULE=on
+ENV PKG_CONFIG_PATH=/usr/lib/pkgconfig:/usr/local/lib/pkgconfig
+ENV CGO_CFLAGS="-I/usr/local/include"
+ENV CGO_LDFLAGS="-L/usr/local/lib"
+ENV GOARM=7
 
 # Install dependencies
 RUN chmod +x /ChargePi/src/scripts/install-dependencies.sh
-RUN /ChargePi/src/scripts/install-dependencies.sh $READER_TYPE 0
-
-ENV GOOS=linux
-ENV GOARCH=arm64
-ENV CGO=1
+RUN /ChargePi/src/scripts/install-dependencies.sh $READER_TYPE
 
 # Compile the client
 RUN --mount=type=cache,target=/root/.cache/go-build go mod download
 RUN go mod verify
-RUN --mount=type=cache,target="/root/.cache/go-build" go build -o ChargePi .
+RUN --mount=type=cache,target="/root/.cache/go-build" \
+     go build -o ChargePi -v -tags="linux" .
 
-FROM node:19 as build-ui
-
+FROM --platform=$BUILDPLATFORM node:19 AS build-ui
 WORKDIR /ui
 
 COPY ./ui/package*.json .
@@ -35,6 +40,13 @@ RUN npm run build
 
 # Test the client
 FROM --platform=$BUILDPLATFORM vektra/mockery:v2.9.4 AS test
+
+ENV GOOS=${TARGETOS}
+ENV GOARCH=${TARGETARCH}
+ENV CGO_ENABLED=1
+ENV GOCACHE=/root/.cache/go-build
+ENV GOMODCACHE=/root/.cache/go-build
+ENV GO111MODULE=on
 
 COPY --from=base /ChargePi/src /ChargePi/src
 WORKDIR /ChargePi/src
@@ -50,25 +62,22 @@ RUN mockery
 # Run tests
 CMD ["go", "test","-v","./..."]
 
-FROM --platform=$BUILDPLATFORM alpine AS chargepi
+FROM --platform=$TARGETPLATFORM alpine AS chargepi
 
 WORKDIR /etc/ChargePi
 
-ARG READER_TYPE
-ENV READER_TYPE=$READER_TYPE
-
-COPY --from=base /ChargePi/src/scripts /etc/ChargePi/scripts
-
-# Install dependencies
-RUN chmod +x ./scripts/install-dependencies.sh
-RUN ./scripts/install-dependencies.sh $READER_TYPE 0
+# Copy installed C libraries and headers
+COPY --from=base /usr/local/bin/ /usr/local/bin/
+COPY --from=base /usr/local/lib/ /usr/local/lib/
+COPY --from=base /usr/local/include/ /usr/local/include/
+COPY --from=base /usr/lib/ /usr/lib/
 
 # Copy the executable
-COPY --from=base /ChargePi/src/configs /etc/ChargePi/configs
+#COPY --from=base /ChargePi/src/configs /etc/ChargePi/configs
 COPY --from=base /ChargePi/src/ChargePi /usr/bin/ChargePi
 
 # Copy the UI static files
-COPY --from=build-ui /ui/build/ /usr/bin/ChargePi/ui/build
+COPY --from=build-ui /ui/build/* /usr/bin/ui/build/*
 
 EXPOSE 8080
 HEALTHCHECK --interval=5s --timeout=3s CMD curl --fail http://localhost:8081/healthz || exit 1

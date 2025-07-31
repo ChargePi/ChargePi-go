@@ -13,3 +13,4 @@ configs
 rpi_ws281x
 ui/.next
 ui/build
+libnfc-*

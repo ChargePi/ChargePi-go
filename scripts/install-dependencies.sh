@@ -1,16 +1,34 @@
 #!/bin/sh
-# Update
-apt-get update -y
-apt-get upgrade -y
 
-# Install dependencies
-apt-get install cmake make autoconf libtool libpcsclite-dev libusb-dev bzip2 -y
+# Prepare the system for building libnfc and WS281x drivers
+apt-get update -y && apt-get install -y \
+    pkg-config \
+    build-essential \
+    cmake \
+    make \
+    autoconf \
+    libtool \
+    libpcsclite-dev \
+    libusb-dev \
+    bzip2 \
+    git \
+    wget \
+    gcc-aarch64-linux-gnu \
+    && rm -rf /var/lib/apt/lists/*
 
-# Download libnfc
-wget https://github.com/nfc-tools/libnfc/releases/download/libnfc-1.8.0/libnfc-1.8.0.tar.bz2
-tar -xvjf libnfc-1.8.0.tar.bz2
+# Download and install libnfc
+latest_tag=$(curl -s https://api.github.com/repos/nfc-tools/libnfc/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+wget "https://github.com/nfc-tools/libnfc/releases/download/${latest_tag}/libnfc-${latest_tag#libnfc-}.tar.bz2"
+tar -xvjf "${latest_tag}.tar.bz2"
+cd "${latest_tag}"
+make clean
+make install all
+
+# Configure libnfc
 mkdir -p /etc/nfc /etc/nfc/devices.d
-cd libnfc-1.8.0
+
+# Default configuration for all drivers
+./configure --with-drivers=pn532_i2c,pn532_spi,pn532_uart --enable-serial-autoprobe --sysconfdir=/etc --prefix=/usr
 
 if [ "$1" = "pn532_i2c" ]; then
   # Add configuration for PN532_I2C
@@ -51,8 +69,5 @@ make install
 cp *.a /usr/local/lib
 cp *.h /usr/local/include
 
-# Optionally, install Go
-if [ "$2" -eq 1 ]; then
-  # installing Go with the help of this script: https://github.com/canha/golang-tools-install-script
-  wget -q -O - https://git.io/vQhTU | bash
-fi
+# Update library cache
+ldconfig
