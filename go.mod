@@ -1,11 +1,10 @@
 module github.com/ChargePi/ChargePi-go
 
-go 1.23.0
+go 1.24.0
 
 toolchain go1.24.1
 
 require (
-	github.com/ChargePi/ocppManager-go v1.2.0
 	github.com/agrison/go-commons-lang v0.0.0-20240106075236-2e001e6401ef
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/casbin/casbin/v2 v2.108.0
@@ -43,6 +42,7 @@ require (
 )
 
 require (
+	github.com/ChargePi/ocppManager-go v1.2.0
 	github.com/jlaffaye/ftp v0.2.0
 	github.com/orandin/lumberjackrus v1.0.1
 	github.com/pkg/errors v0.9.1
