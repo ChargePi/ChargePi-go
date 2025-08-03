@@ -1,0 +1,10 @@
+services:
+  chargepi:
+    build:
+      dockerfile: ./build/Dockerfile
+      context: ../..
+      target: test
+    entrypoint: go test -v ./... -coverpkg=./... -short -coverprofile=tests/unit_coverage.out && go test -v -run 'Integration$' ./... -coverpkg=./... -coverprofile=tests/integration_coverage.out
+    restart: no
+    volumes:
+      - ../../tests/:/ChargePi/src/tests

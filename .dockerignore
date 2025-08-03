@@ -6,10 +6,9 @@
 *.test
 *.out
 
-LICENSE.txt
+*.md
 .idea
 .github/
 build/
 docs/
 deployments/
-ReadMe.md

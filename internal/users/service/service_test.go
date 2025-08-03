@@ -3,7 +3,7 @@ package service
 import (
 	"testing"
 
-	"github.com/ChargePi/ChargePi-go/internal/users/pkg/database"
+	mock_database "github.com/ChargePi/ChargePi-go/gen/mocks/users/pkg/database"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 )
@@ -16,7 +16,7 @@ func (s *serviceTestSuite) SetupTest() {
 }
 
 func (s *serviceTestSuite) TestGetUsers() {
-	dbMock := database.NewDatabaseMock(s.T())
+	dbMock := mock_database.NewMockDatabase(s.T())
 	service := NewUserService(dbMock)
 
 	user, err := service.GetUser("")
@@ -25,7 +25,7 @@ func (s *serviceTestSuite) TestGetUsers() {
 }
 
 func (s *serviceTestSuite) TestAddUser() {
-	dbMock := database.NewDatabaseMock(s.T())
+	dbMock := mock_database.NewMockDatabase(s.T())
 	service := NewUserService(dbMock)
 
 	user, err := service.GetUser("")
@@ -34,7 +34,7 @@ func (s *serviceTestSuite) TestAddUser() {
 }
 
 func (s *serviceTestSuite) TestGetUser() {
-	dbMock := database.NewDatabaseMock(s.T())
+	dbMock := mock_database.NewMockDatabase(s.T())
 	service := NewUserService(dbMock)
 
 	user, err := service.GetUser("")
@@ -43,7 +43,7 @@ func (s *serviceTestSuite) TestGetUser() {
 }
 
 func (s *serviceTestSuite) TestUpdateUser() {
-	dbMock := database.NewDatabaseMock(s.T())
+	dbMock := mock_database.NewMockDatabase(s.T())
 	service := NewUserService(dbMock)
 
 	user, err := service.GetUser("")
