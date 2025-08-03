@@ -79,6 +79,7 @@ WORKDIR /etc/ChargePi
 COPY --from=base /usr/local/bin/ /usr/local/bin/
 COPY --from=base /usr/local/lib/ /usr/local/lib/
 COPY --from=base /usr/local/include/ /usr/local/include/
+COPY --from=base /usr/include/ /usr/include/
 COPY --from=base /usr/lib/ /usr/lib/
 
 # Copy the executable

@@ -25,59 +25,56 @@ on:
       - '*.md'
 
 jobs:
-  # Run unit tests
-  unit:
-    name: "Run unit tests"
+  tests:
+    name: "Run tests"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: 1.23.0
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
 
-        # todo skip mocks coverage
-      - name: Install dependencies and run tests
+      - name: Set up Docker BuildX
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: go-build-cache
+          key: ${{ runner.os }}-go-build-cache-${{ hashFiles('**/go.sum') }}
+
+      - name: inject go-build-cache into docker
+        uses: reproducible-containers/buildkit-cache-dance@v3.3.0
+        with:
+          cache-map: |
+            {
+              "go-build-cache": "/root/.cache/go-build"
+            }
+
+      - name: Run tests
         run: |
-          go mod download
-          go test -v ./... -coverpkg=./... -short -coverprofile=unit_coverage.out
+          docker compose -f ./deployments/docker/docker-compose.test.yaml up --abort-on-container-failure
 
       - name: Archive code coverage results
         uses: actions/upload-artifact@v4
         with:
           name: code-coverage
-          path: unit_coverage.out
-
-  integration:
-    name: "Run integration tests"
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: 1.23.0
-
-      - name: Install dependencies and run tests
-        run: |
-          go mod download
-          go test -v -run 'Integration$' ./... -coverpkg=./... -coverprofile=integration_coverage.out
+          path: tests/unit_coverage.out
 
       - name: Archive code coverage results
         uses: actions/upload-artifact@v4
         with:
           name: integration-coverage
-          path: integration_coverage.out
+          path: tests/integration_coverage.out
+
 
   code_coverage:
     name: "Code coverage report"
     if: github.event_name == 'pull_request' # Do not run when workflow is triggered by push to main branch
     runs-on: ubuntu-latest
-    needs: [ unit, integration ]
+    needs: tests
     continue-on-error: true # not critical
     permissions:
       contents: read
