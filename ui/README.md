@@ -24,19 +24,19 @@ A modern, sleek React TypeScript web interface for the ChargePi charging point f
 ### Prerequisites
 
 - Node.js 16+ 
-- npm or yarn
+- pnpm
 
 ### Installation
 
 ```bash
 cd ui
-npm install
+pnpm install
 ```
 
 ### Development Server
 
 ```bash
-npm start
+pnpm start
 ```
 
 The application will be available at `http://localhost:3000`
@@ -44,7 +44,7 @@ The application will be available at `http://localhost:3000`
 ### Building for Production
 
 ```bash
-npm run build
+pnpm build
 ```
 
 The built files will be in the `build/` directory, which is served by the Go HTTP server.
