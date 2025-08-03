@@ -92,10 +92,9 @@ COPY --from=base /usr/lib/ /usr/lib/
 COPY --from=base /ChargePi/src/ChargePi /usr/bin/ChargePi
 
 # Copy the UI static files
-COPY --from=build-ui /ui/build/* /usr/bin/ui/build/*
+COPY --from=build-ui /ui/build /usr/bin/ui/build
 
 EXPOSE 8080
 HEALTHCHECK --interval=5s --timeout=3s CMD curl --fail http://localhost:8080/healthz || exit 1
 
-ENTRYPOINT ["ChargePi"]
-CMD ["-c", "/etc/ChargePi/configs/config.yaml", "run"]
+ENTRYPOINT ["ChargePi", "-c", "/etc/ChargePi/configs/config.yaml", "run"]
