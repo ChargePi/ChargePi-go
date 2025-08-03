@@ -58,6 +58,8 @@ fi
 make clean
 make install all
 
+rm -rf ${latest_tag} {latest_tag}.tar.bz2
+
 # Install WS281x drivers
 cd ..
 git clone https://github.com/jgarff/rpi_ws281x
@@ -68,6 +70,8 @@ cmake --build .
 make install
 cp *.a /usr/local/lib
 cp *.h /usr/local/include
+
+cd ../.. && rm -rf rpi_ws281x
 
 # Update library cache
 ldconfig
