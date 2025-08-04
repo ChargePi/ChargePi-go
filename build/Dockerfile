@@ -1,4 +1,4 @@
-FROM --platform=$TARGETPLATFORM golang:1.23.0-bookworm AS base
+FROM --platform=$TARGETPLATFORM golang:1.24.0-bookworm AS base
 
 WORKDIR /ChargePi/src
 COPY . /ChargePi/src
@@ -39,7 +39,9 @@ RUN --mount=type=cache,target=/root/.npm npm install
 RUN npm run build
 
 # Test the client
-FROM --platform=$BUILDPLATFORM vektra/mockery:v2.9.4 AS test
+FROM --platform=$TARGETPLATFORM golang:1.24.0-bookworm AS test
+
+WORKDIR /ChargePi/src
 
 ENV GOOS=${TARGETOS}
 ENV GOARCH=${TARGETARCH}
@@ -47,20 +49,27 @@ ENV CGO_ENABLED=1
 ENV GOCACHE=/root/.cache/go-build
 ENV GOMODCACHE=/root/.cache/go-build
 ENV GO111MODULE=on
+ENV PKG_CONFIG_PATH=/usr/lib/pkgconfig:/usr/local/lib/pkgconfig
+ENV CGO_CFLAGS="-I/usr/local/include"
+ENV CGO_LDFLAGS="-L/usr/local/lib"
+ENV GOARM=7
+
+# Copy installed C libraries and headers
+COPY --from=base /usr/local/bin/ /usr/local/bin/
+COPY --from=base /usr/local/lib/ /usr/local/lib/
+COPY --from=base /usr/local/include/ /usr/local/include/
+COPY --from=base /usr/include/ /usr/include/
+COPY --from=base /usr/lib/ /usr/lib/
 
 COPY --from=base /ChargePi/src /ChargePi/src
-WORKDIR /ChargePi/src
 
-RUN cp -r configs/ test/  \
-    && cd test/  \
-    && chmod +x create-test-certs.sh \
-    && ./create-test-certs.sh
+RUN go install github.com/vektra/mockery/v3@v3.5.1
 
 # Gen mocks
-RUN mockery
+RUN make gen-mocks
 
 # Run tests
-CMD ["go", "test","-v","./..."]
+ENTRYPOINT ["go", "test","-v","./...","-coverpkg=./...","-short" ,"-coverprofile=unit_coverage.out"]
 
 FROM --platform=$TARGETPLATFORM alpine AS chargepi
 
@@ -70,6 +79,7 @@ WORKDIR /etc/ChargePi
 COPY --from=base /usr/local/bin/ /usr/local/bin/
 COPY --from=base /usr/local/lib/ /usr/local/lib/
 COPY --from=base /usr/local/include/ /usr/local/include/
+COPY --from=base /usr/include/ /usr/include/
 COPY --from=base /usr/lib/ /usr/lib/
 
 # Copy the executable

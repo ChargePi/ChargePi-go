@@ -1,13 +1,31 @@
 package list
 
 import (
-	"github.com/ChargePi/ChargePi-go/internal/auth"
+	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"testing"
+	"time"
 
 	"github.com/ChargePi/ChargePi-go/internal/pkg/database"
 	"github.com/ChargePi/ChargePi-go/pkg/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
+)
+
+var (
+	okTag = &types.IdTagInfo{
+		ExpiryDate: types.NewDateTime(time.Now().Add(10 * time.Minute)),
+		Status:     types.AuthorizationStatusAccepted,
+	}
+
+	blockedTag = &types.IdTagInfo{
+		ExpiryDate: types.NewDateTime(time.Now().Add(40 * time.Minute)),
+		Status:     types.AuthorizationStatusBlocked,
+	}
+
+	expiredTag = &types.IdTagInfo{
+		ExpiryDate: types.NewDateTime(time.Date(1999, 1, 1, 1, 1, 1, 0, time.Local)),
+		Status:     types.AuthorizationStatusAccepted,
+	}
 )
 
 type localAuthListTestSuite struct {
@@ -22,11 +40,11 @@ func (s *localAuthListTestSuite) SetupTest() {
 
 func (s *localAuthListTestSuite) TestAddTag() {
 	tagId := util.GenerateRandomTag()
-	err := s.authList.AddTag(tagId, auth.okTag)
+	err := s.authList.AddTag(tagId, okTag)
 	s.Assert().NoError(err)
 
 	tagId = util.GenerateRandomTag()
-	err = s.authList.AddTag(tagId, auth.blockedTag)
+	err = s.authList.AddTag(tagId, blockedTag)
 	s.Assert().NoError(err)
 
 	tagId = util.GenerateRandomTag()
@@ -48,7 +66,7 @@ func (s *localAuthListTestSuite) TestUpdateTag() {
 
 func (s *localAuthListTestSuite) TestRemoveTag() {
 	tagId := util.GenerateRandomTag()
-	err := s.authList.AddTag(tagId, auth.blockedTag)
+	err := s.authList.AddTag(tagId, blockedTag)
 	s.Require().NoError(err)
 
 	err = s.authList.RemoveTag(tagId)
