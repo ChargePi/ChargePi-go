@@ -2,29 +2,29 @@ package powerMeter
 
 import (
 	"context"
+	"go.uber.org/zap"
 	"sync/atomic"
 	"time"
 
 	"github.com/ChargePi/ChargePi-go/pkg/models/settings"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
-	log "github.com/sirupsen/logrus"
 )
 
 type Dummy struct {
-	logger     log.FieldLogger
+	logger     *zap.Logger
 	settings   settings.PowerMeterDummy
 	energy     atomic.Int64
 	lastSample *time.Time
 }
 
-func NewDummy(settings *settings.PowerMeterDummy) (*Dummy, error) {
+func NewDummy(logger *zap.Logger, settings *settings.PowerMeterDummy) (*Dummy, error) {
 	if settings == nil {
 		return nil, ErrInvalidConnectionSettings
 	}
 
 	return &Dummy{
 		settings: *settings,
-		logger:   log.StandardLogger().WithField("component", "power-meter-dummy"),
+		logger:   logger.Named("power_meter_dummy"),
 		energy:   atomic.Int64{},
 	}, nil
 }
@@ -44,29 +44,27 @@ func (d *Dummy) GetEnergy() (*types.SampledValue, error) {
 }
 
 func (d *Dummy) GetPower(phase int) (*types.SampledValue, error) {
-	d.logger.WithField("phase", phase).Info("Getting power")
-
+	d.logger.With(zap.Int("phase", phase)).Info("Getting power")
 	return nil, nil
 }
 
 func (d *Dummy) GetReactivePower(phase int) (*types.SampledValue, error) {
-	d.logger.WithField("phase", phase).Info("Getting reactive power")
+	d.logger.With(zap.Int("phase", phase)).Info("Getting reactive power")
 	return nil, nil
 }
 
 func (d *Dummy) GetApparentPower(phase int) (*types.SampledValue, error) {
-	d.logger.WithField("phase", phase).Info("Getting apparent power")
+	d.logger.With(zap.Int("phase", phase)).Info("Getting apparent power")
 	return nil, nil
 }
 
 func (d *Dummy) GetCurrent(phase int) (*types.SampledValue, error) {
-	d.logger.WithField("phase", phase).Info("Getting current")
-
+	d.logger.With(zap.Int("phase", phase)).Info("Getting current")
 	return nil, nil
 }
 
 func (d *Dummy) GetVoltage(phase int) (*types.SampledValue, error) {
-	d.logger.WithField("phase", phase).Info("Getting voltage")
+	d.logger.With(zap.Int("phase", phase)).Info("Getting voltage")
 	return nil, nil
 }
 

@@ -2,12 +2,13 @@ package cache
 
 import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
+	"go.uber.org/zap/zaptest"
 	"testing"
 	"time"
 
 	"github.com/ChargePi/ChargePi-go/internal/pkg/database"
 	"github.com/ChargePi/ChargePi-go/pkg/util"
-	log "github.com/sirupsen/logrus"
+
 	"github.com/stretchr/testify/suite"
 )
 
@@ -35,7 +36,8 @@ type authCacheTestSuite struct {
 
 func (s *authCacheTestSuite) SetupTest() {
 	db := database.Get()
-	s.authCache = NewAuthCache(db)
+	logger := zaptest.NewLogger(s.T())
+	s.authCache = NewAuthCache(logger, db)
 	s.authCache.RemoveCachedTags()
 }
 
@@ -85,6 +87,5 @@ func (s *authCacheTestSuite) TestGetTag() {
 }
 
 func TestAuthCache(t *testing.T) {
-	log.SetLevel(log.DebugLevel)
 	suite.Run(t, new(authCacheTestSuite))
 }

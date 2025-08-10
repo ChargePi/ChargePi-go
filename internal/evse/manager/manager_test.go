@@ -3,7 +3,6 @@ package manager
 import (
 	"testing"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -42,6 +41,5 @@ func (s *managerTestSuite) TestRestoreEVSEs() {
 }
 
 func TestManager(t *testing.T) {
-	log.SetLevel(log.DebugLevel)
 	suite.Run(t, new(managerTestSuite))
 }

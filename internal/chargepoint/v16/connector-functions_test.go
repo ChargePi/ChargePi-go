@@ -1,11 +1,11 @@
 package v16
 
 import (
+	"go.uber.org/zap/zaptest"
 	"testing"
 
 	"github.com/ChargePi/ocppManager-go/ocpp_v16"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -167,7 +167,7 @@ type connectorFunctionsTestSuite struct {
 
 func (s *connectorFunctionsTestSuite) SetupTest() {
 	s.cp = &ChargePoint{
-		logger: log.StandardLogger(),
+		logger: zaptest.NewLogger(s.T()),
 	}
 }
 
@@ -186,7 +186,5 @@ func (s *connectorFunctionsTestSuite) TestNotifyConnectorStatus() {
 }
 
 func TestConnectorFunctions(t *testing.T) {
-	log.SetLevel(log.DebugLevel)
-
 	suite.Run(t, new(connectorFunctionsTestSuite))
 }

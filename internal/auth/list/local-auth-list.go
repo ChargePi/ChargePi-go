@@ -8,7 +8,7 @@ import (
 	"github.com/dgraph-io/badger/v3"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/localauth"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 )
 
 var (
@@ -32,23 +32,23 @@ type (
 		db      *badger.DB
 		numTags int
 		maxTags int
-		logger  log.FieldLogger
+		logger  *zap.Logger
 	}
 )
 
-func NewLocalAuthList(db *badger.DB, maxTags int) *BadgerLocalAuthList {
+func NewLocalAuthList(logger *zap.Logger, db *badger.DB, maxTags int) *BadgerLocalAuthList {
 	return &BadgerLocalAuthList{
 		db:      db,
 		numTags: 0,
 		maxTags: maxTags,
-		logger:  log.StandardLogger().WithField("component", "local-auth-list"),
+		logger:  logger.Named("local-auth-list"),
 	}
 }
 
 // AddTag Add a tag to the global authorization cache.
 func (l *BadgerLocalAuthList) AddTag(tagId string, tagInfo *types.IdTagInfo) error {
-	logInfo := l.logger.WithField("tagId", tagId)
-	logInfo.Debug("Adding a tag to local auth list")
+	logger := l.logger.With(zap.String("tagId", tagId))
+	logger.Debug("Adding a tag to local auth list")
 
 	if l.numTags+1 >= l.maxTags {
 		return ErrTagLimitReached
@@ -76,8 +76,8 @@ func (l *BadgerLocalAuthList) AddTag(tagId string, tagInfo *types.IdTagInfo) err
 
 // RemoveTag Remove a tag with the ID from the Local Auth List.
 func (l *BadgerLocalAuthList) RemoveTag(tagId string) error {
-	logInfo := l.logger.WithField("tagId", tagId)
-	logInfo.Debug("Removing a tag from local auth list")
+	logger := l.logger.With(zap.String("tagId", tagId))
+	logger.Debug("Removing a tag from local auth list")
 
 	return l.db.Update(func(txn *badger.Txn) error {
 		err := txn.Delete(database.GetLocalAuthTagPrefix(tagId))
@@ -91,7 +91,7 @@ func (l *BadgerLocalAuthList) RemoveTag(tagId string) error {
 
 // RemoveAll Remove all tags.
 func (l *BadgerLocalAuthList) RemoveAll() {
-	l.logger.Debugf("Removing local auth list")
+	l.logger.Debug("Removing local auth list")
 
 	// Remove all cached keys from database
 	err := l.db.Update(func(txn *badger.Txn) error {
@@ -109,14 +109,14 @@ func (l *BadgerLocalAuthList) RemoveAll() {
 		return txn.Commit()
 	})
 	if err != nil {
-		l.logger.WithError(err).Error("Error removing local auth list")
+		l.logger.With(zap.Error(err)).Error("Error removing local auth list")
 	}
 }
 
 // GetTag Get a tag
 func (l *BadgerLocalAuthList) GetTag(tagId string) (*types.IdTagInfo, error) {
-	logInfo := l.logger.WithField("tag", tagId)
-	logInfo.Info("Fetching the tag")
+	logger := l.logger.With(zap.String("tagId", tagId))
+	logger.Info("Fetching the tag")
 
 	var tagInfo localauth.AuthorizationData
 	err := l.db.View(func(txn *badger.Txn) error {
@@ -138,7 +138,7 @@ func (l *BadgerLocalAuthList) GetTag(tagId string) (*types.IdTagInfo, error) {
 		return txn.Commit()
 	})
 	if err != nil {
-		logInfo.WithError(err).Error("Error fetching local auth tags")
+		logger.With(zap.Error(err)).Error("Error fetching local auth tags")
 		return nil, err
 	}
 
@@ -147,7 +147,7 @@ func (l *BadgerLocalAuthList) GetTag(tagId string) (*types.IdTagInfo, error) {
 
 // GetTags Get all tags stored in the Local Auth store.
 func (l *BadgerLocalAuthList) GetTags() []localauth.AuthorizationData {
-	l.logger.Infof("Fetching tags")
+	l.logger.Info("Fetching tags")
 	var tags []localauth.AuthorizationData
 
 	err := l.db.View(func(txn *badger.Txn) error {
@@ -171,7 +171,7 @@ func (l *BadgerLocalAuthList) GetTags() []localauth.AuthorizationData {
 		return txn.Commit()
 	})
 	if err != nil {
-		l.logger.WithError(err).Error("Error fetching local auth tags")
+		l.logger.With(zap.Error(err)).Error("Error fetching local auth tags")
 	}
 
 	return tags
@@ -179,8 +179,8 @@ func (l *BadgerLocalAuthList) GetTags() []localauth.AuthorizationData {
 
 // UpdateTag Update a tag in the Local Auth store.
 func (l *BadgerLocalAuthList) UpdateTag(tagId string, tagInfo *types.IdTagInfo) error {
-	logInfo := l.logger.WithField("tagId", tagId)
-	logInfo.Info("Updating tag")
+	logger := l.logger.With(zap.String("tagId", tagId))
+	logger.Info("Updating tag")
 
 	return l.db.Update(func(txn *badger.Txn) error {
 		// todo
@@ -219,8 +219,8 @@ func (l *BadgerLocalAuthList) GetVersion() int {
 
 // SetVersion Set the current version of the Local Auth list.
 func (l *BadgerLocalAuthList) SetVersion(version int) {
-	logInfo := l.logger.WithField("version", version)
-	logInfo.Info("Updating list version")
+	logger := l.logger.With(zap.Int("version", version))
+	logger.Info("Updating list version")
 
 	err := l.db.Update(func(txn *badger.Txn) error {
 		versionKey := database.GetLocalAuthVersion()
@@ -236,14 +236,14 @@ func (l *BadgerLocalAuthList) SetVersion(version int) {
 		return txn.Commit()
 	})
 	if err != nil {
-		logInfo.WithError(err).Error("Error updating list version")
+		logger.With(zap.Error(err)).Error("Error updating list version")
 	}
 }
 
 // SetMaxTags Set the maximum number of tags that can be stored in the Local Auth list.
 func (l *BadgerLocalAuthList) SetMaxTags(number int) {
 	if number > 0 {
-		l.logger.Debugf("Set max tags to %d", number)
+		l.logger.Sugar().Debugf("Set max tags to %d", number)
 		l.maxTags = number
 	}
 }

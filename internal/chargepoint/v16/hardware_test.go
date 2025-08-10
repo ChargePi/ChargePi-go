@@ -1,12 +1,12 @@
 package v16
 
 import (
+	"go.uber.org/zap/zaptest"
 	"testing"
 	"time"
 
 	"github.com/ChargePi/ChargePi-go/pkg/indicator"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -22,7 +22,7 @@ type hardwareTestSuite struct {
 
 func (s *hardwareTestSuite) SetupTest() {
 	s.cp = new(ChargePoint)
-	s.cp.logger = log.StandardLogger()
+	s.cp.logger = zaptest.NewLogger(s.T())
 }
 
 func (s *hardwareTestSuite) TestSendToLCD() {
@@ -50,6 +50,5 @@ func (s *hardwareTestSuite) TestIndicateCard() {
 }
 
 func TestHardware(t *testing.T) {
-	log.SetLevel(log.TraceLevel)
 	suite.Run(t, new(hardwareTestSuite))
 }

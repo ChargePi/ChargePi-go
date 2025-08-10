@@ -1,6 +1,7 @@
 package v16
 
 import (
+	"go.uber.org/zap"
 	"strconv"
 	"strings"
 	"time"
@@ -13,7 +14,6 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/remotetrigger"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/smartcharging"
-	log "github.com/sirupsen/logrus"
 )
 
 // sendRequest is a middleware function that implements a retry mechanism for sending requests. If the max attempts is reached, return an error
@@ -50,24 +50,24 @@ func (cp *ChargePoint) SetProfilesFromConfig() {
 	// Set handlers based on configuration
 	profiles, err := cp.settingsManager.GetOcppV16Manager().GetConfigurationValue(ocpp_v16.SupportedFeatureProfiles)
 	if err != nil {
-		log.WithError(err).Panic("No supported profiles specified")
+		cp.logger.With(zap.Error(err)).Panic("No supported profiles specified")
 	}
 
-	logInfo := log.WithField("profiles", profiles)
+	logger := cp.logger.With(zap.Any("profiles", profiles))
 
 	for _, profile := range strings.Split(*profiles, ", ") {
 		switch strings.ToLower(profile) {
 		case strings.ToLower(reservation.ProfileName):
 			cp.chargePoint.SetReservationHandler(cp)
-			logInfo.Debug("Setting reservation handler")
+			logger.Debug("Setting reservation handler")
 		case strings.ToLower(smartcharging.ProfileName):
-			logInfo.Debug("Setting local auth handler")
+			logger.Debug("Setting local auth handler")
 			// chargePoint.SetSmartChargingHandler(cp)
 		case strings.ToLower(localauth.ProfileName):
-			logInfo.Debug("Setting local auth handler")
+			logger.Debug("Setting local auth handler")
 			cp.chargePoint.SetLocalAuthListHandler(cp)
 		case strings.ToLower(remotetrigger.ProfileName):
-			logInfo.Debug("Setting remote trigger handler")
+			logger.Debug("Setting remote trigger handler")
 			cp.chargePoint.SetRemoteTriggerHandler(cp)
 		case strings.ToLower(firmware.ProfileName):
 			cp.chargePoint.SetFirmwareManagementHandler(cp)
@@ -77,6 +77,6 @@ func (cp *ChargePoint) SetProfilesFromConfig() {
 
 func (cp *ChargePoint) handleRequestErr(err error, text string) {
 	if err != nil {
-		cp.logger.WithError(err).Errorf(text)
+		cp.logger.With(zap.Error(err)).Error(text)
 	}
 }

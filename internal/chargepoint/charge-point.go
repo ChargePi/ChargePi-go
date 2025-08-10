@@ -2,6 +2,7 @@ package chargepoint
 
 import (
 	"context"
+	"go.uber.org/zap"
 
 	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
 
@@ -19,7 +20,6 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/localauth"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/remotetrigger"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
-	log "github.com/sirupsen/logrus"
 )
 
 var supportedOcppV16Profiles = []string{
@@ -33,7 +33,7 @@ var supportedOcppV16Profiles = []string{
 func CreateChargePoint(
 	ctx context.Context,
 	protocolVersion ocpp.ProtocolVersion,
-	logger log.FieldLogger,
+	logger *zap.Logger,
 	manager manager.Manager,
 	tagManager auth.Manager,
 	sessionManager session.Manager,
@@ -58,21 +58,22 @@ func CreateChargePoint(
 		// Setup OCPP configuration from the database
 		defaultOcppConfig, err := ocpp_v16.DefaultConfigurationFromProfiles(supportedOcppV16Profiles...)
 		if err != nil {
-			logger.WithError(err).Fatal("Cannot create OCPP configuration")
+			logger.With(zap.Error(err)).Fatal("Cannot create OCPP configuration")
 		}
 
 		ocppVariableManager, err := ocpp_v16.NewV16ConfigurationManager(*defaultOcppConfig, supportedOcppV16Profiles...)
 		if err != nil {
-			logger.WithError(err).Fatal("Cannot create OCPP configuration manager")
+			logger.With(zap.Error(err)).Fatal("Cannot create OCPP configuration manager")
 		}
 
 		// Create the OCPP 1.6 Charge Point
 		err = settingsManager.SetOcppV16Manager(ocppVariableManager)
 		if err != nil {
-			logger.WithError(err).Fatal("Cannot add OCPP configuration manager")
+			logger.With(zap.Error(err)).Fatal("Cannot add OCPP configuration manager")
 		}
 
 		return v16.NewChargePoint(
+			logger,
 			manager,
 			tagManager,
 			sessionManager,
@@ -83,7 +84,7 @@ func CreateChargePoint(
 		logger.Fatal("Version 2.0.1 is not supported yet.")
 		return nil
 	default:
-		logger.WithField("protocolVersion", protocolVersion).Fatal("Protocol version not supported")
+		logger.With(zap.String("protocolVersion", string(protocolVersion))).Fatal("Protocol version not supported")
 		return nil
 	}
 }

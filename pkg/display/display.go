@@ -2,11 +2,11 @@ package display
 
 import (
 	"errors"
+	"go.uber.org/zap"
 
 	"github.com/ChargePi/ChargePi-go/internal/pkg/util"
 	"github.com/ChargePi/ChargePi-go/pkg/models/settings"
 	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/display"
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -32,24 +32,25 @@ type Display interface {
 
 // NewDisplay returns a concrete implementation of a Display based on the drivers that are supported.
 // The Display is built with the settings from the settings file.
-func NewDisplay(lcdSettings settings.Display) (Display, error) {
-	if lcdSettings.IsEnabled {
-		log.Info("Preparing display from config")
+func NewDisplay(displaySettings settings.Display) (Display, error) {
+	logger := zap.L()
+	if displaySettings.IsEnabled {
+		logger.With(zap.String("display_type", displaySettings.Driver)).Info("Preparing display from config")
 
-		switch lcdSettings.Driver {
+		switch displaySettings.Driver {
 		case DriverHD44780:
-			if util.IsNilInterfaceOrPointer(lcdSettings.HD44780) {
+			if util.IsNilInterfaceOrPointer(displaySettings.HD44780) {
 				return nil, ErrInvalidConnectionDetails
 			}
 
-			lcd, err := NewHD44780(*lcdSettings.HD44780)
+			lcd, err := NewHD44780(logger, *displaySettings.HD44780)
 			if err != nil {
 				return nil, err
 			}
 
 			return lcd, nil
 		case TypeDummy:
-			return NewDummy(lcdSettings.DisplayDummy)
+			return NewDummy(logger, displaySettings.DisplayDummy)
 		default:
 			return nil, ErrDisplayUnsupported
 		}

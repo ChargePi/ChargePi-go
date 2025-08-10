@@ -1,6 +1,7 @@
 package display
 
 import (
+	"go.uber.org/zap"
 	"strconv"
 	"time"
 
@@ -10,17 +11,17 @@ import (
 	"github.com/d2r2/go-i2c"
 	"github.com/go-co-op/gocron"
 	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/display"
-	log "github.com/sirupsen/logrus"
 )
 
 type HD44780 struct {
 	i2c       *i2c.I2C
 	display   *hd44780.Lcd
 	scheduler *gocron.Scheduler
+	logger    *zap.Logger
 }
 
 // NewHD44780 Create a new HD44780 struct.
-func NewHD44780(settings settings.HD44780) (*HD44780, error) {
+func NewHD44780(logger *zap.Logger, settings settings.HD44780) (*HD44780, error) {
 	// Decode the I2C address from hex to uint8
 	decodeString, err := strconv.ParseUint(settings.I2C.Address, 16, 8)
 	if err != nil {
@@ -43,6 +44,7 @@ func NewHD44780(settings settings.HD44780) (*HD44780, error) {
 	_ = lcd2.Clear()
 
 	return &HD44780{
+		logger:    logger.Named("hd44780_display"),
 		i2c:       i2cDev,
 		display:   lcd2,
 		scheduler: scheduler.NewScheduler(),
@@ -56,12 +58,12 @@ func (lcd *HD44780) DisplayMessage(message display.MessageInfo) {
 	if message.StartDateTime != nil {
 		_, err := lcd.scheduler.At(*message.StartDateTime).Tag("displayMessage").Do(lcd.DisplayMessage, message)
 		if err != nil {
-			log.WithError(err).Errorf("Error scheduling ClearMessage")
+			lcd.logger.With(zap.Error(err)).Error("Error scheduling ClearMessage")
 		}
 		return
 	}
 
-	log.Debugf("Displaying the message to Display: %v", message)
+	lcd.logger.Sugar().Debugf("Displaying the message: %v", message)
 
 	// Display lines in pairs. If there are odd number of lines, display the last line by itself.
 	lines := splitString(message.Message.Content, 16)
@@ -80,7 +82,7 @@ func (lcd *HD44780) DisplayMessage(message display.MessageInfo) {
 	if message.EndDateTime != nil {
 		_, err := lcd.scheduler.At(*message.EndDateTime).Tag("clearMessage").Do(lcd.Clear)
 		if err != nil {
-			log.WithError(err).Errorf("Error scheduling ClearMessage")
+			lcd.logger.With(zap.Error(err)).Error("Error scheduling ClearMessage")
 		}
 	}
 }
@@ -100,11 +102,13 @@ func splitString(str string, size int) []string {
 }
 
 func (lcd *HD44780) Clear() {
+	lcd.logger.Info("Clearing display")
 	_ = lcd.display.Clear()
 }
 
 // Cleanup Close the Display I2C connection.
 func (lcd *HD44780) Cleanup() {
+	lcd.logger.Info("Cleaning up display")
 	lcd.Clear()
 	_ = lcd.display.BacklightOff()
 	_ = lcd.i2c.Close()

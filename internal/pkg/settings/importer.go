@@ -3,6 +3,7 @@ package settings
 import (
 	"encoding/binary"
 	"encoding/json"
+	"go.uber.org/zap"
 	"os"
 	"path/filepath"
 
@@ -13,7 +14,6 @@ import (
 	"github.com/agrison/go-commons-lang/stringUtils"
 	"github.com/dgraph-io/badger/v3"
 	"github.com/go-playground/validator/v10"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
@@ -21,11 +21,12 @@ var importer Importer
 
 func GetImporter() Importer {
 	if importer == nil {
-		log.Debug("Creating an importer")
+		logger := zap.L()
+		logger.Debug("Creating an importer")
 		importer = &ImporterImpl{
 			db:              database.Get(),
 			settingsManager: GetManager(),
-			logger:          log.WithField("component", "importer"),
+			logger:          logger.Named("importer"),
 		}
 	}
 
@@ -46,7 +47,7 @@ type Importer interface {
 type ImporterImpl struct {
 	db              *badger.DB
 	settingsManager Manager
-	logger          log.FieldLogger
+	logger          *zap.Logger
 }
 
 func (i *ImporterImpl) ImportEVSESettings(settings []settings.EVSE) error {
@@ -140,7 +141,7 @@ func (i *ImporterImpl) ImportChargePointSettings(settings settings.Settings) err
 }
 
 func (i *ImporterImpl) ImportEVSESettingsFromPath(path string) error {
-	i.logger.Infof("Importing EVSE settings from %s", path)
+	i.logger.With(zap.String("path", path)).Info("Importing EVSE settings")
 
 	var evseSettings []settings.EVSE
 
@@ -178,7 +179,7 @@ func (i *ImporterImpl) ImportEVSESettingsFromPath(path string) error {
 }
 
 func (i *ImporterImpl) ImportLocalAuthListFromPath(path string) error {
-	i.logger.Infof("Importing tags from %s", path)
+	i.logger.With(zap.String("path", path)).Info("Importing tags")
 
 	var tagList settings.AuthList
 	config := viper.New()
@@ -197,7 +198,7 @@ func (i *ImporterImpl) ImportLocalAuthListFromPath(path string) error {
 }
 
 func (i *ImporterImpl) ImportChargePointSettingsFromPath(path string) error {
-	i.logger.Infof("Importing settings from %s", path)
+	i.logger.With(zap.String("path", path)).Info("Importing settings")
 
 	var cpSettings settings.Settings
 
@@ -218,7 +219,7 @@ func (i *ImporterImpl) ImportChargePointSettingsFromPath(path string) error {
 }
 
 func (i *ImporterImpl) ImportOcppConfigurationFromPath(version ocpp.ProtocolVersion, path string) error {
-	i.logger.Infof("Importing OCPP configuration from %s", path)
+	i.logger.With(zap.String("path", path)).Info("Importing OCPP configuration")
 
 	switch version {
 

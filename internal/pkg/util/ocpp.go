@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"go.uber.org/zap"
 	"io/ioutil"
 	"strings"
 	"time"
@@ -12,7 +13,6 @@ import (
 	"github.com/agrison/go-commons-lang/stringUtils"
 	"github.com/lorenzodonini/ocpp-go/ws"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 )
 
 // CreateConnectionUrl creates a connection url from the provided settings
@@ -30,8 +30,8 @@ func CreateConnectionUrl(connectionSettings settings.ConnectionSettings) string 
 }
 
 // CreateClient creates a Websocket client based on the settings.
-func CreateClient(connectionSettings settings.ConnectionSettings, pingInterval *string) (*ws.Client, error) {
-	log.Debug("Creating a websocket client")
+func CreateClient(logger *zap.Logger, connectionSettings settings.ConnectionSettings, pingInterval *string) (*ws.Client, error) {
+	logger.Debug("Creating a websocket client")
 
 	client := ws.NewClient()
 	clientConfig := ws.NewClientTimeoutConfig()
@@ -46,7 +46,7 @@ func CreateClient(connectionSettings settings.ConnectionSettings, pingInterval *
 
 	// Check if the TLS is enabled for the client
 	if connectionSettings.TLS.IsEnabled {
-		log.Debug("TLS enabled for the websocket client")
+		logger.Debug("TLS enabled for the websocket client")
 
 		certPool, err := x509.SystemCertPool()
 		if err != nil {
@@ -76,7 +76,7 @@ func CreateClient(connectionSettings settings.ConnectionSettings, pingInterval *
 
 	// If HTTP basic auth is provided, set it in the Websocket client
 	if stringUtils.IsNoneEmpty(connectionSettings.BasicAuthUsername, connectionSettings.BasicAuthPassword) {
-		log.Debug("Basic auth enabled")
+		logger.Debug("Basic auth enabled")
 		client.SetBasicAuth(connectionSettings.BasicAuthUsername, connectionSettings.BasicAuthPassword)
 	}
 

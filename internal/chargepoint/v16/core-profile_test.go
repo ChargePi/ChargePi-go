@@ -1,13 +1,13 @@
 package v16
 
 import (
+	"go.uber.org/zap/zaptest"
 	"testing"
 
 	"github.com/ChargePi/ChargePi-go/internal/pkg/scheduler"
 	"github.com/ChargePi/ocppManager-go/ocpp_v16"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -20,7 +20,7 @@ func (s *coreTestSuite) SetupTest() {
 	s.cp = &ChargePoint{
 		chargePoint: nil,
 		scheduler:   scheduler.NewScheduler(),
-		logger:      log.StandardLogger(),
+		logger:      zaptest.NewLogger(s.T()),
 	}
 }
 
@@ -156,9 +156,6 @@ func (s *coreTestSuite) TestOnRemoteStartTransaction() {
 }
 
 func TestCore(t *testing.T) {
-	log.SetLevel(log.DebugLevel)
-
 	ocpp_v16.NewEmptyConfiguration()
-
 	suite.Run(t, new(coreTestSuite))
 }

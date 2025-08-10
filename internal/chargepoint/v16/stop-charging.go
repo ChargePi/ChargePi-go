@@ -1,6 +1,7 @@
 package v16
 
 import (
+	"go.uber.org/zap"
 	"strconv"
 	"time"
 
@@ -10,7 +11,6 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
-	log "github.com/sirupsen/logrus"
 )
 
 func (cp *ChargePoint) StopCharging(evseId, connectorId int, reason core.Reason) error {
@@ -28,10 +28,7 @@ func (cp *ChargePoint) stopChargingConnector(connector evse.EVSE, reason core.Re
 		return chargePoint.ErrConnectorNil
 	}
 
-	logInfo := cp.logger.WithFields(log.Fields{
-		"evseId": connector.GetEvseId(),
-		"reason": reason,
-	})
+	logger := cp.logger.With()
 
 	// Check if the connector is already stopped
 	session, err := cp.sessionManager.GetSession(connector.GetEvseId(), nil)
@@ -53,25 +50,25 @@ func (cp *ChargePoint) stopChargingConnector(connector evse.EVSE, reason core.Re
 
 	var callback = func(confirmation ocpp.Response, protoError error) {
 		if protoError != nil {
-			logInfo.WithError(protoError).Errorf("Server responded with error for stopping a transaction")
+			logger.With(zap.Error(err)).Error("Server responded with error for stopping a transaction")
 			return
 		}
 
-		logInfo.Info("Stopping transaction")
+		logger.Info("Stopping transaction")
 
 		// Stop charging on EVSE
 		err = connector.StopCharging(reason)
 		if err != nil {
-			logInfo.WithError(err).Errorf("Unable to stop charging")
+			logger.With(zap.Error(err)).Error("Unable to stop charging")
 			return
 		}
 
 		err = cp.sessionManager.StopSession(session.TransactionId)
 		if err != nil {
-			logInfo.WithError(err).Warnf("Unable to stop session")
+			logger.With(zap.Error(err)).Warn("Unable to stop session")
 		}
 
-		logInfo.Infof("Stopped charging at %s", time.Now())
+		logger.Sugar().Infof("Stopped charging at %s", time.Now())
 	}
 
 	return cp.sendRequest(request, callback)

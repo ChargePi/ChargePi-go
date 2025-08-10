@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"go.uber.org/zap"
+	"strconv"
 	"sync"
 
 	"github.com/ChargePi/ChargePi-go/internal/pkg/models/notifications"
@@ -15,7 +17,6 @@ import (
 	"github.com/go-co-op/gocron"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
-	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -86,17 +87,13 @@ type (
 		powerMeter        powerMeter.PowerMeter
 		evcc              evcc.EVCC
 
-		logger log.FieldLogger
+		logger *zap.Logger
 	}
 )
 
 // NewEvse Create a new evse object from the provided arguments. evseId, connectorId and maxChargingTime must be greater than zero.
 // When created, it makes an empty session, turns off the relay and defaults the status to Available.
-func NewEvse(evseId int, evcc evcc.EVCC, powerMeter powerMeter.PowerMeter, maxPower float64, maxChargingTime *int) (*Impl, error) {
-	log.WithFields(log.Fields{
-		"evseId":          evseId,
-		"maxChargingTime": maxChargingTime,
-	}).Info("Creating a new evse")
+func NewEvse(logger *zap.Logger, evseId int, evcc evcc.EVCC, powerMeter powerMeter.PowerMeter, maxPower float64, maxChargingTime *int) (*Impl, error) {
 
 	if evseId <= 0 {
 		return nil, ErrInvalidEvseId
@@ -105,6 +102,9 @@ func NewEvse(evseId int, evcc evcc.EVCC, powerMeter powerMeter.PowerMeter, maxPo
 	if util.IsNilInterfaceOrPointer(evcc) {
 		return nil, ErrInvalidEVCC
 	}
+
+	newLogger := logger.With(zap.Int("evseId", evseId)).Named("evse-" + strconv.Itoa(evseId))
+	newLogger.Info("Creating a new evse")
 
 	return &Impl{
 		mu:              sync.Mutex{},
@@ -115,7 +115,7 @@ func NewEvse(evseId int, evcc evcc.EVCC, powerMeter powerMeter.PowerMeter, maxPo
 		maxPower:        maxPower,
 		status:          core.ChargePointStatusAvailable,
 		scheduler:       scheduler.NewScheduler(),
-		logger:          log.StandardLogger().WithField("component", "evse").WithField("evseId", evseId),
+		logger:          newLogger,
 	}, nil
 }
 
@@ -226,8 +226,8 @@ Loop:
 
 // StartCharging Start charging an evse if evse is available and session could be started.
 func (evse *Impl) StartCharging(connectorId *int, measurands []types.Measurand, sampleInterval string) error {
-	logInfo := evse.logger.WithField("connectorId", connectorId)
-	logInfo.Debugf("Trying to start charging on evse")
+	logger := evse.logger.With(zap.Intp("connectorId", connectorId))
+	logger.Debug("Trying to start charging on evse")
 
 	// Check if evse is available
 	if !(evse.IsAvailable() || evse.IsPreparing()) {
@@ -245,7 +245,7 @@ func (evse *Impl) StartCharging(connectorId *int, measurands []types.Measurand, 
 	// Prepare power meter and schedule sampling
 	sampleError := evse.scheduleMeterValueUpdates(measurands, sampleInterval)
 	if sampleError != nil {
-		logInfo.WithError(sampleError).Error("Cannot sample evse")
+		logger.With(zap.Error(sampleError)).Error("Cannot sample evse")
 	}
 
 	// Schedule a stop charging after the maxChargingTime, if provided
@@ -253,7 +253,7 @@ func (evse *Impl) StartCharging(connectorId *int, measurands []types.Measurand, 
 		// Schedule a stop charging after the maxChargingTime
 		_, err := evse.scheduler.Every(*evse.maxChargingTime).Minutes().Tag(fmt.Sprintf("evse-%d-chargingTimer", evse.GetEvseId())).Do(evse.StopCharging, core.ReasonLocal)
 		if err != nil {
-			logInfo.WithError(err).Error("Cannot schedule stop charging")
+			logger.With(zap.Error(err)).Error("Cannot schedule stop charging")
 		}
 	}
 
@@ -262,10 +262,10 @@ func (evse *Impl) StartCharging(connectorId *int, measurands []types.Measurand, 
 
 // StopCharging Stops charging an evse if evse is charging
 func (evse *Impl) StopCharging(reason core.Reason) error {
-	logInfo := evse.logger.WithField("reason", reason)
+	logger := evse.logger.With(zap.Any("reason", reason))
 
 	if evse.IsCharging() || evse.IsPreparing() {
-		logInfo.Debugf("Stopping charging")
+		logger.Debug("Stopping charging")
 
 		evse.evcc.DisableCharging()
 		evse.evcc.Unlock()
@@ -273,7 +273,7 @@ func (evse *Impl) StopCharging(reason core.Reason) error {
 		// Remove any jobs scheduled for this evse
 		schedulerErr := evse.scheduler.RemoveByTag(fmt.Sprintf("evse-%d-chargingTimer", evse.GetEvseId()))
 		if schedulerErr != nil {
-			logInfo.WithError(schedulerErr).Errorf("Cannot remove sampling schedule")
+			logger.With(zap.Error(schedulerErr)).Error("Cannot remove sampling schedule")
 		}
 
 		return nil
@@ -283,22 +283,22 @@ func (evse *Impl) StopCharging(reason core.Reason) error {
 }
 
 func (evse *Impl) GetEvseId() int {
-	evse.logger.Debugf("Getting evse id")
+	evse.logger.Debug("Getting evse id")
 	return evse.evseId
 }
 
 func (evse *Impl) GetMaxChargingTime() *int {
-	evse.logger.Debugf("Getting max charging time")
+	evse.logger.Debug("Getting max charging time")
 	return evse.maxChargingTime
 }
 
 func (evse *Impl) SetMaxChargingTime(time *int) {
-	evse.logger.WithField("time", time).Debugf("Setting max charging time")
+	evse.logger.With(zap.Intp("time", time)).Debug("Setting max charging time")
 	evse.maxChargingTime = time
 }
 
 func (evse *Impl) GetMaxChargingPower() float64 {
-	evse.logger.Debugf("Getting max charging power")
+	evse.logger.Debug("Getting max charging power")
 	return evse.maxPower
 }
 

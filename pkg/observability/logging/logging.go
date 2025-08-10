@@ -2,97 +2,112 @@ package logging
 
 import (
 	"fmt"
-	"log/syslog"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"gopkg.in/natefinch/lumberjack.v2"
+	"os"
+	"path/filepath"
 
 	"github.com/ChargePi/ChargePi-go/internal/pkg/models/settings"
 	"github.com/ChargePi/ChargePi-go/internal/pkg/util"
-	graylog "github.com/gemnasium/logrus-graylog-hook/v3"
-	"github.com/lorenzodonini/ocpp-go/ocppj"
-	"github.com/lorenzodonini/ocpp-go/ws"
-	"github.com/orandin/lumberjackrus"
-	log "github.com/sirupsen/logrus"
-	lSyslog "github.com/sirupsen/logrus/hooks/syslog"
 )
 
-const LogFileName = "chargepi.log"
-const LogFileDir = "/var/log/chargepi"
+const (
+	LogFileName = "chargepi.log"
+	LogFileDir  = "/var/log/chargepi"
+)
 
-// Setup setup logs
-func Setup(logger *log.Logger, loggingConfig settings.Logging, isDebug bool) {
-	// Default logging settings
-	logLevel := log.InfoLevel
-	formatter := &log.JSONFormatter{}
-	logger.SetFormatter(formatter)
-
+// SetupZap sets up zap logger with the given configuration
+func SetupZap(loggingConfig settings.Logging, isDebug bool) *zap.Logger {
+	// Determine log level
+	logLevel := zap.InfoLevel
 	if isDebug {
-		// Set underlying library loggers to debug level
-		logLevel = log.DebugLevel
-		ocppj.SetLogger(logger)
-		ws.SetLogger(logger)
+		logLevel = zap.DebugLevel
 	}
 
-	logger.SetLevel(logLevel)
+	// Create encoder config
+	encoderConfig := zap.NewProductionEncoderConfig()
+	encoderConfig.TimeKey = "timestamp"
+	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	encoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
 
-	// Setup file logging
-	fileLogging(logger, fmt.Sprintf("%s/%s", LogFileDir, LogFileName))
+	// Create cores
+	var cores []zapcore.Core
 
-	// Setup remote logging, if configured
+	// Console core
+	consoleEncoder := zapcore.NewJSONEncoder(encoderConfig)
+	consoleCore := zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stdout), logLevel)
+	cores = append(cores, consoleCore)
+
+	// File core
+	fileCore := createFileCore(encoderConfig, logLevel)
+	if fileCore != nil {
+		cores = append(cores, fileCore)
+	}
+
+	// Remote logging cores
 	for _, logType := range loggingConfig.LogTypes {
 		switch LogType(logType.Type) {
 		case RemoteLogging:
-			if util.IsNilInterfaceOrPointer(logType.Address) && util.IsNilInterfaceOrPointer(logType.Format) {
-				remoteLogging(logger, *logType.Address, LogFormat(*logType.Format))
+			if !util.IsNilInterfaceOrPointer(logType.Address) && !util.IsNilInterfaceOrPointer(logType.Format) {
+				remoteCore := createRemoteCore(encoderConfig, logLevel, *logType.Address, LogFormat(*logType.Format))
+				if remoteCore != nil {
+					cores = append(cores, remoteCore)
+				}
 			}
 		case ConsoleLogging:
+			// Console logging is already handled above
 		}
 	}
+
+	// Create logger
+	core := zapcore.NewTee(cores...)
+	logger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
+
+	return logger
 }
 
-func fileLogging(logger *log.Logger, fileName string) {
-	hook, err := lumberjackrus.NewHook(
-		&lumberjackrus.LogFile{
-			Filename:   fileName,
-			MaxSize:    200,
-			MaxBackups: 20,
-			MaxAge:     1,
-			Compress:   false,
-			LocalTime:  false,
-		},
-		logger.GetLevel(),
-		logger.Formatter,
-		nil,
-	)
-
-	if err != nil {
-		panic(err)
+func createFileCore(encoderConfig zapcore.EncoderConfig, level zapcore.Level) zapcore.Core {
+	// Ensure log directory exists
+	if err := os.MkdirAll(LogFileDir, 0755); err != nil {
+		return nil
 	}
 
-	logger.AddHook(hook)
+	// Create lumberjack writer for file rotation
+	writer := zapcore.AddSync(&lumberjack.Logger{
+		Filename:   filepath.Join(LogFileDir, LogFileName),
+		MaxSize:    200, // megabytes
+		MaxBackups: 20,
+		MaxAge:     1, // days
+		Compress:   false,
+	})
+
+	encoder := zapcore.NewJSONEncoder(encoderConfig)
+	return zapcore.NewCore(encoder, writer, level)
 }
 
-// remoteLogging sends logs remotely to Graylog or any Syslog receiver.
-func remoteLogging(logger *log.Logger, address string, format LogFormat) {
-	var (
-		hook log.Hook
-		err  error
-	)
-
+func createRemoteCore(encoderConfig zapcore.EncoderConfig, level zapcore.Level, address string, format LogFormat) zapcore.Core {
+	// For now, we'll implement basic syslog support
+	// Graylog support would require additional dependencies
 	switch format {
-	case Gelf:
-		graylogHook := graylog.NewAsyncGraylogHook(address, map[string]interface{}{})
-		hook = graylogHook
 	case Syslog:
-		hook, err = lSyslog.NewSyslogHook(
-			"tcp",
-			address,
-			syslog.LOG_WARNING,
-			"chargePi",
-		)
+		// Create a network writer for syslog
+		writer, _, err := zap.Open(fmt.Sprintf("tcp://%s", address))
+		if err != nil {
+			return nil
+		}
+		encoder := zapcore.NewJSONEncoder(encoderConfig)
+		return zapcore.NewCore(encoder, writer, level)
+	case Gelf:
+		// Graylog GELF format - would need additional implementation
+		// For now, return nil to skip this core
+		return nil
 	default:
-		return
+		return nil
 	}
+}
 
-	if err == nil {
-		logger.AddHook(hook)
-	}
+// Sync flushes any buffered log entries
+func Sync(logger *zap.Logger) {
+	_ = logger.Sync()
 }

@@ -2,6 +2,7 @@ package configuration
 
 import (
 	"encoding/json"
+	"go.uber.org/zap"
 	"strings"
 
 	"github.com/ChargePi/ChargePi-go/internal/pkg/settings"
@@ -9,7 +10,6 @@ import (
 
 	settingsModel "github.com/ChargePi/ChargePi-go/internal/pkg/models/settings"
 	"github.com/agrison/go-commons-lang/stringUtils"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
@@ -21,6 +21,7 @@ func InitSettings(settingsFilePath string) {
 }
 
 func readConfiguration(viper *viper.Viper, fileName, extension, filePath string) {
+	logger := zap.L()
 	viper.SetConfigName(fileName)
 	viper.SetConfigType(extension)
 	viper.AddConfigPath(settingsModel.CurrentFolder)
@@ -36,9 +37,9 @@ func readConfiguration(viper *viper.Viper, fileName, extension, filePath string)
 	err := viper.ReadInConfig()
 	switch err {
 	case nil:
-		log.Debugf("Using configuration file: %s", viper.ConfigFileUsed())
+		logger.Sugar().Debugf("Using configuration file: %s", viper.ConfigFileUsed())
 	default:
-		log.WithError(err).Warn("Cannot parse config file")
+		logger.With(zap.Error(err)).Warn("Cannot parse config file")
 	}
 }
 
@@ -56,17 +57,18 @@ func setDefaults(viper *viper.Viper) {
 
 // GetSettings gets settings from cache or reads the settings file if the cached settings are not found.
 func GetSettings() *settingsModel.Settings {
-	log.Info("Fetching settings..")
+	logger := zap.L()
+	logger.Info("Fetching settings..")
 
 	var conf settingsModel.Settings
 
 	if stringUtils.IsEmpty(viper.ConfigFileUsed()) {
-		log.Debug("Using database settings..")
+		logger.Debug("Using database settings..")
 
 		// Load the settings persisted in the database.
 		getSettings, settingsErr := settings.GetManager().GetSettings()
 		if settingsErr != nil {
-			log.WithError(settingsErr).Fatalf("Cannot load settings from database")
+			logger.With(zap.Error(settingsErr)).Fatal("Cannot load settings from database")
 		}
 
 		marshal, settingsErr := json.Marshal(getSettings)
@@ -83,13 +85,13 @@ func GetSettings() *settingsModel.Settings {
 
 	err := viper.Unmarshal(&conf)
 	if err != nil {
-		log.WithError(err).Fatalf("Cannot unmarshal settings")
+		logger.With(zap.Error(err)).Fatal("Cannot unmarshal settings")
 	}
 
 	// Validate the settings
 	validationErr := validator.New().Struct(conf)
 	if validationErr != nil {
-		log.WithError(validationErr).Fatalf("Invalid settings")
+		logger.With(zap.Error(validationErr)).Fatal("Invalid settings")
 	}
 
 	return &conf

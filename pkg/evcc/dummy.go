@@ -2,23 +2,23 @@ package evcc
 
 import (
 	"context"
+	"go.uber.org/zap"
 
 	"github.com/ChargePi/ChargePi-go/pkg/models/settings"
-	log "github.com/sirupsen/logrus"
 )
 
 type Dummy struct {
-	logger        *log.Logger
+	logger        *zap.Logger
 	settings      *settings.EvccDummy
 	notifications chan StateNotification
 	currentState  CarState
 	maxCurrent    float64
 }
 
-func NewDummy(settings *settings.EvccDummy) (*Dummy, error) {
+func NewDummy(logger *zap.Logger, settings *settings.EvccDummy) (*Dummy, error) {
 	return &Dummy{
 		settings:      settings,
-		logger:        log.StandardLogger(),
+		logger:        logger.Named("evcc_dummy"),
 		notifications: make(chan StateNotification),
 	}, nil
 }
@@ -38,7 +38,7 @@ func (d *Dummy) DisableCharging() {
 }
 
 func (d *Dummy) SetMaxChargingCurrent(value float64) error {
-	d.logger.Infof("Setting max charging current to %f", value)
+	d.logger.Sugar().Infof("Setting max charging current to %f", value)
 	d.maxCurrent = value
 	return nil
 }

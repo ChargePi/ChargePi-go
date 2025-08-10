@@ -7,7 +7,6 @@ import (
 	mock_list "github.com/ChargePi/ChargePi-go/gen/mocks/auth/list"
 	"github.com/ChargePi/ChargePi-go/pkg/util"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -97,6 +96,5 @@ func (s *tagManagerTestSuite) TestSetMaxTags() {
 }
 
 func TestTagManager(t *testing.T) {
-	log.SetLevel(log.DebugLevel)
 	suite.Run(t, new(tagManagerTestSuite))
 }

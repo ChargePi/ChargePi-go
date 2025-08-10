@@ -3,11 +3,11 @@ package powerMeter
 import (
 	"context"
 	"errors"
+	"go.uber.org/zap"
 
 	"github.com/ChargePi/ChargePi-go/internal/pkg/util"
 	"github.com/ChargePi/ChargePi-go/pkg/models/settings"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
-	log "github.com/sirupsen/logrus"
 )
 
 // Supported power meters
@@ -38,8 +38,9 @@ type PowerMeter interface {
 
 // NewPowerMeter creates a new power meter based on the connector settings.
 func NewPowerMeter(meterSettings settings.PowerMeter) (PowerMeter, error) {
+	logger := zap.L()
 	if meterSettings.Enabled {
-		log.Infof("Creating a new power meter: %s", meterSettings.Type)
+		logger.With(zap.String("meter_type", meterSettings.Type)).Info("Creating a new power meter")
 
 		switch meterSettings.Type {
 		case TypeC5460A:
@@ -48,6 +49,7 @@ func NewPowerMeter(meterSettings settings.PowerMeter) (PowerMeter, error) {
 			}
 
 			powerMeter, err := NewCS5460PowerMeter(
+				logger,
 				meterSettings.SPI.ChipSelect,
 				meterSettings.SPI.Bus,
 				meterSettings.CS5460.ShuntOffset,
@@ -59,7 +61,7 @@ func NewPowerMeter(meterSettings settings.PowerMeter) (PowerMeter, error) {
 
 			return powerMeter, nil
 		case TypeDummy:
-			return NewDummy(meterSettings.PowerMeterDummy)
+			return NewDummy(logger, meterSettings.PowerMeterDummy)
 		default:
 			return nil, ErrPowerMeterUnsupported
 		}

@@ -5,11 +5,10 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	log "github.com/sirupsen/logrus"
 	healthcheck "github.com/tavsec/gin-healthcheck"
 	"github.com/tavsec/gin-healthcheck/checks"
 	"github.com/tavsec/gin-healthcheck/config"
-	ginlogrus "github.com/toorop/gin-logrus"
+	"go.uber.org/zap"
 )
 
 type App struct {
@@ -25,16 +24,16 @@ func NewAppServer() *App {
 }
 
 func (u *App) Serve(url string, checks ...checks.Check) {
-	u.router.Use(ginlogrus.Logger(log.StandardLogger()), gin.Recovery())
+	u.router.Use(loggingMiddleware(), gin.Recovery())
 
 	// Configure healthcheck
 	err := healthcheck.New(u.router, config.DefaultConfig(), checks)
 	if err != nil {
-		log.WithError(err).Panic("Failed to configure healthcheck")
+		zap.L().Panic("Failed to configure healthcheck", zap.Error(err))
 	}
 
 	err = u.router.Run(url)
 	if err != nil && errors.Is(err, http.ErrServerClosed) {
-		log.WithError(err).Fatal("Failed to start HTTP server")
+		zap.L().Fatal("Failed to start HTTP server", zap.Error(err))
 	}
 }

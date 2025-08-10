@@ -3,6 +3,7 @@ package v16
 import (
 	"context"
 	"errors"
+	"go.uber.org/zap"
 	"strings"
 	"time"
 
@@ -20,43 +21,43 @@ func (cp *ChargePoint) DisplayMessage(message display.MessageInfo) error {
 		return nil
 	}
 
-	cp.logger.Debugf("Sending message to display: %v", message)
+	cp.logger.Sugar().Debugf("Sending message to display: %v", message)
 	go cp.display.DisplayMessage(message)
 	return nil
 }
 
 func (cp *ChargePoint) indicateStatusChange(connectorIndex int, status core.ChargePointStatus) {
-	logInfo := cp.logger.WithField("connector", connectorIndex+1)
+	logger := cp.logger.With(zap.Int("connector", connectorIndex+1))
 	if util.IsNilInterfaceOrPointer(cp.indicator) {
-		logInfo.Warn("Cannot indicate status change, indicator disabled or not configured")
+		logger.Warn("Cannot indicate status change, indicator disabled or not configured")
 		return
 	}
 
 	// Get the color for the status
 	color, err := colorMapping(cp.indicatorMapping, status)
 	if err != nil {
-		logInfo.WithError(err).Errorf("Error indicating status")
+		logger.With(zap.Error(err)).Error("Error indicating status")
 	}
 
-	logInfo.Debugf("Indicating connector status: %x", color)
+	logger.Sugar().Debugf("Indicating connector status: %x", color)
 	err = cp.indicator.ChangeColor(connectorIndex, *color)
 	if err != nil {
-		logInfo.WithError(err).Errorf("Error indicating status")
+		logger.With(zap.Error(err)).Error("Error indicating status")
 	}
 }
 
 // indicateCard Blinks the LED to indicate that the card was read.
 func (cp *ChargePoint) indicateCard(index int, color indicator.Color) {
-	logInfo := cp.logger.WithField("connector", index+1)
+	logger := cp.logger.With(zap.Int("connector", index+1))
 	if util.IsNilInterfaceOrPointer(cp.indicator) {
-		logInfo.Warn("Cannot indicate card read, disabled or not configured")
+		logger.Warn("Cannot indicate card read, disabled or not configured")
 		return
 	}
 
-	logInfo.Debug("Indicating a tag was read")
+	logger.Debug("Indicating a tag was read")
 	err := cp.indicator.Blink(index, 3, color)
 	if err != nil {
-		logInfo.WithError(err).Errorf("Could not indicate a tag was read")
+		logger.With(zap.Error(err)).Error("Could not indicate a tag was read")
 	}
 }
 

@@ -3,22 +3,22 @@ package database
 import (
 	"encoding/json"
 	"fmt"
+	"go.uber.org/zap"
 	"time"
 
 	session "github.com/ChargePi/ChargePi-go/internal/sessions/pkg/models"
 	"github.com/dgraph-io/badger/v3"
-	log "github.com/sirupsen/logrus"
 )
 
 type SessionBadgerDb struct {
 	db     *badger.DB
-	logger log.FieldLogger
+	logger *zap.Logger
 }
 
-func NewSessionBadgerDb(db *badger.DB) *SessionBadgerDb {
+func NewSessionBadgerDb(logger *zap.Logger, db *badger.DB) *SessionBadgerDb {
 	return &SessionBadgerDb{
 		db:     db,
-		logger: log.WithField("component", "session-database"),
+		logger: logger.Named("session_badger"),
 	}
 }
 
@@ -27,7 +27,7 @@ func getSessionTransactionIdKey(transactionId string) []byte {
 }
 
 func (s *SessionBadgerDb) CreateSession(session *session.Session) error {
-	s.logger.WithField("transactionId", session.TransactionId).Info("Creating session")
+	s.logger.With(zap.Any("session", session)).Info("Creating session")
 	return s.db.Update(func(txn *badger.Txn) error {
 		marshal, err := json.Marshal(session)
 		if err != nil {
@@ -39,7 +39,7 @@ func (s *SessionBadgerDb) CreateSession(session *session.Session) error {
 }
 
 func (s *SessionBadgerDb) StopSession(transactionId string) error {
-	s.logger.WithField("transactionId", transactionId).Info("Stopping a session")
+	s.logger.With(zap.String("transactionId", transactionId)).Info("Stopping a session")
 
 	return s.db.Update(func(txn *badger.Txn) error {
 		s, err := txn.Get(getSessionTransactionIdKey(transactionId))
@@ -88,7 +88,7 @@ func (s *SessionBadgerDb) UpdateSession(sesh *session.Session) error {
 }
 
 func (s *SessionBadgerDb) GetSession(evseId int, connectorId *int) (*session.Session, error) {
-	s.logger.WithField("evseId", evseId).Info("Getting session")
+	s.logger.With(zap.Int("evse_id", evseId)).Info("Getting session")
 
 	return nil, nil
 }
@@ -106,13 +106,13 @@ func (s *SessionBadgerDb) GetActiveSessions() ([]session.Session, error) {
 }
 
 func (s *SessionBadgerDb) GetSessionWithTransactionId(transactionId string) (*session.Session, error) {
-	s.logger.WithField("transactionId", transactionId).Info("Getting session with transaction id")
+	s.logger.With(zap.String("transaction_id", transactionId)).Info("Getting session with transaction id")
 
 	return nil, nil
 }
 
 func (s *SessionBadgerDb) GetSessionWithTagId(tagId string) (*session.Session, error) {
-	s.logger.WithField("tagId", tagId).Info("Getting session with tag id")
+	s.logger.With(zap.String("tag_id", tagId)).Info("Getting session with tag id")
 
 	return nil, nil
 }

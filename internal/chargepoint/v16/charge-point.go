@@ -3,6 +3,7 @@ package v16
 import (
 	"context"
 	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
+	"go.uber.org/zap"
 	"os/exec"
 
 	"github.com/ChargePi/ChargePi-go/internal/auth"
@@ -22,7 +23,6 @@ import (
 	"github.com/go-co-op/gocron"
 	ocpp16 "github.com/lorenzodonini/ocpp-go/ocpp1.6"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	log "github.com/sirupsen/logrus"
 )
 
 type ChargePoint struct {
@@ -49,11 +49,11 @@ type ChargePoint struct {
 	meterValuesChannel chan notifications.MeterValueNotification
 	scheduler          *gocron.Scheduler
 	tagManager         auth.Manager
-	logger             log.FieldLogger
+	logger             *zap.Logger
 }
 
 // NewChargePoint creates a new ChargePoint for OCPP version 1.6.
-func NewChargePoint(manager manager.Manager, tagManager auth.Manager, sessionManager session.Manager, diagnosticsManager diagnostics.Manager, opts ...chargePoint.Options) *ChargePoint {
+func NewChargePoint(logger *zap.Logger, manager manager.Manager, tagManager auth.Manager, sessionManager session.Manager, diagnosticsManager diagnostics.Manager, opts ...chargePoint.Options) *ChargePoint {
 	cp := &ChargePoint{
 		availability:       core.AvailabilityTypeOperative,
 		scheduler:          scheduler.NewScheduler(),
@@ -62,7 +62,7 @@ func NewChargePoint(manager manager.Manager, tagManager auth.Manager, sessionMan
 		sessionManager:     sessionManager,
 		settingsManager:    settings2.GetManager(),
 		diagnosticsManager: diagnosticsManager,
-		logger:             log.StandardLogger().WithField("component", "chargePointV16"),
+		logger:             logger.Named("charge_point_v16"),
 	}
 
 	cp.ApplyOpts(opts...)
@@ -77,15 +77,15 @@ func (cp *ChargePoint) Connect(ctx context.Context, serverUrl string) {
 		cp.chargePoint.Stop()
 	}
 
-	logInfo := cp.logger.WithFields(log.Fields{"chargePointId": cp.connectionSettings.Id})
+	logger := cp.logger.With(zap.String("serverUrl", serverUrl), zap.String("id", cp.connectionSettings.Id))
 
 	// Get the ping interval from the configuration
 	pingInterval, _ := cp.settingsManager.GetOcppV16Manager().GetConfigurationValue(ocpp_v16.WebSocketPingInterval)
 
 	// Create a new websocket client
-	wsClient, err := util.CreateClient(cp.connectionSettings, pingInterval)
+	wsClient, err := util.CreateClient(cp.logger, cp.connectionSettings, pingInterval)
 	if err != nil {
-		logInfo.WithError(err).Panic("Cannot create a new websocket client")
+		logger.With(zap.Error(err)).Panic("Cannot create a new websocket client")
 	}
 
 	// Create a new OCPP charge point handler
@@ -94,22 +94,22 @@ func (cp *ChargePoint) Connect(ctx context.Context, serverUrl string) {
 	// Set profiles
 	cp.SetProfilesFromConfig()
 
-	cp.logger.Infof("Trying to connect to the central system: %s", serverUrl)
+	cp.logger.Info("Trying to connect to the central system")
 	connectErr := cp.chargePoint.Start(serverUrl)
 	if connectErr != nil {
 		// cp.CleanUp(core.ReasonOther)
 		cp.isConnected = false
-		cp.logger.WithError(connectErr).Error("Cannot connect to the central system")
+		cp.logger.With(zap.Error(err)).Error("Cannot connect to the central system")
 		return
 	}
 
-	cp.logger.Infof("Successfully connected to: %s", serverUrl)
+	cp.logger.Info("Successfully connected to backend")
 	cp.bootNotification()
 }
 
 // CleanUp When exiting the client, stop all the transactions, clean up all the peripherals and terminate the connection.
 func (cp *ChargePoint) CleanUp(reason core.Reason) {
-	cp.logger.Infof("Cleaning up ChargePoint, reason: %s", reason)
+	cp.logger.With(zap.Any("reason", reason)).Info("Cleaning up ChargePoint")
 
 	switch reason {
 	case core.ReasonRemote, core.ReasonLocal, core.ReasonHardReset, core.ReasonSoftReset:
@@ -117,7 +117,7 @@ func (cp *ChargePoint) CleanUp(reason core.Reason) {
 			// Stop charging the connectors
 			err := cp.stopChargingConnector(c, reason)
 			if err != nil {
-				cp.logger.WithError(err).Errorf("Cannot stop the transaction at cleanup")
+				cp.logger.With(zap.Error(err)).Error("Cannot stop the transaction at cleanup")
 			}
 		}
 	}
@@ -141,13 +141,13 @@ func (cp *ChargePoint) CleanUp(reason core.Reason) {
 	cp.scheduler.Stop()
 	cp.scheduler.Clear()
 
-	cp.logger.Infof("Disconnecting the client..")
+	cp.logger.Info("Disconnecting the client..")
 	cp.chargePoint.Stop()
 }
 
 // Reset the charge point.
 func (cp *ChargePoint) Reset(resetType string) error {
-	cp.logger.Infof("Resetting the charge point")
+	cp.logger.Info("Resetting the charge point")
 
 	// Todo check if conditions are met
 	var err error

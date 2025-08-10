@@ -2,10 +2,10 @@ package indicator
 
 import (
 	"errors"
+	"go.uber.org/zap"
 
 	"github.com/ChargePi/ChargePi-go/internal/pkg/util"
 	"github.com/ChargePi/ChargePi-go/pkg/models/settings"
-	log "github.com/sirupsen/logrus"
 )
 
 // color constants
@@ -47,29 +47,30 @@ type (
 
 // NewIndicator constructs the Indicator based on the type provided by the settings file.
 func NewIndicator(stripLength int, indicator settings.Indicator) Indicator {
-	if indicator.Enabled {
+	logger := zap.L()
 
+	if indicator.Enabled {
 		// Last LED is used to indicate card read
 		if indicator.IndicateCardRead {
 			stripLength++
 		}
 
-		log.Infof("Preparing Indicator from config: %s", indicator.Type)
+		logger.With(zap.String("indicator_type", indicator.Type)).Info("Preparing Indicator from config")
 		switch indicator.Type {
 		case TypeWS281x:
 			if util.IsNilInterfaceOrPointer(indicator.WS281x) {
 				return nil
 			}
 
-			ledStrip, ledError := NewWS281xStrip(stripLength, indicator.WS281x.DataPin)
+			ledStrip, ledError := NewWS281xStrip(logger, stripLength, indicator.WS281x.DataPin)
 			if ledError != nil {
-				log.WithError(ledError).Errorf("Error creating indicator")
+				logger.With(zap.Error(ledError)).Error("Error creating indicator")
 				return nil
 			}
 
 			return ledStrip
 		case TypeDummy:
-			return NewDummy(indicator.IndicatorDummy)
+			return NewDummy(logger, indicator.IndicatorDummy)
 		default:
 			return nil
 		}

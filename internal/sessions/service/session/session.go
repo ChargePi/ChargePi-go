@@ -4,7 +4,7 @@ import (
 	"github.com/ChargePi/ChargePi-go/internal/sessions/pkg/database"
 	session "github.com/ChargePi/ChargePi-go/internal/sessions/pkg/models"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 )
 
 type (
@@ -20,24 +20,24 @@ type (
 
 	Impl struct {
 		sessionRepository database.SessionRepository
-		logger            log.FieldLogger
+		logger            *zap.Logger
 	}
 )
 
-func NewSessionManager(sessionRepository database.SessionRepository) *Impl {
+func NewSessionManager(logger *zap.Logger, sessionRepository database.SessionRepository) *Impl {
 	return &Impl{
 		sessionRepository: sessionRepository,
-		logger:            log.WithField("component", "session-service"),
+		logger:            logger.Named("session_service"),
 	}
 }
 
 func (i *Impl) StartSession(evseId int, connectorId *int, tagId, transactionId string) error {
-	i.logger.WithFields(log.Fields{
-		"evseId":      evseId,
-		"connectorId": connectorId,
-		"tagId":       tagId,
-		"transaction": transactionId,
-	}).Info("Starting session")
+	i.logger.With(
+		zap.Int("evseId", evseId),
+		zap.Intp("connectorId", connectorId),
+		zap.String("tagId", tagId),
+		zap.String("transactionId", transactionId),
+	).Info("Starting session")
 
 	// Check if a session already exists
 	_, err := i.GetSession(evseId, connectorId)
@@ -56,12 +56,12 @@ func (i *Impl) StartSession(evseId int, connectorId *int, tagId, transactionId s
 }
 
 func (i *Impl) StopSession(transactionId string) error {
-	i.logger.WithFields(log.Fields{"transaction": transactionId}).Info("Stopping a session")
+	i.logger.With(zap.String("transaction_id", transactionId)).Info("Stopping a session")
 	return i.sessionRepository.StopSession(transactionId)
 }
 
 func (i *Impl) UpdateMeterValues(transactionId string, values ...types.SampledValue) error {
-	i.logger.WithField("transaction", transactionId).Info("Updating meter values")
+	i.logger.With(zap.String("transaction", transactionId)).Info("Updating meter values")
 
 	sessionWithTransactionId, err := i.GetSessionWithTransactionId(transactionId)
 	if err != nil {
@@ -74,25 +74,25 @@ func (i *Impl) UpdateMeterValues(transactionId string, values ...types.SampledVa
 }
 
 func (i *Impl) GetSession(evseId int, connectorId *int) (*session.Session, error) {
-	i.logger.WithFields(log.Fields{
-		"evseId":      evseId,
-		"connectorId": connectorId,
-	}).Info("Getting session")
+	i.logger.With(
+		zap.Int("evseId", evseId),
+		zap.Intp("connectorId", connectorId),
+	).Info("Getting session")
 
 	return i.sessionRepository.GetSession(evseId, connectorId)
 }
 
 func (i *Impl) GetSessionWithTransactionId(transactionId string) (*session.Session, error) {
-	i.logger.WithFields(log.Fields{
-		"transactionId": transactionId,
-	}).Info("Getting session with transaction id")
+	i.logger.With(
+		zap.String("transactionId", transactionId),
+	).Info("Getting session with transaction id")
 
 	return i.sessionRepository.GetSessionWithTransactionId(transactionId)
 }
 
 func (i *Impl) GetSessionWithTagId(tagId string) (*session.Session, error) {
-	i.logger.WithFields(log.Fields{
-		"tagId": tagId,
-	}).Info("Getting session with tag id")
+	i.logger.With(
+		zap.String("tagId", tagId),
+	).Info("Getting session with tag id")
 	return i.sessionRepository.GetSessionWithTagId(tagId)
 }

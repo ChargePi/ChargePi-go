@@ -11,7 +11,7 @@ import (
 	userDatabase "github.com/ChargePi/ChargePi-go/internal/users/pkg/database"
 	"github.com/ChargePi/ChargePi-go/internal/users/service"
 	"github.com/dgraph-io/badger/v3"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 )
 
 // SetupApi Runs a gRPC API server at a specified address if it is enabled. The API is protected by an authentication layer.
@@ -25,7 +25,7 @@ func SetupApi(
 	settingsManager cfg.Manager,
 ) {
 	if !api.Enabled {
-		log.Info("API is disabled")
+		zap.L().Info("API is disabled")
 		return
 	}
 
@@ -33,7 +33,7 @@ func SetupApi(
 	userDb := userDatabase.NewUserDb(db)
 
 	// User service layer
-	userService := service.NewUserService(userDb)
+	userService := service.NewUserService(zap.L(), userDb)
 
 	// Expose the API endpoints
 	server := grpc.NewServer(api, handler, tagManager, manager, settingsManager, userService)
@@ -43,7 +43,7 @@ func SetupApi(
 // SetupUi Runs a management UI server if enabled
 func SetupUi(uiSettings settings.Ui) {
 	if !uiSettings.Enabled {
-		log.Info("Management UI is disabled")
+		zap.L().Info("Management UI is disabled")
 		return
 	}
 
@@ -53,7 +53,7 @@ func SetupUi(uiSettings settings.Ui) {
 
 // Creates a healthcheck endpoint
 func setupHealthcheck() {
-	log.Infof("Starting application healthcheck at localhost:8081")
+	zap.L().Info("Starting application healthcheck at localhost:8081")
 	httpServer := http.NewAppServer()
 	httpServer.Serve(":8081")
 }
