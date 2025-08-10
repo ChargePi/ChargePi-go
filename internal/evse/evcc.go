@@ -3,25 +3,26 @@ package evse
 import (
 	"github.com/ChargePi/ChargePi-go/internal/pkg/models/settings"
 	"github.com/ChargePi/ChargePi-go/pkg/evcc"
+	"go.uber.org/zap"
 )
 
 func (evse *Impl) Lock() {
-	evse.logger.Debugf("Locking EVCC")
+	evse.logger.Debug("Locking EVCC")
 	evse.evcc.Lock()
 }
 
 func (evse *Impl) Unlock() {
-	evse.logger.Debugf("Unlocking EVCC")
+	evse.logger.Debug("Unlocking EVCC")
 	evse.evcc.Unlock()
 }
 
 func (evse *Impl) GetConnectors() []settings.Connector {
-	evse.logger.Debugf("Getting connectors for EVSE")
+	evse.logger.Debug("Getting connectors for EVSE")
 	return evse.connectors
 }
 
 func (evse *Impl) AddConnector(connector settings.Connector) error {
-	evse.logger.WithField("connectorId", connector.ConnectorId).Debug("Adding connector to EVSE")
+	evse.logger.With(zap.Any("connector", connector)).Debug("Adding connector to EVSE")
 	for _, c := range evse.connectors {
 		// Do not add if they're the same connector
 		if c.ConnectorId == connector.ConnectorId {
@@ -34,17 +35,17 @@ func (evse *Impl) AddConnector(connector settings.Connector) error {
 }
 
 func (evse *Impl) GetEvcc() evcc.EVCC {
-	evse.logger.Debugf("Getting EVCC")
+	evse.logger.Debug("Getting EVCC")
 	return evse.evcc
 }
 
 func (evse *Impl) SetEvcc(e evcc.EVCC) {
-	evse.logger.Debugf("Setting EVCC")
+	evse.logger.Debug("Setting EVCC")
 
 	// Cleanup the previous EVCC
 	err := evse.evcc.Cleanup()
 	if err != nil {
-		evse.logger.Errorf("Error cleaning up EVCC: %s", err)
+		evse.logger.With(zap.Error(err)).Error("Error cleaning up EVCC")
 	}
 
 	evse.evcc = e

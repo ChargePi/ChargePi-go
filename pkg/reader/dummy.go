@@ -2,13 +2,13 @@ package reader
 
 import (
 	"context"
+	"go.uber.org/zap"
 
 	"github.com/ChargePi/ChargePi-go/pkg/models/settings"
-	log "github.com/sirupsen/logrus"
 )
 
 type Dummy struct {
-	logger   *log.Logger
+	logger   *zap.Logger
 	listener chan string
 	settings settings.DummyReader
 	tagIndex int
@@ -28,7 +28,7 @@ func (d *Dummy) ListenForTags(ctx context.Context) {
 	tag := d.settings.TagIds[d.tagIndex]
 
 	d.listener <- tag
-	d.logger.Infof("Tag %s read", tag)
+	d.logger.Sugar().Infof("Tag %s read", tag)
 	d.tagIndex++
 }
 

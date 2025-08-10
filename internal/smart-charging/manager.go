@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
+	"go.uber.org/zap"
 	"strconv"
 
 	"github.com/ChargePi/ChargePi-go/internal/pkg/database"
@@ -11,7 +12,6 @@ import (
 	"github.com/ChargePi/ocppManager-go/ocpp_v16"
 	"github.com/dgraph-io/badger/v3"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
-	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -34,16 +34,16 @@ type (
 		maxCurrent         int
 		evseManager        manager.Manager
 		settingsManager    settings.Manager
-		logger             log.FieldLogger
+		logger             *zap.Logger
 		compositeSchedules map[int][]ScheduleInterval
 	}
 )
 
-func NewManager(db *badger.DB, maxCurrent int) *Impl {
+func NewManager(logger *zap.Logger, db *badger.DB, maxCurrent int) *Impl {
 	return &Impl{
 		db:         db,
 		maxCurrent: maxCurrent,
-		logger:     log.StandardLogger().WithField("component", "smart-charging"),
+		logger:     logger.Named("smart-charging"),
 	}
 }
 
@@ -65,7 +65,7 @@ func (m *Impl) storeProfile(profile *types.ChargingProfile) error {
 }
 
 func (m *Impl) AddProfile(profile *types.ChargingProfile) error {
-	m.logger.WithField("profile", profile).Info("Adding profile")
+	m.logger.With(zap.Any("profile", profile)).Info("Adding profile")
 	if profile == nil {
 		return nil
 	}
@@ -100,7 +100,7 @@ Store:
 }
 
 func (m *Impl) canApplyProfile(profile *types.ChargingProfile) bool {
-	m.logger.WithField("profile", profile).Info("Checking if profile can be applied")
+	m.logger.With(zap.Any("profile", profile)).Info("Checking if profile can be applied")
 
 	ocppManager := m.settingsManager.GetOcppV16Manager()
 	// Get max stack level
@@ -143,7 +143,7 @@ func (m *Impl) canApplyProfile(profile *types.ChargingProfile) bool {
 }
 
 func (m *Impl) RemoveProfile(profileId int) error {
-	m.logger.WithField("profile", profileId).Info("Removing profile")
+	m.logger.With(zap.Int("profile_id", profileId)).Info("Removing profile")
 
 	return m.db.Update(func(txn *badger.Txn) error {
 		err := txn.Delete(database.GetSmartChargingProfile(profileId))
@@ -156,7 +156,7 @@ func (m *Impl) RemoveProfile(profileId int) error {
 }
 
 func (m *Impl) GetProfile(profileId int) (*types.ChargingProfile, error) {
-	m.logger.WithField("profile", profileId).Info("Getting a profile")
+	m.logger.With(zap.Int("profile_id", profileId)).Info("Getting a profile")
 
 	var profile types.ChargingProfile
 
@@ -205,7 +205,7 @@ func (m *Impl) GetProfiles() []types.ChargingProfile {
 		return txn.Commit()
 	})
 	if err != nil {
-		log.WithError(err).Error("Error querying for smart charging profiles")
+		m.logger.With(zap.Error(err)).Error("Error querying for smart charging profiles")
 	}
 
 	return profiles

@@ -3,6 +3,7 @@ package settings
 import (
 	"encoding/json"
 	"fmt"
+	"go.uber.org/zap"
 	"sync"
 
 	"github.com/ChargePi/ChargePi-go/internal/pkg/database"
@@ -13,7 +14,6 @@ import (
 	"github.com/dgraph-io/badger/v3"
 	"github.com/go-playground/validator/v10"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -31,8 +31,9 @@ func init() {
 
 func GetManager() Manager {
 	if manager == nil {
-		log.Debug("Creating settings manager")
-		manager = NewManager(database.Get())
+		logger := zap.L()
+		logger.Debug("Creating settings manager")
+		manager = NewManager(logger, database.Get())
 	}
 
 	return manager
@@ -51,7 +52,7 @@ type (
 	Impl struct {
 		db                    *badger.DB
 		ocpp16VariableManager ocpp_v16.Manager
-		logger                log.FieldLogger
+		logger                *zap.Logger
 	}
 )
 
@@ -68,10 +69,10 @@ func (i *Impl) SetOcppV16Manager(manager ocpp_v16.Manager) error {
 	return nil
 }
 
-func NewManager(db *badger.DB) *Impl {
+func NewManager(logger *zap.Logger, db *badger.DB) *Impl {
 	return &Impl{
 		db:     db,
-		logger: log.WithField("component", "settings-manager"),
+		logger: logger.Named("settings_manager"),
 	}
 }
 
@@ -153,7 +154,7 @@ func (i *Impl) GetSettings() (*settings.Settings, error) {
 }
 
 func (i *Impl) GetOcppConfiguration(version ocpp.ProtocolVersion) ([]core.ConfigurationKey, error) {
-	i.logger.WithField("version", version).Debug("Getting OCPP configuration")
+	i.logger.With(zap.Any("version", version)).Debug("Getting OCPP configuration")
 
 	switch version {
 	case ocpp.OCPP16:
@@ -164,7 +165,7 @@ func (i *Impl) GetOcppConfiguration(version ocpp.ProtocolVersion) ([]core.Config
 
 		err = i.ocpp16VariableManager.SetConfiguration(*config)
 		if err != nil {
-			i.logger.WithError(err).Errorf("Error setting the configuration to the manager")
+			i.logger.With(zap.Error(err)).Error("Error setting the configuration to the manager")
 		}
 
 		return i.ocpp16VariableManager.GetConfiguration()
@@ -174,7 +175,7 @@ func (i *Impl) GetOcppConfiguration(version ocpp.ProtocolVersion) ([]core.Config
 }
 
 func (i *Impl) GetOcppConfigurationWithKey(version ocpp.ProtocolVersion, key string) (*core.ConfigurationKey, error) {
-	i.logger.WithField("version", version).Debug("Getting OCPP configuration with key")
+	i.logger.With(zap.Any("version", version), zap.String("key", key)).Debug("Getting OCPP configuration with key")
 
 	switch version {
 	case ocpp.OCPP16:

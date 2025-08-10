@@ -26,7 +26,7 @@ func runCommand() *cobra.Command {
 			mainSettings := configuration.GetSettings()
 
 			// Run the charge point
-			chargepoint.Run(debug, mainSettings)
+			chargepoint.Run(cmd.Context(), debug, mainSettings)
 		},
 	}
 

@@ -3,6 +3,7 @@ package v16
 import (
 	"errors"
 	"fmt"
+	"go.uber.org/zap"
 	"strconv"
 	"time"
 
@@ -14,11 +15,10 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/display"
-	log "github.com/sirupsen/logrus"
 )
 
 func (cp *ChargePoint) OnChangeAvailability(request *core.ChangeAvailabilityRequest) (confirmation *core.ChangeAvailabilityConfirmation, err error) {
-	cp.logger.Infof("Received request %s", request.GetFeatureName())
+	cp.logger.Sugar().Infof("Received request %s", request.GetFeatureName())
 	response := core.AvailabilityStatusRejected
 
 	// This would mean a request to change the availability of the whole charge point
@@ -44,14 +44,14 @@ func (cp *ChargePoint) OnChangeAvailability(request *core.ChangeAvailabilityRequ
 		// todo set evse availability
 		// cp.evseManager.Get
 	default:
-		cp.logger.WithError(sessionErr).Error("Error checking for ongoing transactions ")
+		cp.logger.With(zap.Error(sessionErr)).Error("Error checking for ongoing transactions")
 	}
 
 	return core.NewChangeAvailabilityConfirmation(response), nil
 }
 
 func (cp *ChargePoint) OnChangeConfiguration(request *core.ChangeConfigurationRequest) (confirmation *core.ChangeConfigurationConfirmation, err error) {
-	cp.logger.Infof("Received request %s", request.GetFeatureName())
+	cp.logger.Sugar().Infof("Received request %s", request.GetFeatureName())
 	var response = core.ConfigurationStatusRejected
 
 	// Process the change configuration request
@@ -112,7 +112,7 @@ func (cp *ChargePoint) OnChangeConfiguration(request *core.ChangeConfigurationRe
 }
 
 func (cp *ChargePoint) OnClearCache(request *core.ClearCacheRequest) (confirmation *core.ClearCacheConfirmation, err error) {
-	cp.logger.Infof("Received request %s", request.GetFeatureName())
+	cp.logger.Sugar().Infof("Received request %s", request.GetFeatureName())
 	response := core.ClearCacheStatusRejected
 
 	cacheErr := cp.tagManager.ClearCache()
@@ -124,7 +124,7 @@ func (cp *ChargePoint) OnClearCache(request *core.ClearCacheRequest) (confirmati
 		cp.logger.Info("Cache not enabled")
 		response = core.ClearCacheStatusRejected
 	default:
-		cp.logger.WithError(cacheErr).Warn("Unable to clear cache")
+		cp.logger.With(zap.Error(cacheErr)).Warn("Unable to clear cache")
 		response = core.ClearCacheStatusRejected
 	}
 
@@ -132,7 +132,7 @@ func (cp *ChargePoint) OnClearCache(request *core.ClearCacheRequest) (confirmati
 }
 
 func (cp *ChargePoint) OnDataTransfer(request *core.DataTransferRequest) (confirmation *core.DataTransferConfirmation, err error) {
-	cp.logger.Infof("Received request %s", request.GetFeatureName())
+	cp.logger.Sugar().Infof("Received request %s", request.GetFeatureName())
 	response := core.DataTransferStatusRejected
 
 	// Supporting direct display control over custom data transfer messages, based on the messages in OCPP 2.0.1.
@@ -153,7 +153,7 @@ func (cp *ChargePoint) OnDataTransfer(request *core.DataTransferRequest) (confir
 
 		displayErr := cp.DisplayMessage(req.Message)
 		if displayErr != nil {
-			cp.logger.WithError(displayErr).Warn("Failed to display requested message")
+			cp.logger.With(zap.Error(err)).Warn("Failed to display requested message")
 		}
 	default:
 		response = core.DataTransferStatusUnknownMessageId
@@ -163,7 +163,7 @@ func (cp *ChargePoint) OnDataTransfer(request *core.DataTransferRequest) (confir
 }
 
 func (cp *ChargePoint) OnGetConfiguration(request *core.GetConfigurationRequest) (confirmation *core.GetConfigurationConfirmation, err error) {
-	cp.logger.Infof("Received request %s", request.GetFeatureName())
+	cp.logger.Sugar().Infof("Received request %s", request.GetFeatureName())
 
 	var (
 		unknownKeys []string
@@ -212,7 +212,7 @@ func (cp *ChargePoint) OnGetConfiguration(request *core.GetConfigurationRequest)
 }
 
 func (cp *ChargePoint) OnReset(request *core.ResetRequest) (confirmation *core.ResetConfirmation, err error) {
-	cp.logger.Infof("Received request %s", request.GetFeatureName())
+	cp.logger.Sugar().Infof("Received request %s", request.GetFeatureName())
 	var response = core.ResetStatusRejected
 	var retries = 3
 
@@ -239,13 +239,13 @@ func (cp *ChargePoint) OnReset(request *core.ResetRequest) (confirmation *core.R
 }
 
 func (cp *ChargePoint) OnUnlockConnector(request *core.UnlockConnectorRequest) (confirmation *core.UnlockConnectorConfirmation, err error) {
-	cp.logger.Infof("Received request %s", request.GetFeatureName())
+	cp.logger.Sugar().Infof("Received request %s", request.GetFeatureName())
 	response := core.UnlockStatusNotSupported
 
 	conn, fErr := cp.evseManager.GetEVSE(request.ConnectorId)
 	switch fErr {
 	case nil:
-		cp.logger.Infof("Unlocking connector %d", request.ConnectorId)
+		cp.logger.Sugar().Infof("Unlocking connector %d", request.ConnectorId)
 		response = core.UnlockStatusUnlocked
 		conn.GetEvcc().Unlock()
 	}
@@ -254,20 +254,21 @@ func (cp *ChargePoint) OnUnlockConnector(request *core.UnlockConnectorRequest) (
 }
 
 func (cp *ChargePoint) OnRemoteStopTransaction(request *core.RemoteStopTransactionRequest) (confirmation *core.RemoteStopTransactionConfirmation, err error) {
-	cp.logger.WithField("transactionId", request.TransactionId).Infof("Received request %s", request.GetFeatureName())
+	logger := cp.logger.With(zap.Int("transactionId", request.TransactionId))
+	logger.Sugar().Infof("Received request %s", request.GetFeatureName())
 
 	response := types.RemoteStartStopStatusRejected
 	transactionId := fmt.Sprintf("%d", request.TransactionId)
 
 	session, fErr := cp.sessionManager.GetSessionWithTransactionId(transactionId)
 	if fErr == nil {
-		cp.logger.WithField("transactionId", request.TransactionId).Infof("Stopping transaction")
+		logger.Info("Stopping transaction")
 		response = types.RemoteStartStopStatusAccepted
 
 		// Delay stopping the transaction by 3 seconds
 		_, schedulerErr := cp.scheduler.Every(3).Seconds().LimitRunsTo(1).Do(cp.StopCharging, session.EvseId, session.ConnectorId, core.ReasonRemote)
 		if schedulerErr != nil {
-			cp.logger.WithError(err).Error("Failed to schedule stop charging")
+			logger.With(zap.Error(err)).Error("Failed to schedule stop charging")
 			response = types.RemoteStartStopStatusRejected
 		}
 	}
@@ -277,15 +278,16 @@ func (cp *ChargePoint) OnRemoteStopTransaction(request *core.RemoteStopTransacti
 
 func (cp *ChargePoint) OnRemoteStartTransaction(request *core.RemoteStartTransactionRequest) (confirmation *core.RemoteStartTransactionConfirmation, err error) {
 	var (
-		logInfo = cp.logger.WithFields(log.Fields{
-			"connectorId": request.ConnectorId,
-			"tagId":       request.IdTag,
-		})
+		logger = cp.logger.With(
+			zap.String("featureName", request.GetFeatureName()),
+			zap.String("idTag", request.IdTag),
+			zap.Intp("connectorId", request.ConnectorId),
+		)
 		response = types.RemoteStartStopStatusRejected
 		conn     evse.EVSE
 	)
 
-	logInfo.Infof("Received request %s", request.GetFeatureName())
+	logger.Sugar().Info("Received request %s", request.GetFeatureName())
 
 	// If the connector is specified, check if it exists and is available.
 	if request.ConnectorId != nil {
@@ -295,7 +297,7 @@ func (cp *ChargePoint) OnRemoteStartTransaction(request *core.RemoteStartTransac
 	}
 
 	if err == nil && conn.IsAvailable() {
-		logInfo.Infof("Remote starting transaction")
+		logger.Info("Remote starting transaction")
 
 		// Delay the charging by 3 seconds
 		response = types.RemoteStartStopStatusAccepted
@@ -309,11 +311,10 @@ func (cp *ChargePoint) OnRemoteStartTransaction(request *core.RemoteStartTransac
 }
 
 func (cp *ChargePoint) remoteStart(evseId, connectorId int, tagId string) {
-	logInfo := cp.logger.WithFields(log.Fields{
-		"evseId":      evseId,
-		"connectorId": connectorId,
-		"tagId":       tagId,
-	})
+	logger := cp.logger.With(
+		zap.Int("evseId", evseId),
+		zap.Int("connectorId", connectorId),
+		zap.String("tagId", tagId))
 
 	if cp.availability != core.AvailabilityTypeOperative {
 		return
@@ -321,10 +322,10 @@ func (cp *ChargePoint) remoteStart(evseId, connectorId int, tagId string) {
 
 	authorizeRemoteTx, _ := cp.settingsManager.GetOcppV16Manager().GetConfigurationValue(ocpp_v16.AuthorizeRemoteTxRequests)
 	if authorizeRemoteTx != nil && *authorizeRemoteTx == "true" {
-		logInfo.Info("Authorizing RemoteStart transaction")
+		logger.Info("Authorizing RemoteStart transaction")
 
 		if !cp.isTagAuthorized(tagId) {
-			logInfo.Warn("Tag unauthorized")
+			logger.Warn("Tag unauthorized")
 			return
 		}
 	}
@@ -338,7 +339,7 @@ func (cp *ChargePoint) remoteStart(evseId, connectorId int, tagId string) {
 
 	callback := func(confirmation ocpp.Response, protoError error) {
 		if protoError != nil {
-			logInfo.WithError(protoError).Errorf("Central system responded with an error for %s", confirmation.GetFeatureName())
+			logger.With(zap.Error(protoError)).Sugar().Errorf("Central system responded with an error for %s", confirmation.GetFeatureName())
 			return
 		}
 
@@ -350,15 +351,15 @@ func (cp *ChargePoint) remoteStart(evseId, connectorId int, tagId string) {
 			measurements, sampleInterval := cp.getSessionParameters()
 			err := cp.evseManager.StartCharging(evseId, nil, measurements, sampleInterval)
 			if err != nil {
-				logInfo.WithError(err).Errorf("Unable to start charging connector")
+				logger.With(zap.Error(protoError)).Error("Unable to start charging connector")
 				return
 			}
 
-			logInfo.Infof("Started charging connector at %s", time.Now())
+			logger.Sugar().Infof("Started charging connector at %s", time.Now())
 		case types.AuthorizationStatusBlocked, types.AuthorizationStatusInvalid, types.AuthorizationStatusExpired:
 			fallthrough
 		default:
-			logInfo.Errorf("Transaction unauthorized")
+			logger.Error("Transaction unauthorized")
 		}
 	}
 

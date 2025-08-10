@@ -1,10 +1,10 @@
 package service
 
 import (
+	"go.uber.org/zap/zaptest"
 	"testing"
 
 	mock_database "github.com/ChargePi/ChargePi-go/gen/mocks/users/pkg/database"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -17,7 +17,8 @@ func (s *serviceTestSuite) SetupTest() {
 
 func (s *serviceTestSuite) TestGetUsers() {
 	dbMock := mock_database.NewMockDatabase(s.T())
-	service := NewUserService(dbMock)
+
+	service := NewUserService(zaptest.NewLogger(s.T()), dbMock)
 
 	user, err := service.GetUser("")
 	s.Assert().NoError(err)
@@ -26,7 +27,7 @@ func (s *serviceTestSuite) TestGetUsers() {
 
 func (s *serviceTestSuite) TestAddUser() {
 	dbMock := mock_database.NewMockDatabase(s.T())
-	service := NewUserService(dbMock)
+	service := NewUserService(zaptest.NewLogger(s.T()), dbMock)
 
 	user, err := service.GetUser("")
 	s.Assert().NoError(err)
@@ -35,7 +36,7 @@ func (s *serviceTestSuite) TestAddUser() {
 
 func (s *serviceTestSuite) TestGetUser() {
 	dbMock := mock_database.NewMockDatabase(s.T())
-	service := NewUserService(dbMock)
+	service := NewUserService(zaptest.NewLogger(s.T()), dbMock)
 
 	user, err := service.GetUser("")
 	s.Assert().NoError(err)
@@ -44,7 +45,7 @@ func (s *serviceTestSuite) TestGetUser() {
 
 func (s *serviceTestSuite) TestUpdateUser() {
 	dbMock := mock_database.NewMockDatabase(s.T())
-	service := NewUserService(dbMock)
+	service := NewUserService(zaptest.NewLogger(s.T()), dbMock)
 
 	user, err := service.GetUser("")
 	s.Assert().NoError(err)
@@ -52,6 +53,5 @@ func (s *serviceTestSuite) TestUpdateUser() {
 }
 
 func TestService(t *testing.T) {
-	log.SetLevel(log.DebugLevel)
 	suite.Run(t, new(serviceTestSuite))
 }

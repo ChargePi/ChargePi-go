@@ -3,22 +3,23 @@ package display
 import (
 	"github.com/ChargePi/ChargePi-go/pkg/models/settings"
 	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/display"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 )
 
 type Dummy struct {
-	logger   *log.Logger
+	logger   *zap.Logger
 	settings settings.DisplayDummy
 }
 
-func NewDummy(settings *settings.DisplayDummy) (*Dummy, error) {
+func NewDummy(logger *zap.Logger, settings *settings.DisplayDummy) (*Dummy, error) {
 	return &Dummy{
+		logger:   logger.Named("display_dummy"),
 		settings: *settings,
 	}, nil
 }
 
 func (d *Dummy) DisplayMessage(message display.MessageInfo) {
-	d.logger.WithFields(log.Fields{"message": message}).Info("Displaying message")
+	d.logger.With(zap.Any("message", message)).Info("Displaying message")
 }
 
 func (d *Dummy) Clear() {

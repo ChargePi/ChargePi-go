@@ -3,9 +3,9 @@ package reader
 import (
 	"context"
 	"errors"
+	"go.uber.org/zap"
 
 	"github.com/ChargePi/ChargePi-go/pkg/models/settings"
-	log "github.com/sirupsen/logrus"
 )
 
 // Supported readers - by libnfc
@@ -34,11 +34,12 @@ type Reader interface {
 
 // NewTagReader creates an instance of the Reader interface based on the provided configuration.
 func NewTagReader(reader settings.TagReader) (Reader, error) {
+	logger := zap.L()
 	if reader.IsEnabled {
-		log.Infof("Preparing tag reader from config: %s", reader.ReaderModel)
+		logger.With(zap.String("model", reader.ReaderModel)).Info("Creating new tag reader")
 		switch reader.ReaderModel {
 		case PN532, ACR122, PN533, BR500, R502:
-			return NewReader(reader.PN532.Device, reader.ReaderModel, reader.PN532.ResetPin)
+			return NewReader(logger, reader.PN532.Device, reader.ReaderModel, reader.PN532.ResetPin)
 		case TypeDummy:
 			return NewDummy(reader.DummyReader)
 		default:

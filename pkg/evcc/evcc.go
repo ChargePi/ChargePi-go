@@ -2,6 +2,8 @@ package evcc
 
 import (
 	"context"
+	"errors"
+	"go.uber.org/zap"
 
 	"github.com/ChargePi/ChargePi-go/pkg/models/settings"
 )
@@ -33,12 +35,13 @@ type EVCC interface {
 
 // NewEVCCFromType creates a new EVCC instance based on the provided type.
 func NewEVCCFromType(evccSettings settings.EVCC) (EVCC, error) {
+	logger := zap.L()
 	switch evccSettings.Type {
 	case Relay:
-		return NewRelay(evccSettings.Relay)
+		return NewRelay(logger, evccSettings.Relay)
 	case TypeDummy:
-		return NewDummy(evccSettings.Dummy)
+		return NewDummy(logger, evccSettings.Dummy)
 	default:
-		return nil, nil
+		return nil, errors.New("unsupported EVCC type: " + evccSettings.Type)
 	}
 }

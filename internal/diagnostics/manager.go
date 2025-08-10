@@ -2,6 +2,7 @@ package diagnostics
 
 import (
 	"bytes"
+	"go.uber.org/zap"
 	"net/url"
 	"os"
 	"strings"
@@ -10,7 +11,6 @@ import (
 	"github.com/ChargePi/ChargePi-go/pkg/observability/logging"
 	"github.com/jlaffaye/ftp"
 	"github.com/samber/lo"
-	log "github.com/sirupsen/logrus"
 )
 
 type Manager interface {
@@ -20,13 +20,13 @@ type Manager interface {
 }
 
 type ManagerImpl struct {
-	logger       log.FieldLogger
+	logger       *zap.Logger
 	uploadStatus string
 }
 
-func NewManager() *ManagerImpl {
+func NewManager(logger *zap.Logger) *ManagerImpl {
 	return &ManagerImpl{
-		logger: log.WithField("component", "diagnostics-manager"),
+		logger: logger.Named("diagnostics_manager"),
 	}
 }
 

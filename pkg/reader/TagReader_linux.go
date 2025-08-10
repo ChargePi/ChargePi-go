@@ -6,10 +6,10 @@ package reader
 import (
 	"context"
 	"encoding/hex"
+	"go.uber.org/zap"
 	"time"
 
 	"github.com/clausecker/nfc/v2"
-	log "github.com/sirupsen/logrus"
 	"github.com/warthog618/gpiod"
 )
 
@@ -32,12 +32,14 @@ type TagReader struct {
 	devAddress string
 	resetPin   int
 	deviceType string
+	logger     *zap.Logger
 }
 
-func NewReader(device, deviceType string, resetPin int) (*TagReader, error) {
+func NewReader(logger *zap.Logger, device, deviceType string, resetPin int) (*TagReader, error) {
 	tagChannel := make(chan string, 5)
 
 	return &TagReader{
+		logger:     logger.Named("libnfc_tag_reader"),
 		tagChannel: tagChannel,
 		devAddress: device,
 		resetPin:   resetPin,
@@ -49,13 +51,13 @@ func NewReader(device, deviceType string, resetPin int) (*TagReader, error) {
 func (reader *TagReader) init() {
 	dev, err := nfc.Open(reader.devAddress)
 	if err != nil {
-		log.Panic("Cannot communicate with reader")
+		reader.logger.Panic("Cannot communicate with reader")
 	}
 
 	reader.reader = &dev
 	err = reader.reader.InitiatorInit()
 	if err != nil {
-		log.Panic("Failed to initialize reader")
+		reader.logger.Panic("Failed to initialize reader")
 	}
 }
 
@@ -80,7 +82,7 @@ Listener:
 		default:
 			count, target, err = reader.reader.InitiatorPollTarget(modulations, 1, 300*time.Millisecond)
 			if err != nil {
-				log.WithError(err).Errorf("Error polling the reader")
+				reader.logger.With(zap.Error(err)).Error("Error polling the reader")
 				reader.Reset()
 				continue
 			}
@@ -117,7 +119,7 @@ Listener:
 					UIDLen = len(ID)
 					UID = hex.EncodeToString(ID[:UIDLen])
 				default:
-					log.Warn("NFC modulation unknown")
+					reader.logger.Warn("NFC modulation unknown")
 					continue
 				}
 
@@ -140,32 +142,35 @@ func (reader *TagReader) GetType() string {
 // Cleanup Close the reader device connection.
 func (reader *TagReader) Cleanup() {
 	close(reader.tagChannel)
-	reader.reader.Close()
+	err := reader.reader.Close()
+	if err != nil {
+		reader.logger.With(zap.Error(err)).Error("Error closing the reader")
+	}
 }
 
 // Reset Implements the hardware reset by pulling the resetPin low and then releasing.
 func (reader *TagReader) Reset() {
-	log.Infof("Resetting the reader")
+	reader.logger.Info("Resetting the reader")
 
 	// Refer to gpiod docs
 	c, err := gpiod.NewChip("gpiochip0")
 	pin, err := c.RequestLine(reader.resetPin, gpiod.AsOutput(1))
 	if err != nil {
-		log.WithError(err).Error("Error requesting the reset line")
+		reader.logger.With(zap.Error(err)).Error("Error requesting the reset line")
 		return
 	}
 
 	time.Sleep(time.Millisecond * 300)
 	err = pin.SetValue(0)
 	if err != nil {
-		log.WithError(err).Error("Error requesting the reset line")
+		reader.logger.With(zap.Error(err)).Error("Error requesting the reset line")
 		return
 	}
 
 	time.Sleep(time.Millisecond * 300)
 	err = pin.SetValue(1)
 	if err != nil {
-		log.WithError(err).Error("Error requesting the reset line")
+		reader.logger.With(zap.Error(err)).Error("Error requesting the reset line")
 		return
 	}
 }

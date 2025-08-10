@@ -4,12 +4,12 @@ import (
 	userDatabase "github.com/ChargePi/ChargePi-go/internal/users/pkg/database"
 	"github.com/ChargePi/ChargePi-go/internal/users/pkg/models"
 	"github.com/dgraph-io/badger/v3"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 )
 
 // Initialize the database with default settings.
 func migration(db *badger.DB) {
-	log.Debug("Migrating database")
+	zap.L().Debug("Migrating database")
 
 	userDb := userDatabase.NewUserDb(db)
 	_ = userDb.AddUser(models.User{

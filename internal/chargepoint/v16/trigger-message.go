@@ -1,6 +1,7 @@
 package v16
 
 import (
+	"go.uber.org/zap"
 	"strings"
 	"time"
 
@@ -11,12 +12,11 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/firmware"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/remotetrigger"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
-	log "github.com/sirupsen/logrus"
 )
 
 func (cp *ChargePoint) OnTriggerMessage(request *remotetrigger.TriggerMessageRequest) (confirmation *remotetrigger.TriggerMessageConfirmation, err error) {
-	logInfo := cp.logger.WithFields(log.Fields{"feature": request.GetFeatureName(), "request": request.RequestedMessage})
-	logInfo.Infof("Received a request")
+	logInfo := cp.logger.With(zap.String("feature", remotetrigger.TriggerMessageFeatureName))
+	logInfo.Info("Received a request")
 
 	status := remotetrigger.TriggerMessageStatusRejected
 
@@ -61,7 +61,7 @@ func (cp *ChargePoint) OnTriggerMessage(request *remotetrigger.TriggerMessageReq
 
 		switch request.ConnectorId {
 		case nil:
-			logInfo.Infof("Sending a status update for all connectors")
+			logInfo.Info("Sending a status update for all connectors")
 
 			// Send the status of all connectors after the response
 			defer func() {
@@ -76,7 +76,7 @@ func (cp *ChargePoint) OnTriggerMessage(request *remotetrigger.TriggerMessageReq
 
 		default:
 
-			logInfo.Infof("Sending a status update for a connector")
+			logInfo.Info("Sending a status update for a connector")
 
 			// Send a StatusNotification for a certain connector
 			c, findErr := cp.evseManager.GetEVSE(*request.ConnectorId)

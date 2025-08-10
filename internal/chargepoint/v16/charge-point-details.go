@@ -4,6 +4,7 @@ import (
 	data "github.com/ChargePi/ChargePi-go/pkg/models/ocpp"
 	"github.com/lorenzodonini/ocpp-go/ocpp"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
+	"go.uber.org/zap"
 )
 
 // sendHeartBeat Send a setHeartbeat to the central system.
@@ -15,7 +16,7 @@ func (cp *ChargePoint) sendChargePointInfo() error {
 
 	return cp.sendRequest(dataTransfer, func(confirmation ocpp.Response, protoError error) {
 		if protoError != nil {
-			cp.logger.WithError(protoError).Warn("Error sending data")
+			cp.logger.With(zap.Error(protoError)).Warn("Error sending data")
 			return
 		}
 
@@ -39,24 +40,24 @@ func (cp *ChargePoint) sendEvses() {
 }
 
 func (cp *ChargePoint) SendEVSEsDetails(evseId int, maxPower float32, connectors ...data.Connector) {
-	logInfo := cp.logger.WithField("evseId", evseId)
-	logInfo.Info("Sending EVSE details to the central system")
+	logger := cp.logger.With(zap.Int("evseId", evseId), zap.Float32("maxPower", maxPower))
+	logger.Info("Sending EVSE details to the central system")
 
 	dataTransfer := core.NewDataTransferRequest(cp.info.OCPPDetails.Vendor)
 	dataTransfer.Data = data.NewEvseInfo(evseId, maxPower, connectors...)
 
 	err := cp.sendRequest(dataTransfer, func(confirmation ocpp.Response, protoError error) {
 		if protoError != nil {
-			logInfo.WithError(protoError).Warn("Error sending data")
+			logger.With(zap.Error(protoError)).Warn("Error sending data")
 			return
 		}
 
 		resp := confirmation.(*core.DataTransferConfirmation)
 		if resp.Status == core.DataTransferStatusAccepted {
-			logInfo.Info("Sent additional charge point information")
+			logger.Info("Sent additional charge point information")
 		}
 	})
 	if err != nil {
-		logInfo.WithError(err).Warn("Error sending data")
+		logger.With(zap.Error(err)).Warn("Error sending data")
 	}
 }

@@ -8,14 +8,14 @@ import (
 )
 
 func (cp *ChargePoint) OnGetLocalListVersion(request *localauth.GetLocalListVersionRequest) (confirmation *localauth.GetLocalListVersionConfirmation, err error) {
-	cp.logger.Infof("Received request %s", request.GetFeatureName())
+	cp.logger.Sugar().Infof("Received request %s", request.GetFeatureName())
 	version := cp.tagManager.GetAuthListVersion()
 	res := localauth.NewGetLocalListVersionConfirmation(version)
 	return res, nil
 }
 
 func (cp *ChargePoint) OnSendLocalList(request *localauth.SendLocalListRequest) (confirmation *localauth.SendLocalListConfirmation, err error) {
-	cp.logger.Infof("Received request %s", request.GetFeatureName())
+	cp.logger.Sugar().Infof("Received request %s", request.GetFeatureName())
 
 	res := localauth.UpdateStatusFailed
 

@@ -9,7 +9,7 @@ import (
 )
 
 func (cp *ChargePoint) OnReserveNow(request *reservation.ReserveNowRequest) (confirmation *reservation.ReserveNowConfirmation, err error) {
-	cp.logger.Infof("Received %s for %v", request.GetFeatureName(), request.ConnectorId)
+	cp.logger.Sugar().Infof("Received %s for %v", request.GetFeatureName(), request.ConnectorId)
 
 	err = cp.evseManager.Reserve(request.ConnectorId, nil, request.ReservationId, request.IdTag)
 	switch {
@@ -29,7 +29,7 @@ func (cp *ChargePoint) OnReserveNow(request *reservation.ReserveNowRequest) (con
 }
 
 func (cp *ChargePoint) OnCancelReservation(request *reservation.CancelReservationRequest) (confirmation *reservation.CancelReservationConfirmation, err error) {
-	cp.logger.Infof("Received %s for %v", request.GetFeatureName(), request.ReservationId)
+	cp.logger.Sugar().Infof("Received %s for %v", request.GetFeatureName(), request.ReservationId)
 	status := reservation.CancelReservationStatusAccepted
 
 	err = cp.evseManager.RemoveReservation(request.ReservationId)

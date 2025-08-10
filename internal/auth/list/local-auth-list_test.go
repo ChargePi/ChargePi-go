@@ -2,12 +2,12 @@ package list
 
 import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
+	"go.uber.org/zap/zaptest"
 	"testing"
 	"time"
 
 	"github.com/ChargePi/ChargePi-go/internal/pkg/database"
 	"github.com/ChargePi/ChargePi-go/pkg/util"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -35,7 +35,8 @@ type localAuthListTestSuite struct {
 
 func (s *localAuthListTestSuite) SetupTest() {
 	db := database.Get()
-	s.authList = NewLocalAuthList(db, 10)
+	logger := zaptest.NewLogger(s.T())
+	s.authList = NewLocalAuthList(logger, db, 10)
 }
 
 func (s *localAuthListTestSuite) TestAddTag() {
@@ -110,6 +111,5 @@ func (s *localAuthListTestSuite) TestVersion() {
 }
 
 func TestLocalAuth(t *testing.T) {
-	log.SetLevel(log.DebugLevel)
 	suite.Run(t, new(localAuthListTestSuite))
 }

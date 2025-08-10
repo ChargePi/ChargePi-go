@@ -2,13 +2,13 @@ package i18n
 
 import (
 	"fmt"
+	"go.uber.org/zap"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 
 	"github.com/nicksnyder/go-i18n/v2/i18n"
-	log "github.com/sirupsen/logrus"
 	"golang.org/x/text/language"
 	"gopkg.in/yaml.v3"
 )
@@ -76,7 +76,8 @@ func addDefaultMessage(message i18n.Message) {
 
 // loadTranslations loads all available translations from the translations folder into the bundle.
 func loadTranslations() {
-	log.Debug("Loading translations..")
+	logger := zap.L()
+	logger.Debug("Loading translations..")
 
 	err := filepath.Walk("./hardware/display/i18n/translations", func(path string, info os.FileInfo, err error) error {
 		// Load all active.*.yaml translations into the bundle
@@ -88,7 +89,7 @@ func loadTranslations() {
 	})
 
 	if err != nil {
-		log.Errorf("Error loading translations: %v", err)
+		logger.With(zap.Error(err)).Error("Error loading translations")
 	}
 
 	// Create a matcher based on imported translation files.
@@ -96,6 +97,7 @@ func loadTranslations() {
 }
 
 func loadTranslation(path string, info os.FileInfo) error {
+	logger := zap.L()
 	// active.en.yaml -> en
 	strs := strings.Split(info.Name(), ".")
 	if len(strs) < 2 {
@@ -104,7 +106,7 @@ func loadTranslation(path string, info os.FileInfo) error {
 
 	// The language is second to last
 	lang := strs[len(strs)-2]
-	log.Debugf("loading translation: %s", lang)
+	logger.Sugar().Debugf("loading translation: %s", lang)
 
 	err := addLanguageSupport(lang)
 	if err != nil {

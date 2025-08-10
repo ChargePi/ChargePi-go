@@ -3,6 +3,7 @@ package v16
 import (
 	"context"
 	"errors"
+	"go.uber.org/zap"
 	"time"
 
 	"github.com/ChargePi/ChargePi-go/internal/pkg/models/notifications"
@@ -11,7 +12,6 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
-	log "github.com/sirupsen/logrus"
 )
 
 // restoreState After connecting to the central system, try to restore the previous state of each EVSE and notify
@@ -23,7 +23,7 @@ func (cp *ChargePoint) restoreState() {
 	cp.logger.Info("Restoring charge point state")
 	err := cp.evseManager.RestoreEVSEs()
 	if err != nil {
-		cp.logger.WithError(err).Warn("Unable to restore states")
+		cp.logger.With(zap.Error(err)).Warn("Unable to restore state")
 	}
 }
 
@@ -33,7 +33,7 @@ func (cp *ChargePoint) notifyConnectorStatus(evseId int, status core.ChargePoint
 	request.Timestamp = types.NewDateTime(time.Now())
 
 	callback := func(confirmation ocpp.Response, protoError error) {
-		cp.logger.WithField("evseId", evseId).Infof("Notified status %s of the connector", status)
+		cp.logger.With(zap.Int("evse_id", evseId)).Sugar().Infof("Notified status %s of the connector", status)
 	}
 
 	err := cp.sendRequest(request, callback)
@@ -52,11 +52,10 @@ Listener:
 			status := core.ChargePointStatus(c.Status)
 			errCode := core.ChargePointErrorCode(c.Status)
 
-			logInfo := cp.logger.WithFields(log.Fields{
-				"evseId":  c.EvseId,
-				"status":  status,
-				"errCode": errCode,
-			})
+			logInfo := cp.logger.With(
+				zap.Int("evse_id", c.EvseId),
+				zap.String("status", string(status)),
+				zap.String("error_code", string(errCode)))
 			logInfo.Info("Received evse status update")
 
 			go cp.handleStatusUpdate(ctx, c.EvseId, status)
@@ -65,10 +64,9 @@ Listener:
 			cp.notifyConnectorStatus(c.EvseId, status, errCode)
 
 		case meterVal := <-cp.meterValuesChannel:
-			logInfo := cp.logger.WithFields(log.Fields{
-				"evseId":      meterVal.EvseId,
-				"transaction": meterVal.TransactionId,
-			})
+			logInfo := cp.logger.With(
+				zap.Int("evse_id", meterVal.EvseId))
+			logInfo = logInfo.With(zap.Int("meter_values", len(meterVal.MeterValues)))
 			logInfo.Info("Received meter value update")
 
 			// Send a meter value notification to the Central System
@@ -77,7 +75,7 @@ Listener:
 				logInfo.Info("Sent a meter value update")
 			})
 			if err != nil {
-				logInfo.WithError(err).Errorf("Cannot send meter values")
+				logInfo.With(zap.Error(err)).Error("Cannot send meter values")
 			}
 
 			// todo add plugin/middleware support
@@ -90,21 +88,21 @@ Listener:
 
 // displayStatusChangeOnDisplay sends an update to the Display based on the EVSE status change.
 func (cp *ChargePoint) displayStatusChangeOnDisplay(connectorId int, status core.ChargePointStatus) {
-	logInfo := cp.logger.WithField("connectorId", connectorId).WithField("status", status)
+	logInfo := cp.logger.With(zap.Int("connector", connectorId+1), zap.String("status", string(status)))
 	logInfo.Debug("Updating status on display")
 
 	switch cp.display.GetType() {
 	case display.DriverHD44780:
 		// cp.display.DisplayMessage(connectorId, status)
 	default:
-		cp.logger.Errorf("Display unsupported")
+		cp.logger.Error("Display unsupported")
 	}
 }
 
 // handleStatusUpdate if an EV is connected, ask for authentication, if it was disconnected, stop the transaction.
 func (cp *ChargePoint) handleStatusUpdate(ctx context.Context, evseId int, status core.ChargePointStatus) {
-	logInfo := cp.logger.WithField("evseId", evseId).WithField("status", status)
-	logInfo.Debug("Handling status update")
+	logger := cp.logger.With(zap.Int("evse_id", evseId), zap.String("status", string(status)))
+	logger.Debug("Handling status update")
 
 	cp.indicateStatusChange(evseId-1, status)
 	cp.displayStatusChangeOnDisplay(evseId-1, status)
@@ -137,7 +135,7 @@ func (cp *ChargePoint) handleStatusUpdate(ctx context.Context, evseId int, statu
 		if stopTransactionOnEVDisconnect != nil && *stopTransactionOnEVDisconnect == "true" {
 			stopChargingErr := cp.StopCharging(evseId, 1, core.ReasonEVDisconnected)
 			if stopChargingErr != nil {
-				logInfo.WithError(err).Error("Cannot stop charging")
+				logger.With(zap.Error(err)).Error("Cannot stop charging")
 				// Todo Indicate that the charging hasn't been successfully stopped
 			}
 
@@ -147,7 +145,7 @@ func (cp *ChargePoint) handleStatusUpdate(ctx context.Context, evseId int, statu
 	case core.ChargePointStatusFaulted:
 		err := cp.StopCharging(evseId, 1, core.ReasonEmergencyStop)
 		if err != nil {
-			logInfo.WithError(err).Error("Cannot stop charging")
+			logger.With(zap.Error(err)).Error("Cannot stop charging")
 		}
 	}
 }
@@ -157,8 +155,8 @@ func (cp *ChargePoint) StartChargingFreeMode(evseId int) error {
 		return errors.New("free mode is not enabled")
 	}
 
-	logInfo := cp.logger.WithField("evseId", evseId)
-	logInfo.Info("Free mode enabled, starting charging")
+	logger := cp.logger.With(zap.Int("evse_id", evseId))
+	logger.Info("Free mode enabled, starting charging")
 
 	measurements, sampleInterval := cp.getSessionParameters()
 
@@ -171,8 +169,8 @@ func (cp *ChargePoint) authenticateWithRfidCard(ctx context.Context, evseId int)
 	listenCtx, cancel := context.WithTimeout(ctx, time.Minute)
 	defer cancel()
 
-	logInfo := cp.logger.WithField("evseId", evseId)
-	logInfo.Info("Waiting for the user to tap a tag")
+	logger := cp.logger.With(zap.Int("evse_id", evseId))
+	logger.Info("Waiting for the user to tap a tag")
 
 	tag, err := cp.ListenForTag(listenCtx, cp.tagReader.GetTagChannel())
 	switch {
@@ -180,14 +178,14 @@ func (cp *ChargePoint) authenticateWithRfidCard(ctx context.Context, evseId int)
 		// Tag was found, attempt to start charging
 		err = cp.StartCharging(evseId, 1, *tag)
 		if err != nil {
-			logInfo.WithError(err).Error("Cannot start charging")
+			logger.With(zap.Error(err)).Error("Cannot start charging")
 		}
 
 		// Indicate charging should start
 	case errors.Is(err, context.DeadlineExceeded):
 		// Indicate timeout
 	default:
-		logInfo.WithError(err).Error("Error while listening for tag")
+		logger.With(zap.Error(err)).Error("Error while listening for tag")
 		// Indicate error
 	}
 }

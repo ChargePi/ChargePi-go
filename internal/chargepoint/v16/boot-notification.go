@@ -2,6 +2,7 @@ package v16
 
 import (
 	"fmt"
+	"go.uber.org/zap"
 
 	"github.com/ChargePi/ChargePi-go/internal/pkg/models/charge-point"
 	"github.com/ChargePi/ocppManager-go/ocpp_v16"
@@ -29,7 +30,7 @@ func (cp *ChargePoint) bootNotification() {
 	callback := func(confirmation ocpp.Response, protoError error) {
 		bootConf := confirmation.(*core.BootNotificationConfirmation)
 
-		cp.logger.Infof("Registration status: %s", bootConf.Status)
+		cp.logger.Sugar().Infof("Registration status: %s", bootConf.Status)
 
 		switch bootConf.Status {
 		case core.RegistrationStatusAccepted:
@@ -51,7 +52,7 @@ func (cp *ChargePoint) bootNotification() {
 			// Schedule a new boot notification in 1 minute
 			_, err := cp.scheduler.Every(bootConf.Interval).Seconds().LimitRunsTo(1).Tag("bootNotification").Do(cp.bootNotification)
 			if err != nil {
-				cp.logger.WithError(err).Errorf("Error rescheduling BootNotification")
+				cp.logger.With(zap.Error(err)).Error("Error rescheduling BootNotification")
 			}
 		}
 	}
@@ -72,7 +73,7 @@ func (cp *ChargePoint) setHeartbeat(interval int) {
 
 	_, err = cp.scheduler.Every(fmt.Sprintf("%ss", *heartBeatInterval)).Tag("heartbeat").Do(cp.sendHeartBeat)
 	if err != nil {
-		cp.logger.WithError(err).Errorf("Error scheduling heartbeat")
+		cp.logger.With(zap.Error(err)).Error("Error scheduling heartbeat")
 	}
 }
 

@@ -3,10 +3,10 @@ package evcc
 import (
 	"context"
 	"errors"
+	"go.uber.org/zap"
 
 	"github.com/ChargePi/ChargePi-go/pkg/models/settings"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	log "github.com/sirupsen/logrus"
 	"github.com/warthog618/gpiod"
 )
 
@@ -20,16 +20,17 @@ type RelayAsEvcc struct {
 	state         CarState
 	pin           *gpiod.Line
 	statusChannel chan StateNotification
+	logger        *zap.Logger
 }
 
 // NewRelay creates a new RelayImpl struct that will communicate with the GPIO pin specified.
-func NewRelay(settings *settings.Relay) (*RelayAsEvcc, error) {
+func NewRelay(logger *zap.Logger, settings *settings.Relay) (*RelayAsEvcc, error) {
 	if settings.RelayPin <= 0 {
 		return nil, ErrInvalidPinNumber
 	}
 
-	log.Debugf("Creating new relay at pin %d", settings.RelayPin)
 	relay := RelayAsEvcc{
+		logger:        logger.Named("relay"),
 		relayPin:      settings.RelayPin,
 		inverseLogic:  settings.InverseLogic,
 		statusChannel: make(chan StateNotification, 10),
@@ -39,6 +40,7 @@ func NewRelay(settings *settings.Relay) (*RelayAsEvcc, error) {
 }
 
 func (r *RelayAsEvcc) Init(ctx context.Context) error {
+	r.logger.Debug("Initializing relay")
 	// Refer to gpiod docs
 	c, err := gpiod.NewChip("gpiochip0")
 	if err != nil {
@@ -50,9 +52,11 @@ func (r *RelayAsEvcc) Init(ctx context.Context) error {
 }
 
 func (r *RelayAsEvcc) Lock() {
+	r.logger.Debug("Locking relay")
 }
 
 func (r *RelayAsEvcc) Unlock() {
+	r.logger.Debug("Unlocking relay")
 }
 
 func (r *RelayAsEvcc) GetError() string {
@@ -64,6 +68,7 @@ func (r *RelayAsEvcc) GetState() CarState {
 }
 
 func (r *RelayAsEvcc) EnableCharging() error {
+	r.logger.Debug("Enabling charging")
 	if r.inverseLogic {
 		_ = r.pin.SetValue(0)
 	} else {
@@ -75,6 +80,7 @@ func (r *RelayAsEvcc) EnableCharging() error {
 }
 
 func (r *RelayAsEvcc) DisableCharging() {
+	r.logger.Debug("Disabling charging")
 	if r.inverseLogic {
 		_ = r.pin.SetValue(1)
 	} else {
@@ -96,6 +102,7 @@ func (r *RelayAsEvcc) setState(state CarState, error string) error {
 }
 
 func (r *RelayAsEvcc) SetMaxChargingCurrent(value float64) error {
+	r.logger.Debug("Setting max charging current", zap.Float64("value", value))
 	return nil
 }
 
@@ -104,6 +111,7 @@ func (r *RelayAsEvcc) GetMaxChargingCurrent() float64 {
 }
 
 func (r *RelayAsEvcc) Cleanup() error {
+	r.logger.Debug("Cleaning up relay")
 	return r.pin.Close()
 }
 
@@ -119,4 +127,5 @@ func (r *RelayAsEvcc) SetNotificationChannel(notifications chan StateNotificatio
 }
 
 func (r *RelayAsEvcc) Reset() {
+	r.logger.Debug("Resetting relay")
 }

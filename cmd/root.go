@@ -3,9 +3,9 @@ package cmd
 import (
 	"github.com/ChargePi/ChargePi-go/internal/pkg/models/settings"
 	"github.com/ChargePi/ChargePi-go/pkg/observability/logging"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
 )
 
 var rootCmd = &cobra.Command{
@@ -17,7 +17,8 @@ var rootCmd = &cobra.Command{
 
 func init() {
 	cobra.OnInitialize(func() {
-		logging.Setup(log.StandardLogger(), settings.Logging{}, viper.GetBool(settings.Debug))
+		logger := logging.SetupZap(settings.Logging{}, viper.GetBool(settings.Debug))
+		zap.ReplaceGlobals(logger)
 	})
 
 	rootCmd.AddCommand(runCommand())
@@ -32,6 +33,6 @@ func init() {
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
-		log.WithError(err).Fatal("Unable to run")
+		zap.L().Fatal("Unable to run", zap.Error(err))
 	}
 }

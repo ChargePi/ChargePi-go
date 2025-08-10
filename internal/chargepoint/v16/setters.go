@@ -3,6 +3,7 @@ package v16
 import (
 	"context"
 	"errors"
+	"go.uber.org/zap"
 
 	"github.com/ChargePi/ChargePi-go/internal/pkg/models/charge-point"
 	"github.com/ChargePi/ChargePi-go/internal/pkg/models/settings"
@@ -13,10 +14,9 @@ import (
 	"github.com/ChargePi/ChargePi-go/pkg/reader"
 	"github.com/go-playground/validator/v10"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	log "github.com/sirupsen/logrus"
 )
 
-func (cp *ChargePoint) SetLogger(logger log.FieldLogger) {
+func (cp *ChargePoint) SetLogger(logger *zap.Logger) {
 	cp.logger = logger
 }
 
@@ -25,7 +25,7 @@ func (cp *ChargePoint) SetReader(reader reader.Reader) error {
 		return nil
 	}
 
-	cp.logger.Debugf("Setting reader")
+	cp.logger.Debug("Setting reader")
 	cp.tagReader = reader
 	return nil
 }
@@ -97,7 +97,7 @@ func (cp *ChargePoint) SetIndicatorSettings(settings settings2.IndicatorStatusMa
 }
 
 func (cp *ChargePoint) SetAvailability(availabilityType core.AvailabilityType) error {
-	cp.logger.WithField("availability", availabilityType).Debug("Setting availability")
+	cp.logger.With(zap.Any("availability", availabilityType)).Debug("Setting availability")
 
 	// Check if there are ongoing transactions
 	_, sessionErr := cp.sessionManager.GetSession(0, nil)

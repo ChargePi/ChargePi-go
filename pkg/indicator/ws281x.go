@@ -7,6 +7,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"errors"
+	"go.uber.org/zap"
 	"time"
 
 	ws2811 "github.com/rpi-ws281x/rpi-ws281x-go"
@@ -34,11 +35,12 @@ type WS281x struct {
 	dataPin      int
 	ws2811       *ws2811.WS2811
 	brightness   int
+	logger       *zap.Logger
 }
 
 // NewWS281xStrip create a new LED strip object with the specified number of LEDs and the data pin.
 // When created, it will also be initialized.
-func NewWS281xStrip(numberOfLEDs int, dataPin int) (*WS281x, error) {
+func NewWS281xStrip(logger *zap.Logger, numberOfLEDs int, dataPin int) (*WS281x, error) {
 	if numberOfLEDs <= 0 {
 		return nil, ErrInvalidNumberOfLeds
 	}
@@ -76,6 +78,7 @@ func NewWS281xStrip(numberOfLEDs int, dataPin int) (*WS281x, error) {
 // DisplayColor change the color of the LED at specified index to the specified color.
 // The index must be greater than 0 and less than the length of the LED strip.
 func (ws *WS281x) ChangeColor(index int, color Color) error {
+	ws.logger.Debug("Changing color of LED", zap.Int("index", index), zap.String("color", string(color)))
 	if index < 0 || index > len(ws.ws2811.Leds(0)) {
 		return ErrInvalidIndex
 	}
@@ -87,6 +90,8 @@ func (ws *WS281x) ChangeColor(index int, color Color) error {
 // Blink the LED at index a certain number of times with the specified color. If the number of times the LED is supposed to blink is even, it will stay turned off after the blinking,
 // otherwise it will stay on after the blinking.
 func (ws *WS281x) Blink(index int, times int, color Color) error {
+	ws.logger.Debug("Blinking LED", zap.Int("index", index), zap.Int("times", times), zap.String("color", string(color)))
+
 	if index < 0 || index > len(ws.ws2811.Leds(0)) {
 		return ErrInvalidIndex
 	}
@@ -111,6 +116,7 @@ func (ws *WS281x) Blink(index int, times int, color Color) error {
 
 // Cleanup turn the LEDs off and terminate the data connection.
 func (ws *WS281x) Cleanup() {
+	ws.logger.Debug("Cleaning up WS281x strip")
 	var i = 0
 
 	for ws.numberOfLEDs != i {
@@ -130,6 +136,7 @@ func (ws *WS281x) GetType() string {
 }
 
 func (ws *WS281x) SetBrightness(brightness int) error {
+	ws.logger.Debug("Setting brightness", zap.Int("brightness", brightness))
 	if brightness < 0 || brightness > 100 {
 		return errors.New("brightness must be between 0 and 100")
 	}

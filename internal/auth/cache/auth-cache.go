@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"go.uber.org/zap"
 
 	"github.com/dgraph-io/badger/v3"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/localauth"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
-	log "github.com/sirupsen/logrus"
 )
 
 type (
@@ -22,15 +22,15 @@ type (
 	BadgerCache struct {
 		db      *badger.DB
 		maxTags int
-		logger  log.FieldLogger
+		logger  *zap.Logger
 	}
 )
 
-func NewAuthCache(db *badger.DB) *BadgerCache {
+func NewAuthCache(logger *zap.Logger, db *badger.DB) *BadgerCache {
 	return &BadgerCache{
 		db:      db,
 		maxTags: 0,
-		logger:  log.StandardLogger().WithField("component", "auth-cache"),
+		logger:  logger.Named("auth_cache"),
 	}
 }
 
@@ -40,7 +40,7 @@ func getTagKey(tagId string) []byte {
 
 // AddTag Add a tag to the authorization cache.
 func (c *BadgerCache) AddTag(tagId string, tagInfo *types.IdTagInfo) {
-	logInfo := c.logger.WithField("tagId", tagId)
+	logInfo := c.logger.With(zap.String("tagId", tagId))
 	logInfo.Debug("Adding a tag to cache")
 
 	// Add a tag if it doesn't exist in the cache.
@@ -63,15 +63,15 @@ func (c *BadgerCache) AddTag(tagId string, tagInfo *types.IdTagInfo) {
 		return txn.Commit()
 	})
 	if err != nil {
-		logInfo.WithError(err).Error("Error adding tag to cache")
+		logInfo.With(zap.Error(err)).Error("Error adding tag to cache")
 		return
 	}
 }
 
 // RemoveTag Remove a tag from the authorization cache.
 func (c *BadgerCache) RemoveTag(tagId string) {
-	logInfo := c.logger.WithField("tagId", tagId)
-	logInfo.Debug("Removing a tag from cache")
+	logger := c.logger.With(zap.String("tagId", tagId))
+	logger.Debug("Removing a tag from cache")
 
 	err := c.db.Update(func(txn *badger.Txn) error {
 		err := txn.Delete(getTagKey(tagId))
@@ -82,13 +82,13 @@ func (c *BadgerCache) RemoveTag(tagId string) {
 		return txn.Commit()
 	})
 	if err != nil {
-		logInfo.WithError(err).Error("Error removing tag from cache")
+		logger.With(zap.Error(err)).Error("Error removing tag from cache")
 	}
 }
 
 // RemoveCachedTags Remove all Tags from the authorization cache.
 func (c *BadgerCache) RemoveCachedTags() {
-	log.Debugf("Flushing auth cache")
+	c.logger.Debug("Flushing auth cache")
 
 	// Remove all cached keys from database
 	err := c.db.Update(func(txn *badger.Txn) error {
@@ -106,13 +106,13 @@ func (c *BadgerCache) RemoveCachedTags() {
 		return txn.Commit()
 	})
 	if err != nil {
-		log.WithError(err).Error("Error flushing auth cache")
+		c.logger.With(zap.Error(err)).Error("Error flushing auth cache")
 	}
 }
 
 // SetMaxCachedTags Set the maximum number of Tags allowed in the authorization cache.
 func (c *BadgerCache) SetMaxCachedTags(number int) {
-	c.logger.Debugf("Set max cached tags to %d", number)
+	c.logger.Sugar().Debugf("Set max cached tags to %d", number)
 
 	if number > 0 {
 		c.maxTags = number
@@ -121,8 +121,8 @@ func (c *BadgerCache) SetMaxCachedTags(number int) {
 
 // GetTag Get a tag from cache based on the tag ID.
 func (c *BadgerCache) GetTag(tagId string) (*types.IdTagInfo, error) {
-	logInfo := c.logger.WithField("tagId", tagId)
-	logInfo.Info("Getting a tag from cache")
+	logger := c.logger.With(zap.String("tagId", tagId))
+	logger.Info("Getting a tag from cache")
 
 	var tagInfo localauth.AuthorizationData
 
@@ -146,7 +146,7 @@ func (c *BadgerCache) GetTag(tagId string) (*types.IdTagInfo, error) {
 		return txn.Commit()
 	})
 	if err != nil {
-		logInfo.WithError(err).Errorf("Error getting tag from cache")
+		logger.With(zap.Error(err)).Error("Error getting tag from cache")
 		return nil, err
 	}
 

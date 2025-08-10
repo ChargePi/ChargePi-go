@@ -2,11 +2,11 @@ package database
 
 import (
 	"encoding/json"
+	"go.uber.org/zap"
 	"sync"
 
 	"github.com/ChargePi/ChargePi-go/internal/pkg/models/settings"
 	"github.com/dgraph-io/badger/v3"
-	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -23,7 +23,7 @@ func Get() *badger.DB {
 		// Load/initialize a database for EVSE, tags, users and settings
 		badgerDb, err := badger.Open(opts)
 		if err != nil {
-			log.WithError(err).Panic("Cannot open/create database")
+			zap.L().With(zap.Error(err)).Panic("Cannot open/create database")
 		}
 
 		db = badgerDb
@@ -37,6 +37,7 @@ func Get() *badger.DB {
 
 func GetEvseSettings(db *badger.DB) []settings.EVSE {
 	var evseSettings []settings.EVSE
+	logger := zap.L()
 
 	// Query the database for EVSE settings.
 	err := db.View(func(txn *badger.Txn) error {
@@ -53,7 +54,7 @@ func GetEvseSettings(db *badger.DB) []settings.EVSE {
 				return json.Unmarshal(v, &data)
 			})
 			if err != nil {
-				log.WithError(err).Warnf("Error unmarshalling EVSE settings for %s", item.Key())
+				logger.With(zap.Error(err)).Sugar().Warnf("Error unmarshalling EVSE settings for %s", item.Key())
 				continue
 			}
 
@@ -63,7 +64,7 @@ func GetEvseSettings(db *badger.DB) []settings.EVSE {
 		return txn.Commit()
 	})
 	if err != nil {
-		log.WithError(err).Error("Error querying for EVSE settings")
+		logger.With(zap.Error(err)).Error("Error querying for EVSE settings")
 	}
 
 	return evseSettings

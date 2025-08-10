@@ -2,6 +2,7 @@ package evse
 
 import (
 	"fmt"
+	"go.uber.org/zap"
 	"time"
 
 	"github.com/ChargePi/ChargePi-go/internal/pkg/models/notifications"
@@ -33,20 +34,20 @@ func (evse *Impl) SetPowerMeter(meter powerMeter.PowerMeter) error {
 // SamplePowerMeter Get a sample from the power meter. The measurands argument takes the list of all the types of the measurands to sample.
 // It will add all the samples to the evse's Session if it is active.
 func (evse *Impl) SamplePowerMeter(measurands []types.Measurand) []types.SampledValue {
-	logInfo := evse.logger
+	logger := evse.logger
 
 	if util.IsNilInterfaceOrPointer(evse.powerMeter) {
-		logInfo.Warn("Sampling the power meter unavailable")
+		logger.Warn("Sampling the power meter unavailable")
 		return nil
 	}
 
-	logInfo.Debugf("Sampling EVSE for measurands %v", measurands)
+	logger.Debug("Sampling EVSE for measurands", zap.Any("measurands", measurands))
 
 	var samples []types.SampledValue
 
 	// Get value for each supported measureand
 	for _, measurand := range measurands {
-		logInfo.Debugf("Sampling measurand %v", measurand)
+		logger.Sugar().Debugf("Sampling measurand %v", measurand)
 
 		switch measurand {
 		case types.MeasurandPowerActiveImport, types.MeasurandPowerActiveExport:
@@ -101,7 +102,7 @@ func (evse *Impl) sendMeterValueUpdate(measurands []types.Measurand) {
 
 	// Notify a MeterValue update
 	if evse.meterValuesChannel != nil {
-		evse.logger.Debugf("Sending meter value notification")
+		evse.logger.Debug("Sending meter value notification")
 		evse.meterValuesChannel <- notifications.NewMeterValueNotification(evse.evseId, &evse.evseId, nil, meterValue)
 	}
 }

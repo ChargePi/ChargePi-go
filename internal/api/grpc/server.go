@@ -13,14 +13,14 @@ import (
 	usersv1 "github.com/ChargePi/ChargePi-go/gen/proto/users/v1"
 	"github.com/ChargePi/ChargePi-go/internal/auth"
 	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
-	"github.com/ChargePi/ChargePi-go/internal/pkg/models/charge-point"
+	chargePoint "github.com/ChargePi/ChargePi-go/internal/pkg/models/charge-point"
 	"github.com/ChargePi/ChargePi-go/internal/pkg/models/settings"
 	cfg "github.com/ChargePi/ChargePi-go/internal/pkg/settings"
 	"github.com/ChargePi/ChargePi-go/internal/users/service"
 	grpcmiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpcauth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	grpcrecovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
@@ -53,7 +53,7 @@ func NewServer(
 		// Add TLS if enabled
 		tlsCredentials, err := credentials.NewServerTLSFromFile(settings.TLS.CACertificatePath, settings.TLS.PrivateKeyPath)
 		if err != nil {
-			log.WithError(err).Panic("Failed to fetch credentials")
+			zap.L().Panic("Failed to fetch credentials", zap.Error(err))
 		}
 
 		opts = []grpc.ServerOption{grpc.Creds(tlsCredentials)}
@@ -62,7 +62,7 @@ func NewServer(
 	// Add authentication middleware
 	opts = append(opts, grpc.UnaryInterceptor(grpcmiddleware.ChainUnaryServer(
 		grpcauth.UnaryServerInterceptor(func(ctx context.Context) (context.Context, error) {
-			log.Debug("Authenticating request")
+			zap.L().Debug("Authenticating request")
 			token, err := grpcauth.AuthFromMD(ctx, "basic")
 			if err != nil {
 				return nil, status.Errorf(codes.Unauthenticated, "no basic header found: %v", err)
@@ -99,15 +99,15 @@ func (s *Server) Run() {
 	configurationv1.RegisterConfigurationServiceServer(s.server, s.configurationHandler)
 	connectionv1.RegisterConnectionServiceServer(s.server, s.connectivityHandler)
 
-	log.Infof("Exposing API endpoints at %s", s.address)
+	zap.L().Info("Exposing API endpoints", zap.String("address", s.address))
 
 	listener, err := net.Listen("tcp", s.address)
 	if err != nil {
-		log.WithError(err).Panicf("Unable to listen to provided address: %s", s.address)
+		zap.L().Panic("Unable to listen to provided address", zap.Error(err), zap.String("address", s.address))
 	}
 
 	err = s.server.Serve(listener)
 	if err != nil {
-		log.WithError(err).Panic("Cannot expose API")
+		zap.L().Panic("Cannot expose API", zap.Error(err))
 	}
 }

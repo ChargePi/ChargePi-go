@@ -2,6 +2,7 @@ package v16
 
 import (
 	"fmt"
+	"go.uber.org/zap"
 	"strings"
 	"time"
 
@@ -11,16 +12,11 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/samber/lo"
-	log "github.com/sirupsen/logrus"
 )
 
 func (cp *ChargePoint) StartCharging(evseId, connectorId int, tagId string) error {
-	logInfo := cp.logger.WithFields(log.Fields{
-		"evseId":      evseId,
-		"connectorId": connectorId,
-		"tagId":       tagId,
-	})
-	logInfo.Infof("Starting charging")
+	logger := cp.logger.With(zap.Int("evseId", evseId), zap.Int("connectorId", connectorId), zap.String("tagId", tagId))
+	logger.Info("Starting charging")
 
 	// Charge point must be available to accept transactions
 	if cp.availability != core.AvailabilityTypeOperative {
@@ -43,7 +39,7 @@ func (cp *ChargePoint) StartCharging(evseId, connectorId int, tagId string) erro
 
 	callback := func(confirmation ocpp.Response, protoError error) {
 		if protoError != nil {
-			logInfo.WithError(protoError).Warn("Central system responded with an error for %s", confirmation.GetFeatureName())
+			logger.With(zap.Error(protoError)).Sugar().Warnf("Central system responded with an error for %s", confirmation.GetFeatureName())
 			return
 		}
 
@@ -55,7 +51,7 @@ func (cp *ChargePoint) StartCharging(evseId, connectorId int, tagId string) erro
 
 			err := cp.sessionManager.StartSession(evseId, nil, tagId, transactionId)
 			if err != nil {
-				logInfo.WithError(err).Error("Unable to start a session")
+				logger.With(zap.Error(err)).Error("Unable to start a session")
 				return
 			}
 
@@ -65,21 +61,21 @@ func (cp *ChargePoint) StartCharging(evseId, connectorId int, tagId string) erro
 			// Start the charging on EVSE
 			err = cp.evseManager.StartCharging(evseId, nil, measurands, sampleInterval)
 			if err != nil {
-				logInfo.WithError(err).Error("Unable to start charging on EVSE")
+				logger.With(zap.Error(err)).Error("Unable to start charging on EVSE")
 				return
 			}
 
-			logInfo.Infof("Started charging connector at %s", time.Now())
+			logger.Sugar().Infof("Started charging connector at %s", time.Now())
 		case types.AuthorizationStatusBlocked, types.AuthorizationStatusInvalid, types.AuthorizationStatusExpired:
 			fallthrough
 		default:
-			logInfo.Warn("Transaction unauthorized")
+			logger.Warn("Transaction unauthorized")
 		}
 
 		// Cache the tag
 		err := cp.tagManager.AddTag(tagId, startTransactionConf.IdTagInfo)
 		if err != nil {
-			logInfo.WithError(err).Warn("Unable to cache tag")
+			logger.With(zap.Error(err)).Warn("Unable to cache tag")
 		}
 	}
 

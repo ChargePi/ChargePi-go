@@ -3,6 +3,7 @@ package chargePoint
 import (
 	"context"
 	"errors"
+	"go.uber.org/zap"
 
 	"github.com/ChargePi/ChargePi-go/internal/pkg/models/notifications"
 	"github.com/ChargePi/ChargePi-go/internal/pkg/models/settings"
@@ -13,7 +14,6 @@ import (
 	"github.com/ChargePi/ChargePi-go/pkg/reader"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	ocppDisplay "github.com/lorenzodonini/ocpp-go/ocpp2.0.1/display"
-	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -39,7 +39,7 @@ type ChargePoint interface {
 	ListenForConnectorStatusChange(ctx context.Context, ch <-chan notifications.StatusNotification)
 
 	// Options
-	SetLogger(logger log.FieldLogger)
+	SetLogger(logger *zap.Logger)
 
 	// Display APIs
 	SetDisplay(display display.Display) error

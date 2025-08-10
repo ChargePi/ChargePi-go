@@ -17,8 +17,8 @@ import (
 	"github.com/ChargePi/ChargePi-go/pkg/reader"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/display"
-	"github.com/sirupsen/logrus"
 	mock "github.com/stretchr/testify/mock"
+	"go.uber.org/zap"
 )
 
 // NewMockChargePoint creates a new instance of MockChargePoint. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
@@ -927,7 +927,7 @@ func (_c *MockChargePoint_SetIndicatorSettings_Call) RunAndReturn(run func(setti
 }
 
 // SetLogger provides a mock function for the type MockChargePoint
-func (_mock *MockChargePoint) SetLogger(logger logrus.FieldLogger) {
+func (_mock *MockChargePoint) SetLogger(logger *zap.Logger) {
 	_mock.Called(logger)
 	return
 }
@@ -938,16 +938,16 @@ type MockChargePoint_SetLogger_Call struct {
 }
 
 // SetLogger is a helper method to define mock.On call
-//   - logger logrus.FieldLogger
+//   - logger *zap.Logger
 func (_e *MockChargePoint_Expecter) SetLogger(logger interface{}) *MockChargePoint_SetLogger_Call {
 	return &MockChargePoint_SetLogger_Call{Call: _e.mock.On("SetLogger", logger)}
 }
 
-func (_c *MockChargePoint_SetLogger_Call) Run(run func(logger logrus.FieldLogger)) *MockChargePoint_SetLogger_Call {
+func (_c *MockChargePoint_SetLogger_Call) Run(run func(logger *zap.Logger)) *MockChargePoint_SetLogger_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 logrus.FieldLogger
+		var arg0 *zap.Logger
 		if args[0] != nil {
-			arg0 = args[0].(logrus.FieldLogger)
+			arg0 = args[0].(*zap.Logger)
 		}
 		run(
 			arg0,
@@ -961,7 +961,7 @@ func (_c *MockChargePoint_SetLogger_Call) Return() *MockChargePoint_SetLogger_Ca
 	return _c
 }
 
-func (_c *MockChargePoint_SetLogger_Call) RunAndReturn(run func(logger logrus.FieldLogger)) *MockChargePoint_SetLogger_Call {
+func (_c *MockChargePoint_SetLogger_Call) RunAndReturn(run func(logger *zap.Logger)) *MockChargePoint_SetLogger_Call {
 	_c.Run(run)
 	return _c
 }

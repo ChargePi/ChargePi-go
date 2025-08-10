@@ -1,6 +1,7 @@
 package v16
 
 import (
+	"go.uber.org/zap/zaptest"
 	"testing"
 	"time"
 
@@ -8,7 +9,6 @@ import (
 	"github.com/ChargePi/ChargePi-go/internal/pkg/scheduler"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/remotetrigger"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -19,7 +19,7 @@ type triggerMessageTestSuite struct {
 
 func (s *triggerMessageTestSuite) SetupTest() {
 	s.cp = &ChargePoint{
-		logger:    log.StandardLogger(),
+		logger:    zaptest.NewLogger(s.T()),
 		scheduler: scheduler.NewScheduler(),
 	}
 	s.cp.scheduler.Clear()

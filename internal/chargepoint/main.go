@@ -2,15 +2,13 @@ package chargepoint
 
 import (
 	"context"
-	"os"
-	"os/signal"
 	"time"
 
 	"github.com/ChargePi/ChargePi-go/internal/auth"
 	"github.com/ChargePi/ChargePi-go/internal/diagnostics"
 	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
 	"github.com/ChargePi/ChargePi-go/internal/pkg/database"
-	"github.com/ChargePi/ChargePi-go/internal/pkg/models/charge-point"
+	chargePoint "github.com/ChargePi/ChargePi-go/internal/pkg/models/charge-point"
 	"github.com/ChargePi/ChargePi-go/internal/pkg/models/settings"
 	cfg "github.com/ChargePi/ChargePi-go/internal/pkg/settings"
 	"github.com/ChargePi/ChargePi-go/internal/pkg/util"
@@ -18,16 +16,17 @@ import (
 	"github.com/ChargePi/ChargePi-go/internal/sessions/service/session"
 	"github.com/ChargePi/ChargePi-go/pkg/observability/logging"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 )
 
-func Run(debug bool, config *settings.Settings) {
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
-	defer cancel()
-
+func Run(ctx context.Context, debug bool, config *settings.Settings) {
 	// Create a logger
-	logger := log.StandardLogger()
-	logging.Setup(logger, config.ChargePoint.Logging, debug)
+	logger := logging.SetupZap(config.ChargePoint.Logging, debug)
+	zap.ReplaceGlobals(logger)
+	defer logging.Sync(logger)
+
+	// Create named loggers for components
+	evseLogger := logger.Named("evse")
 
 	var (
 		handler            chargePoint.ChargePoint
@@ -44,15 +43,15 @@ func Run(debug bool, config *settings.Settings) {
 	settingsManager := cfg.GetManager()
 
 	evseManager := manager.GetManager()
-	diagnosticsManager := diagnostics.NewManager()
-	tagManager := auth.NewTagManager(db)
-	sessionRepository := database2.NewSessionBadgerDb(db)
-	sessionManager := session.NewSessionManager(sessionRepository)
+	diagnosticsManager := diagnostics.NewManager(logger)
+	tagManager := auth.NewTagManager(logger, db)
+	sessionRepository := database2.NewSessionBadgerDb(logger, db)
+	sessionManager := session.NewSessionManager(logger, sessionRepository)
 
 	// Initialize all the EVSEs
 	err := evseManager.InitAll(ctx)
 	if err != nil {
-		logger.WithError(err).Fatal("Cannot add EVSEs")
+		evseLogger.Fatal("Cannot add EVSEs", zap.Error(err))
 	}
 
 	// Create a context for the OCPP connection, so it can be dynamically reconnected.
@@ -60,15 +59,16 @@ func Run(debug bool, config *settings.Settings) {
 	defer parentCancel()
 
 	// Set the settings
+
 	handler = CreateChargePoint(parentCtxForOcpp, protocolVersion, logger, evseManager, tagManager, sessionManager, settingsManager, diagnosticsManager, hardware)
 	err = handler.SetSettings(chargePointInfo)
 	if err != nil {
-		logger.WithError(err).Fatal("Unable to set the charge point settings")
+		logger.Fatal("Unable to set the charge point settings", zap.Error(err))
 	}
 
 	err = handler.SetConnectionSettings(connectionSettings)
 	if err != nil {
-		logger.WithError(err).Fatal("Unable to set the connection settings")
+		logger.Fatal("Unable to set the connection settings", zap.Error(err))
 	}
 
 	// Listen for connector status changes

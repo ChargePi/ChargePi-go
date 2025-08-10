@@ -4,10 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
-	log "github.com/sirupsen/logrus"
 	"github.com/warthog618/gpiod"
+	"go.uber.org/zap"
 	"periph.io/x/conn/v3/spi"
 	"periph.io/x/conn/v3/spi/spireg"
 	"periph.io/x/host/v3"
@@ -68,10 +67,11 @@ type C5460A struct {
 	voltageMultiplier    float64
 	currentMultiplier    float64
 	powerMultiplier      float64
+	logger               *zap.Logger
 }
 
 // NewCS5460PowerMeter creates a concrete implementation for the CS5460A chip for the charging station.
-func NewCS5460PowerMeter(enablePin int, spiBus int, voltageDividerOffset float64, shuntOffset float64) (*C5460A, error) {
+func NewCS5460PowerMeter(logger *zap.Logger, enablePin int, spiBus int, voltageDividerOffset float64, shuntOffset float64) (*C5460A, error) {
 	if enablePin <= 0 {
 		return nil, errors.New("pin cannot be negative")
 	}
@@ -81,6 +81,7 @@ func NewCS5460PowerMeter(enablePin int, spiBus int, voltageDividerOffset float64
 	}
 
 	var powerMeter = C5460A{
+		logger:               logger.Named("cs5460a"),
 		pin:                  enablePin,
 		bus:                  spiBus,
 		voltageDividerOffset: voltageDividerOffset,
@@ -95,6 +96,7 @@ func NewCS5460PowerMeter(enablePin int, spiBus int, voltageDividerOffset float64
 
 // Init prepares the CS5460A chip and SPI communication with the Chip.
 func (receiver *C5460A) Init(ctx context.Context) error {
+	receiver.logger.Info("Initializing CS5460A")
 	if _, err := host.Init(); err != nil {
 		return err
 	}
@@ -134,7 +136,7 @@ func (receiver *C5460A) sendBytes(payload []byte) {
 
 	err := receiver.spiConnection.TxPackets(p)
 	if err != nil {
-		log.WithError(err).Error("Cannot transmit to the power meter")
+		receiver.logger.With(zap.Error(err)).Error("Cannot transmit to the power meter")
 	}
 
 	_ = receiver.chipSelect.SetValue(1)
@@ -162,7 +164,7 @@ func (receiver *C5460A) sendToRegister(register byte, data int32) {
 
 	err := receiver.spiConnection.TxPackets(p)
 	if err != nil {
-		log.WithError(err).Error("Cannot transmit to the power meter")
+		receiver.logger.With(zap.Error(err)).Error("Cannot transmit to the power meter")
 	}
 
 	_ = receiver.chipSelect.SetValue(1)
@@ -185,7 +187,7 @@ func (receiver *C5460A) readFromRegister(register int32) int32 {
 
 	err := receiver.spiConnection.TxPackets(p)
 	if err != nil {
-		log.WithError(err).Error("Cannot transmit to the power meter")
+		receiver.logger.With(zap.Error(err)).Error("Cannot transmit to the power meter")
 	}
 
 	var value int32 = 0x0
@@ -225,6 +227,7 @@ func (receiver *C5460A) stopConverting() {
 }
 
 func (receiver *C5460A) Reset() {
+	receiver.logger.Info("Resetting CS5460A")
 	receiver.sendToRegister(ConfigRegister, ChipReset)
 	receiver.sendSync()
 }
@@ -344,9 +347,11 @@ func (receiver *C5460A) GetType() string {
 }
 
 func (receiver *C5460A) Cleanup() {
+	receiver.logger.Info("Cleaning up CS5460A")
+
 	err := receiver.chipSelect.Close()
 	if err != nil {
-		log.WithError(err).Error("Cannot close chip select")
+		receiver.logger.With(zap.Error(err)).Error("Cannot close chip select")
 	}
 }
 

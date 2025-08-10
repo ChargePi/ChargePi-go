@@ -1,6 +1,7 @@
 package v16
 
 import (
+	"go.uber.org/zap"
 	"time"
 
 	"github.com/ChargePi/ocppManager-go/ocpp_v16"
@@ -15,13 +16,13 @@ func (cp *ChargePoint) isTagAuthorized(tagId string) bool {
 	var (
 		response             = false
 		localPreAuthorize, _ = cp.settingsManager.GetOcppV16Manager().GetConfigurationValue(ocpp_v16.LocalPreAuthorize)
-		logInfo              = cp.logger.WithField("tag", tagId)
+		logInfo              = cp.logger.With(zap.String("tag", tagId))
 	)
 
 	// When local authorization is enabled, get the tag details from the cache or authList before requesting the
 	// tag details from the backend.
 	if localPreAuthorize != nil && *localPreAuthorize == "true" {
-		logInfo.Infof("Authorizing tag %s with cache", tagId)
+		logInfo.Info("Authorizing tag with cache")
 
 		tag, err := cp.tagManager.GetTag(tagId)
 		if err != nil {
@@ -57,20 +58,20 @@ Skip:
 		response = true
 	}
 
-	logInfo.Debugf("Tag authorization result: %v", response)
+	logInfo.With(zap.Bool("authorized", response)).Debug("Authorization status of the tag")
 	return response
 }
 
 // sendAuthorizeRequest Send a AuthorizeRequest to the central system to get information on the tag status.
 // Adds the tag to the cache and/or localAuthList if it's enabled.
 func (cp *ChargePoint) sendAuthorizeRequest(tagId string) (*types.IdTagInfo, error) {
-	logInfo := cp.logger.WithField("tag", tagId)
+	logInfo := cp.logger.With(zap.String("tag", tagId))
 	logInfo.Info("Authorizing the tag with the central system")
 
 	// Authorize the tag with the backend.
 	response, err := cp.chargePoint.SendRequest(core.NewAuthorizationRequest(tagId))
 	if err != nil {
-		logInfo.WithError(err).Error("Tag authorization with the central system failed")
+		logInfo.With(zap.Error(err)).Error("Tag authorization with the central system failed")
 
 		// An error occurred probably due network issues.
 		// If LocalAuthOffline is enabled, try to authenticate from cache or localAuthList.
