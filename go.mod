@@ -20,7 +20,6 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/lorenzodonini/ocpp-go v0.19.0
-	github.com/mandrigin/gin-spa v0.0.0-20200212133200-790d0c0c7335
 	github.com/nicksnyder/go-i18n/v2 v2.6.0
 	github.com/op/go-logging v0.0.0-20160315200505-970db520ece7 // indirect
 	github.com/rpi-ws281x/rpi-ws281x-go v1.0.10
@@ -31,21 +30,27 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/tavsec/gin-healthcheck v1.7.9
 	github.com/warthog618/gpiod v0.8.2
-	golang.org/x/net v0.42.0
+	golang.org/x/net v0.42.0 // indirect
 	golang.org/x/text v0.27.0
 	google.golang.org/grpc v1.74.2
 	google.golang.org/protobuf v1.36.6
-	gopkg.in/yaml.v3 v3.0.1
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 	periph.io/x/conn/v3 v3.7.2
 	periph.io/x/host/v3 v3.8.5
 )
 
 require (
+	github.com/ChargePi/ocpp-manager v1.3.0
 	github.com/ChargePi/ocppManager-go v1.2.0
+	github.com/emirpasic/gods v1.18.1
+	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.2
 	github.com/jlaffaye/ftp v0.2.0
+	github.com/madflojo/testcerts v1.4.0
+	github.com/orandin/lumberjackrus v1.0.1
 	github.com/pkg/errors v0.9.1
 	go.uber.org/zap v1.27.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
+	github.com/warthog618/go-gpiocdev v0.9.1
 )
 
 require (
@@ -64,7 +69,6 @@ require (
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
 	github.com/gin-contrib/sse v1.0.0 // indirect
-	github.com/gin-gonic/contrib v0.0.0-20221130124618-7e01895a63f2 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-viper/mapstructure/v2 v2.3.0 // indirect

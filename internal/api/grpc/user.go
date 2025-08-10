@@ -2,19 +2,18 @@ package grpc
 
 import (
 	"context"
-
 	grpc "github.com/ChargePi/ChargePi-go/gen/proto/users/v1"
-	"github.com/ChargePi/ChargePi-go/internal/users/pkg/models"
-	"github.com/ChargePi/ChargePi-go/internal/users/service"
+	"github.com/ChargePi/ChargePi-go/internal/users"
+	"github.com/ChargePi/ChargePi-go/internal/users/models"
 	"github.com/golang/protobuf/ptypes/empty"
 )
 
 type UserHandler struct {
 	grpc.UnimplementedUserServiceServer
-	userService service.Service
+	userService users.Service
 }
 
-func NewUserHandler(userService service.Service) *UserHandler {
+func NewUserHandler(userService users.Service) *UserHandler {
 	return &UserHandler{
 		userService: userService,
 	}

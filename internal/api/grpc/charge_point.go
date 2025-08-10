@@ -4,21 +4,18 @@ import (
 	"context"
 
 	grpc "github.com/ChargePi/ChargePi-go/gen/proto/charge_point/v1"
-	"github.com/ChargePi/ChargePi-go/internal/pkg/models/charge-point"
-	cfg "github.com/ChargePi/ChargePi-go/internal/pkg/settings"
+	"github.com/ChargePi/ChargePi-go/internal/chargepoint"
 	"github.com/golang/protobuf/ptypes/empty"
 )
 
 type ChargePointHandler struct {
 	grpc.UnimplementedChargePointServiceServer
-	point           chargePoint.ChargePoint
-	settingsManager cfg.Manager
+	point chargepoint.ChargePoint
 }
 
-func NewChargePointService(point chargePoint.ChargePoint, settingsManager cfg.Manager) *ChargePointHandler {
+func NewChargePointService(point chargepoint.ChargePoint) *ChargePointHandler {
 	return &ChargePointHandler{
-		point:           point,
-		settingsManager: settingsManager,
+		point: point,
 	}
 }
 

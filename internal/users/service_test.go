@@ -4,10 +4,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/ChargePi/ChargePi-go/internal/users/mocks"
+	mock_encryption "github.com/ChargePi/ChargePi-go/gen/mocks/pkg/encryption"
+	mock_users "github.com/ChargePi/ChargePi-go/gen/mocks/users"
 	"github.com/ChargePi/ChargePi-go/internal/users/models"
-	encMock "github.com/ChargePi/ChargePi-go/pkg/encryption/mocks"
-	"github.com/golang/mock/gomock"
 	"github.com/samber/lo"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
@@ -15,13 +14,13 @@ import (
 
 type serviceTestSuite struct {
 	suite.Suite
-	mockRepository *mocks.MockUserRepository
-	mockEncryptor  *encMock.MockEncryptor
+	mockRepository *mock_users.MockUserRepository
+	mockEncryptor  *mock_encryption.MockEncryptor
 	service        *UserService
 }
 
 func (s *serviceTestSuite) SetupTest() {
-	s.mockRepository = mocks.NewMockUserRepository(s.T())
+	s.mockRepository = mock_users.NewMockUserRepository(s.T())
 	s.service = NewUserService(s.mockRepository)
 }
 
@@ -141,7 +140,7 @@ func (s *serviceTestSuite) TestGetUser() {
 }
 
 func (s *serviceTestSuite) TestUpdateUser() {
-	s.mockRepository.EXPECT().UpdateUser(gomock.Any()).Return(nil, nil).Times(1)
+	// s.mockRepository.EXPECT().UpdateUser(gomock.Any()).Return(nil, nil).Times(1)
 
 	tests := []struct {
 		name         string

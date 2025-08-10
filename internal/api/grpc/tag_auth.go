@@ -12,10 +12,10 @@ import (
 
 type AuthService struct {
 	tagsv1.UnimplementedTagServiceServer
-	tagManager auth.Manager
+	tagManager auth.Service
 }
 
-func NewAuthService(tagManager auth.Manager) *AuthService {
+func NewAuthService(tagManager auth.Service) *AuthService {
 	return &AuthService{
 		tagManager: tagManager,
 	}
@@ -77,7 +77,7 @@ func (s *AuthService) RemoveAuthorizedCard(ctx context.Context, request *tagsv1.
 		return response, nil
 	}
 
-	response.Status = grpc.ResponseStatus_Success
+	response.Status = "Success"
 	return response, nil
 }
 

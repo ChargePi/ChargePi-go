@@ -3,7 +3,6 @@ package grpc
 import (
 	"testing"
 
-	grpc2 "github.com/ChargePi/ChargePi-go/pkg/proto/v1/grpc"
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/test/bufconn"
@@ -35,8 +34,6 @@ func (s *tagAuthTestSuite) TearDownSuite() {
 
 func (s *tagAuthTestSuite) SetupTest() {
 	// Recreate mocks before each test
-	authService := NewTagAuthService(nil)
-	grpc2.RegisterTagServer(s.server, authService)
 }
 
 func (s *tagAuthTestSuite) TestGetAuthorizedCards() {

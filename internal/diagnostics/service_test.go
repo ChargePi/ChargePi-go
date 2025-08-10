@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ChargePi/ChargePi-go/internal/diagnostics/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -15,8 +14,8 @@ import (
 
 type serviceTestSuite struct {
 	suite.Suite
-	mockUploader *mocks.Mockuploader
-	service      *ServiceV1
+	// mockUploader *mock_diagnostics.Mockuploader
+	service *ServiceV1
 }
 
 func (s *serviceTestSuite) SetupTest() {

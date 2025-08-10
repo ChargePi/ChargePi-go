@@ -7,7 +7,7 @@ import (
 
 	"github.com/ChargePi/ChargePi-go/internal/evse"
 	"github.com/ChargePi/ChargePi-go/internal/pkg/notifications"
-	"github.com/ChargePi/ocppManager-go/ocpp_v16"
+	"github.com/ChargePi/ocpp-manager/ocpp_v16"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/firmware"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/remotetrigger"

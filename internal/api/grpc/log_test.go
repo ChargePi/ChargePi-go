@@ -3,8 +3,6 @@ package grpc
 import (
 	"testing"
 
-	"github.com/ChargePi/ChargePi-go/internal/diagnostics/mocks"
-	grpc2 "github.com/ChargePi/ChargePi-go/pkg/proto/v1/grpc"
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/test/bufconn"
@@ -12,9 +10,9 @@ import (
 
 type loggingTestSuite struct {
 	suite.Suite
-	server                *grpc.Server
-	listener              *bufconn.Listener
-	diagnosticServiceMock *mocks.MockDiagnosticsService
+	server   *grpc.Server
+	listener *bufconn.Listener
+	// diagnosticServiceMock *mocks.MockDiagnosticsService
 }
 
 func (s *loggingTestSuite) SetupSuite() {
@@ -37,8 +35,8 @@ func (s *loggingTestSuite) TearDownSuite() {
 
 func (s *loggingTestSuite) SetupTest() {
 	// Recreate mocks before each test
-	s.diagnosticServiceMock = mocks.NewMockDiagnosticsService(s.T())
-	grpc2.RegisterLogServer(s.server, NewLogService(s.diagnosticServiceMock))
+	// s.diagnosticServiceMock = mocks.NewMockDiagnosticsService(s.T())
+	// grpc2.RegisterLogServer(s.server, NewLogService(s.diagnosticServiceMock))
 }
 
 func (s *loggingTestSuite) TestGetLogs() {

@@ -10,9 +10,9 @@ import (
 	"github.com/ChargePi/ChargePi-go/internal/evse"
 	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
 	"github.com/ChargePi/ChargePi-go/internal/pkg/configuration"
-	manager2 "github.com/ChargePi/ChargePi-go/internal/pkg/configuration/manager"
+	settingsManager "github.com/ChargePi/ChargePi-go/internal/pkg/configuration/manager"
 	"github.com/ChargePi/ChargePi-go/pkg/ocpp"
-	"github.com/ChargePi/ocppManager-go/ocpp_v16"
+	"github.com/ChargePi/ocpp-manager/ocpp_v16"
 	"github.com/go-playground/validator/v10"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -30,7 +30,7 @@ type Importer interface {
 }
 
 type ImporterImpl struct {
-	settingsManager         manager2.Manager
+	settingsManager         settingsManager.Manager
 	viper                   *viper.Viper
 	evseSettingsRepository  manager.EvseSettingsRepository
 	localAuthListRepository auth.LocalAuthListRepository
@@ -38,7 +38,7 @@ type ImporterImpl struct {
 }
 
 func NewImporter(
-	settingsManager manager2.Manager,
+	settingsManager settingsManager.Manager,
 	evseSettingsRepository manager.EvseSettingsRepository,
 	localAuthListRepository auth.LocalAuthListRepository,
 ) *ImporterImpl {

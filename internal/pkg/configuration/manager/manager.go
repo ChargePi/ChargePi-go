@@ -3,7 +3,7 @@ package manager
 import (
 	"github.com/ChargePi/ChargePi-go/internal/chargepoint"
 	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
-	"github.com/ChargePi/ocppManager-go/ocpp_v16"
+	"github.com/ChargePi/ocpp-manager/ocpp_v16"
 	"github.com/go-playground/validator/v10"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	log "github.com/sirupsen/logrus"

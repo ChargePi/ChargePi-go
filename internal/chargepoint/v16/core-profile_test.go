@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/ChargePi/ChargePi-go/internal/pkg/scheduler"
-	"github.com/ChargePi/ocppManager-go/ocpp_v16"
+	"github.com/ChargePi/ocpp-manager/ocpp_v16"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/stretchr/testify/suite"

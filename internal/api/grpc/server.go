@@ -21,7 +21,7 @@ import (
 	grpcmiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpcauth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
 	grpcrecovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
-	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
+	logging "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -94,8 +94,8 @@ func NewServer(
 		address:              settings.Address,
 		evseHandler:          NewEvseHandler(manager),
 		authHandler:          NewAuthService(authCache),
-		chargePointHandler:   NewChargePointService(point, settingsManager),
-		logHandler:           NewLogHandler(nil),
+		chargePointHandler:   NewChargePointService(point),
+		logHandler:           NewLogHandler(),
 		userHandler:          NewUserHandler(userService),
 		configurationHandler: NewConfigurationHandler(settingsManager),
 		connectivityHandler:  NewConnectivityHandler(),

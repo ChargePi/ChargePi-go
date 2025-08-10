@@ -12,7 +12,7 @@ import (
 	chargePoint "github.com/ChargePi/ChargePi-go/internal/chargepoint"
 	"github.com/ChargePi/ChargePi-go/internal/diagnostics"
 	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
-	"github.com/ChargePi/ChargePi-go/internal/networking"
+	// "github.com/ChargePi/ChargePi-go/internal/networking"
 	settings "github.com/ChargePi/ChargePi-go/internal/pkg/configuration/manager"
 	"github.com/ChargePi/ChargePi-go/internal/pkg/notifications"
 	"github.com/ChargePi/ChargePi-go/internal/pkg/scheduler"
@@ -21,7 +21,7 @@ import (
 	"github.com/ChargePi/ChargePi-go/pkg/hardware/indicator"
 	"github.com/ChargePi/ChargePi-go/pkg/hardware/reader"
 	"github.com/ChargePi/ChargePi-go/pkg/util"
-	"github.com/ChargePi/ocppManager-go/ocpp_v16"
+	"github.com/ChargePi/ocpp-manager/ocpp_v16"
 	"github.com/avast/retry-go"
 	"github.com/go-co-op/gocron"
 	"github.com/lorenzodonini/ocpp-go/ocpp"
@@ -45,7 +45,7 @@ type ChargePoint struct {
 	settingsManager    settings.Manager
 	info               chargePoint.Info
 	connectionSettings chargePoint.ConnectionSettings
-	modem              networking.Modem
+	// modem              networking.Modem
 
 	// Hardware components
 	tagReader        reader.Reader

@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/ChargePi/ChargePi-go/internal/auth"
-	"github.com/ChargePi/ocppManager-go/ocpp_v16"
+	"github.com/ChargePi/ocpp-manager/ocpp_v16"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/pkg/errors"

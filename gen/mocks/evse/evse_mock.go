@@ -7,10 +7,10 @@ package mock_evse
 import (
 	"context"
 
-	"github.com/ChargePi/ChargePi-go/internal/pkg/models/notifications"
-	"github.com/ChargePi/ChargePi-go/internal/pkg/models/settings"
-	"github.com/ChargePi/ChargePi-go/pkg/evcc"
-	"github.com/ChargePi/ChargePi-go/pkg/power-meter"
+	"github.com/ChargePi/ChargePi-go/internal/evse"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/notifications"
+	"github.com/ChargePi/ChargePi-go/pkg/hardware/evcc"
+	"github.com/ChargePi/ChargePi-go/pkg/hardware/power-meter"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	mock "github.com/stretchr/testify/mock"
@@ -44,7 +44,7 @@ func (_m *MockEVSE) EXPECT() *MockEVSE_Expecter {
 }
 
 // AddConnector provides a mock function for the type MockEVSE
-func (_mock *MockEVSE) AddConnector(connector settings.Connector) error {
+func (_mock *MockEVSE) AddConnector(connector evse.ConnectorSettings) error {
 	ret := _mock.Called(connector)
 
 	if len(ret) == 0 {
@@ -52,7 +52,7 @@ func (_mock *MockEVSE) AddConnector(connector settings.Connector) error {
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(settings.Connector) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(evse.ConnectorSettings) error); ok {
 		r0 = returnFunc(connector)
 	} else {
 		r0 = ret.Error(0)
@@ -66,16 +66,16 @@ type MockEVSE_AddConnector_Call struct {
 }
 
 // AddConnector is a helper method to define mock.On call
-//   - connector settings.Connector
+//   - connector evse.ConnectorSettings
 func (_e *MockEVSE_Expecter) AddConnector(connector interface{}) *MockEVSE_AddConnector_Call {
 	return &MockEVSE_AddConnector_Call{Call: _e.mock.On("AddConnector", connector)}
 }
 
-func (_c *MockEVSE_AddConnector_Call) Run(run func(connector settings.Connector)) *MockEVSE_AddConnector_Call {
+func (_c *MockEVSE_AddConnector_Call) Run(run func(connector evse.ConnectorSettings)) *MockEVSE_AddConnector_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 settings.Connector
+		var arg0 evse.ConnectorSettings
 		if args[0] != nil {
-			arg0 = args[0].(settings.Connector)
+			arg0 = args[0].(evse.ConnectorSettings)
 		}
 		run(
 			arg0,
@@ -89,25 +89,69 @@ func (_c *MockEVSE_AddConnector_Call) Return(err error) *MockEVSE_AddConnector_C
 	return _c
 }
 
-func (_c *MockEVSE_AddConnector_Call) RunAndReturn(run func(connector settings.Connector) error) *MockEVSE_AddConnector_Call {
+func (_c *MockEVSE_AddConnector_Call) RunAndReturn(run func(connector evse.ConnectorSettings) error) *MockEVSE_AddConnector_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Cleanup provides a mock function for the type MockEVSE
+func (_mock *MockEVSE) Cleanup() error {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Cleanup")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func() error); ok {
+		r0 = returnFunc()
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockEVSE_Cleanup_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Cleanup'
+type MockEVSE_Cleanup_Call struct {
+	*mock.Call
+}
+
+// Cleanup is a helper method to define mock.On call
+func (_e *MockEVSE_Expecter) Cleanup() *MockEVSE_Cleanup_Call {
+	return &MockEVSE_Cleanup_Call{Call: _e.mock.On("Cleanup")}
+}
+
+func (_c *MockEVSE_Cleanup_Call) Run(run func()) *MockEVSE_Cleanup_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockEVSE_Cleanup_Call) Return(err error) *MockEVSE_Cleanup_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockEVSE_Cleanup_Call) RunAndReturn(run func() error) *MockEVSE_Cleanup_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetConnectors provides a mock function for the type MockEVSE
-func (_mock *MockEVSE) GetConnectors() []settings.Connector {
+func (_mock *MockEVSE) GetConnectors() []evse.ConnectorSettings {
 	ret := _mock.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetConnectors")
 	}
 
-	var r0 []settings.Connector
-	if returnFunc, ok := ret.Get(0).(func() []settings.Connector); ok {
+	var r0 []evse.ConnectorSettings
+	if returnFunc, ok := ret.Get(0).(func() []evse.ConnectorSettings); ok {
 		r0 = returnFunc()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]settings.Connector)
+			r0 = ret.Get(0).([]evse.ConnectorSettings)
 		}
 	}
 	return r0
@@ -130,12 +174,12 @@ func (_c *MockEVSE_GetConnectors_Call) Run(run func()) *MockEVSE_GetConnectors_C
 	return _c
 }
 
-func (_c *MockEVSE_GetConnectors_Call) Return(connectors []settings.Connector) *MockEVSE_GetConnectors_Call {
-	_c.Call.Return(connectors)
+func (_c *MockEVSE_GetConnectors_Call) Return(connectorSettingss []evse.ConnectorSettings) *MockEVSE_GetConnectors_Call {
+	_c.Call.Return(connectorSettingss)
 	return _c
 }
 
-func (_c *MockEVSE_GetConnectors_Call) RunAndReturn(run func() []settings.Connector) *MockEVSE_GetConnectors_Call {
+func (_c *MockEVSE_GetConnectors_Call) RunAndReturn(run func() []evse.ConnectorSettings) *MockEVSE_GetConnectors_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -270,52 +314,6 @@ func (_c *MockEVSE_GetMaxChargingPower_Call) Return(f float64) *MockEVSE_GetMaxC
 }
 
 func (_c *MockEVSE_GetMaxChargingPower_Call) RunAndReturn(run func() float64) *MockEVSE_GetMaxChargingPower_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetMaxChargingTime provides a mock function for the type MockEVSE
-func (_mock *MockEVSE) GetMaxChargingTime() *int {
-	ret := _mock.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetMaxChargingTime")
-	}
-
-	var r0 *int
-	if returnFunc, ok := ret.Get(0).(func() *int); ok {
-		r0 = returnFunc()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*int)
-		}
-	}
-	return r0
-}
-
-// MockEVSE_GetMaxChargingTime_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetMaxChargingTime'
-type MockEVSE_GetMaxChargingTime_Call struct {
-	*mock.Call
-}
-
-// GetMaxChargingTime is a helper method to define mock.On call
-func (_e *MockEVSE_Expecter) GetMaxChargingTime() *MockEVSE_GetMaxChargingTime_Call {
-	return &MockEVSE_GetMaxChargingTime_Call{Call: _e.mock.On("GetMaxChargingTime")}
-}
-
-func (_c *MockEVSE_GetMaxChargingTime_Call) Run(run func()) *MockEVSE_GetMaxChargingTime_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *MockEVSE_GetMaxChargingTime_Call) Return(n *int) *MockEVSE_GetMaxChargingTime_Call {
-	_c.Call.Return(n)
-	return _c
-}
-
-func (_c *MockEVSE_GetMaxChargingTime_Call) RunAndReturn(run func() *int) *MockEVSE_GetMaxChargingTime_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -558,6 +556,50 @@ func (_c *MockEVSE_IsCharging_Call) RunAndReturn(run func() bool) *MockEVSE_IsCh
 	return _c
 }
 
+// IsHealthy provides a mock function for the type MockEVSE
+func (_mock *MockEVSE) IsHealthy() bool {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for IsHealthy")
+	}
+
+	var r0 bool
+	if returnFunc, ok := ret.Get(0).(func() bool); ok {
+		r0 = returnFunc()
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+	return r0
+}
+
+// MockEVSE_IsHealthy_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IsHealthy'
+type MockEVSE_IsHealthy_Call struct {
+	*mock.Call
+}
+
+// IsHealthy is a helper method to define mock.On call
+func (_e *MockEVSE_Expecter) IsHealthy() *MockEVSE_IsHealthy_Call {
+	return &MockEVSE_IsHealthy_Call{Call: _e.mock.On("IsHealthy")}
+}
+
+func (_c *MockEVSE_IsHealthy_Call) Run(run func()) *MockEVSE_IsHealthy_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockEVSE_IsHealthy_Call) Return(b bool) *MockEVSE_IsHealthy_Call {
+	_c.Call.Return(b)
+	return _c
+}
+
+func (_c *MockEVSE_IsHealthy_Call) RunAndReturn(run func() bool) *MockEVSE_IsHealthy_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // IsPreparing provides a mock function for the type MockEVSE
 func (_mock *MockEVSE) IsPreparing() bool {
 	ret := _mock.Called()
@@ -691,8 +733,8 @@ func (_c *MockEVSE_IsUnavailable_Call) RunAndReturn(run func() bool) *MockEVSE_I
 }
 
 // Lock provides a mock function for the type MockEVSE
-func (_mock *MockEVSE) Lock() {
-	_mock.Called()
+func (_mock *MockEVSE) Lock(connectorId int) {
+	_mock.Called(connectorId)
 	return
 }
 
@@ -702,13 +744,20 @@ type MockEVSE_Lock_Call struct {
 }
 
 // Lock is a helper method to define mock.On call
-func (_e *MockEVSE_Expecter) Lock() *MockEVSE_Lock_Call {
-	return &MockEVSE_Lock_Call{Call: _e.mock.On("Lock")}
+//   - connectorId int
+func (_e *MockEVSE_Expecter) Lock(connectorId interface{}) *MockEVSE_Lock_Call {
+	return &MockEVSE_Lock_Call{Call: _e.mock.On("Lock", connectorId)}
 }
 
-func (_c *MockEVSE_Lock_Call) Run(run func()) *MockEVSE_Lock_Call {
+func (_c *MockEVSE_Lock_Call) Run(run func(connectorId int)) *MockEVSE_Lock_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run()
+		var arg0 int
+		if args[0] != nil {
+			arg0 = args[0].(int)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -718,13 +767,13 @@ func (_c *MockEVSE_Lock_Call) Return() *MockEVSE_Lock_Call {
 	return _c
 }
 
-func (_c *MockEVSE_Lock_Call) RunAndReturn(run func()) *MockEVSE_Lock_Call {
+func (_c *MockEVSE_Lock_Call) RunAndReturn(run func(connectorId int)) *MockEVSE_Lock_Call {
 	_c.Run(run)
 	return _c
 }
 
 // SamplePowerMeter provides a mock function for the type MockEVSE
-func (_mock *MockEVSE) SamplePowerMeter(measurands []types.Measurand) []types.SampledValue {
+func (_mock *MockEVSE) SamplePowerMeter(measurands []types.Measurand) ([]types.SampledValue, error) {
 	ret := _mock.Called(measurands)
 
 	if len(ret) == 0 {
@@ -732,6 +781,10 @@ func (_mock *MockEVSE) SamplePowerMeter(measurands []types.Measurand) []types.Sa
 	}
 
 	var r0 []types.SampledValue
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func([]types.Measurand) ([]types.SampledValue, error)); ok {
+		return returnFunc(measurands)
+	}
 	if returnFunc, ok := ret.Get(0).(func([]types.Measurand) []types.SampledValue); ok {
 		r0 = returnFunc(measurands)
 	} else {
@@ -739,7 +792,12 @@ func (_mock *MockEVSE) SamplePowerMeter(measurands []types.Measurand) []types.Sa
 			r0 = ret.Get(0).([]types.SampledValue)
 		}
 	}
-	return r0
+	if returnFunc, ok := ret.Get(1).(func([]types.Measurand) error); ok {
+		r1 = returnFunc(measurands)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
 // MockEVSE_SamplePowerMeter_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SamplePowerMeter'
@@ -766,20 +824,31 @@ func (_c *MockEVSE_SamplePowerMeter_Call) Run(run func(measurands []types.Measur
 	return _c
 }
 
-func (_c *MockEVSE_SamplePowerMeter_Call) Return(sampledValues []types.SampledValue) *MockEVSE_SamplePowerMeter_Call {
-	_c.Call.Return(sampledValues)
+func (_c *MockEVSE_SamplePowerMeter_Call) Return(sampledValues []types.SampledValue, err error) *MockEVSE_SamplePowerMeter_Call {
+	_c.Call.Return(sampledValues, err)
 	return _c
 }
 
-func (_c *MockEVSE_SamplePowerMeter_Call) RunAndReturn(run func(measurands []types.Measurand) []types.SampledValue) *MockEVSE_SamplePowerMeter_Call {
+func (_c *MockEVSE_SamplePowerMeter_Call) RunAndReturn(run func(measurands []types.Measurand) ([]types.SampledValue, error)) *MockEVSE_SamplePowerMeter_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // SetAvailability provides a mock function for the type MockEVSE
-func (_mock *MockEVSE) SetAvailability(isAvailable bool) {
-	_mock.Called(isAvailable)
-	return
+func (_mock *MockEVSE) SetAvailability(isAvailable bool) error {
+	ret := _mock.Called(isAvailable)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SetAvailability")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(bool) error); ok {
+		r0 = returnFunc(isAvailable)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
 }
 
 // MockEVSE_SetAvailability_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetAvailability'
@@ -806,20 +875,31 @@ func (_c *MockEVSE_SetAvailability_Call) Run(run func(isAvailable bool)) *MockEV
 	return _c
 }
 
-func (_c *MockEVSE_SetAvailability_Call) Return() *MockEVSE_SetAvailability_Call {
-	_c.Call.Return()
+func (_c *MockEVSE_SetAvailability_Call) Return(err error) *MockEVSE_SetAvailability_Call {
+	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockEVSE_SetAvailability_Call) RunAndReturn(run func(isAvailable bool)) *MockEVSE_SetAvailability_Call {
-	_c.Run(run)
+func (_c *MockEVSE_SetAvailability_Call) RunAndReturn(run func(isAvailable bool) error) *MockEVSE_SetAvailability_Call {
+	_c.Call.Return(run)
 	return _c
 }
 
 // SetEvcc provides a mock function for the type MockEVSE
-func (_mock *MockEVSE) SetEvcc(eVCC evcc.EVCC) {
-	_mock.Called(eVCC)
-	return
+func (_mock *MockEVSE) SetEvcc(eVCC evcc.EVCC) error {
+	ret := _mock.Called(eVCC)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SetEvcc")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(evcc.EVCC) error); ok {
+		r0 = returnFunc(eVCC)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
 }
 
 // MockEVSE_SetEvcc_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetEvcc'
@@ -846,53 +926,13 @@ func (_c *MockEVSE_SetEvcc_Call) Run(run func(eVCC evcc.EVCC)) *MockEVSE_SetEvcc
 	return _c
 }
 
-func (_c *MockEVSE_SetEvcc_Call) Return() *MockEVSE_SetEvcc_Call {
-	_c.Call.Return()
+func (_c *MockEVSE_SetEvcc_Call) Return(err error) *MockEVSE_SetEvcc_Call {
+	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockEVSE_SetEvcc_Call) RunAndReturn(run func(eVCC evcc.EVCC)) *MockEVSE_SetEvcc_Call {
-	_c.Run(run)
-	return _c
-}
-
-// SetMaxChargingTime provides a mock function for the type MockEVSE
-func (_mock *MockEVSE) SetMaxChargingTime(time *int) {
-	_mock.Called(time)
-	return
-}
-
-// MockEVSE_SetMaxChargingTime_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetMaxChargingTime'
-type MockEVSE_SetMaxChargingTime_Call struct {
-	*mock.Call
-}
-
-// SetMaxChargingTime is a helper method to define mock.On call
-//   - time *int
-func (_e *MockEVSE_Expecter) SetMaxChargingTime(time interface{}) *MockEVSE_SetMaxChargingTime_Call {
-	return &MockEVSE_SetMaxChargingTime_Call{Call: _e.mock.On("SetMaxChargingTime", time)}
-}
-
-func (_c *MockEVSE_SetMaxChargingTime_Call) Run(run func(time *int)) *MockEVSE_SetMaxChargingTime_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 *int
-		if args[0] != nil {
-			arg0 = args[0].(*int)
-		}
-		run(
-			arg0,
-		)
-	})
-	return _c
-}
-
-func (_c *MockEVSE_SetMaxChargingTime_Call) Return() *MockEVSE_SetMaxChargingTime_Call {
-	_c.Call.Return()
-	return _c
-}
-
-func (_c *MockEVSE_SetMaxChargingTime_Call) RunAndReturn(run func(time *int)) *MockEVSE_SetMaxChargingTime_Call {
-	_c.Run(run)
+func (_c *MockEVSE_SetEvcc_Call) RunAndReturn(run func(eVCC evcc.EVCC) error) *MockEVSE_SetEvcc_Call {
+	_c.Call.Return(run)
 	return _c
 }
 
@@ -1028,9 +1068,20 @@ func (_c *MockEVSE_SetPowerMeter_Call) RunAndReturn(run func(powerMeter1 powerMe
 }
 
 // SetStatus provides a mock function for the type MockEVSE
-func (_mock *MockEVSE) SetStatus(status core.ChargePointStatus, errCode core.ChargePointErrorCode) {
-	_mock.Called(status, errCode)
-	return
+func (_mock *MockEVSE) SetStatus(status core.ChargePointStatus, errCode core.ChargePointErrorCode) error {
+	ret := _mock.Called(status, errCode)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SetStatus")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(core.ChargePointStatus, core.ChargePointErrorCode) error); ok {
+		r0 = returnFunc(status, errCode)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
 }
 
 // MockEVSE_SetStatus_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetStatus'
@@ -1063,13 +1114,13 @@ func (_c *MockEVSE_SetStatus_Call) Run(run func(status core.ChargePointStatus, e
 	return _c
 }
 
-func (_c *MockEVSE_SetStatus_Call) Return() *MockEVSE_SetStatus_Call {
-	_c.Call.Return()
+func (_c *MockEVSE_SetStatus_Call) Return(err error) *MockEVSE_SetStatus_Call {
+	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockEVSE_SetStatus_Call) RunAndReturn(run func(status core.ChargePointStatus, errCode core.ChargePointErrorCode)) *MockEVSE_SetStatus_Call {
-	_c.Run(run)
+func (_c *MockEVSE_SetStatus_Call) RunAndReturn(run func(status core.ChargePointStatus, errCode core.ChargePointErrorCode) error) *MockEVSE_SetStatus_Call {
+	_c.Call.Return(run)
 	return _c
 }
 
@@ -1188,8 +1239,8 @@ func (_c *MockEVSE_StopCharging_Call) RunAndReturn(run func(reason core.Reason) 
 }
 
 // Unlock provides a mock function for the type MockEVSE
-func (_mock *MockEVSE) Unlock() {
-	_mock.Called()
+func (_mock *MockEVSE) Unlock(connectorId int) {
+	_mock.Called(connectorId)
 	return
 }
 
@@ -1199,13 +1250,20 @@ type MockEVSE_Unlock_Call struct {
 }
 
 // Unlock is a helper method to define mock.On call
-func (_e *MockEVSE_Expecter) Unlock() *MockEVSE_Unlock_Call {
-	return &MockEVSE_Unlock_Call{Call: _e.mock.On("Unlock")}
+//   - connectorId int
+func (_e *MockEVSE_Expecter) Unlock(connectorId interface{}) *MockEVSE_Unlock_Call {
+	return &MockEVSE_Unlock_Call{Call: _e.mock.On("Unlock", connectorId)}
 }
 
-func (_c *MockEVSE_Unlock_Call) Run(run func()) *MockEVSE_Unlock_Call {
+func (_c *MockEVSE_Unlock_Call) Run(run func(connectorId int)) *MockEVSE_Unlock_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run()
+		var arg0 int
+		if args[0] != nil {
+			arg0 = args[0].(int)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -1215,7 +1273,7 @@ func (_c *MockEVSE_Unlock_Call) Return() *MockEVSE_Unlock_Call {
 	return _c
 }
 
-func (_c *MockEVSE_Unlock_Call) RunAndReturn(run func()) *MockEVSE_Unlock_Call {
+func (_c *MockEVSE_Unlock_Call) RunAndReturn(run func(connectorId int)) *MockEVSE_Unlock_Call {
 	_c.Run(run)
 	return _c
 }

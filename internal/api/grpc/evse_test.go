@@ -1,11 +1,11 @@
 package grpc
 
 import (
+	"context"
 	"testing"
 
-	"github.com/ChargePi/ChargePi-go/internal/evse/manager/mocks"
-	grpc2 "github.com/ChargePi/ChargePi-go/pkg/proto/v1/grpc"
-	log "github.com/sirupsen/logrus"
+	evsev1 "github.com/ChargePi/ChargePi-go/gen/proto/evse/v1"
+	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/test/bufconn"
@@ -15,130 +15,58 @@ type evseTestSuite struct {
 	suite.Suite
 	server      *grpc.Server
 	listener    *bufconn.Listener
-	evseManager *mocks.MockEVSEManager
+	evseHandler *EvseHandler
 }
 
 func (s *evseTestSuite) SetupSuite() {
 	s.server = grpc.NewServer()
-
-	buffer := 101024 * 1024
+	buffer := 1024 * 1024
 	s.listener = bufconn.Listen(buffer)
 
-	err := s.server.Serve(s.listener)
-	s.Require().NoError(err)
+	// Start the server
+	go func() {
+		if err := s.server.Serve(s.listener); err != nil {
+			s.T().Logf("Server failed to serve: %v", err)
+		}
+	}()
 }
 
 func (s *evseTestSuite) TearDownSuite() {
-	// Stop the GRPC server
-	err := s.listener.Close()
-	s.Require().NoError(err)
-
 	s.server.GracefulStop()
+	s.listener.Close()
 }
 
 func (s *evseTestSuite) SetupTest() {
-	// Recreate mocks and service before each test
-	s.evseManager = mocks.NewMockEVSEManager(s.T())
-	grpc2.RegisterEvseServer(s.server, NewEvseService(s.evseManager))
-}
+	// Create EVSE handler with nil manager for testing
+	s.evseHandler = &EvseHandler{}
 
-func (s *evseTestSuite) TestAddEVSE() {
-	tests := []struct {
-		name string
-	}{}
-
-	for _, tt := range tests {
-		s.T().Run(tt.name, func(t *testing.T) {
-
-		})
-	}
-}
-
-func (s *evseTestSuite) TestUpdateUser() {
-	tests := []struct {
-		name string
-	}{}
-
-	for _, tt := range tests {
-		s.T().Run(tt.name, func(t *testing.T) {
-
-		})
-	}
-}
-
-func (s *evseTestSuite) TestRemoveUser() {
-	tests := []struct {
-		name string
-	}{}
-
-	for _, tt := range tests {
-		s.T().Run(tt.name, func(t *testing.T) {
-
-		})
-	}
-}
-
-func (s *evseTestSuite) TestGetEVSE() {
-	tests := []struct {
-		name string
-	}{}
-
-	for _, tt := range tests {
-		s.T().Run(tt.name, func(t *testing.T) {
-
-		})
-	}
-}
-
-func (s *evseTestSuite) TestSetEVCC() {
-	tests := []struct {
-		name string
-	}{}
-
-	for _, tt := range tests {
-		s.T().Run(tt.name, func(t *testing.T) {
-
-		})
-	}
-}
-
-func (s *evseTestSuite) TestSetPowerMeter() {
-	tests := []struct {
-		name string
-	}{}
-
-	for _, tt := range tests {
-		s.T().Run(tt.name, func(t *testing.T) {
-
-		})
-	}
-}
-
-func (s *evseTestSuite) TestGetUsageForEVSE() {
-	tests := []struct {
-		name string
-	}{}
-
-	for _, tt := range tests {
-		s.T().Run(tt.name, func(t *testing.T) {
-
-		})
-	}
+	// Register the service
+	evsev1.RegisterEvseServiceServer(s.server, s.evseHandler)
 }
 
 func (s *evseTestSuite) TestGetEVSEs() {
-	tests := []struct {
-		name string
-	}{}
+	// Test that the service can handle basic requests
+	response, err := s.evseHandler.GetEVSEs(context.Background(), &empty.Empty{})
 
-	for _, tt := range tests {
-		s.T().Run(tt.name, func(t *testing.T) {
-
-		})
-	}
+	// Should not panic even with nil manager
+	s.NoError(err)
+	s.NotNil(response)
+	s.NotNil(response.Evses)
 }
 
-func TestEVSE(t *testing.T) {
-	log.SetLevel(log.DebugLevel)
+func (s *evseTestSuite) TestGetEVSE() {
+	// Test that the service can handle basic requests
+	request := &evsev1.GetEVSERequest{
+		EvseId: 1,
+	}
+
+	response, err := s.evseHandler.GetEVSE(context.Background(), request)
+
+	// Should not panic even with nil manager
+	s.NoError(err)
+	s.NotNil(response)
+}
+
+func TestEvse(t *testing.T) {
 	suite.Run(t, new(evseTestSuite))
 }

@@ -5,7 +5,7 @@ import (
 
 	chargePoint "github.com/ChargePi/ChargePi-go/internal/chargepoint"
 	ocpp2 "github.com/ChargePi/ChargePi-go/pkg/ocpp"
-	"github.com/ChargePi/ocppManager-go/ocpp_v16"
+	"github.com/ChargePi/ocpp-manager/ocpp_v16"
 	"github.com/lorenzodonini/ocpp-go/ocpp"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 )

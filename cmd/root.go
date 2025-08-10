@@ -1,11 +1,15 @@
 package cmd
 
 import (
+	"context"
 	"github.com/ChargePi/ChargePi-go/internal/pkg/configuration"
 	"github.com/ChargePi/ChargePi-go/pkg/observability"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 var rootCmd = &cobra.Command{
@@ -30,7 +34,10 @@ func init() {
 }
 
 func Execute() {
-	err := rootCmd.Execute()
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGKILL, syscall.SIGTERM)
+	defer cancel()
+
+	err := rootCmd.ExecuteContext(ctx)
 	if err != nil {
 		zap.L().Fatal("Unable to run", zap.Error(err))
 	}

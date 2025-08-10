@@ -1,20 +1,20 @@
 package sessions
 
 import (
+	mock_sessions "github.com/ChargePi/ChargePi-go/gen/mocks/sessions"
 	"testing"
 
-	"github.com/ChargePi/ChargePi-go/internal/sessions/mocks"
 	"github.com/stretchr/testify/suite"
 )
 
 type sessionServiceTestSuite struct {
 	suite.Suite
 	service               *Impl
-	sessionRepositoryMock *mocks.MockSessionRepository
+	sessionRepositoryMock *mock_sessions.MockSessionRepository
 }
 
 func (s *sessionServiceTestSuite) SetupTest() {
-	s.sessionRepositoryMock = mocks.NewMockSessionRepository(s.T())
+	s.sessionRepositoryMock = mock_sessions.NewMockSessionRepository(s.T())
 
 	service, err := NewSessionService(s.sessionRepositoryMock)
 	s.Require().NoError(err)

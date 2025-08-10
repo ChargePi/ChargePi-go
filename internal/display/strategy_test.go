@@ -1,22 +1,22 @@
 package display
 
 import (
+	mock_display "github.com/ChargePi/ChargePi-go/gen/mocks/pkg/hardware/display"
 	"testing"
 
-	"github.com/ChargePi/ChargePi-go/pkg/hardware/display/mocks"
 	"github.com/stretchr/testify/suite"
 )
 
 type strategyTestSuite struct {
 	suite.Suite
-	displays []*mocks.MockDisplay
+	displays []*mock_display.MockDisplay
 }
 
 func (s *strategyTestSuite) SetupTest() {
-	s.displays = []*mocks.MockDisplay{
-		mocks.NewMockDisplay(s.T()),
-		mocks.NewMockDisplay(s.T()),
-		mocks.NewMockDisplay(s.T()),
+	s.displays = []*mock_display.MockDisplay{
+		mock_display.NewMockDisplay(s.T()),
+		mock_display.NewMockDisplay(s.T()),
+		mock_display.NewMockDisplay(s.T()),
 	}
 }
 

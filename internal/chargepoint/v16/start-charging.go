@@ -8,7 +8,7 @@ import (
 
 	"github.com/ChargePi/ChargePi-go/internal/chargepoint"
 	"github.com/ChargePi/ChargePi-go/internal/evse"
-	"github.com/ChargePi/ocppManager-go/ocpp_v16"
+	"github.com/ChargePi/ocpp-manager/ocpp_v16"
 	"github.com/lorenzodonini/ocpp-go/ocpp"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"

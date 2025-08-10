@@ -23,7 +23,7 @@ linters:
   exclusions:
     generated: lax
     paths:
-      - ./gen
+      - ./gen/*
       - ./pkg/reader
 formatters:
   settings:
@@ -33,3 +33,6 @@ formatters:
   enable:
     - gofmt
     - goimports
+  exclusions:
+    paths:
+      - gen/*

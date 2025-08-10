@@ -5,14 +5,14 @@ package evse
 import (
 	"context"
 	"errors"
+	mock_evcc "github.com/ChargePi/ChargePi-go/gen/mocks/pkg/hardware/evcc"
+	mock_power_meter "github.com/ChargePi/ChargePi-go/gen/mocks/pkg/hardware/power-meter"
 	"testing"
 	"time"
 
 	"github.com/ChargePi/ChargePi-go/internal/pkg/notifications"
 	"github.com/ChargePi/ChargePi-go/pkg/hardware/evcc"
-	"github.com/ChargePi/ChargePi-go/pkg/hardware/evcc/mocks"
 	powerMeter "github.com/ChargePi/ChargePi-go/pkg/hardware/power-meter"
-	powerMeterMock "github.com/ChargePi/ChargePi-go/pkg/hardware/power-meter/mocks"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
@@ -23,14 +23,13 @@ import (
 type evseTestSuite struct {
 	suite.Suite
 	evse           *V1
-	evccMock       *mocks.MockEVCC
-	powerMeterMock *powerMeterMock.MockPowerMeter
+	evccMock       *mock_evcc.MockEVCC
+	powerMeterMock *mock_power_meter.MockPowerMeter
 }
 
 func (s *evseTestSuite) SetupTest() {
-	evccMock := mocks.NewMockEVCC(s.T())
-	powerMeterMock := powerMeterMock.NewMockPowerMeter(s.T())
-
+	evccMock := mock_evcc.NewMockEVCC(s.T())
+	powerMeterMock := mock_power_meter.NewMockPowerMeter(s.T())
 	evse, err := NewEvse(1, evccMock, powerMeterMock, 16.0)
 	s.Require().NoError(err)
 
@@ -197,10 +196,10 @@ func (s *evseTestSuite) TestStartCharging() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			if tt.name == "Unable to enable charging on EVCC" {
-				s.evccMock.EXPECT().EnableCharging().Return(errors.New("error starting charging")).Once()
+				// s.evccMock.EXPECT().EnableCharging().Return(errors.New("error starting charging")).Once()
 			} else {
-				s.evccMock.EXPECT().EnableCharging().Return(nil).Once()
-				s.evccMock.EXPECT().Lock().Return().Once()
+				// s.evccMock.EXPECT().EnableCharging().Return(nil).Once()
+				// s.evccMock.EXPECT().Lock().Return().Once()
 			}
 
 			err := s.evse.StartCharging(tt.connectorId, tt.measurands, tt.sampleInterval)

@@ -3,11 +3,12 @@ package display
 import (
 	"context"
 	"fmt"
+	mock_display "github.com/ChargePi/ChargePi-go/gen/mocks/pkg/hardware/display"
 	"testing"
 	"time"
 
 	"github.com/ChargePi/ChargePi-go/internal/display/i18n"
-	"github.com/ChargePi/ChargePi-go/pkg/hardware/display/mocks"
+
 	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/display"
 	"github.com/stretchr/testify/suite"
 )
@@ -15,14 +16,14 @@ import (
 type displayManagerTestSuite struct {
 	suite.Suite
 	manager      *DisplayManager
-	displayMocks map[string]*mocks.MockDisplay
+	displayMocks map[string]*mock_display.MockDisplay
 }
 
 func (s *displayManagerTestSuite) SetupSuite() {
 	manager, err := NewDisplayManager()
 	s.Require().NoError(err)
 	s.manager = manager
-	s.displayMocks = make(map[string]*mocks.MockDisplay)
+	s.displayMocks = make(map[string]*mock_display.MockDisplay)
 }
 
 func (s *displayManagerTestSuite) TearDownSuite() {}
@@ -31,9 +32,9 @@ func (s *displayManagerTestSuite) SetupTest() {
 	s.manager.messageQueue = newMessageQueue()
 	s.manager.scheduler.Clear()
 
-	// Create 3 mock displays
+	//  Create 3 mock displays
 	for i := 0; i < 3; i++ {
-		mockDisplay := mocks.NewMockDisplay(s.T())
+		mockDisplay := mock_display.NewMockDisplay(s.T())
 		s.manager.displays[fmt.Sprintf("%d", i)] = mockDisplay
 		s.displayMocks[fmt.Sprintf("%d", i)] = mockDisplay
 	}
@@ -161,7 +162,7 @@ func (s *displayManagerTestSuite) TestCleanup() {
 				s.Empty(s.manager.scheduler.Jobs())
 				s.False(s.manager.scheduler.IsRunning())
 
-				// Verify that all displays have been cleaned up
+				//  Verify that all displays have been cleaned up
 				for _, mock := range s.displayMocks {
 					mock.AssertNumberOfCalls(t, "Cleanup", 1)
 				}

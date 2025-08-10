@@ -12,7 +12,7 @@ import (
 	"github.com/ChargePi/ChargePi-go/internal/evse"
 	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
 	configManager "github.com/ChargePi/ChargePi-go/internal/pkg/configuration/manager"
-	"github.com/ChargePi/ocppManager-go/ocpp_v16"
+	"github.com/ChargePi/ocpp-manager/ocpp_v16"
 	"github.com/agrison/go-commons-lang/stringUtils"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"

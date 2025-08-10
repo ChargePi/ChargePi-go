@@ -9,7 +9,7 @@ import (
 	cfg "github.com/ChargePi/ChargePi-go/internal/pkg/configuration"
 	exporter2 "github.com/ChargePi/ChargePi-go/internal/pkg/configuration/exporter"
 	"github.com/ChargePi/ChargePi-go/internal/pkg/configuration/manager"
-	"github.com/ChargePi/ocppManager-go/ocpp_v16"
+	"github.com/ChargePi/ocpp-manager/ocpp_v16"
 	"github.com/spf13/cobra"
 )
 

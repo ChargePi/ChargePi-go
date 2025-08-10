@@ -1,9 +1,10 @@
 package manager
 
 import (
+	mock_manager "github.com/ChargePi/ChargePi-go/gen/mocks/evse/manager"
+	mock_sessions "github.com/ChargePi/ChargePi-go/gen/mocks/sessions"
 	"testing"
 
-	evseMock "github.com/ChargePi/ChargePi-go/internal/evse/manager/mocks"
 	"github.com/ChargePi/ChargePi-go/internal/pkg/notifications"
 	"github.com/ChargePi/ChargePi-go/internal/sessions/mocks"
 	"github.com/stretchr/testify/suite"
@@ -12,14 +13,14 @@ import (
 type managerTestSuite struct {
 	suite.Suite
 	manager             *Impl
-	sessionRepository   *mocks.MockSessionRepository
-	evseRepository      *evseMock.MockEvseSettingsRepository
+	sessionRepository   *mock_sessions.MockSessionRepository
+	evseRepository      *mock_manager.MockEvseSettingsRepository
 	notificationChannel chan notifications.StatusNotification
 }
 
 func (s *managerTestSuite) SetupTest() {
-	s.sessionRepository = mocks.NewMockSessionRepository(s.T())
-	s.evseRepository = evseMock.NewMockEvseSettingsRepository(s.T())
+	s.sessionRepository = mock_sessions.NewMockSessionRepository(s.T())
+	s.evseRepository = mock_manager.NewMockEvseSettingsRepository(s.T())
 	s.notificationChannel = make(chan notifications.StatusNotification)
 
 	manager, err := NewManager(s.sessionRepository, s.evseRepository, s.notificationChannel)

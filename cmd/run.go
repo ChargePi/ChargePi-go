@@ -2,10 +2,6 @@ package cmd
 
 import (
 	"context"
-	"os"
-	"os/signal"
-	"syscall"
-
 	"github.com/ChargePi/ChargePi-go/internal/api/grpc"
 	"github.com/ChargePi/ChargePi-go/internal/api/http"
 	"github.com/ChargePi/ChargePi-go/internal/auth"
@@ -19,7 +15,7 @@ import (
 	"github.com/ChargePi/ChargePi-go/internal/sessions"
 	"github.com/ChargePi/ChargePi-go/internal/users"
 	"github.com/ChargePi/ChargePi-go/pkg/observability"
-	"github.com/ChargePi/ocppManager-go/ocpp_v16"
+	"github.com/ChargePi/ocpp-manager/ocpp_v16"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -43,10 +39,7 @@ func runCommand() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			debug := viper.GetBool(configuration.Debug)
 			runtimeSettings := configuration.GetRuntimeSettings()
-
-			// Run the charge point
-			ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGKILL, syscall.SIGTERM)
-			defer cancel()
+			ctx := cmd.Context()
 
 			// Create a logger
 			logger := log.StandardLogger()

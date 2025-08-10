@@ -1,20 +1,19 @@
 package manager
 
 import (
-	"testing"
-
-	"github.com/ChargePi/ChargePi-go/internal/evse/manager/mocks"
-	mocks2 "github.com/ChargePi/ChargePi-go/internal/pkg/configuration/manager/mocks"
-	"github.com/ChargePi/ocppManager-go/ocpp_v16"
+	evse_manager_mock "github.com/ChargePi/ChargePi-go/gen/mocks/evse/manager"
+	mock_manager "github.com/ChargePi/ChargePi-go/gen/mocks/pkg/configuration/manager"
+	"github.com/ChargePi/ocpp-manager/ocpp_v16"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/stretchr/testify/suite"
+	"testing"
 )
 
 type managerTestSuite struct {
 	suite.Suite
-	evseSettingsRepo      *mocks.MockEvseSettingsRepository
-	settingsRepo          *mocks2.MockSettingsRepository
-	ocppConfigurationRepo *mocks2.MockOcppConfigurationRepository
+	evseSettingsRepo      *evse_manager_mock.MockEvseSettingsRepository
+	settingsRepo          *mock_manager.MockSettingsRepository
+	ocppConfigurationRepo *mock_manager.MockOcppConfigurationRepository
 	ocppManager           ocpp_v16.Manager
 }
 
@@ -30,9 +29,9 @@ func (s *managerTestSuite) SetupSuite() {
 func (s *managerTestSuite) TearDownSuite() {}
 
 func (s *managerTestSuite) SetupTest() {
-	s.evseSettingsRepo = mocks.NewMockEvseSettingsRepository(s.T())
-	s.settingsRepo = mocks2.NewMockSettingsRepository(s.T())
-	s.ocppConfigurationRepo = mocks2.NewMockOcppConfigurationRepository(s.T())
+	s.evseSettingsRepo = evse_manager_mock.NewMockEvseSettingsRepository(s.T())
+	s.settingsRepo = mock_manager.NewMockSettingsRepository(s.T())
+	s.ocppConfigurationRepo = mock_manager.NewMockOcppConfigurationRepository(s.T())
 
 	// Replace the configuration
 	cfg, err := ocpp_v16.DefaultConfigurationFromProfiles(core.ProfileName)
