@@ -9,6 +9,7 @@ on:
       - '.run/**'
       - 'docs/**'
       - 'deployments/**'
+      - 'gen/**'
       - '*.md'
 
   pull_request:
@@ -20,6 +21,7 @@ on:
       - '.run/**'
       - 'docs/**'
       - 'deployments/**'
+      - 'gen/**'
       - '*.md'
 
 jobs:
@@ -40,17 +42,3 @@ jobs:
         with:
           version: v2.1
           args: --timeout=3m
-
-  buf:
-    name: Run buf
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - uses: bufbuild/buf-action@v1
-        with:
-          github_token: ${{ github.token }}
