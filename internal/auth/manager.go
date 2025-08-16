@@ -37,8 +37,8 @@ type ManagerV1 struct {
 }
 
 func NewManager(logger *zap.Logger, localAuthRepository LocalAuthListRepository, tagRepository TagRepository) *ManagerV1 {
-	cache := newAuthCache(tagRepository)
-	authList := newLocalAuthList(localAuthRepository, 10)
+	cache := newAuthCache(logger, tagRepository)
+	authList := newLocalAuthList(logger, localAuthRepository, 10)
 
 	return &ManagerV1{
 		// Cache is enabled by default

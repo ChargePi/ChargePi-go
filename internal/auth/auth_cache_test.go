@@ -5,10 +5,11 @@ import (
 	"testing"
 	"time"
 
+	"go.uber.org/zap/zaptest"
+
 	mock_auth "github.com/ChargePi/ChargePi-go/gen/mocks/auth"
 
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/ChargePi/ChargePi-go/pkg/util"
@@ -40,7 +41,7 @@ type authCacheTestSuite struct {
 
 func (s *authCacheTestSuite) SetupTest() {
 	s.tagRepository = mock_auth.NewMockTagRepository(s.T())
-	s.authCache = newAuthCache(s.tagRepository)
+	s.authCache = newAuthCache(zaptest.NewLogger(s.T()), s.tagRepository)
 }
 
 func (s *authCacheTestSuite) TearDownTest() {}
@@ -223,6 +224,5 @@ func (s *authCacheTestSuite) TestGetTag() {
 }
 
 func TestAuthCache(t *testing.T) {
-	log.SetLevel(log.DebugLevel)
 	suite.Run(t, new(authCacheTestSuite))
 }

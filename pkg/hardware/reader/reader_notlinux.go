@@ -5,7 +5,7 @@ package reader
 import (
 	"context"
 
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 )
 
 type TagReader struct {
@@ -44,7 +44,7 @@ func (reader *TagReader) GetType() string {
 // NewTagReader creates an instance of the Reader interface based on the provided configuration.
 func NewTagReader(reader Settings) (Reader, error) {
 	if reader.IsEnabled {
-		log.Infof("Preparing tag reader from config: %s", reader.ReaderModel)
+		zap.L().Sugar().Infof("Preparing tag reader from config: %s", reader.ReaderModel)
 		switch reader.ReaderModel {
 		case TypeDummy:
 			return &TagReader{}, nil

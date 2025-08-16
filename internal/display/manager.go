@@ -7,9 +7,10 @@ import (
 	"sync"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/go-co-op/gocron"
 	message "github.com/lorenzodonini/ocpp-go/ocpp2.0.1/display"
-	log "github.com/sirupsen/logrus"
 
 	"github.com/ChargePi/ChargePi-go/pkg/hardware/display"
 	"github.com/ChargePi/ChargePi-go/pkg/util"
@@ -27,7 +28,7 @@ type Manager interface {
 type DisplayManager struct {
 	mu              sync.Mutex
 	scheduler       *gocron.Scheduler
-	logger          log.FieldLogger
+	logger          *zap.Logger
 	displayStrategy Strategy
 	displays        map[string]display.Display
 	//messageQueuePerDisplay map[string]*messagePriorityQueue
@@ -36,13 +37,13 @@ type DisplayManager struct {
 	messageQueue *messagePriorityQueue
 }
 
-func NewDisplayManager() (*DisplayManager, error) {
-	logger := log.StandardLogger()
+func NewDisplayManager(logger *zap.Logger) (*DisplayManager, error) {
+
 	scheduler := gocron.NewScheduler(time.UTC)
 
 	return &DisplayManager{
 		scheduler:    scheduler,
-		logger:       logger,
+		logger:       logger.Named("display_manager"),
 		messageQueue: newMessageQueue(),
 		displays:     make(map[string]display.Display),
 	}, nil
@@ -53,7 +54,7 @@ func (d *DisplayManager) DisplayMessage(message message.MessageInfo) error {
 	if message.StartDateTime != nil && message.StartDateTime.After(time.Now()) {
 		_, err := d.scheduler.At(*message.StartDateTime).Tag("displayMessage", strconv.Itoa(message.ID)).Do(d.DisplayMessage, message)
 		if err != nil {
-			d.logger.WithError(err).Errorf("Error scheduling ClearMessage")
+			d.logger.With(zap.Error(err)).Error("Error scheduling ClearMessage")
 			return err
 		}
 
@@ -61,7 +62,7 @@ func (d *DisplayManager) DisplayMessage(message message.MessageInfo) error {
 	}
 
 	// Trigger display strategy
-	d.logger.Debugf("Displaying message %v", message)
+	d.logger.Debug("Displaying message", zap.Any("message", message))
 	err := d.displayStrategy.DisplayMessage(d, message)
 	if err != nil {
 		return err
@@ -71,7 +72,7 @@ func (d *DisplayManager) DisplayMessage(message message.MessageInfo) error {
 	if message.EndDateTime != nil {
 		_, err := d.scheduler.At(*message.EndDateTime).Tag("clearMessage", strconv.Itoa(message.ID)).Do(d.RemoveMessage, message.ID)
 		if err != nil {
-			d.logger.WithError(err).Errorf("Error scheduling ClearMessage")
+			d.logger.With(zap.Error(err)).Error("Error scheduling ClearMessage")
 			return err
 		}
 	}
@@ -129,7 +130,7 @@ func (d *DisplayManager) cleanupDisplays(ctx context.Context, err error, errChan
 	for _, dis := range d.displays {
 		err = dis.Cleanup(ctx)
 		if err != nil {
-			d.logger.WithError(err).Error("Error cleaning up display")
+			d.logger.With(zap.Error(err)).Error("Error cleaning up display")
 			errChan <- err
 		}
 	}

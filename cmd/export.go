@@ -45,12 +45,12 @@ func exportCommand() *cobra.Command {
 				return fmt.Errorf("could not create OCPP configuration manager: %v", err)
 			}
 
-			settingsManager, err := manager.NewManager(db, db, configurationManager)
+			settingsManager, err := manager.NewManager(logger, db, db, configurationManager)
 			if err != nil {
 				return fmt.Errorf("could not create settings manager: %v", err)
 			}
 
-			exporter := exporter2.NewExporter(tagManager, settingsManager, db)
+			exporter := exporter2.NewExporter(logger, tagManager, settingsManager, db)
 
 			evseFlag := cmd.Flags().Lookup(cfg.EvseFlag).Changed
 			ocppFlag := cmd.Flags().Lookup(cfg.OcppConfigPathFlag).Changed

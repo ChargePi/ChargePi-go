@@ -7,7 +7,6 @@ import (
 	"go.uber.org/zap/zaptest"
 
 	"github.com/samber/lo"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
 
 	mock_encryption "github.com/ChargePi/ChargePi-go/gen/mocks/pkg/encryption"
@@ -188,6 +187,5 @@ func (s *serviceTestSuite) TestUpdateUser() {
 }
 
 func TestService(t *testing.T) {
-	log.SetLevel(log.DebugLevel)
 	suite.Run(t, new(serviceTestSuite))
 }

@@ -5,12 +5,13 @@ import (
 	"testing"
 	"time"
 
-	mock_auth "github.com/ChargePi/ChargePi-go/gen/mocks/auth"
+	"go.uber.org/zap/zaptest"
 
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/localauth"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
+
+	mock_auth "github.com/ChargePi/ChargePi-go/gen/mocks/auth"
 )
 
 var (
@@ -38,7 +39,7 @@ type localAuthListTestSuite struct {
 
 func (s *localAuthListTestSuite) SetupTest() {
 	s.mockRepository = mock_auth.NewMockLocalAuthListRepository(s.T())
-	s.authList = newLocalAuthList(s.mockRepository, 10)
+	s.authList = newLocalAuthList(zaptest.NewLogger(s.T()), s.mockRepository, 10)
 }
 
 func (s *localAuthListTestSuite) TestAddTag() {
@@ -362,6 +363,5 @@ func (s *localAuthListTestSuite) TestVersion() {
 }
 
 func TestLocalAuth(t *testing.T) {
-	log.SetLevel(log.DebugLevel)
 	suite.Run(t, new(localAuthListTestSuite))
 }

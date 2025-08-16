@@ -3,7 +3,6 @@
 package powerMeter
 
 import (
-	log "github.com/sirupsen/logrus"
 	"go.uber.org/zap"
 
 	"github.com/ChargePi/ChargePi-go/pkg/hardware"
@@ -30,7 +29,7 @@ type Settings struct {
 func NewPowerMeter(meterSettings Settings) (PowerMeter, error) {
 	if meterSettings.Enabled {
 		logger := zap.L()
-		log.Infof("Creating a new power meter: %s", meterSettings.Type)
+		logger.Sugar().Infof("Creating a new power meter: %s", meterSettings.Type)
 
 		switch meterSettings.Type {
 		case TypeC5460A:

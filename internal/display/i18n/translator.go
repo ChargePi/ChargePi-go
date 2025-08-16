@@ -8,8 +8,9 @@ import (
 	"strings"
 	"sync"
 
+	"go.uber.org/zap"
+
 	"github.com/nicksnyder/go-i18n/v2/i18n"
-	log "github.com/sirupsen/logrus"
 	"golang.org/x/text/language"
 	"gopkg.in/yaml.v2"
 )
@@ -31,10 +32,10 @@ type TranslatorImpl struct {
 	mu                 sync.Mutex
 	matcher            language.Matcher
 	supportedLanguages []language.Tag
-	logger             *log.Logger
+	logger             *zap.Logger
 }
 
-func NewTranslator(settings Settings) (*TranslatorImpl, error) {
+func NewTranslator(logger *zap.Logger, settings Settings) (*TranslatorImpl, error) {
 	bundle := i18n.NewBundle(language.English)
 	bundle.RegisterUnmarshalFunc("yaml", yaml.Unmarshal)
 	_, err := bundle.LoadMessageFileFS(locale, "translations/active.en.yaml")
@@ -45,7 +46,7 @@ func NewTranslator(settings Settings) (*TranslatorImpl, error) {
 	translator := &TranslatorImpl{
 		bundle:          bundle,
 		defaultMessages: map[string]i18n.Message{},
-		logger:          log.StandardLogger(),
+		logger:          logger.Named("translator"),
 	}
 
 	// Add defaults
@@ -153,7 +154,7 @@ func (t *TranslatorImpl) loadTranslation(path string) error {
 
 	// The language is second to last
 	lang := strs[len(strs)-2]
-	log.Debugf("loading translation: %s", lang)
+	t.logger.Debug("loading translation", zap.String("lang", lang))
 
 	// Load the translation file
 	_, err := t.bundle.LoadMessageFile(path)

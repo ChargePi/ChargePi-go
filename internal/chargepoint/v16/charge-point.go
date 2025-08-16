@@ -14,6 +14,15 @@ import (
 	"github.com/ChargePi/ChargePi-go/internal/diagnostics"
 	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
 
+	settings "github.com/ChargePi/ChargePi-go/internal/pkg/configuration/manager"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/notifications"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/scheduler"
+	"github.com/ChargePi/ChargePi-go/internal/sessions"
+	"github.com/ChargePi/ChargePi-go/pkg/hardware/display"
+	"github.com/ChargePi/ChargePi-go/pkg/hardware/indicator"
+	"github.com/ChargePi/ChargePi-go/pkg/hardware/reader"
+	"github.com/ChargePi/ChargePi-go/pkg/util"
+
 	// "github.com/ChargePi/ChargePi-go/internal/networking"
 	"github.com/ChargePi/ocpp-manager/ocpp_v16"
 	"github.com/avast/retry-go"
@@ -27,16 +36,6 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/smartcharging"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
-
-	settings "github.com/ChargePi/ChargePi-go/internal/pkg/configuration/manager"
-	"github.com/ChargePi/ChargePi-go/internal/pkg/notifications"
-	"github.com/ChargePi/ChargePi-go/internal/pkg/scheduler"
-	"github.com/ChargePi/ChargePi-go/internal/sessions"
-	"github.com/ChargePi/ChargePi-go/pkg/hardware/display"
-	"github.com/ChargePi/ChargePi-go/pkg/hardware/indicator"
-	"github.com/ChargePi/ChargePi-go/pkg/hardware/reader"
-	"github.com/ChargePi/ChargePi-go/pkg/util"
 )
 
 type ChargePoint struct {
@@ -362,27 +361,27 @@ func (cp *ChargePoint) setProfilesFromConfig() error {
 		return errors.Wrap(err, "unable to retrieve supported profiles")
 	}
 
-	logInfo := log.WithField("profiles", profiles)
+	logger := cp.logger.With(zap.Any("profiles", profiles))
 
 	for _, profile := range strings.Split(*profiles, ", ") {
 		switch profile {
 		case reservation.ProfileName:
 			cp.chargePoint.SetReservationHandler(cp)
-			logInfo.Debug("Setting reservation handler")
+			logger.Debug("Setting reservation handler")
 		case smartcharging.ProfileName:
-			logInfo.Debug("Setting smart charging handler")
+			logger.Debug("Setting smart charging handler")
 			err = cp.setupSmartChargingConfigurationValidation()
 			// cp.chargePoint.SetSmartChargingHandler(cp)
 		case localauth.ProfileName:
-			logInfo.Debug("Setting local auth handler")
+			logger.Debug("Setting local auth handler")
 			cp.chargePoint.SetLocalAuthListHandler(cp)
 
 			err = cp.setupCoreConfigurationValidation()
 		case remotetrigger.ProfileName:
-			logInfo.Debug("Setting remote trigger handler")
+			logger.Debug("Setting remote trigger handler")
 			cp.chargePoint.SetRemoteTriggerHandler(cp)
 		case firmware.ProfileName:
-			logInfo.Debug("Setting firmware handler")
+			logger.Debug("Setting firmware handler")
 			cp.chargePoint.SetFirmwareManagementHandler(cp)
 		default:
 			return errors.New("unsupported profile")

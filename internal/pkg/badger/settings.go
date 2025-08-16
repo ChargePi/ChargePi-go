@@ -7,7 +7,7 @@ import (
 	"github.com/ChargePi/ocpp-manager/ocpp_v16"
 	"github.com/dgraph-io/badger/v3"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 
 	chargePoint "github.com/ChargePi/ChargePi-go/internal/chargepoint"
 	"github.com/ChargePi/ChargePi-go/internal/evse"
@@ -69,7 +69,7 @@ func (db *Database) GetEvseSettings() ([]evse.Settings, error) {
 				return json.Unmarshal(v, &data)
 			})
 			if err != nil {
-				log.WithError(err).Warnf("Error unmarshalling EVSE settings for %s", item.Key())
+				db.logger.With(zap.Error(err)).Sugar().Warnf("Error unmarshalling EVSE settings for %s", item.Key())
 				continue
 			}
 

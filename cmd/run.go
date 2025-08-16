@@ -76,7 +76,7 @@ func runCommand() *cobra.Command {
 				logger.With(zap.Error(err)).Fatal("Cannot create OCPP variable manager")
 			}
 
-			settingsManager, err := configManager.NewManager(db, db, ocppVariableManager)
+			settingsManager, err := configManager.NewManager(logger, db, db, ocppVariableManager)
 			if err != nil {
 				logger.With(zap.Error(err)).Fatal("Cannot create settings manager")
 			}
@@ -86,7 +86,7 @@ func runCommand() *cobra.Command {
 				logger.With(zap.Error(err)).Fatal("Cannot create EVSE manager")
 			}
 
-			diagnosticsManager, err := diagnostics.NewService()
+			diagnosticsManager, err := diagnostics.NewService(logger)
 			if err != nil {
 				logger.With(zap.Error(err)).Fatal("Cannot create diagnostics service")
 			}

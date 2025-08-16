@@ -3,8 +3,9 @@ package configuration
 import (
 	"strings"
 
+	"go.uber.org/zap"
+
 	"github.com/agrison/go-commons-lang/stringUtils"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 
 	"github.com/ChargePi/ChargePi-go/pkg/ocpp"
@@ -52,7 +53,7 @@ func InitSettings(settingsFilePath string) {
 
 	err := ReadConfiguration(config, "settings", "yaml", settingsFilePath)
 	if err != nil {
-		log.WithError(err).Fatalf("Cannot read configuration file")
+		zap.L().With(zap.Error(err)).Fatal("Cannot read configuration file")
 	}
 }
 
@@ -72,7 +73,7 @@ func ReadConfiguration(v *viper.Viper, fileName, extension, filePath string) err
 	err := v.ReadInConfig()
 	if err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			log.Warn("No configuration file found")
+			zap.L().Warn("No configuration file found")
 			return nil
 		}
 	}

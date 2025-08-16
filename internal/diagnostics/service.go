@@ -11,9 +11,10 @@ import (
 	"sync"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/avast/retry-go"
 	"github.com/samber/lo"
-	log "github.com/sirupsen/logrus"
 	"github.com/tavsec/gin-healthcheck/checks"
 
 	"github.com/ChargePi/ChargePi-go/pkg/observability"
@@ -32,17 +33,17 @@ type Service interface {
 }
 
 type ServiceV1 struct {
-	logger       log.FieldLogger
+	logger       *zap.Logger
 	mu           sync.Mutex
 	uploadStatus string
 	fac          *uploaderFactory
 }
 
-func NewService() (*ServiceV1, error) {
+func NewService(logger *zap.Logger) (*ServiceV1, error) {
 	return &ServiceV1{
 		mu:     sync.Mutex{},
 		fac:    &uploaderFactory{},
-		logger: log.WithField("component", "diagnostics-manager"),
+		logger: logger.Named("diagnostics-manager"),
 	}, nil
 }
 
@@ -153,7 +154,7 @@ func (m *ServiceV1) UploadLogs(uri string, from, to *time.Time, retryInterval ti
 		retry.Attempts(uint(retries)),
 		retry.Delay(retryInterval),
 		retry.OnRetry(func(n uint, err error) {
-			m.logger.WithError(err).WithField("attempt", n).Warn("Failed to upload logs, retrying")
+			m.logger.With(zap.Error(err), zap.Uint("attempt", n)).Warn("Failed to upload logs, retrying")
 		}),
 	)
 }
@@ -176,7 +177,7 @@ func zipLogs(files []string) ([]byte, error) {
 	defer func(temp *os.File) {
 		err := temp.Close()
 		if err != nil {
-			log.WithError(err).Error("Failed to close temporary file")
+			zap.L().With(zap.Error(err)).Error("Failed to close temporary file")
 		}
 	}(temp)
 

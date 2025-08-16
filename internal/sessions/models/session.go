@@ -8,7 +8,6 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
-	log "github.com/sirupsen/logrus"
 
 	"github.com/ChargePi/ChargePi-go/pkg/util"
 )
@@ -102,7 +101,6 @@ func (session *Session) SetTransactionId(transactionId string) error {
 // EndSession End the Session if one is active. Reset the attributes, except the measurands.
 func (session *Session) EndSession() error {
 	if session.IsActive {
-		log.Debugf("Ended a session %s for %s", session.TransactionId, session.TagId)
 		session.TransactionId = ""
 		session.TagId = ""
 		session.IsActive = false
@@ -131,7 +129,6 @@ func (session *Session) AddSampledValue(samples []types.SampledValue) error {
 		}
 	}
 
-	log.Tracef("Added meter sample for session %s", session.TransactionId)
 	session.Consumption = append(session.Consumption, types.MeterValue{
 		Timestamp:    types.NewDateTime(time.Now()),
 		SampledValue: samples,

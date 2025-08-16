@@ -3,11 +3,12 @@ package auth
 import (
 	"errors"
 
+	"go.uber.org/zap"
+
 	"github.com/agrison/go-commons-lang/stringUtils"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/localauth"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/lorenzodonini/ocpp-go/ocppj"
-	log "github.com/sirupsen/logrus"
 
 	"github.com/ChargePi/ChargePi-go/internal/auth/list"
 	"github.com/ChargePi/ChargePi-go/pkg/util"
@@ -36,7 +37,7 @@ type (
 	List struct {
 		repository LocalAuthListRepository
 		maxTags    int
-		logger     log.FieldLogger
+		logger     *zap.Logger
 	}
 )
 
@@ -50,18 +51,18 @@ type LocalAuthListRepository interface {
 	AddAuthList(list.LocalAuthListVersion) error
 }
 
-func newLocalAuthList(repository LocalAuthListRepository, maxTags int) *List {
+func newLocalAuthList(logger *zap.Logger, repository LocalAuthListRepository, maxTags int) *List {
 	return &List{
 		repository: repository,
 		maxTags:    maxTags,
-		logger:     log.StandardLogger().WithField("component", "local-auth-list"),
+		logger:     logger.Named("local_auth_list"),
 	}
 }
 
 // AddTag Add a tag to the local auth list.
 func (l *List) AddTag(tagId string, tagInfo *types.IdTagInfo) error {
-	logInfo := l.logger.WithField("tagId", tagId)
-	logInfo.Debug("Adding a tag to local auth list")
+	logger := l.logger.With(zap.String("tagId", tagId), zap.Any("tagInfo", tagInfo))
+	logger.Debug("Adding a tag to local auth list")
 
 	if stringUtils.IsEmpty(tagId) {
 		return ErrInvalidTagId
@@ -90,8 +91,8 @@ func (l *List) AddTag(tagId string, tagInfo *types.IdTagInfo) error {
 
 // RemoveTag Remove a tag with the ID from the Local Auth List.
 func (l *List) RemoveTag(tagId string) error {
-	logInfo := l.logger.WithField("tagId", tagId)
-	logInfo.Debug("Removing a tag from local auth list")
+	logger := l.logger.With(zap.String("tagId", tagId))
+	logger.Debug("Removing a tag from local auth list")
 
 	if stringUtils.IsEmpty(tagId) {
 		return ErrInvalidTagId
@@ -102,19 +103,19 @@ func (l *List) RemoveTag(tagId string) error {
 
 // RemoveAll Remove all tags.
 func (l *List) RemoveAll() {
-	l.logger.Debugf("Removing local auth list")
+	l.logger.Debug("Removing local auth list")
 
 	// Remove all cached keys from database
 	err := l.repository.RemoveAuthListAllTagsForVersion(l.GetVersion())
 	if err != nil {
-		l.logger.WithError(err).Error("Error removing local auth list")
+		l.logger.With(zap.Error(err)).Error("Error removing local auth list")
 	}
 }
 
 // GetTag Get a tag from local auth list.
 func (l *List) GetTag(tagId string) (*types.IdTagInfo, error) {
-	logInfo := l.logger.WithField("tagId", tagId)
-	logInfo.Info("Fetching the tag")
+	logger := l.logger.With(zap.String("tagId", tagId))
+	logger.Info("Fetching the tag")
 
 	if stringUtils.IsEmpty(tagId) {
 		return nil, ErrInvalidTagId
@@ -125,7 +126,7 @@ func (l *List) GetTag(tagId string) (*types.IdTagInfo, error) {
 
 // GetTags Get all tags stored in the Local Auth store.
 func (l *List) GetTags() ([]localauth.AuthorizationData, error) {
-	l.logger.Infof("Fetching tags")
+	l.logger.Info("Fetching tags")
 
 	tags, err := l.repository.GetLocalAuthListTags()
 	if err != nil {
@@ -137,8 +138,8 @@ func (l *List) GetTags() ([]localauth.AuthorizationData, error) {
 
 // UpdateTag Update a tag in the Local Auth store.
 func (l *List) UpdateTag(tagId string, tagInfo *types.IdTagInfo) error {
-	logInfo := l.logger.WithField("tagId", tagId)
-	logInfo.Info("Updating expectedTag")
+	logger := l.logger.With(zap.String("tagId", tagId))
+	logger.Info("Updating tag")
 
 	if stringUtils.IsEmpty(tagId) {
 		return ErrInvalidTagId
@@ -167,7 +168,7 @@ func (l *List) GetVersion() int {
 
 // SetVersion Set the current version of the Local Auth list.
 func (l *List) SetVersion(version int) {
-	logInfo := l.logger.WithField("version", version)
+	logInfo := l.logger.With(zap.Int("version", version))
 	logInfo.Info("Updating list version")
 
 	// todo
@@ -176,7 +177,7 @@ func (l *List) SetVersion(version int) {
 // SetMaxTags Set the maximum number of tags that can be stored in the Local Auth list.
 func (l *List) SetMaxTags(number int) {
 	if number >= 0 {
-		l.logger.Debugf("Set max tags to %d", number)
+		l.logger.Sugar().Debugf("Set max tags to %d", number)
 		l.maxTags = number
 	}
 }

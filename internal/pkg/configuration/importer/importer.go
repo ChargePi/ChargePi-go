@@ -4,9 +4,10 @@ import (
 	"os"
 	"path/filepath"
 
+	"go.uber.org/zap"
+
 	"github.com/ChargePi/ocpp-manager/ocpp_v16"
 	"github.com/go-playground/validator/v10"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 
 	"github.com/ChargePi/ChargePi-go/internal/auth"
@@ -35,10 +36,11 @@ type ImporterImpl struct {
 	viper                   *viper.Viper
 	evseSettingsRepository  manager.EvseSettingsRepository
 	localAuthListRepository auth.LocalAuthListRepository
-	logger                  log.FieldLogger
+	logger                  *zap.Logger
 }
 
 func NewImporter(
+	logger *zap.Logger,
 	settingsManager settingsManager.Manager,
 	evseSettingsRepository manager.EvseSettingsRepository,
 	localAuthListRepository auth.LocalAuthListRepository,
@@ -48,7 +50,7 @@ func NewImporter(
 		viper:                   viper.New(),
 		evseSettingsRepository:  evseSettingsRepository,
 		localAuthListRepository: localAuthListRepository,
-		logger:                  log.StandardLogger().WithField("component", "importer"),
+		logger:                  logger.Named("importer"),
 	}
 }
 
@@ -130,7 +132,7 @@ func (i *ImporterImpl) ImportChargePointSettings(settings chargepoint.Settings) 
 }
 
 func (i *ImporterImpl) ImportEVSESettingsFromPath(path string) error {
-	i.logger.Infof("Importing EVSE settings from %s", path)
+	i.logger.Info("Importing EVSE settings")
 
 	var evseSettings []evse.Settings
 
@@ -168,7 +170,7 @@ func (i *ImporterImpl) ImportEVSESettingsFromPath(path string) error {
 }
 
 func (i *ImporterImpl) ImportLocalAuthListFromPath(path string) error {
-	i.logger.Infof("Importing tags from %s", path)
+	i.logger.With(zap.String("path", path)).Info("Importing tags")
 
 	var tagList list.LocalAuthListVersion
 
@@ -186,7 +188,7 @@ func (i *ImporterImpl) ImportLocalAuthListFromPath(path string) error {
 }
 
 func (i *ImporterImpl) ImportChargePointSettingsFromPath(path string) error {
-	i.logger.Infof("Importing settings from %s", path)
+	i.logger.With(zap.String("path", path)).Info("Importing settings")
 
 	var cpSettings chargepoint.Settings
 
@@ -205,7 +207,7 @@ func (i *ImporterImpl) ImportChargePointSettingsFromPath(path string) error {
 }
 
 func (i *ImporterImpl) ImportOcppConfigurationFromPath(version ocpp.ProtocolVersion, path string) error {
-	i.logger.Infof("Importing OCPP configuration from %s", path)
+	i.logger.With(zap.String("path", path)).Info("Importing OCPP configuration")
 
 	// Todo detect which version of OCPP is being imported from the settings?
 	switch version {

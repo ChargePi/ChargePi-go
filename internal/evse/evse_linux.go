@@ -8,13 +8,14 @@ import (
 	"sort"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/go-co-op/gocron"
 	"github.com/go-playground/validator/v10"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
-	log "github.com/sirupsen/logrus"
 
 	"github.com/ChargePi/ChargePi-go/internal/pkg/notifications"
 	"github.com/ChargePi/ChargePi-go/internal/pkg/scheduler"
@@ -41,7 +42,7 @@ type V1 struct {
 	connectors []ConnectorSettings
 
 	scheduler *gocron.Scheduler
-	logger    log.FieldLogger
+	logger    *zap.Logger
 
 	// State
 	state *state
@@ -57,10 +58,8 @@ type V1 struct {
 }
 
 // NewEvse Creates a new evse.
-func NewEvse(evseId int, evcc evcc.EVCC, powerMeter powerMeter.PowerMeter, maxPower float64) (*V1, error) {
-	log.WithFields(log.Fields{
-		"evseId": evseId,
-	}).Info("Creating a new evse")
+func NewEvse(logger *zap.Logger, evseId int, evcc evcc.EVCC, powerMeter powerMeter.PowerMeter, maxPower float64) (*V1, error) {
+	l2 := logger.With(zap.Int("evseId", evseId))
 
 	if evseId <= 0 {
 		return nil, ErrInvalidEvseId
@@ -86,14 +85,12 @@ func NewEvse(evseId int, evcc evcc.EVCC, powerMeter powerMeter.PowerMeter, maxPo
 		connectors:        make([]ConnectorSettings, 0),
 		state:             newState(),
 		scheduler:         scheduler.NewScheduler(),
-		logger:            log.StandardLogger().WithField("component", "evse").WithField("evseId", evseId),
+		logger:            l2,
 	}, nil
 }
 
 // NewEvseFromSettings Create a new evse object from the configuration.
-func NewEvseFromSettings(settings Settings) (*V1, error) {
-	logInfo := log.StandardLogger()
-
+func NewEvseFromSettings(logger *zap.Logger, settings Settings) (*V1, error) {
 	err := settings.Validate()
 	if err != nil {
 		return nil, err
@@ -103,22 +100,22 @@ func NewEvseFromSettings(settings Settings) (*V1, error) {
 	evccFromType, err := evcc.NewEVCCFromType(settings.EVCC)
 	switch err {
 	case nil:
-		logInfo.WithField("type", settings.EVCC.Type).Debugf("EVCC created")
+		logger.With(zap.String("type", settings.EVCC.Type)).Debug("EVCC created")
 	default:
 		return nil, err
 	}
 
 	// Create a PowerMeter from settings
-	logInfo.Debugf("Creating power meter")
+	logger.Debug("Creating power meter")
 	meter, powerMeterErr := powerMeter.NewPowerMeter(settings.PowerMeter)
 	switch {
 	case powerMeterErr == nil:
 	case errors.Is(powerMeterErr, powerMeter.ErrPowerMeterDisabled):
-		logInfo.WithError(powerMeterErr).Warn("Power meter disabled")
+		logger.With(zap.Error(powerMeterErr)).Warn("Power meter disabled")
 	case errors.Is(powerMeterErr, powerMeter.ErrPowerMeterUnsupported), errors.Is(powerMeterErr, powerMeter.ErrInvalidConnectionSettings):
 		fallthrough
 	default:
-		logInfo.WithError(powerMeterErr).Error("Cannot instantiate power meter for evse")
+		logger.With(zap.Error(powerMeterErr)).Error("Cannot instantiate power meter for evse")
 		return nil, powerMeterErr
 	}
 
@@ -131,7 +128,7 @@ func NewEvseFromSettings(settings Settings) (*V1, error) {
 		powerMeter: meter,
 		state:      newState(),
 		scheduler:  scheduler.NewScheduler(),
-		logger:     log.StandardLogger().WithField("component", "evse").WithField("evseId", settings.EvseId),
+		logger:     logger,
 	}, nil
 }
 
@@ -168,13 +165,13 @@ func (evse *V1) Cleanup() error {
 	// Stop charging
 	err := evse.StopCharging(core.ReasonLocal)
 	if err != nil {
-		evse.logger.WithError(err).Error("Cannot stop charging")
+		evse.logger.With(zap.Error(err)).Error("Cannot stop charging")
 	}
 
 	// Clean up EVCC
 	err = evse.evcc.Cleanup()
 	if err != nil {
-		evse.logger.WithError(err).Error("Cannot cleanup evcc")
+		evse.logger.With(zap.Error(err)).Error("Cannot cleanup evcc")
 	}
 
 	// Stop the scheduler
@@ -184,7 +181,7 @@ func (evse *V1) Cleanup() error {
 	if evse.powerMeterEnabled {
 		err = evse.powerMeter.Cleanup()
 		if err != nil {
-			evse.logger.WithError(err).Error("Cannot stop power meter")
+			evse.logger.With(zap.Error(err)).Error("Cannot stop power meter")
 		}
 	}
 
@@ -273,7 +270,7 @@ Loop:
 			err := evse.SetStatus(state, cpErr)
 			if err != nil {
 				// todo is this a panic event?
-				evse.logger.WithError(err).Error("Cannot set evse status")
+				evse.logger.With(zap.Error(err)).Error("Cannot set evse status")
 			}
 		case <-ctx.Done():
 			break Loop
@@ -287,8 +284,8 @@ func (evse *V1) SetState(state State) {
 
 // StartCharging Start charging an evse if evse is available and session could be started.
 func (evse *V1) StartCharging(connectorId *int, measurands []types.Measurand, sampleInterval string) error {
-	logInfo := evse.logger.WithField("connectorId", connectorId)
-	logInfo.Debugf("Trying to start charging on evse")
+	logger := evse.logger.With(zap.Intp("connectorId", connectorId))
+	logger.Debug("Trying to start charging on evse")
 
 	// Enable charging on the evcc
 	err := evse.evcc.EnableCharging()
@@ -302,7 +299,7 @@ func (evse *V1) StartCharging(connectorId *int, measurands []types.Measurand, sa
 	// Prepare power meter and schedule sampling
 	sampleError := evse.scheduleMeterValueUpdates(measurands, sampleInterval)
 	if sampleError != nil {
-		logInfo.WithError(sampleError).Error("Cannot sample evse")
+		logger.With(zap.Error(sampleError)).Error("Cannot sample evse")
 	}
 
 	return nil
@@ -310,10 +307,10 @@ func (evse *V1) StartCharging(connectorId *int, measurands []types.Measurand, sa
 
 // StopCharging Stops charging an evse if evse is charging
 func (evse *V1) StopCharging(reason core.Reason) error {
-	logInfo := evse.logger.WithField("reason", reason)
+	logger := evse.logger.With(zap.String("reason", string(reason)))
 
 	if evse.IsCharging() {
-		logInfo.Debugf("Stopping charging")
+		logger.Debug("Stopping charging")
 
 		evse.evcc.DisableCharging()
 		evse.evcc.Unlock()
@@ -321,7 +318,7 @@ func (evse *V1) StopCharging(reason core.Reason) error {
 		// Remove any jobs scheduled for this evse
 		schedulerErr := evse.scheduler.RemoveByTag(fmt.Sprintf("evse-%d-chargingTimer", evse.GetEvseId()))
 		if schedulerErr != nil {
-			logInfo.WithError(schedulerErr).Errorf("Cannot remove sampling schedule")
+			logger.With(zap.Error(schedulerErr)).Error("Cannot remove sampling schedule")
 		}
 
 		return nil
@@ -384,11 +381,11 @@ func (evse *V1) SetAvailability(isAvailable bool) error {
 
 // SetStatus sets the status of the EVSE and sends a notification to the channel
 func (evse *V1) SetStatus(status core.ChargePointStatus, errCode core.ChargePointErrorCode) error {
-	logInfo := evse.logger.WithFields(log.Fields{
-		"status": status,
-		"err":    errCode,
-	})
-	logInfo.Debugf("Setting evse status %s with err %s", status, errCode)
+	logger := evse.logger.With(
+		zap.String("status", string(status)),
+		zap.String("errorCode", string(errCode)),
+	)
+	logger.Debug("Setting evse status")
 
 	err := evse.state.SetStatus(status, errCode)
 	if err != nil {
@@ -397,7 +394,7 @@ func (evse *V1) SetStatus(status core.ChargePointStatus, errCode core.ChargePoin
 
 	// Notify the channel that a status was updated
 	if evse.notificationChannel != nil {
-		logInfo.Debug("Sending status notification")
+		logger.Debug("Sending status notification")
 		evse.notificationChannel <- notifications.NewStatusNotification(evse.info.EvseId, string(status), string(errCode))
 	}
 	return nil
@@ -410,13 +407,13 @@ func (evse *V1) GetStatus() (core.ChargePointStatus, core.ChargePointErrorCode) 
 
 // GetEvseId returns the id of the evse
 func (evse *V1) GetEvseId() int {
-	evse.logger.Debugf("Getting evse id")
+	evse.logger.Debug("Getting evse id")
 	return evse.info.EvseId
 }
 
 // GetMaxChargingPower returns the maximum charging power of the evse
 func (evse *V1) GetMaxChargingPower() float64 {
-	evse.logger.Debugf("Getting max charging power")
+	evse.logger.Debug("Getting max charging power")
 	return evse.info.MaxPower
 }
 
@@ -467,7 +464,7 @@ func (evse *V1) AddConnector(connector ConnectorSettings) error {
 		return err
 	}
 
-	evse.logger.WithField("connectorId", connector.ConnectorId).Debug("Adding connector to EVSE")
+	evse.logger.With(zap.Int("connectorId", connector.ConnectorId)).Debug("Adding connector to EVSE")
 
 	containsConnectorWithId := lo.ContainsBy(evse.connectors, func(item ConnectorSettings) bool {
 		return item.ConnectorId == connector.ConnectorId
@@ -501,7 +498,7 @@ func (evse *V1) SetEvcc(e evcc.EVCC) error {
 	// Cleanup the "current" EVCC
 	err := evse.evcc.Cleanup()
 	if err != nil {
-		evse.logger.Errorf("Error cleaning up EVCC: %s", err)
+		evse.logger.With(zap.Error(err)).Error("Error cleaning up EVCC")
 		return err
 	}
 
@@ -544,27 +541,27 @@ func (evse *V1) SetPowerMeter(meter powerMeter.PowerMeter) error {
 
 // SamplePowerMeter requests samples from the power meter for given measurands.
 func (evse *V1) SamplePowerMeter(measurands []types.Measurand) ([]types.SampledValue, error) {
-	logInfo := evse.logger
+	logger := evse.logger.With(zap.Any("measurands", measurands))
 
 	if util.IsNilInterfaceOrPointer(evse.powerMeter) {
-		logInfo.Warn("Sampling the power meter unavailable")
+		logger.Warn("Sampling the power meter unavailable")
 		return nil, errors.New("power meter not enabled")
 	}
 
-	logInfo.Debugf("Sampling EVSE for measurands %v", measurands)
+	logger.Debug("Sampling EVSE")
 
 	var samples []types.SampledValue
 
 	// Get value for each supported measureand
 	for _, measurand := range measurands {
-		logInfo.Debugf("Sampling measurand %v", measurand)
+		logger.Sugar().Debugf("Sampling measurand %v", measurand)
 
 		switch measurand {
 		case types.MeasurandPowerActiveImport, types.MeasurandPowerActiveExport:
 			// Get the total power
 			current, err := evse.powerMeter.GetPower(1)
 			if err != nil {
-				logInfo.WithError(err).Error("Error sampling power meter power")
+				logger.With(zap.Error(err)).Error("Error sampling power meter power")
 				continue
 			}
 
@@ -573,7 +570,7 @@ func (evse *V1) SamplePowerMeter(measurands []types.Measurand) ([]types.SampledV
 			types.MeasurandEnergyActiveExportInterval, types.MeasurandEnergyActiveExportRegister:
 			energy, err := evse.powerMeter.GetEnergy()
 			if err != nil {
-				logInfo.WithError(err).Error("Error sampling power meter energy")
+				logger.With(zap.Error(err)).Error("Error sampling power meter energy")
 				continue
 			}
 
@@ -583,7 +580,7 @@ func (evse *V1) SamplePowerMeter(measurands []types.Measurand) ([]types.SampledV
 			for i := 1; i < 4; i++ {
 				current, err := evse.powerMeter.GetCurrent(i)
 				if err != nil {
-					logInfo.WithError(err).Error("Error sampling power meter current")
+					logger.With(zap.Error(err)).Error("Error sampling power meter current")
 					continue
 				}
 
@@ -594,7 +591,7 @@ func (evse *V1) SamplePowerMeter(measurands []types.Measurand) ([]types.SampledV
 			for i := 1; i < 4; i++ {
 				current, err := evse.powerMeter.GetVoltage(i)
 				if err != nil {
-					logInfo.WithError(err).Error("Error sampling power meter voltage")
+					logger.With(zap.Error(err)).Error("Error sampling power meter voltage")
 					continue
 				}
 
@@ -610,7 +607,7 @@ func (evse *V1) SamplePowerMeter(measurands []types.Measurand) ([]types.SampledV
 func (evse *V1) sendMeterValueUpdate(measurands []types.Measurand) {
 	samples, err := evse.SamplePowerMeter(measurands)
 	if err != nil {
-		evse.logger.WithError(err).Error("Error sampling power meter")
+		evse.logger.With(zap.Error(err)).Error("Error sampling power meter")
 		return
 	}
 
@@ -621,7 +618,7 @@ func (evse *V1) sendMeterValueUpdate(measurands []types.Measurand) {
 
 	// Notify a MeterValue update
 	if evse.meterValuesChannel != nil {
-		evse.logger.Debugf("Sending meter value notification")
+		evse.logger.Debug("Sending meter value notification")
 		evse.meterValuesChannel <- notifications.NewMeterValueNotification(evse.info.EvseId, nil, nil, meterValue)
 	}
 }

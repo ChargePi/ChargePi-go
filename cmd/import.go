@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"go.uber.org/zap"
 
 	"github.com/ChargePi/ocpp-manager/ocpp_v16"
 	"github.com/spf13/cobra"
@@ -35,17 +36,19 @@ func importCommand() *cobra.Command {
 				return fmt.Errorf("could not create database: %v", err)
 			}
 
+			logger := zap.L()
+
 			configurationManager, err := ocpp_v16.NewV16ConfigurationManager(ocpp_v16.NewEmptyConfiguration())
 			if err != nil {
 				return fmt.Errorf("could not create OCPP configuration manager: %v", err)
 			}
 
-			settingsManager, err := manager.NewManager(db, db, configurationManager)
+			settingsManager, err := manager.NewManager(logger, db, db, configurationManager)
 			if err != nil {
 				return fmt.Errorf("could not create settings manager: %v", err)
 			}
 
-			importer := importer2.NewImporter(settingsManager, db, db)
+			importer := importer2.NewImporter(logger, settingsManager, db, db)
 
 			evseFlag := cmd.Flags().Lookup(cfg.EvseFlag).Changed
 			ocppFlag := cmd.Flags().Lookup(cfg.OcppConfigPathFlag).Changed

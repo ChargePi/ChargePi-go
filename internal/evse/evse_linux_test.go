@@ -8,12 +8,13 @@ import (
 	"testing"
 	"time"
 
+	"go.uber.org/zap/zaptest"
+
 	mock_evcc "github.com/ChargePi/ChargePi-go/gen/mocks/pkg/hardware/evcc"
 	mock_power_meter "github.com/ChargePi/ChargePi-go/gen/mocks/pkg/hardware/power-meter"
 
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -30,9 +31,10 @@ type evseTestSuite struct {
 }
 
 func (s *evseTestSuite) SetupTest() {
+	logger := zaptest.NewLogger(s.T())
 	evccMock := mock_evcc.NewMockEVCC(s.T())
 	powerMeterMock := mock_power_meter.NewMockPowerMeter(s.T())
-	evse, err := NewEvse(1, evccMock, powerMeterMock, 16.0)
+	evse, err := NewEvse(logger, 1, evccMock, powerMeterMock, 16.0)
 	s.Require().NoError(err)
 
 	s.evse = evse
@@ -41,6 +43,7 @@ func (s *evseTestSuite) SetupTest() {
 }
 
 func (s *evseTestSuite) TestNewEVSEFromSettings() {
+	logger := zaptest.NewLogger(s.T())
 	tests := []struct {
 		name     string
 		settings Settings
@@ -141,7 +144,7 @@ func (s *evseTestSuite) TestNewEVSEFromSettings() {
 
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
-			_, err := NewEvseFromSettings(tt.settings)
+			_, err := NewEvseFromSettings(logger, tt.settings)
 			if tt.wantErr {
 				s.Assert().Error(err)
 				return
@@ -672,6 +675,5 @@ func (s *evseTestSuite) TestGetConnectors() {
 }
 
 func TestEVSE(t *testing.T) {
-	log.SetLevel(log.DebugLevel)
 	suite.Run(t, new(evseTestSuite))
 }

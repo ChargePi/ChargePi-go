@@ -4,7 +4,7 @@ import (
 	"github.com/ChargePi/ocpp-manager/ocpp_v16"
 	"github.com/go-playground/validator/v10"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 
 	"github.com/ChargePi/ChargePi-go/internal/chargepoint"
 	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
@@ -21,11 +21,12 @@ type (
 		evseSettingsRepository manager.EvseSettingsRepository
 		settingsRepository     SettingsRepository
 		ocpp16VariableManager  ocpp_v16.Manager
-		logger                 log.FieldLogger
+		logger                 *zap.Logger
 	}
 )
 
 func NewManager(
+	logger *zap.Logger,
 	evseSettingsRepository manager.EvseSettingsRepository,
 	settingsRepository SettingsRepository,
 	ocpp16VariableManager ocpp_v16.Manager,
@@ -34,7 +35,7 @@ func NewManager(
 		evseSettingsRepository: evseSettingsRepository,
 		settingsRepository:     settingsRepository,
 		ocpp16VariableManager:  ocpp16VariableManager,
-		logger:                 log.WithField("component", "settings-manager"),
+		logger:                 logger.Named("settings_manager"),
 	}, nil
 }
 

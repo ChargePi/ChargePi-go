@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"go.uber.org/zap"
+
 	"github.com/ChargePi/ocpp-manager/ocpp_v16"
 	"github.com/agrison/go-commons-lang/stringUtils"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 
 	"github.com/ChargePi/ChargePi-go/internal/auth"
@@ -35,16 +36,21 @@ type ExporterImpl struct {
 	tagManager             auth.Service
 	settingsManager        configManager.Manager
 	evseSettingsRepository manager.EvseSettingsRepository
-	logger                 log.FieldLogger
+	logger                 *zap.Logger
 }
 
-func NewExporter(tagManager auth.Service, settingsManager configManager.Manager, evseSettingsRepository manager.EvseSettingsRepository) *ExporterImpl {
+func NewExporter(
+	logger *zap.Logger,
+	tagManager auth.Service,
+	settingsManager configManager.Manager,
+	evseSettingsRepository manager.EvseSettingsRepository,
+) *ExporterImpl {
 	return &ExporterImpl{
 		viper:                  viper.New(),
 		tagManager:             tagManager,
 		settingsManager:        settingsManager,
 		evseSettingsRepository: evseSettingsRepository,
-		logger:                 log.StandardLogger().WithField("component", "settings-exporter"),
+		logger:                 logger.Named("settings_exporter"),
 	}
 }
 
@@ -99,7 +105,7 @@ func (i *ExporterImpl) ExportChargePointSettings() (*chargepoint.Settings, error
 }
 
 func (i *ExporterImpl) ExportEVSESettingsToFile(path string) error {
-	i.logger.Infof("Exporting EVSE settings to %s", path)
+	i.logger.With(zap.String("path", path)).Info("Exporting EVSE settings")
 
 	evseSettings, err := i.ExportEVSESettings()
 	if err != nil {
@@ -131,7 +137,7 @@ func (i *ExporterImpl) ExportEVSESettingsToFile(path string) error {
 }
 
 func (i *ExporterImpl) ExportOcppConfigurationToFile(path string) error {
-	i.logger.Infof("Exporting OCPP configuration to %s", path)
+	i.logger.With(zap.String("path", path)).Info("Exporting OCPP configuration")
 
 	ocppConfiguration, err := i.ExportOcppConfiguration()
 	if err != nil {
@@ -154,7 +160,7 @@ func (i *ExporterImpl) ExportOcppConfigurationToFile(path string) error {
 }
 
 func (i *ExporterImpl) ExportLocalAuthListToFile(path string) error {
-	i.logger.Infof("Exporting tags to %s", path)
+	i.logger.With(zap.String("path", path)).Info("Exporting tags")
 
 	localAuthList, err := i.ExportLocalAuthList()
 	if err != nil {
@@ -176,7 +182,7 @@ func (i *ExporterImpl) ExportLocalAuthListToFile(path string) error {
 }
 
 func (i *ExporterImpl) ExportChargePointSettingsToFile(path string) error {
-	i.logger.Infof("Exporting settings to %s", path)
+	i.logger.With(zap.String("path", path)).Info("Exporting settings")
 
 	ocppConfiguration, err := i.ExportChargePointSettings()
 	if err != nil {
