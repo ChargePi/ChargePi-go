@@ -3,11 +3,12 @@ package manager
 import (
 	"context"
 
-	"github.com/ChargePi/ChargePi-go/internal/evse"
-	"github.com/ChargePi/ChargePi-go/internal/pkg/notifications"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/pkg/errors"
+
+	"github.com/ChargePi/ChargePi-go/internal/evse"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/notifications"
 )
 
 var (

@@ -1,13 +1,14 @@
 package manager
 
 import (
-	mock_manager "github.com/ChargePi/ChargePi-go/gen/mocks/evse/manager"
-	mock_sessions "github.com/ChargePi/ChargePi-go/gen/mocks/sessions"
 	"testing"
 
-	"github.com/ChargePi/ChargePi-go/internal/pkg/notifications"
-	"github.com/ChargePi/ChargePi-go/internal/sessions/mocks"
+	mock_manager "github.com/ChargePi/ChargePi-go/gen/mocks/evse/manager"
+	mock_sessions "github.com/ChargePi/ChargePi-go/gen/mocks/sessions"
+
 	"github.com/stretchr/testify/suite"
+
+	"github.com/ChargePi/ChargePi-go/internal/pkg/notifications"
 )
 
 type managerTestSuite struct {

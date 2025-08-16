@@ -7,13 +7,14 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/ChargePi/ChargePi-go/pkg/hardware"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
-	"go.uber.org/zap"
 	gpiod "github.com/warthog618/go-gpiocdev"
+	"go.uber.org/zap"
 	"periph.io/x/conn/v3/spi"
 	"periph.io/x/conn/v3/spi/spireg"
 	"periph.io/x/host/v3"
+
+	"github.com/ChargePi/ChargePi-go/pkg/hardware"
 )
 
 const (

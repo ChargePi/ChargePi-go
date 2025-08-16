@@ -5,8 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ChargePi/ChargePi-go/internal/sessions/models"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/ChargePi/ChargePi-go/internal/sessions/models"
 )
 
 type sessionRepositoryTestSuite struct {

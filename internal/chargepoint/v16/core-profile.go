@@ -1,9 +1,9 @@
 package v16
 
 import (
-	"go.uber.org/zap"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/display"
+	"go.uber.org/zap"
 )
 
 func (cp *ChargePoint) OnDataTransfer(request *core.DataTransferRequest) (confirmation *core.DataTransferConfirmation, err error) {

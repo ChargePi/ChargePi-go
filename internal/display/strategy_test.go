@@ -1,8 +1,9 @@
 package display
 
 import (
-	mock_display "github.com/ChargePi/ChargePi-go/gen/mocks/pkg/hardware/display"
 	"testing"
+
+	mock_display "github.com/ChargePi/ChargePi-go/gen/mocks/pkg/hardware/display"
 
 	"github.com/stretchr/testify/suite"
 )

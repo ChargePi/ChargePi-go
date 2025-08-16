@@ -1,9 +1,10 @@
 package cmd
 
 import (
-	chargePoint "github.com/ChargePi/ChargePi-go/internal/chargepoint"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
+
+	chargePoint "github.com/ChargePi/ChargePi-go/internal/chargepoint"
 )
 
 // versionCmd represents the version command

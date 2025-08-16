@@ -1,10 +1,11 @@
 package sessions
 
 import (
-	session "github.com/ChargePi/ChargePi-go/internal/sessions/models"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/tavsec/gin-healthcheck/checks"
 	"go.uber.org/zap"
+
+	session "github.com/ChargePi/ChargePi-go/internal/sessions/models"
 )
 
 type (

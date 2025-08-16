@@ -3,16 +3,18 @@ package v16
 import (
 	"context"
 	"errors"
-	"go.uber.org/zap"
 	"strings"
 	"time"
+
+	"go.uber.org/zap"
+
+	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
+	displaMessages "github.com/lorenzodonini/ocpp-go/ocpp2.0.1/display"
 
 	"github.com/ChargePi/ChargePi-go/pkg/hardware/display"
 	"github.com/ChargePi/ChargePi-go/pkg/hardware/indicator"
 	"github.com/ChargePi/ChargePi-go/pkg/hardware/reader"
 	"github.com/ChargePi/ChargePi-go/pkg/util"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	displaMessages "github.com/lorenzodonini/ocpp-go/ocpp2.0.1/display"
 )
 
 func (cp *ChargePoint) SetReader(reader reader.Reader) error {
@@ -58,7 +60,7 @@ func (cp *ChargePoint) DisplayMessage(message displaMessages.MessageInfo) error 
 		return errors.New("display not configured")
 	}
 
-	logger := cp.logger.With(zap.Any("message",message))
+	logger := cp.logger.With(zap.Any("message", message))
 
 	logger.Debug("Displaying message")
 	go func() {

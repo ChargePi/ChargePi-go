@@ -2,14 +2,16 @@ package auth
 
 import (
 	"errors"
-	mock_auth "github.com/ChargePi/ChargePi-go/gen/mocks/auth"
 	"testing"
 	"time"
 
-	"github.com/ChargePi/ChargePi-go/pkg/util"
+	mock_auth "github.com/ChargePi/ChargePi-go/gen/mocks/auth"
+
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/ChargePi/ChargePi-go/pkg/util"
 )
 
 var (

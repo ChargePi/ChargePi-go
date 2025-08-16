@@ -4,14 +4,15 @@ import (
 	"context"
 	"time"
 
-	commonv1 "github.com/ChargePi/ChargePi-go/gen/proto/common/v1"
-	grpc "github.com/ChargePi/ChargePi-go/gen/proto/evse/v1"
-	"github.com/ChargePi/ChargePi-go/internal/evse"
-	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/samber/lo"
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	commonv1 "github.com/ChargePi/ChargePi-go/gen/proto/common/v1"
+	grpc "github.com/ChargePi/ChargePi-go/gen/proto/evse/v1"
+	"github.com/ChargePi/ChargePi-go/internal/evse"
+	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
 )
 
 type EvseHandler struct {

@@ -2,11 +2,13 @@ package users
 
 import (
 	"errors"
+
 	"go.uber.org/zap"
+
+	"github.com/casbin/casbin/v2"
 
 	"github.com/ChargePi/ChargePi-go/internal/users/models"
 	"github.com/ChargePi/ChargePi-go/pkg/encryption"
-	"github.com/casbin/casbin/v2"
 )
 
 var (

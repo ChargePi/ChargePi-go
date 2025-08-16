@@ -3,8 +3,9 @@
 package display
 
 import (
+	"go.uber.org/zap"
+
 	"github.com/ChargePi/ChargePi-go/pkg/util"
-	log "github.com/sirupsen/logrus"
 )
 
 type Settings struct {
@@ -31,7 +32,8 @@ type Settings struct {
 // The Display is built with the settings from the settings file.
 func NewDisplay(lcdSettings Settings) (Display, error) {
 	if lcdSettings.IsEnabled {
-		log.Info("Preparing display from config")
+		logger := zap.L()
+		logger.Info("Preparing display from config")
 
 		switch lcdSettings.Driver {
 		case DriverHD44780:
@@ -39,14 +41,14 @@ func NewDisplay(lcdSettings Settings) (Display, error) {
 				return nil, ErrInvalidConnectionDetails
 			}
 
-			lcd, err := NewHD44780(*lcdSettings.HD44780)
+			lcd, err := NewHD44780(logger, *lcdSettings.HD44780)
 			if err != nil {
 				return nil, err
 			}
 
 			return lcd, nil
 		case TypeDummy:
-			return NewDummy(lcdSettings.DisplayDummy)
+			return NewDummy(logger, lcdSettings.DisplayDummy)
 		default:
 			return nil, ErrDisplayUnsupported
 		}

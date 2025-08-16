@@ -1,17 +1,19 @@
 package v16
 
 import (
-	"go.uber.org/zap"
 	"strings"
 	"time"
 
-	"github.com/ChargePi/ChargePi-go/internal/evse"
-	"github.com/ChargePi/ChargePi-go/internal/pkg/notifications"
+	"go.uber.org/zap"
+
 	"github.com/ChargePi/ocpp-manager/ocpp_v16"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/firmware"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/remotetrigger"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
+
+	"github.com/ChargePi/ChargePi-go/internal/evse"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/notifications"
 )
 
 func (cp *ChargePoint) OnTriggerMessage(request *remotetrigger.TriggerMessageRequest) (confirmation *remotetrigger.TriggerMessageConfirmation, err error) {

@@ -1,14 +1,16 @@
 package v16
 
 import (
-	"go.uber.org/zap/zaptest"
 	"testing"
 	"time"
 
-	"github.com/ChargePi/ChargePi-go/internal/pkg/scheduler"
+	"go.uber.org/zap/zaptest"
+
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/ChargePi/ChargePi-go/internal/pkg/scheduler"
 )
 
 const (

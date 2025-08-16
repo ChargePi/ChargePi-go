@@ -2,14 +2,16 @@ package grpc
 
 import (
 	"context"
-	configurationv1 "github.com/ChargePi/ChargePi-go/gen/proto/configuration/v1"
-	chargePoint "github.com/ChargePi/ChargePi-go/internal/chargepoint"
-	"github.com/ChargePi/ChargePi-go/internal/pkg/configuration/manager"
-	"github.com/ChargePi/ChargePi-go/pkg/hardware/display"
+
 	"github.com/ChargePi/ocpp-manager/ocpp_v16"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"google.golang.org/protobuf/types/known/emptypb"
+
+	configurationv1 "github.com/ChargePi/ChargePi-go/gen/proto/configuration/v1"
+	chargePoint "github.com/ChargePi/ChargePi-go/internal/chargepoint"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/configuration/manager"
+	"github.com/ChargePi/ChargePi-go/pkg/hardware/display"
 )
 
 type ConfigurationHandler struct {

@@ -1,8 +1,11 @@
 package sessions
 
 import (
-	mock_sessions "github.com/ChargePi/ChargePi-go/gen/mocks/sessions"
 	"testing"
+
+	"go.uber.org/zap/zaptest"
+
+	mock_sessions "github.com/ChargePi/ChargePi-go/gen/mocks/sessions"
 
 	"github.com/stretchr/testify/suite"
 )
@@ -16,7 +19,7 @@ type sessionServiceTestSuite struct {
 func (s *sessionServiceTestSuite) SetupTest() {
 	s.sessionRepositoryMock = mock_sessions.NewMockSessionRepository(s.T())
 
-	service, err := NewSessionService(s.sessionRepositoryMock)
+	service, err := NewSessionService(zaptest.NewLogger(s.T()), s.sessionRepositoryMock)
 	s.Require().NoError(err)
 	s.service = service
 }

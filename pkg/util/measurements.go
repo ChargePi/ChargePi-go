@@ -48,7 +48,7 @@ func ValidateMeterValueSample(sample types.SampledValue) error {
 			return errors.New("frequency must be positive")
 		}
 	case types.MeasurandRPM:
-		// Must be positive & full number
+		// Must be positive and a full number
 		if sampleValue < 0 {
 			return errors.New("RPM must be positive")
 		}

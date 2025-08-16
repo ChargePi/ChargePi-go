@@ -5,15 +5,16 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/ChargePi/ChargePi-go/internal/chargepoint"
-	"github.com/ChargePi/ChargePi-go/pkg/hardware/indicator"
 	"github.com/ChargePi/ocpp-manager/ocpp_v16"
 	"github.com/go-playground/validator/v10"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
+
+	"github.com/ChargePi/ChargePi-go/internal/chargepoint"
+	"github.com/ChargePi/ChargePi-go/pkg/hardware/indicator"
 )
 
 func (cp *ChargePoint) OnChangeConfiguration(request *core.ChangeConfigurationRequest) (confirmation *core.ChangeConfigurationConfirmation, err error) {
-	cp.logger.Infof("Received request %s", request.GetFeatureName())
+	cp.logger.Sugar().Infof("Received request %s", request.GetFeatureName())
 	var response = core.ConfigurationStatusRejected
 
 	// Update the desired key. Validation is done by the settings manager and is configured in the setupCustomConfigurationValidation function.
@@ -27,7 +28,7 @@ func (cp *ChargePoint) OnChangeConfiguration(request *core.ChangeConfigurationRe
 }
 
 func (cp *ChargePoint) OnGetConfiguration(request *core.GetConfigurationRequest) (confirmation *core.GetConfigurationConfirmation, err error) {
-	cp.logger.Infof("Received request %s", request.GetFeatureName())
+	cp.logger.Sugar().Infof("Received request %s", request.GetFeatureName())
 
 	var (
 		unknownKeys []string

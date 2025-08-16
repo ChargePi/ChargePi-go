@@ -2,6 +2,7 @@ package auth
 
 import (
 	"errors"
+
 	"go.uber.org/zap"
 
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/localauth"

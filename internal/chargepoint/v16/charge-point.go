@@ -2,25 +2,19 @@ package v16
 
 import (
 	"context"
-	"go.uber.org/zap"
 	"os/exec"
 	"strconv"
 	"strings"
 	"time"
 
+	"go.uber.org/zap"
+
 	"github.com/ChargePi/ChargePi-go/internal/auth"
 	chargePoint "github.com/ChargePi/ChargePi-go/internal/chargepoint"
 	"github.com/ChargePi/ChargePi-go/internal/diagnostics"
 	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
+
 	// "github.com/ChargePi/ChargePi-go/internal/networking"
-	settings "github.com/ChargePi/ChargePi-go/internal/pkg/configuration/manager"
-	"github.com/ChargePi/ChargePi-go/internal/pkg/notifications"
-	"github.com/ChargePi/ChargePi-go/internal/pkg/scheduler"
-	"github.com/ChargePi/ChargePi-go/internal/sessions"
-	"github.com/ChargePi/ChargePi-go/pkg/hardware/display"
-	"github.com/ChargePi/ChargePi-go/pkg/hardware/indicator"
-	"github.com/ChargePi/ChargePi-go/pkg/hardware/reader"
-	"github.com/ChargePi/ChargePi-go/pkg/util"
 	"github.com/ChargePi/ocpp-manager/ocpp_v16"
 	"github.com/avast/retry-go"
 	"github.com/go-co-op/gocron"
@@ -34,6 +28,15 @@ import (
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/smartcharging"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+
+	settings "github.com/ChargePi/ChargePi-go/internal/pkg/configuration/manager"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/notifications"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/scheduler"
+	"github.com/ChargePi/ChargePi-go/internal/sessions"
+	"github.com/ChargePi/ChargePi-go/pkg/hardware/display"
+	"github.com/ChargePi/ChargePi-go/pkg/hardware/indicator"
+	"github.com/ChargePi/ChargePi-go/pkg/hardware/reader"
+	"github.com/ChargePi/ChargePi-go/pkg/util"
 )
 
 type ChargePoint struct {
@@ -94,7 +97,7 @@ func (cp *ChargePoint) ApplyOpts(opts ...chargePoint.Options) error {
 	for _, opt := range opts {
 		err := opt(cp)
 		if err != nil {
-			cp.logger.WithError(err).Error("Error applying option")
+			cp.logger.With(zap.Error(err)).Error("Error applying option")
 			return err
 		}
 	}
@@ -129,7 +132,7 @@ func (cp *ChargePoint) Connect(ctx context.Context, serverUrl string) error {
 		return err
 	}
 
-	cp.logger.Info("Trying to connect to the central system")
+	logger.Info("Trying to connect to the central system")
 	connectErr := cp.chargePoint.Start(serverUrl)
 	if connectErr != nil {
 		// cp.Cleanup(core.ReasonOther)
@@ -137,7 +140,7 @@ func (cp *ChargePoint) Connect(ctx context.Context, serverUrl string) error {
 		return connectErr
 	}
 
-	cp.logger.Info("Successfully connected to backend")
+	logger.Info("Successfully connected to backend")
 	cp.bootNotification()
 	return nil
 }
@@ -395,6 +398,6 @@ func (cp *ChargePoint) setProfilesFromConfig() error {
 
 func (cp *ChargePoint) handleRequestErr(err error, text string) {
 	if err != nil {
-		cp.logger.WithError(err).Errorf(text)
+		cp.logger.With(zap.Error(err)).Error(text)
 	}
 }

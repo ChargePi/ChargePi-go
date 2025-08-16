@@ -3,13 +3,14 @@ package auth
 import (
 	"errors"
 
-	"github.com/ChargePi/ChargePi-go/internal/auth/list"
-	"github.com/ChargePi/ChargePi-go/pkg/util"
 	"github.com/agrison/go-commons-lang/stringUtils"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/localauth"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/lorenzodonini/ocpp-go/ocppj"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/ChargePi/ChargePi-go/internal/auth/list"
+	"github.com/ChargePi/ChargePi-go/pkg/util"
 )
 
 var (

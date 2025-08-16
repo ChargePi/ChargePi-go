@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/ChargePi/ChargePi-go/internal/api/grpc"
-	"github.com/ChargePi/ChargePi-go/internal/api/http"
-	"github.com/ChargePi/ChargePi-go/pkg/observability"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/ChargePi/ChargePi-go/internal/api/grpc"
+	"github.com/ChargePi/ChargePi-go/internal/api/http"
 )
 
 func TestGetRuntimeSettings(t *testing.T) {
@@ -27,13 +27,6 @@ func TestGetRuntimeSettings(t *testing.T) {
 				},
 				HTTP: http.Configuration{
 					Address: "localhost:8080",
-				},
-				Logging: observability.Logging{
-					LogTypes: []observability.Type{
-						{
-							Type: "console",
-						},
-					},
 				},
 			},
 		},
@@ -67,14 +60,14 @@ func TestGetRuntimeSettings(t *testing.T) {
 			case "Settings not configured":
 				// Skip
 			case "Settings fail validation":
-				tt.expectedSettings.Logging.LogTypes = append(tt.expectedSettings.Logging.LogTypes, observability.Type{})
+
 				marshal, err := json.Marshal(tt.expectedSettings)
 				require.NoError(t, err)
 
 				err = viper.ReadConfig(bytes.NewBuffer(marshal))
 				require.NoError(t, err)
 			case "Settings not the same struct":
-				marshal, err := json.Marshal(observability.Type{})
+				marshal, err := json.Marshal(http.Configuration{})
 				require.NoError(t, err)
 
 				err = viper.ReadConfig(bytes.NewBuffer(marshal))

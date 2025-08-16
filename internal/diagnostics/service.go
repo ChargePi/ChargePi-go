@@ -11,11 +11,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ChargePi/ChargePi-go/pkg/observability"
 	"github.com/avast/retry-go"
 	"github.com/samber/lo"
 	log "github.com/sirupsen/logrus"
 	"github.com/tavsec/gin-healthcheck/checks"
+
+	"github.com/ChargePi/ChargePi-go/pkg/observability"
 )
 
 type uploader interface {

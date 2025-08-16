@@ -4,15 +4,17 @@ import (
 	"context"
 	"errors"
 
+	"go.uber.org/zap"
+
+	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
+	ocppDisplay "github.com/lorenzodonini/ocpp-go/ocpp2.0.1/display"
+	"github.com/tavsec/gin-healthcheck/checks"
+
 	"github.com/ChargePi/ChargePi-go/pkg/hardware/display"
 	"github.com/ChargePi/ChargePi-go/pkg/hardware/indicator"
 	"github.com/ChargePi/ChargePi-go/pkg/hardware/reader"
 	"github.com/ChargePi/ChargePi-go/pkg/ocpp"
 	"github.com/ChargePi/ChargePi-go/pkg/tls"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	ocppDisplay "github.com/lorenzodonini/ocpp-go/ocpp2.0.1/display"
-	log "github.com/sirupsen/logrus"
-	"github.com/tavsec/gin-healthcheck/checks"
 )
 
 var FirmwareVersion = "develop"
@@ -124,7 +126,7 @@ type ChargePoint interface {
 	ListenForConnectorStatusChange(ctx context.Context)
 
 	// Options
-	SetLogger(logger log.FieldLogger)
+	SetLogger(logger *zap.Logger)
 
 	// Display APIs
 	SetDisplay(display display.Display) error

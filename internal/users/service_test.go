@@ -4,12 +4,15 @@ import (
 	"errors"
 	"testing"
 
-	mock_encryption "github.com/ChargePi/ChargePi-go/gen/mocks/pkg/encryption"
-	mock_users "github.com/ChargePi/ChargePi-go/gen/mocks/users"
-	"github.com/ChargePi/ChargePi-go/internal/users/models"
+	"go.uber.org/zap/zaptest"
+
 	"github.com/samber/lo"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/suite"
+
+	mock_encryption "github.com/ChargePi/ChargePi-go/gen/mocks/pkg/encryption"
+	mock_users "github.com/ChargePi/ChargePi-go/gen/mocks/users"
+	"github.com/ChargePi/ChargePi-go/internal/users/models"
 )
 
 type serviceTestSuite struct {
@@ -21,7 +24,7 @@ type serviceTestSuite struct {
 
 func (s *serviceTestSuite) SetupTest() {
 	s.mockRepository = mock_users.NewMockUserRepository(s.T())
-	s.service = NewUserService(s.mockRepository)
+	s.service = NewUserService(zaptest.NewLogger(s.T()), s.mockRepository)
 }
 
 func (s *serviceTestSuite) TestGetUsers() {

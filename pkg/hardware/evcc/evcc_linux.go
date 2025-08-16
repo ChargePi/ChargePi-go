@@ -5,6 +5,8 @@ package evcc
 import (
 	"errors"
 
+	"go.uber.org/zap"
+
 	"github.com/ChargePi/ChargePi-go/pkg/hardware"
 )
 
@@ -22,15 +24,16 @@ type Settings struct {
 
 // NewEVCCFromType creates a new EVCC instance based on the provided type.
 func NewEVCCFromType(evccSettings Settings) (EVCC, error) {
+	logger := zap.L()
 	switch evccSettings.Type {
 	case Relay:
 		if evccSettings.Relay == nil {
 			return nil, errors.New("missing relay settings")
 		}
 
-		return NewRelay(*evccSettings.Relay)
+		return NewRelay(logger, *evccSettings.Relay)
 	case TypeDummy:
-		return NewDummy(evccSettings.Dummy)
+		return NewDummy(logger, evccSettings.Dummy)
 	default:
 		return nil, ErrInvalidType
 	}

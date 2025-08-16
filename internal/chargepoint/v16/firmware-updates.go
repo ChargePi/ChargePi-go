@@ -3,8 +3,9 @@ package v16
 import (
 	"errors"
 
-	"github.com/ChargePi/ChargePi-go/pkg/util"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/firmware"
+
+	"github.com/ChargePi/ChargePi-go/pkg/util"
 )
 
 func (cp *ChargePoint) OnGetDiagnostics(request *firmware.GetDiagnosticsRequest) (confirmation *firmware.GetDiagnosticsConfirmation, err error) {

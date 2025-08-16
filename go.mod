@@ -24,7 +24,7 @@ require (
 	github.com/op/go-logging v0.0.0-20160315200505-970db520ece7 // indirect
 	github.com/rpi-ws281x/rpi-ws281x-go v1.0.10
 	github.com/samber/lo v1.51.0
-	github.com/sirupsen/logrus v1.9.3 // indirect
+	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
@@ -46,11 +46,11 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.2
 	github.com/jlaffaye/ftp v0.2.0
 	github.com/madflojo/testcerts v1.4.0
-	github.com/orandin/lumberjackrus v1.0.1
 	github.com/pkg/errors v0.9.1
+	github.com/warthog618/go-gpiocdev v0.9.1
 	go.uber.org/zap v1.27.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
-	github.com/warthog618/go-gpiocdev v0.9.1
+	gopkg.in/yaml.v2 v2.2.8
 )
 
 require (

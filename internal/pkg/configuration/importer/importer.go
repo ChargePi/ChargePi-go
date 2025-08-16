@@ -4,6 +4,11 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/ChargePi/ocpp-manager/ocpp_v16"
+	"github.com/go-playground/validator/v10"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
+
 	"github.com/ChargePi/ChargePi-go/internal/auth"
 	"github.com/ChargePi/ChargePi-go/internal/auth/list"
 	"github.com/ChargePi/ChargePi-go/internal/chargepoint"
@@ -12,10 +17,6 @@ import (
 	"github.com/ChargePi/ChargePi-go/internal/pkg/configuration"
 	settingsManager "github.com/ChargePi/ChargePi-go/internal/pkg/configuration/manager"
 	"github.com/ChargePi/ChargePi-go/pkg/ocpp"
-	"github.com/ChargePi/ocpp-manager/ocpp_v16"
-	"github.com/go-playground/validator/v10"
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 )
 
 type Importer interface {

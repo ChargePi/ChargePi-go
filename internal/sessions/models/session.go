@@ -3,13 +3,14 @@ package models
 import (
 	"time"
 
-	"github.com/ChargePi/ChargePi-go/pkg/util"
 	strUtil "github.com/agrison/go-commons-lang/stringUtils"
 	"github.com/google/uuid"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/ChargePi/ChargePi-go/pkg/util"
 )
 
 var (

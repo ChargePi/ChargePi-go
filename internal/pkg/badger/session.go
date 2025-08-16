@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	session "github.com/ChargePi/ChargePi-go/internal/sessions/models"
+	"go.uber.org/zap"
+
 	"github.com/dgraph-io/badger/v3"
+
+	session "github.com/ChargePi/ChargePi-go/internal/sessions/models"
 )
 
 const (
@@ -19,7 +22,7 @@ func getSessionTransactionIdKey(transactionId string) []byte {
 
 func (db *Database) CreateSession(session *session.Session) error {
 	// todo handle cases where a session does not have a transaction ID yet
-	db.logger.WithField("transactionId", session.TransactionId).Info("Creating session")
+	db.logger.With(zap.Any("session", session)).Info("Creating session")
 	return db.db.Update(func(txn *badger.Txn) error {
 		// Check if already exists
 		_, err := txn.Get(getSessionTransactionIdKey(session.TransactionId))
@@ -37,7 +40,7 @@ func (db *Database) CreateSession(session *session.Session) error {
 }
 
 func (db *Database) StopSession(transactionId string) error {
-	db.logger.WithField("transactionId", transactionId).Info("Stopping a session")
+	db.logger.With(zap.String("transactionId", transactionId)).Info("Stopping a session")
 	// todo handle cases where a session does not have a transaction ID yet
 	return db.db.Update(func(txn *badger.Txn) error {
 		s, err := txn.Get(getSessionTransactionIdKey(transactionId))
@@ -90,7 +93,7 @@ func (db *Database) UpdateSession(sesh *session.Session) error {
 }
 
 func (db *Database) GetSession(evseId int, connectorId *int) (*session.Session, error) {
-	db.logger.WithField("evseId", evseId).Info("Getting session")
+	db.logger.With(zap.Int("evseId", evseId)).Info("Getting session")
 
 	return nil, nil
 }
@@ -108,13 +111,13 @@ func (db *Database) GetActiveSessions() ([]session.Session, error) {
 }
 
 func (db *Database) GetSessionWithTransactionId(transactionId string) (*session.Session, error) {
-	db.logger.WithField("transactionId", transactionId).Info("Getting session with transaction id")
+	db.logger.With(zap.String("transactionId", transactionId)).Info("Getting session with transaction id")
 
 	return nil, nil
 }
 
 func (db *Database) GetSessionWithTagId(tagId string) (*session.Session, error) {
-	db.logger.WithField("tagId", tagId).Info("Getting session with tag id")
+	db.logger.With(zap.String("tagId", tagId)).Info("Getting session with tag id")
 
 	return nil, nil
 }

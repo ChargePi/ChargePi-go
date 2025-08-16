@@ -3,9 +3,10 @@ package display
 import (
 	"context"
 	"fmt"
-	mock_display "github.com/ChargePi/ChargePi-go/gen/mocks/pkg/hardware/display"
 	"testing"
 	"time"
+
+	mock_display "github.com/ChargePi/ChargePi-go/gen/mocks/pkg/hardware/display"
 
 	"github.com/ChargePi/ChargePi-go/internal/display/i18n"
 

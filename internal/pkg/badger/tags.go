@@ -6,10 +6,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/ChargePi/ChargePi-go/internal/auth/list"
 	"github.com/dgraph-io/badger/v3"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/localauth"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
+
+	"github.com/ChargePi/ChargePi-go/internal/auth/list"
 )
 
 const (

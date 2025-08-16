@@ -1,8 +1,9 @@
 package manager
 
 import (
-	chargePoint "github.com/ChargePi/ChargePi-go/internal/chargepoint"
 	"github.com/ChargePi/ocppManager-go/ocpp_v16"
+
+	chargePoint "github.com/ChargePi/ChargePi-go/internal/chargepoint"
 )
 
 type SettingsRepository interface {

@@ -3,11 +3,12 @@ package grpc
 import (
 	"context"
 
-	tagsv1 "github.com/ChargePi/ChargePi-go/gen/proto/tags/v1"
-	"github.com/ChargePi/ChargePi-go/internal/auth"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	tagsv1 "github.com/ChargePi/ChargePi-go/gen/proto/tags/v1"
+	"github.com/ChargePi/ChargePi-go/internal/auth"
 )
 
 type AuthService struct {

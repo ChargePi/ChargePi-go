@@ -7,13 +7,14 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ChargePi/ChargePi-go/pkg/tls"
+	"go.uber.org/zap"
+
 	"github.com/gin-gonic/gin"
-	log "github.com/sirupsen/logrus"
 	healthcheck "github.com/tavsec/gin-healthcheck"
 	"github.com/tavsec/gin-healthcheck/checks"
 	"github.com/tavsec/gin-healthcheck/config"
-	ginlogrus "github.com/toorop/gin-logrus"
+
+	"github.com/ChargePi/ChargePi-go/pkg/tls"
 )
 
 // todo go:embed ui/build/*
@@ -33,16 +34,16 @@ type Configuration struct {
 type Server struct {
 	router        *gin.Engine
 	server        *http.Server
-	logger        log.FieldLogger
+	logger        *zap.Logger
 	configuration Configuration
 }
 
 func NewServer(configuration Configuration) *Server {
 	ginRouter := gin.Default()
-	logger := log.WithField("component", "http-server")
+	logger := zap.L()
 
 	// Add logging and recovery middleware
-	ginRouter.Use(ginlogrus.Logger(logger), gin.Recovery())
+	ginRouter.Use(loggingMiddleware(logger), gin.Recovery())
 
 	return &Server{
 		router: ginRouter,
@@ -58,19 +59,19 @@ func (u *Server) Serve(checks ...checks.Check) {
 	// Configure healthcheck
 	err := healthcheck.New(u.router, config.DefaultConfig(), checks)
 	if err != nil {
-		u.logger.WithError(err).Panic("Failed to configure healthcheck")
+		u.logger.With(zap.Error(err)).Panic("Failed to configure healthcheck")
 	}
 
 	// Setup UI
 	if u.configuration.UiEnabled {
-		u.logger.Infof("Starting UI at %s", u.configuration.Address)
+		u.logger.Sugar().Infof("Starting UI at %s", u.configuration.Address)
 		u.router.StaticFS("/", http.FS(fs))
 	}
 
 	go func() {
 		err = u.server.ListenAndServe()
 		if err != nil && errors.Is(err, http.ErrServerClosed) {
-			u.logger.WithError(err).Fatal("Failed to start HTTP server")
+			u.logger.With(zap.Error(err)).Fatal("Failed to start HTTP server")
 		}
 	}()
 }

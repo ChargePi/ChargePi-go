@@ -3,9 +3,10 @@ package display
 import (
 	"sync"
 
+	message "github.com/lorenzodonini/ocpp-go/ocpp2.0.1/display"
+
 	"github.com/ChargePi/ChargePi-go/internal/display/i18n"
 	"github.com/ChargePi/ChargePi-go/pkg/hardware/display"
-	message "github.com/lorenzodonini/ocpp-go/ocpp2.0.1/display"
 )
 
 type Strategy interface {

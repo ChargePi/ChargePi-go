@@ -2,9 +2,10 @@ package powerMeter
 
 import (
 	"context"
-	"go.uber.org/zap"
 	"sync/atomic"
 	"time"
+
+	"go.uber.org/zap"
 
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 )

@@ -8,11 +8,6 @@ import (
 	"sort"
 	"time"
 
-	"github.com/ChargePi/ChargePi-go/internal/pkg/notifications"
-	"github.com/ChargePi/ChargePi-go/internal/pkg/scheduler"
-	"github.com/ChargePi/ChargePi-go/pkg/hardware/evcc"
-	powerMeter "github.com/ChargePi/ChargePi-go/pkg/hardware/power-meter"
-	"github.com/ChargePi/ChargePi-go/pkg/util"
 	"github.com/go-co-op/gocron"
 	"github.com/go-playground/validator/v10"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
@@ -20,6 +15,12 @@ import (
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/ChargePi/ChargePi-go/internal/pkg/notifications"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/scheduler"
+	"github.com/ChargePi/ChargePi-go/pkg/hardware/evcc"
+	powerMeter "github.com/ChargePi/ChargePi-go/pkg/hardware/power-meter"
+	"github.com/ChargePi/ChargePi-go/pkg/util"
 )
 
 type Settings struct {

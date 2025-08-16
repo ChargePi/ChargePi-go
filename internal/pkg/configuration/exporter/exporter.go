@@ -6,16 +6,17 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/ChargePi/ocpp-manager/ocpp_v16"
+	"github.com/agrison/go-commons-lang/stringUtils"
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
+
 	"github.com/ChargePi/ChargePi-go/internal/auth"
 	"github.com/ChargePi/ChargePi-go/internal/auth/list"
 	"github.com/ChargePi/ChargePi-go/internal/chargepoint"
 	"github.com/ChargePi/ChargePi-go/internal/evse"
 	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
 	configManager "github.com/ChargePi/ChargePi-go/internal/pkg/configuration/manager"
-	"github.com/ChargePi/ocpp-manager/ocpp_v16"
-	"github.com/agrison/go-commons-lang/stringUtils"
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 )
 
 type Exporter interface {

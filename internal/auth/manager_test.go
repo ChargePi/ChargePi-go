@@ -3,9 +3,9 @@ package auth
 import (
 	"testing"
 
-	"github.com/ChargePi/ChargePi-go/pkg/util"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/ChargePi/ChargePi-go/pkg/util"
 )
 
 type tagManagerTestSuite struct {

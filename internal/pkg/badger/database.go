@@ -1,14 +1,15 @@
 package badger
 
 import (
-	"github.com/ChargePi/ChargePi-go/internal/users/models"
 	"github.com/dgraph-io/badger/v3"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
+
+	"github.com/ChargePi/ChargePi-go/internal/users/models"
 )
 
 type Database struct {
 	db     *badger.DB
-	logger log.FieldLogger
+	logger *zap.Logger
 }
 
 func NewBadgerDb(filePath string) (*Database, error) {
@@ -24,7 +25,7 @@ func NewBadgerDb(filePath string) (*Database, error) {
 
 	return &Database{
 		db:     badgerDb,
-		logger: log.StandardLogger().WithField("component", "badger-db"),
+		logger: zap.L().Named("badger-db"),
 	}, nil
 }
 
@@ -55,6 +56,6 @@ func (db *Database) Close() {
 	db.logger.Debug("Closing database")
 	err := db.db.Close()
 	if err != nil {
-		db.logger.WithError(err).Error("Error closing database")
+		db.logger.With(zap.Error(err)).Error("Error closing database")
 	}
 }

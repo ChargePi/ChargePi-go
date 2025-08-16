@@ -3,14 +3,15 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/ChargePi/ocpp-manager/ocpp_v16"
+	"github.com/spf13/cobra"
+
 	"github.com/ChargePi/ChargePi-go/internal/chargepoint"
 	"github.com/ChargePi/ChargePi-go/internal/pkg/badger"
 	cfg "github.com/ChargePi/ChargePi-go/internal/pkg/configuration"
 	importer2 "github.com/ChargePi/ChargePi-go/internal/pkg/configuration/importer"
 	"github.com/ChargePi/ChargePi-go/internal/pkg/configuration/manager"
 	"github.com/ChargePi/ChargePi-go/pkg/ocpp"
-	"github.com/ChargePi/ocpp-manager/ocpp_v16"
-	"github.com/spf13/cobra"
 )
 
 var (

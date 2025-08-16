@@ -3,7 +3,7 @@
 package indicator
 
 import (
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 )
 
 type Settings struct {
@@ -26,16 +26,16 @@ type Settings struct {
 // NewIndicator constructs the Settings based on the type provided by the settings file.
 func NewIndicator(stripLength int, indicator Settings) Indicator {
 	if indicator.Enabled {
-
+		logger := zap.L()
 		// Last LED is used to indicate card read
 		if indicator.IndicateCardRead {
 			stripLength++
 		}
 
-		log.Infof("Preparing Settings from config: %s", indicator.Type)
+		logger.Sugar().Infof("Preparing Settings from config: %s", indicator.Type)
 		switch indicator.Type {
 		case TypeDummy:
-			return NewDummy(*indicator.IndicatorDummy)
+			return NewDummy(logger, *indicator.IndicatorDummy)
 		default:
 			return nil
 		}

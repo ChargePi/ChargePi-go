@@ -2,6 +2,13 @@ package cmd
 
 import (
 	"context"
+
+	"github.com/ChargePi/ocpp-manager/ocpp_v16"
+	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"go.uber.org/zap"
+
 	"github.com/ChargePi/ChargePi-go/internal/api/grpc"
 	"github.com/ChargePi/ChargePi-go/internal/api/http"
 	"github.com/ChargePi/ChargePi-go/internal/auth"
@@ -15,11 +22,6 @@ import (
 	"github.com/ChargePi/ChargePi-go/internal/sessions"
 	"github.com/ChargePi/ChargePi-go/internal/users"
 	"github.com/ChargePi/ChargePi-go/pkg/observability"
-	"github.com/ChargePi/ocpp-manager/ocpp_v16"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var (
@@ -42,19 +44,18 @@ func runCommand() *cobra.Command {
 			ctx := cmd.Context()
 
 			// Create a logger
-			logger := log.StandardLogger()
-			observability.SetupLogging(logger, runtimeSettings.Logging, debug)
+			logger := observability.SetupLogger(debug)
 
 			// Create a database for EVSE settings and state, tags, users, sessions and settings
 			db, err := badger.NewBadgerDb(*databasePath)
 			if err != nil {
-				logger.WithError(err).Fatal("Cannot create database")
+				logger.With(zap.Error(err)).Fatal("Cannot create database")
 			}
 
 			// Get the persistent settings
 			persistentSettings, err := db.GetSettings()
 			if err != nil {
-				logger.WithError(err).Fatal("Cannot read persistent settings")
+				logger.With(zap.Error(err)).Fatal("Cannot read persistent settings")
 			}
 
 			var (
@@ -67,56 +68,56 @@ func runCommand() *cobra.Command {
 
 			cfg, err := ocpp_v16.DefaultConfigurationFromProfiles(supportedOcppV16Profiles...)
 			if err != nil {
-				logger.WithError(err).Fatal("Cannot create OCPP configuration")
+				logger.With(zap.Error(err)).Fatal("Cannot create OCPP configuration")
 			}
 
 			ocppVariableManager, err := ocpp_v16.NewV16ConfigurationManager(*cfg, supportedOcppV16Profiles...)
 			if err != nil {
-				logger.WithError(err).Fatal("Cannot create OCPP variable manager")
+				logger.With(zap.Error(err)).Fatal("Cannot create OCPP variable manager")
 			}
 
 			settingsManager, err := configManager.NewManager(db, db, ocppVariableManager)
 			if err != nil {
-				logger.WithError(err).Fatal("Cannot create settings manager")
+				logger.With(zap.Error(err)).Fatal("Cannot create settings manager")
 			}
 
 			evseManager, err := manager.NewManager(db, db, make(chan notifications.StatusNotification, 100))
 			if err != nil {
-				logger.WithError(err).Fatal("Cannot create EVSE manager")
+				logger.With(zap.Error(err)).Fatal("Cannot create EVSE manager")
 			}
 
 			diagnosticsManager, err := diagnostics.NewService()
 			if err != nil {
-				logger.WithError(err).Fatal("Cannot create diagnostics service")
+				logger.With(zap.Error(err)).Fatal("Cannot create diagnostics service")
 			}
 
-			tagManager := auth.NewManager(db, db)
-			sessionManager, err := sessions.NewSessionService(db)
+			tagManager := auth.NewManager(logger, db, db)
+			sessionManager, err := sessions.NewSessionService(logger, db)
 			if err != nil {
-				logger.WithError(err).Fatal("Cannot create session service")
+				logger.With(zap.Error(err)).Fatal("Cannot create session service")
 			}
 
 			// User service
-			userService := users.NewUserService(db)
+			userService := users.NewUserService(logger, db)
 
 			// Initialize all the EVSEs.
 			err = evseManager.InitAll(ctx)
 			if err != nil {
-				logger.WithError(err).Fatal("Cannot init EVSEs")
+				logger.With(zap.Error(err)).Fatal("Cannot init EVSEs")
 			}
 
 			// Setup GRPC API if enabled
 			if runtimeSettings.GRPC.Enabled {
 				server, err := grpc.NewServer(runtimeSettings.GRPC, handler, tagManager, evseManager, settingsManager, userService)
 				if err != nil {
-					logger.WithError(err).Fatal("Cannot create the API server")
+					logger.With(zap.Error(err)).Fatal("Cannot create the API server")
 				}
 				defer server.Stop()
 
 				go func() {
 					err = server.Run()
 					if err != nil {
-						logger.WithError(err).Fatal("Cannot start the API server")
+						logger.With(zap.Error(err)).Fatal("Cannot start the API server")
 					}
 				}()
 			}
@@ -142,17 +143,17 @@ func runCommand() *cobra.Command {
 				hardware,
 			)
 			if err != nil {
-				logger.WithError(err).Fatal("Unable to create charge point")
+				logger.With(zap.Error(err)).Fatal("Unable to create charge point")
 			}
 
 			err = handler.SetSettings(chargePointInfo)
 			if err != nil {
-				logger.WithError(err).Fatal("Unable to set the charge point settings")
+				logger.With(zap.Error(err)).Fatal("Unable to set the charge point settings")
 			}
 
 			err = handler.SetConnectionSettings(connectionSettings)
 			if err != nil {
-				logger.WithError(err).Fatal("Unable to set the connection settings")
+				logger.With(zap.Error(err)).Fatal("Unable to set the connection settings")
 			}
 
 			// Listen for connector status changes
@@ -160,13 +161,13 @@ func runCommand() *cobra.Command {
 
 			serverUrl, err := chargepoint.CreateConnectionUrl(connectionSettings)
 			if err != nil {
-				logger.WithError(err).Fatal("Cannot create connection URL")
+				logger.With(zap.Error(err)).Fatal("Cannot create connection URL")
 			}
 
 			// Connect the charge point to the backend
 			err = handler.Connect(parentCtxForOcpp, serverUrl)
 			if err != nil {
-				logger.WithError(err).Fatal("Cannot connect to the central system")
+				logger.With(zap.Error(err)).Fatal("Cannot connect to the central system")
 			}
 
 			// Wait for the termination signal

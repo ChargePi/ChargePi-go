@@ -24,7 +24,7 @@ linters:
     generated: lax
     paths:
       - ./gen/*
-      - ./pkg/reader
+      - ./pkg/hardware/reader
 formatters:
   settings:
     goimports:

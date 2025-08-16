@@ -1,8 +1,9 @@
 package v16
 
 import (
-	"go.uber.org/zap/zaptest"
 	"testing"
+
+	"go.uber.org/zap/zaptest"
 
 	"github.com/ChargePi/ocpp-manager/ocpp_v16"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"

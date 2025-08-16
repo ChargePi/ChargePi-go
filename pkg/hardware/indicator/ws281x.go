@@ -6,8 +6,9 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"errors"
-	"go.uber.org/zap"
 	"time"
+
+	"go.uber.org/zap"
 
 	ws2811 "github.com/rpi-ws281x/rpi-ws281x-go"
 )

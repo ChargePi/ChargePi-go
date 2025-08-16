@@ -1,12 +1,14 @@
 package manager
 
 import (
-	evse_manager_mock "github.com/ChargePi/ChargePi-go/gen/mocks/evse/manager"
-	mock_manager "github.com/ChargePi/ChargePi-go/gen/mocks/pkg/configuration/manager"
+	"testing"
+
 	"github.com/ChargePi/ocpp-manager/ocpp_v16"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/stretchr/testify/suite"
-	"testing"
+
+	evse_manager_mock "github.com/ChargePi/ChargePi-go/gen/mocks/evse/manager"
+	mock_manager "github.com/ChargePi/ChargePi-go/gen/mocks/pkg/configuration/manager"
 )
 
 type managerTestSuite struct {

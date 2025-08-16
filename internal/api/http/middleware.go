@@ -6,9 +6,9 @@ import (
 )
 
 // loggingMiddleware returns a gin.HandlerFunc for logging HTTP requests using zap
-func loggingMiddleware() gin.HandlerFunc {
+func loggingMiddleware(logger *zap.Logger) gin.HandlerFunc {
 	return gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
-		zap.L().Info("HTTP Request",
+		logger.Info("HTTP Request",
 			zap.String("method", param.Method),
 			zap.String("path", param.Path),
 			zap.String("ip", param.ClientIP),

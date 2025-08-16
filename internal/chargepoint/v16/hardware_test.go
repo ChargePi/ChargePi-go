@@ -1,13 +1,15 @@
 package v16
 
 import (
-	"go.uber.org/zap/zaptest"
 	"testing"
 	"time"
 
-	"github.com/ChargePi/ChargePi-go/pkg/hardware/indicator"
+	"go.uber.org/zap/zaptest"
+
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/ChargePi/ChargePi-go/pkg/hardware/indicator"
 )
 
 const (

@@ -1,14 +1,12 @@
 package observability
 
 import (
-	"fmt"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-	"gopkg.in/natefinch/lumberjack.v2"
 	"os"
 	"path/filepath"
 
-	"github.com/ChargePi/ChargePi-go/pkg/util"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 const (
@@ -16,8 +14,8 @@ const (
 	LogFileDir  = "/var/log/chargepi"
 )
 
-// SetupZap sets up zap logger with the given configuration
-func SetupZap(loggingConfig settings.Logging, isDebug bool) *zap.Logger {
+// SetupLogger sets up zap logger with the given configuration
+func SetupLogger(isDebug bool) *zap.Logger {
 	// Determine log level
 	logLevel := zap.InfoLevel
 	if isDebug {
@@ -44,21 +42,6 @@ func SetupZap(loggingConfig settings.Logging, isDebug bool) *zap.Logger {
 		cores = append(cores, fileCore)
 	}
 
-	// Remote logging cores
-	for _, logType := range loggingConfig.LogTypes {
-		switch LogType(logType.Type) {
-		case RemoteLogging:
-			if !util.IsNilInterfaceOrPointer(logType.Address) && !util.IsNilInterfaceOrPointer(logType.Format) {
-				remoteCore := createRemoteCore(encoderConfig, logLevel, *logType.Address, LogFormat(*logType.Format))
-				if remoteCore != nil {
-					cores = append(cores, remoteCore)
-				}
-			}
-		case ConsoleLogging:
-			// Console logging is already handled above
-		}
-	}
-
 	// Create logger
 	core := zapcore.NewTee(cores...)
 	logger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
@@ -83,27 +66,6 @@ func createFileCore(encoderConfig zapcore.EncoderConfig, level zapcore.Level) za
 
 	encoder := zapcore.NewJSONEncoder(encoderConfig)
 	return zapcore.NewCore(encoder, writer, level)
-}
-
-func createRemoteCore(encoderConfig zapcore.EncoderConfig, level zapcore.Level, address string, format LogFormat) zapcore.Core {
-	// For now, we'll implement basic syslog support
-	// Graylog support would require additional dependencies
-	switch format {
-	case Syslog:
-		// Create a network writer for syslog
-		writer, _, err := zap.Open(fmt.Sprintf("tcp://%s", address))
-		if err != nil {
-			return nil
-		}
-		encoder := zapcore.NewJSONEncoder(encoderConfig)
-		return zapcore.NewCore(encoder, writer, level)
-	case Gelf:
-		// Graylog GELF format - would need additional implementation
-		// For now, return nil to skip this core
-		return nil
-	default:
-		return nil
-	}
 }
 
 // Sync flushes any buffered log entries

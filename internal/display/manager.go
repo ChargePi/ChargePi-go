@@ -7,11 +7,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ChargePi/ChargePi-go/pkg/hardware/display"
-	"github.com/ChargePi/ChargePi-go/pkg/util"
 	"github.com/go-co-op/gocron"
 	message "github.com/lorenzodonini/ocpp-go/ocpp2.0.1/display"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/ChargePi/ChargePi-go/pkg/hardware/display"
+	"github.com/ChargePi/ChargePi-go/pkg/util"
 )
 
 type Manager interface {

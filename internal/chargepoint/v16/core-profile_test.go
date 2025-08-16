@@ -1,14 +1,16 @@
 package v16
 
 import (
-	"go.uber.org/zap/zaptest"
 	"testing"
 
-	"github.com/ChargePi/ChargePi-go/internal/pkg/scheduler"
+	"go.uber.org/zap/zaptest"
+
 	"github.com/ChargePi/ocpp-manager/ocpp_v16"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/ChargePi/ChargePi-go/internal/pkg/scheduler"
 )
 
 type coreTestSuite struct {

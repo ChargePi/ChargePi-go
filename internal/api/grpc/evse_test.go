@@ -4,11 +4,12 @@ import (
 	"context"
 	"testing"
 
-	evsev1 "github.com/ChargePi/ChargePi-go/gen/proto/evse/v1"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/test/bufconn"
+
+	evsev1 "github.com/ChargePi/ChargePi-go/gen/proto/evse/v1"
 )
 
 type evseTestSuite struct {

@@ -5,6 +5,7 @@ package evcc
 import (
 	"context"
 	"errors"
+
 	"go.uber.org/zap"
 
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
@@ -42,7 +43,7 @@ func NewRelay(logger *zap.Logger, settings RelaySettings) (*RelayAsEvcc, error) 
 	}
 
 	relay := &RelayAsEvcc{
-		logger: logger.Named("relay"),
+		logger:        logger.Named("relay"),
 		relayPin:      settings.RelayPin,
 		inverseLogic:  settings.InverseLogic,
 		amperage:      settings.Amperage,

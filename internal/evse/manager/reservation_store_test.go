@@ -3,9 +3,10 @@ package manager
 import (
 	"testing"
 
-	"github.com/ChargePi/ChargePi-go/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/ChargePi/ChargePi-go/pkg/util"
 )
 
 type reservationTestSuite struct {

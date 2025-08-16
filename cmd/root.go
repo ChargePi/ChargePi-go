@@ -2,14 +2,16 @@ package cmd
 
 import (
 	"context"
-	"github.com/ChargePi/ChargePi-go/internal/pkg/configuration"
-	"github.com/ChargePi/ChargePi-go/pkg/observability"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"go.uber.org/zap"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"go.uber.org/zap"
+
+	"github.com/ChargePi/ChargePi-go/internal/pkg/configuration"
+	"github.com/ChargePi/ChargePi-go/pkg/observability"
 )
 
 var rootCmd = &cobra.Command{
@@ -21,7 +23,7 @@ var rootCmd = &cobra.Command{
 
 func init() {
 	cobra.OnInitialize(func() {
-		// observability.SetupLogging(log.StandardLogger(), observability.Logging{}, viper.GetBool(configuration.Debug))
+		observability.SetupLogger(viper.GetBool(configuration.Debug))
 	})
 
 	rootCmd.AddCommand(runCommand())

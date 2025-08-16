@@ -3,8 +3,9 @@ package chargepoint
 import (
 	"testing"
 
-	"github.com/ChargePi/ChargePi-go/pkg/tls"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/ChargePi/ChargePi-go/pkg/tls"
 )
 
 func TestCreateConnectionUrl(t *testing.T) {

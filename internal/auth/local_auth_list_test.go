@@ -2,9 +2,10 @@ package auth
 
 import (
 	"errors"
-	mock_auth "github.com/ChargePi/ChargePi-go/gen/mocks/auth"
 	"testing"
 	"time"
+
+	mock_auth "github.com/ChargePi/ChargePi-go/gen/mocks/auth"
 
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/localauth"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"

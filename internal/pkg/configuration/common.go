@@ -3,10 +3,11 @@ package configuration
 import (
 	"strings"
 
-	"github.com/ChargePi/ChargePi-go/pkg/ocpp"
 	"github.com/agrison/go-commons-lang/stringUtils"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+
+	"github.com/ChargePi/ChargePi-go/pkg/ocpp"
 )
 
 const (

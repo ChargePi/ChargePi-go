@@ -3,14 +3,16 @@ package v16
 import (
 	"context"
 	"errors"
-	"go.uber.org/zap"
 	"time"
 
-	"github.com/ChargePi/ChargePi-go/pkg/hardware/indicator"
+	"go.uber.org/zap"
+
 	"github.com/ChargePi/ocpp-manager/ocpp_v16"
 	"github.com/lorenzodonini/ocpp-go/ocpp"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
+
+	"github.com/ChargePi/ChargePi-go/pkg/hardware/indicator"
 )
 
 func (cp *ChargePoint) OnUnlockConnector(request *core.UnlockConnectorRequest) (confirmation *core.UnlockConnectorConfirmation, err error) {
@@ -34,7 +36,7 @@ func (cp *ChargePoint) notifyStatus(evseId int, status core.ChargePointStatus, e
 	request.Timestamp = types.NewDateTime(time.Now())
 
 	callback := func(confirmation ocpp.Response, protoError error) {
-		cp.logger.With(zap.Int("evse_id", evseId), zap.String("status",string(status))).Info("Notified status of the connector")
+		cp.logger.With(zap.Int("evse_id", evseId), zap.String("status", string(status))).Info("Notified status of the connector")
 	}
 
 	err := cp.sendRequest(request, callback)

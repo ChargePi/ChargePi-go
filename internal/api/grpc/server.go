@@ -5,6 +5,17 @@ import (
 	"fmt"
 	"net"
 
+	grpcmiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpcauth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
+	grpcrecovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
+	"github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
+	"github.com/pkg/errors"
+	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/status"
+
 	charge_pointv1 "github.com/ChargePi/ChargePi-go/gen/proto/charge_point/v1"
 	configurationv1 "github.com/ChargePi/ChargePi-go/gen/proto/configuration/v1"
 	connectionv1 "github.com/ChargePi/ChargePi-go/gen/proto/connection/v1"
@@ -18,16 +29,6 @@ import (
 	settings "github.com/ChargePi/ChargePi-go/internal/pkg/configuration/manager"
 	"github.com/ChargePi/ChargePi-go/internal/users"
 	"github.com/ChargePi/ChargePi-go/pkg/tls"
-	grpcmiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	grpcauth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
-	grpcrecovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
-	logging "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
-	"github.com/pkg/errors"
-	"go.uber.org/zap"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/status"
 )
 
 // GRPC API configuration
@@ -83,8 +84,8 @@ func NewServer(
 
 	// Add authentication, recovery and logging middleware
 	opts = append(opts, grpc.UnaryInterceptor(grpcmiddleware.ChainUnaryServer(
-		logging.UnaryServerInterceptor(interceptorLogger(logger), logOpts...),
-		grpcauth.UnaryServerInterceptor(authMiddleware(logger,userService)),
+		logging.UnaryServerInterceptor(InterceptorLogger(logger), logOpts...),
+		grpcauth.UnaryServerInterceptor(authMiddleware(logger, userService)),
 		grpcrecovery.UnaryServerInterceptor(),
 	)))
 
@@ -146,29 +147,4 @@ func authMiddleware(logger *zap.Logger, userService users.Service) func(context.
 
 		return ctx, nil
 	}
-}
-
-func interceptorLogger(l *zap.Logger) logging.Logger {
-	return logging.LoggerFunc(func(_ context.Context, lvl logging.Level, msg string, fields ...any) {
-		f := make(map[string]any, len(fields)/2)
-		i := logging.Fields(fields).Iterator()
-		for i.Next() {
-			k, v := i.At()
-			f[k] = v
-		}
-		l := l.WithFields(f)
-
-		switch lvl {
-		case logging.LevelDebug:
-			l.Debug(msg)
-		case logging.LevelInfo:
-			l.Info(msg)
-		case logging.LevelWarn:
-			l.Warn(msg)
-		case logging.LevelError:
-			l.Error(msg)
-		default:
-			panic(fmt.Sprintf("unknown level %v", lvl))
-		}
-	})
 }

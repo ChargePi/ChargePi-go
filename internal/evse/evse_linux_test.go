@@ -5,19 +5,21 @@ package evse
 import (
 	"context"
 	"errors"
-	mock_evcc "github.com/ChargePi/ChargePi-go/gen/mocks/pkg/hardware/evcc"
-	mock_power_meter "github.com/ChargePi/ChargePi-go/gen/mocks/pkg/hardware/power-meter"
 	"testing"
 	"time"
 
-	"github.com/ChargePi/ChargePi-go/internal/pkg/notifications"
-	"github.com/ChargePi/ChargePi-go/pkg/hardware/evcc"
-	powerMeter "github.com/ChargePi/ChargePi-go/pkg/hardware/power-meter"
+	mock_evcc "github.com/ChargePi/ChargePi-go/gen/mocks/pkg/hardware/evcc"
+	mock_power_meter "github.com/ChargePi/ChargePi-go/gen/mocks/pkg/hardware/power-meter"
+
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/ChargePi/ChargePi-go/internal/pkg/notifications"
+	"github.com/ChargePi/ChargePi-go/pkg/hardware/evcc"
+	powerMeter "github.com/ChargePi/ChargePi-go/pkg/hardware/power-meter"
 )
 
 type evseTestSuite struct {

@@ -3,14 +3,17 @@ package cmd
 import (
 	"fmt"
 
+	"go.uber.org/zap"
+
+	"github.com/ChargePi/ocpp-manager/ocpp_v16"
+	"github.com/spf13/cobra"
+
 	"github.com/ChargePi/ChargePi-go/internal/auth"
 	"github.com/ChargePi/ChargePi-go/internal/chargepoint"
 	"github.com/ChargePi/ChargePi-go/internal/pkg/badger"
 	cfg "github.com/ChargePi/ChargePi-go/internal/pkg/configuration"
 	exporter2 "github.com/ChargePi/ChargePi-go/internal/pkg/configuration/exporter"
 	"github.com/ChargePi/ChargePi-go/internal/pkg/configuration/manager"
-	"github.com/ChargePi/ocpp-manager/ocpp_v16"
-	"github.com/spf13/cobra"
 )
 
 var (
@@ -34,7 +37,8 @@ func exportCommand() *cobra.Command {
 				return fmt.Errorf("could not create database: %v", err)
 			}
 
-			tagManager := auth.NewManager(db, db)
+			logger := zap.L()
+			tagManager := auth.NewManager(logger, db, db)
 
 			configurationManager, err := ocpp_v16.NewV16ConfigurationManager(ocpp_v16.NewEmptyConfiguration())
 			if err != nil {

@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 
-	chargePoint "github.com/ChargePi/ChargePi-go/internal/chargepoint"
-	"github.com/ChargePi/ChargePi-go/internal/evse"
-	"github.com/ChargePi/ChargePi-go/pkg/ocpp"
 	"github.com/ChargePi/ocpp-manager/ocpp_v16"
 	"github.com/dgraph-io/badger/v3"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+
+	chargePoint "github.com/ChargePi/ChargePi-go/internal/chargepoint"
+	"github.com/ChargePi/ChargePi-go/internal/evse"
+	"github.com/ChargePi/ChargePi-go/pkg/ocpp"
 )
 
 const (

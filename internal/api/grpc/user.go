@@ -2,10 +2,10 @@ package grpc
 
 import (
 	"context"
+
 	grpc "github.com/ChargePi/ChargePi-go/gen/proto/users/v1"
 	"github.com/ChargePi/ChargePi-go/internal/users"
 	"github.com/ChargePi/ChargePi-go/internal/users/models"
-	"github.com/golang/protobuf/ptypes/empty"
 )
 
 type UserHandler struct {
@@ -45,7 +45,7 @@ func (s *UserHandler) GetUser(ctx context.Context, request *grpc.GetUserRequest)
 	}, nil
 }
 
-func (s *UserHandler) GetUsers(ctx context.Context, e *empty.Empty) (*grpc.GetUsersResponse, error) {
+func (s *UserHandler) GetUsers(ctx context.Context, req *grpc.GetUsersRequest) (*grpc.GetUsersResponse, error) {
 	response := &grpc.GetUsersResponse{}
 
 	getUsers, err := s.userService.GetUsers()

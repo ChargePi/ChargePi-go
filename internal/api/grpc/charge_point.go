@@ -3,9 +3,10 @@ package grpc
 import (
 	"context"
 
+	"github.com/golang/protobuf/ptypes/empty"
+
 	grpc "github.com/ChargePi/ChargePi-go/gen/proto/charge_point/v1"
 	"github.com/ChargePi/ChargePi-go/internal/chargepoint"
-	"github.com/golang/protobuf/ptypes/empty"
 )
 
 type ChargePointHandler struct {

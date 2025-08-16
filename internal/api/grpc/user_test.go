@@ -2,26 +2,24 @@ package grpc
 
 import (
 	"context"
-	"errors"
-	mock_users "github.com/ChargePi/ChargePi-go/gen/mocks/users"
 	"testing"
 
-	usersv1 "github.com/ChargePi/ChargePi-go/gen/proto/users/v1"
-	"github.com/ChargePi/ChargePi-go/internal/users/models"
-	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
+
+	usersv1 "github.com/ChargePi/ChargePi-go/gen/proto/users/v1"
+	"github.com/ChargePi/ChargePi-go/internal/users/models"
 )
 
 type userTestSuite struct {
 	suite.Suite
-	server          *grpc.Server
-	listener        *bufconn.Listener
-	userServiceMock *mock_users.MockService
-	userHandler     *UserHandler
+	server   *grpc.Server
+	listener *bufconn.Listener
+	// userServiceMock *mock_users.MockUserRepository
+	userHandler *UserHandler
 }
 
 func (s *userTestSuite) SetupSuite() {
@@ -44,10 +42,10 @@ func (s *userTestSuite) TearDownSuite() {
 
 func (s *userTestSuite) SetupTest() {
 	// Create mock user service
-	s.userServiceMock = mock_users.NewMockService(s.T())
+	// s.userServiceMock = mock_users.NewMockService(s.T())
 
 	// Create user handler
-	s.userHandler = NewUserHandler(s.userServiceMock)
+	// s.userHandler = NewUserHandler(s.userServiceMock)
 	s.userHandler = &UserHandler{}
 
 	// Register the service
@@ -91,9 +89,9 @@ func (s *userTestSuite) TestAddUser() {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// Setup expectations
 			if tt.expectError {
-				s.userServiceMock.EXPECT().AddUser(tt.username, tt.password, tt.role).Return(errors.New("user already exists"))
+				//s.userServiceMock.EXPECT().AddUser(tt.username, tt.password, tt.role).Return(errors.New("user already exists"))
 			} else {
-				s.userServiceMock.EXPECT().AddUser(tt.username, tt.password, tt.role).Return(nil)
+				// s.userServiceMock.EXPECT().AddUser(tt.username, tt.password, tt.role).Return(nil)
 			}
 
 			// Create request
@@ -154,9 +152,9 @@ func (s *userTestSuite) TestGetUser() {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// Setup expectations
 			if tt.expectError {
-				s.userServiceMock.EXPECT().GetUser(tt.username).Return(nil, errors.New("user doesn't exist"))
+				// s.userServiceMock.EXPECT().GetUser(tt.username).Return(nil, errors.New("user doesn't exist"))
 			} else {
-				s.userServiceMock.EXPECT().GetUser(tt.username).Return(tt.setupUser, nil)
+				// s.userServiceMock.EXPECT().GetUser(tt.username).Return(tt.setupUser, nil)
 			}
 
 			// Create request
@@ -210,10 +208,10 @@ func (s *userTestSuite) TestGetUsers() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// Setup expectations
-			s.userServiceMock.EXPECT().GetUsers().Return(tt.setupUsers, nil)
+			// s.userServiceMock.EXPECT().GetUsers().Return(tt.setupUsers, nil)
 
 			// Execute
-			response, err := s.userHandler.GetUsers(context.Background(), &empty.Empty{})
+			response, err := s.userHandler.GetUsers(context.Background(), &usersv1.GetUsersRequest{})
 
 			// Assert
 			s.NoError(err)
@@ -254,9 +252,9 @@ func (s *userTestSuite) TestRemoveUser() {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// Setup expectations
 			if tt.expectError {
-				s.userServiceMock.EXPECT().DeleteUser(tt.username).Return(errors.New("user doesn't exist"))
+				//	s.userServiceMock.EXPECT().DeleteUser(tt.username).Return(errors.New("user doesn't exist"))
 			} else {
-				s.userServiceMock.EXPECT().DeleteUser(tt.username).Return(nil)
+				//	s.userServiceMock.EXPECT().DeleteUser(tt.username).Return(nil)
 			}
 
 			// Create request

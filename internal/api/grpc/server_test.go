@@ -4,6 +4,15 @@ import (
 	"context"
 	"testing"
 
+	"go.uber.org/zap/zaptest"
+
+	"github.com/stretchr/testify/suite"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
+	"google.golang.org/grpc/test/bufconn"
+
 	charge_pointv1 "github.com/ChargePi/ChargePi-go/gen/proto/charge_point/v1"
 	configurationv1 "github.com/ChargePi/ChargePi-go/gen/proto/configuration/v1"
 	connectionv1 "github.com/ChargePi/ChargePi-go/gen/proto/connection/v1"
@@ -12,12 +21,6 @@ import (
 	tagsv1 "github.com/ChargePi/ChargePi-go/gen/proto/tags/v1"
 	usersv1 "github.com/ChargePi/ChargePi-go/gen/proto/users/v1"
 	"github.com/ChargePi/ChargePi-go/pkg/tls"
-	"github.com/stretchr/testify/suite"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
-	"google.golang.org/grpc/test/bufconn"
 )
 
 // grpcTestSuite provides comprehensive testing for the gRPC server functionality.
@@ -161,7 +164,7 @@ func (s *grpcTestSuite) TestAuthMiddleware() {
 			}
 
 			// Test the middleware with nil userService (should fail)
-			authFunc := authMiddleware(nil)
+			authFunc := authMiddleware(zaptest.NewLogger(s.T()), nil)
 			_, err := authFunc(ctx)
 
 			if tt.expectError {

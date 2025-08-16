@@ -3,7 +3,7 @@
 package reader
 
 import (
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 )
 
 type Settings struct {
@@ -16,12 +16,13 @@ type Settings struct {
 // NewTagReader creates an instance of the Reader interface based on the provided configuration.
 func NewTagReader(reader Settings) (Reader, error) {
 	if reader.IsEnabled {
-		log.Infof("Preparing tag reader from config: %s", reader.ReaderModel)
+		logger := zap.L()
+		logger.Sugar().Infof("Preparing tag reader from config: %s", reader.ReaderModel)
 		switch reader.ReaderModel {
 		case PN532, ACR122, PN533, BR500, R502:
-			return NewReader(reader.PN532.Device, reader.ReaderModel, reader.PN532.ResetPin)
+			return NewReader(logger, reader.PN532.Device, reader.ReaderModel, reader.PN532.ResetPin)
 		case TypeDummy:
-			return NewDummy(reader.DummyReader)
+			return NewDummy(logger, reader.DummyReader)
 		default:
 			return nil, ErrReaderUnsupported
 		}

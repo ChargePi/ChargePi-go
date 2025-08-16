@@ -3,6 +3,14 @@ package cmd
 import (
 	"context"
 
+	"go.uber.org/zap"
+
+	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
+	"github.com/lorenzodonini/ocpp-go/ocpp1.6/localauth"
+	"github.com/lorenzodonini/ocpp-go/ocpp1.6/remotetrigger"
+	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
+	"github.com/pkg/errors"
+
 	"github.com/ChargePi/ChargePi-go/internal/auth"
 	"github.com/ChargePi/ChargePi-go/internal/chargepoint"
 	v16 "github.com/ChargePi/ChargePi-go/internal/chargepoint/v16"
@@ -12,12 +20,6 @@ import (
 	"github.com/ChargePi/ChargePi-go/internal/sessions"
 	"github.com/ChargePi/ChargePi-go/pkg/hardware/indicator"
 	"github.com/ChargePi/ChargePi-go/pkg/ocpp"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/localauth"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/remotetrigger"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
-	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 )
 
 var supportedOcppV16Profiles = []string{
@@ -31,7 +33,7 @@ var supportedOcppV16Profiles = []string{
 func NewChargePoint(
 	ctx context.Context,
 	protocolVersion ocpp.ProtocolVersion,
-	logger log.FieldLogger,
+	logger *zap.Logger,
 	manager manager.Manager,
 	tagManager auth.Service,
 	settingsManager settings.Manager,
@@ -54,7 +56,7 @@ func NewChargePoint(
 	switch protocolVersion {
 	case ocpp.OCPP16:
 		// Setup OCPP configuration from the database
-		return v16.NewChargePoint(manager, settingsManager, tagManager, sessionManager, diagnosticsManager, opts...)
+		return v16.NewChargePoint(logger, manager, settingsManager, tagManager, sessionManager, diagnosticsManager, opts...)
 	case ocpp.OCPP201:
 		return nil, errors.New("Version 2.0.1 is not supported yet.")
 	default:

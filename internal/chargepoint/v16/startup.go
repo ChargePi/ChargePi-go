@@ -3,11 +3,14 @@ package v16
 import (
 	"fmt"
 
-	chargePoint "github.com/ChargePi/ChargePi-go/internal/chargepoint"
-	ocpp2 "github.com/ChargePi/ChargePi-go/pkg/ocpp"
+	"go.uber.org/zap"
+
 	"github.com/ChargePi/ocpp-manager/ocpp_v16"
 	"github.com/lorenzodonini/ocpp-go/ocpp"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
+
+	chargePoint "github.com/ChargePi/ChargePi-go/internal/chargepoint"
+	ocpp2 "github.com/ChargePi/ChargePi-go/pkg/ocpp"
 )
 
 // bootNotification After connecting to the central system, send a BootNotification in order to get the
@@ -29,9 +32,13 @@ func (cp *ChargePoint) bootNotification() {
 	}
 
 	callback := func(confirmation ocpp.Response, protoError error) {
+		if protoError != nil {
+			cp.logger.With(zap.Error(protoError)).Error("Error receiving BootNotification confirmation")
+			return
+		}
 		bootConf := confirmation.(*core.BootNotificationConfirmation)
 
-		cp.logger.Infof("Registration status: %s", bootConf.Status)
+		cp.logger.With(zap.String("status", string(bootConf.Status))).Info("Received conformation")
 
 		switch bootConf.Status {
 		case core.RegistrationStatusAccepted:
@@ -46,7 +53,7 @@ func (cp *ChargePoint) bootNotification() {
 				// Send details about the charge point and its EVSEs concurrently
 				err := cp.sendChargePointInfo()
 				if err != nil {
-					cp.logger.WithError(err).Warn("Error sending charge point information")
+					cp.logger.With(zap.Error(err)).Warn("Error sending charge point information")
 				}
 				cp.sendEvses()
 			}()
@@ -74,7 +81,7 @@ func (cp *ChargePoint) rescheduleBootNotification(interval int) {
 	// Schedule a new boot notification in 1 minute
 	_, err := cp.scheduler.Every(interval).Seconds().LimitRunsTo(1).Tag("bootNotification").Do(cp.bootNotification)
 	if err != nil {
-		cp.logger.WithError(err).Fatal("Error rescheduling BootNotification")
+		cp.logger.With(zap.Error(err)).Fatal("Error rescheduling BootNotification")
 	}
 }
 
@@ -86,19 +93,19 @@ func (cp *ChargePoint) setHeartbeat(interval int) {
 		// Default to the configuration value
 		heartBeatInterval, err := cp.settingsManager.GetConfigurationValue(ocpp_v16.HeartbeatInterval)
 		if err != nil {
-			cp.logger.WithError(err).Fatal("Error getting heartbeat interval from configuration")
+			cp.logger.With(zap.Error(err)).Fatal("Error getting heartbeat interval from configuration")
 		}
 
 		_, err = cp.scheduler.Every(fmt.Sprintf("%ss", *heartBeatInterval)).Tag("heartbeat").Do(cp.sendHeartBeat)
 		if err != nil {
-			cp.logger.WithError(err).Fatal("Error scheduling heartbeat")
+			cp.logger.With(zap.Error(err)).Fatal("Error scheduling heartbeat")
 		}
 		return
 	}
 
 	_, err := cp.scheduler.Every(fmt.Sprintf("%ds", interval)).Tag("heartbeat").Do(cp.sendHeartBeat)
 	if err != nil {
-		cp.logger.WithError(err).Fatal("Error scheduling heartbeat")
+		cp.logger.With(zap.Error(err)).Fatal("Error scheduling heartbeat")
 	}
 }
 
@@ -124,7 +131,7 @@ func (cp *ChargePoint) sendChargePointInfo() error {
 
 	return cp.sendRequest(dataTransfer, func(confirmation ocpp.Response, protoError error) {
 		if protoError != nil {
-			cp.logger.WithError(protoError).Warn("Error sending data")
+			cp.logger.With(zap.Error(protoError)).Warn("Error sending data")
 			return
 		}
 
@@ -149,21 +156,21 @@ func (cp *ChargePoint) sendEvses() {
 
 // SendEVSEsDetails Send the EVSE's configuration to the central system.
 func (cp *ChargePoint) SendEVSEsDetails(evseId int, maxPower float32, connectors ...ocpp2.Connector) {
-	logInfo := cp.logger.WithField("evseId", evseId)
-	logInfo.Info("Sending EVSE details to the central system")
+	logger := cp.logger.With(zap.Int("evseId", evseId))
+	logger.Info("Sending EVSE details to the central system")
 
 	dataTransfer := core.NewDataTransferRequest(cp.info.OCPPDetails.Vendor)
 	dataTransfer.Data = ocpp2.NewEvseInfo(evseId, maxPower, connectors...)
 
 	err := cp.sendRequest(dataTransfer, func(confirmation ocpp.Response, protoError error) {
 		if protoError != nil {
-			logInfo.WithError(protoError).Warn("Error sending data")
+			logger.With(zap.Error(protoError)).Warn("Error sending data")
 			return
 		}
 
 		resp := confirmation.(*core.DataTransferConfirmation)
 		if resp.Status == core.DataTransferStatusAccepted {
-			logInfo.Info("Sent additional charge point information")
+			logger.Info("Sent additional charge point information")
 		}
 	})
 	cp.handleRequestErr(err, "Error sending data")

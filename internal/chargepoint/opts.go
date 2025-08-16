@@ -3,6 +3,7 @@ package chargepoint
 import (
 	"context"
 	"errors"
+
 	"go.uber.org/zap"
 
 	"github.com/ChargePi/ChargePi-go/pkg/hardware/display"

@@ -2,14 +2,17 @@ package smartCharging
 
 import (
 	"errors"
-	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
-	"go.uber.org/zap"
 	"strconv"
 	"sync"
 
-	manager2 "github.com/ChargePi/ChargePi-go/internal/pkg/configuration/manager"
+	"go.uber.org/zap"
+
+	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
+
 	"github.com/ChargePi/ocpp-manager/ocpp_v16"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
+
+	manager2 "github.com/ChargePi/ChargePi-go/internal/pkg/configuration/manager"
 )
 
 var (

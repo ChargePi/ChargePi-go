@@ -2,18 +2,15 @@ package evse
 
 import (
 	"context"
-	"fmt"
-	"go.uber.org/zap"
-	"strconv"
-	"sync"
 
-	"github.com/ChargePi/ChargePi-go/internal/pkg/notifications"
-	"github.com/ChargePi/ChargePi-go/pkg/hardware/evcc"
-	"github.com/ChargePi/ChargePi-go/pkg/hardware/power-meter"
 	"github.com/go-playground/validator/v10"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/pkg/errors"
+
+	"github.com/ChargePi/ChargePi-go/internal/pkg/notifications"
+	"github.com/ChargePi/ChargePi-go/pkg/hardware/evcc"
+	powerMeter "github.com/ChargePi/ChargePi-go/pkg/hardware/power-meter"
 )
 
 var (

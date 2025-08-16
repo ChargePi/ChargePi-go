@@ -3,7 +3,7 @@
 package display
 
 import (
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 )
 
 type Settings struct {
@@ -27,11 +27,12 @@ type Settings struct {
 // The Display is built with the settings from the settings file.
 func NewDisplay(lcdSettings Settings) (Display, error) {
 	if lcdSettings.IsEnabled {
-		log.Info("Preparing display from config")
+		logger := zap.L()
+		logger.Debug("Preparing display from config")
 
 		switch lcdSettings.Driver {
 		case TypeDummy:
-			return NewDummy(lcdSettings.DisplayDummy)
+			return NewDummy(logger, lcdSettings.DisplayDummy)
 		default:
 			return nil, ErrDisplayUnsupported
 		}

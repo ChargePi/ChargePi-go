@@ -5,8 +5,9 @@ package reader
 import (
 	"context"
 	"encoding/hex"
-	"go.uber.org/zap"
 	"time"
+
+	"go.uber.org/zap"
 
 	"github.com/clausecker/nfc/v2"
 	"github.com/warthog618/gpiod"
@@ -48,7 +49,7 @@ type NFCTagReader struct {
 	logger     *zap.Logger
 }
 
-func NewReader(logger *zap.Logger,device, deviceType string, resetPin int) (*NFCTagReader, error) {
+func NewReader(logger *zap.Logger, device, deviceType string, resetPin int) (*NFCTagReader, error) {
 	return &NFCTagReader{
 		tagChannel: make(chan string, 1),
 		devAddress: device,
@@ -80,7 +81,7 @@ func (reader *NFCTagReader) init() error {
 func (reader *NFCTagReader) ListenForTags(ctx context.Context) {
 	err := reader.init()
 	if err != nil {
-		reader.logger.Panic("Failed to initialize reader", err)
+		reader.logger.With(zap.Error(err)).Panic("Failed to initialize reader")
 	}
 
 	var (

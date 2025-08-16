@@ -1,19 +1,21 @@
 package v16
 
 import (
-	"go.uber.org/zap"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/ChargePi/ChargePi-go/internal/chargepoint"
-	"github.com/ChargePi/ChargePi-go/internal/evse"
+	"go.uber.org/zap"
+
 	"github.com/ChargePi/ocpp-manager/ocpp_v16"
 	"github.com/lorenzodonini/ocpp-go/ocpp"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	"github.com/pkg/errors"
 	"github.com/samber/lo"
+
+	"github.com/ChargePi/ChargePi-go/internal/chargepoint"
+	"github.com/ChargePi/ChargePi-go/internal/evse"
 )
 
 func (cp *ChargePoint) OnRemoteStartTransaction(request *core.RemoteStartTransactionRequest) (confirmation *core.RemoteStartTransactionConfirmation, err error) {

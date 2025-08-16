@@ -3,17 +3,19 @@
 package display
 
 import (
-	"go.uber.org/zap"
 	"context"
 	"strconv"
 	"time"
 
-	"github.com/ChargePi/ChargePi-go/internal/pkg/scheduler"
-	"github.com/ChargePi/ChargePi-go/pkg/hardware"
+	"go.uber.org/zap"
+
 	"github.com/d2r2/go-hd44780"
 	"github.com/d2r2/go-i2c"
 	"github.com/go-co-op/gocron"
 	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/display"
+
+	"github.com/ChargePi/ChargePi-go/internal/pkg/scheduler"
+	"github.com/ChargePi/ChargePi-go/pkg/hardware"
 )
 
 const DriverHD44780 = "hd44780"

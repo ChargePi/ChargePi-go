@@ -5,14 +5,15 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
+	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
+	"go.uber.org/zap"
+
 	"github.com/ChargePi/ChargePi-go/internal/evse"
 	"github.com/ChargePi/ChargePi-go/internal/pkg/notifications"
 	"github.com/ChargePi/ChargePi-go/internal/pkg/scheduler"
 	"github.com/ChargePi/ChargePi-go/internal/sessions"
 	"github.com/ChargePi/ChargePi-go/pkg/util"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
-	"go.uber.org/zap"
 )
 
 // Manager is responsible for managing EVSE instances at runtime. It persists their status and settings in the database.

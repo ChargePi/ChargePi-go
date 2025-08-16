@@ -3,8 +3,9 @@ package grpc
 import (
 	"context"
 
-	"github.com/ChargePi/ChargePi-go/gen/proto/connection/v1"
 	"google.golang.org/protobuf/types/known/emptypb"
+
+	connectionv1 "github.com/ChargePi/ChargePi-go/gen/proto/connection/v1"
 )
 
 type ConnectivityHandler struct {

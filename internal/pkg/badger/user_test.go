@@ -4,8 +4,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/ChargePi/ChargePi-go/internal/users/models"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/ChargePi/ChargePi-go/internal/users/models"
 )
 
 type userTestSuite struct {

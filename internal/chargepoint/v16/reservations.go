@@ -4,8 +4,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
+	"go.uber.org/zap"
+
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/reservation"
+
+	"github.com/ChargePi/ChargePi-go/internal/evse/manager"
 )
 
 func getSchedulerReservationTag(reservationId int) string {
@@ -43,7 +46,7 @@ func (cp *ChargePoint) OnCancelReservation(request *reservation.CancelReservatio
 		schedulerErr := cp.scheduler.RemoveByTag(getSchedulerReservationTag(request.ReservationId))
 		if schedulerErr != nil {
 			// Log the error, but don't fail the operation
-			cp.logger.WithError(schedulerErr).Error("Error cancelling reservation removal")
+			cp.logger.With(zap.Error(schedulerErr)).Error("Error cancelling reservation removal")
 		}
 	default:
 		status = reservation.CancelReservationStatusRejected

@@ -2,6 +2,7 @@ package reader
 
 import (
 	"context"
+
 	"go.uber.org/zap"
 )
 
@@ -22,7 +23,7 @@ func NewDummy(logger *zap.Logger, settings *DummySettings) (*Dummy, error) {
 	return &Dummy{
 		settings: *settings,
 		listener: make(chan string),
-		logger: logger,
+		logger:   logger,
 		tagIndex: 0,
 	}, nil
 }
