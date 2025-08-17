@@ -98,7 +98,7 @@ func (m *Impl) AddEVSE(ctx context.Context, evse evse.EVSE) error {
 func (m *Impl) AddEVSEFromSettings(ctx context.Context, settings evse.Settings) error {
 	m.logger.Debug("Adding an EVSE to manager", zap.Int("evseId", settings.EvseId))
 
-	evse, err := evse.NewEvseFromSettings(settings)
+	evse, err := evse.NewEvseFromSettings(zap.L(), settings)
 	if err != nil {
 		return err
 	}
