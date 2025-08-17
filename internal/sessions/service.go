@@ -106,13 +106,18 @@ func (i *Impl) GetSessionWithTagId(tagId string) (*session.Session, error) {
 }
 
 func (i *Impl) AddTransactionIdToSession(evseId int, connectorId *int, transactionId string) error {
-	//TODO implement me
-	panic("implement me")
+	i.logger.With(
+		zap.String("transactionId", transactionId),
+		zap.Int("evseId", evseId),
+	).Info("Adding transaction id to session")
+	return nil
 }
 
 func (i *Impl) GetSessions(evseId *int) ([]session.Session, error) {
-	//TODO implement me
-	panic("implement me")
+	i.logger.With(
+		zap.Intp("evseId", evseId),
+	).Info("Getting sessions")
+	return nil, nil
 }
 
 func (i *Impl) Pass() bool {

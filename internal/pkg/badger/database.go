@@ -25,7 +25,7 @@ func NewBadgerDb(filePath string) (*Database, error) {
 
 	return &Database{
 		db:     badgerDb,
-		logger: zap.L().Named("badger-db"),
+		logger: zap.L().Named("badger_db"),
 	}, nil
 }
 
