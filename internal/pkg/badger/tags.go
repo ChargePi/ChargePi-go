@@ -1,6 +1,7 @@
 package badger
 
 import (
+	"context"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
@@ -31,7 +32,7 @@ func getTagKey(tagId string) []byte {
 	return []byte(fmt.Sprintf("%s-%s", tagKeyPrefix, tagId))
 }
 
-func (db *Database) AddTagToAuthList(tagId string, tagInfo *types.IdTagInfo) error {
+func (db *Database) AddTagToAuthList(ctx context.Context, tagId string, tagInfo *types.IdTagInfo) error {
 	return db.db.Update(func(txn *badger.Txn) error {
 		_, err := txn.Get(getLocalAuthTagPrefix(tagId))
 		if !errors.Is(err, badger.ErrKeyNotFound) {
@@ -52,7 +53,7 @@ func (db *Database) AddTagToAuthList(tagId string, tagInfo *types.IdTagInfo) err
 	})
 }
 
-func (db *Database) RemoveAuthListTag(tagId string) error {
+func (db *Database) RemoveAuthListTag(ctx context.Context, tagId string) error {
 	return db.db.Update(func(txn *badger.Txn) error {
 		err := txn.Delete(getLocalAuthTagPrefix(tagId))
 		if err != nil {
@@ -63,7 +64,7 @@ func (db *Database) RemoveAuthListTag(tagId string) error {
 	})
 }
 
-func (db *Database) GetLocalAuthListTag(tagId string) (*types.IdTagInfo, error) {
+func (db *Database) GetLocalAuthListTag(ctx context.Context, tagId string) (*types.IdTagInfo, error) {
 	var tagInfo localauth.AuthorizationData
 	err := db.db.View(func(txn *badger.Txn) error {
 		item, err := txn.Get(getLocalAuthTagPrefix(tagId))
@@ -90,7 +91,7 @@ func (db *Database) GetLocalAuthListTag(tagId string) (*types.IdTagInfo, error) 
 	return tagInfo.IdTagInfo, nil
 }
 
-func (db *Database) GetLocalAuthListTags() ([]localauth.AuthorizationData, error) {
+func (db *Database) GetLocalAuthListTags(ctx context.Context) ([]localauth.AuthorizationData, error) {
 	var tags []localauth.AuthorizationData
 
 	err := db.db.View(func(txn *badger.Txn) error {
@@ -120,12 +121,12 @@ func (db *Database) GetLocalAuthListTags() ([]localauth.AuthorizationData, error
 	return tags, nil
 }
 
-func (db *Database) GetAuthListTagsForVersion(version int) ([]localauth.AuthorizationData, error) {
+func (db *Database) GetAuthListTagsForVersion(ctx context.Context, version int) ([]localauth.AuthorizationData, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (db *Database) RemoveAuthListAllTagsForVersion(version int) error {
+func (db *Database) RemoveAuthListAllTagsForVersion(ctx context.Context, version int) error {
 	// Remove all cached keys from database
 	return db.db.Update(func(txn *badger.Txn) error {
 		it := txn.NewIterator(badger.DefaultIteratorOptions)
@@ -143,7 +144,7 @@ func (db *Database) RemoveAuthListAllTagsForVersion(version int) error {
 	})
 }
 
-func (db *Database) AddAuthList(list list.LocalAuthListVersion) error {
+func (db *Database) AddAuthList(ctx context.Context, list list.LocalAuthListVersion) error {
 	return db.db.Update(func(txn *badger.Txn) error {
 		ver := []byte{}
 		binary.LittleEndian.PutUint32(ver, uint32(list.Version))
@@ -170,7 +171,7 @@ func (db *Database) AddAuthList(list list.LocalAuthListVersion) error {
 	})
 }
 
-func (db *Database) AddTag(tagId string, tagInfo *types.IdTagInfo) error {
+func (db *Database) AddTag(ctx context.Context, tagId string, tagInfo *types.IdTagInfo) error {
 	// Add a tag if it doesn't exist in the cache.
 	return db.db.Update(func(txn *badger.Txn) error {
 		_, err := txn.Get(getTagKey(tagId))
@@ -192,7 +193,7 @@ func (db *Database) AddTag(tagId string, tagInfo *types.IdTagInfo) error {
 	})
 }
 
-func (db *Database) RemoveTag(tagId string) error {
+func (db *Database) RemoveTag(ctx context.Context, tagId string) error {
 	return db.db.Update(func(txn *badger.Txn) error {
 		err := txn.Delete(getTagKey(tagId))
 		if err != nil {
@@ -203,7 +204,7 @@ func (db *Database) RemoveTag(tagId string) error {
 	})
 }
 
-func (db *Database) GetTag(tagId string) (*types.IdTagInfo, error) {
+func (db *Database) GetTag(ctx context.Context, tagId string) (*types.IdTagInfo, error) {
 	var tagInfo localauth.AuthorizationData
 
 	err := db.db.View(func(txn *badger.Txn) error {
@@ -232,12 +233,12 @@ func (db *Database) GetTag(tagId string) (*types.IdTagInfo, error) {
 	return tagInfo.IdTagInfo, nil
 }
 
-func (db *Database) GetTags() ([]*types.IdTagInfo, error) {
+func (db *Database) GetTags(context.Context) ([]*types.IdTagInfo, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (db *Database) RemoveAllTags() error {
+func (db *Database) RemoveAllTags(context.Context) error {
 	// Remove all cached keys from database
 	return db.db.Update(func(txn *badger.Txn) error {
 		it := txn.NewIterator(badger.DefaultIteratorOptions)

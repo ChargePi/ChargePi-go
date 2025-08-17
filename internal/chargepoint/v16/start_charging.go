@@ -1,6 +1,7 @@
 package v16
 
 import (
+	"context"
 	"strconv"
 	"strings"
 	"time"
@@ -57,6 +58,8 @@ func (cp *ChargePoint) remoteStart(evseId, connectorId int, tagId string) {
 		zap.Int("connectorId", connectorId),
 		zap.String("tagId", tagId),
 	)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
 
 	if cp.state.GetAvailability() != core.AvailabilityTypeOperative {
 		return
@@ -74,13 +77,16 @@ func (cp *ChargePoint) remoteStart(evseId, connectorId int, tagId string) {
 	}
 
 	// Start the charging
-	err := cp.StartCharging(evseId, connectorId, tagId)
+	err := cp.StartCharging(ctx, evseId, connectorId, tagId)
 	if err != nil {
 		logger.With(zap.Error(err)).Error("Unable to start charging remotely")
 	}
 }
 
-func (cp *ChargePoint) StartCharging(evseId, connectorId int, tagId string) error {
+func (cp *ChargePoint) StartCharging(ctx context.Context, evseId, connectorId int, tagId string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
 	logger := cp.logger.With(zap.Int("evseId", evseId), zap.Int("connectorId", connectorId), zap.String("tagId", tagId))
 	logger.Info("Starting charging")
 
@@ -105,7 +111,7 @@ func (cp *ChargePoint) StartCharging(evseId, connectorId int, tagId string) erro
 	}
 
 	// Log the session in the session manager
-	err = cp.sessionService.StartSession(evseId, nil, tagId, "")
+	err = cp.sessionService.StartSession(ctx, evseId, nil, tagId, "")
 	if err != nil {
 		logger.With(zap.Error(err)).Error("Unable to start a session")
 		return err
@@ -122,6 +128,9 @@ func (cp *ChargePoint) StartCharging(evseId, connectorId int, tagId string) erro
 	)
 
 	callback := func(confirmation ocpp.Response, protoError error) {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
 		if protoError != nil {
 			logger.With(zap.Error(protoError)).Sugar().Warnf("Central system responded with an error for %s", confirmation.GetFeatureName())
 			return
@@ -131,13 +140,13 @@ func (cp *ChargePoint) StartCharging(evseId, connectorId int, tagId string) erro
 
 		// Update the transaction id in the session
 		logger.Sugar().Infof("Updating transaction ID: %d", startTransactionConf.TransactionId)
-		err = cp.sessionService.AddTransactionIdToSession(evseId, nil, strconv.Itoa(startTransactionConf.TransactionId))
+		err = cp.sessionService.AddTransactionIdToSession(ctx, evseId, nil, strconv.Itoa(startTransactionConf.TransactionId))
 		if err != nil {
 			logger.With(zap.Error(err)).Warn("Unable to update transaction ID in the session manager")
 		}
 
 		// Cache the tag
-		err = cp.tagAuthService.CacheTag(tagId, startTransactionConf.IdTagInfo)
+		err = cp.tagAuthService.CacheTag(ctx, tagId, types.NewIdTagInfo(types.AuthorizationStatusAccepted))
 		if err != nil {
 			logger.With(zap.Error(err)).Warn("Unable to cache tag")
 		}

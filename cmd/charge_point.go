@@ -35,10 +35,10 @@ func NewChargePoint(
 	protocolVersion ocpp.ProtocolVersion,
 	logger *zap.Logger,
 	manager manager.Manager,
-	tagManager auth.Service,
+	authService auth.Service,
 	settingsManager settings.Manager,
-	sessionManager sessions.Service,
-	diagnosticsManager diagnostics.Service,
+	sessionService sessions.Service,
+	diagnosticsService diagnostics.Service,
 	hardware chargepoint.Hardware,
 ) (chargepoint.ChargePoint, error) {
 
@@ -56,7 +56,7 @@ func NewChargePoint(
 	switch protocolVersion {
 	case ocpp.OCPP16:
 		// Setup OCPP configuration from the database
-		return v16.NewChargePoint(logger, manager, settingsManager, tagManager, sessionManager, diagnosticsManager, opts...)
+		return v16.NewChargePoint(logger, manager, settingsManager, authService, sessionService, diagnosticsService, opts...)
 	case ocpp.OCPP201:
 		return nil, errors.New("Version 2.0.1 is not supported yet.")
 	default:

@@ -51,7 +51,7 @@ func getKey(evseId int) string {
 func (m *Impl) InitAll(ctx context.Context) error {
 	m.logger.Info("Initializing EVSEs")
 
-	settings, err := m.evseRepository.GetEvseSettings()
+	settings, err := m.evseRepository.GetEvseSettings(ctx)
 	if err != nil {
 		return err
 	}
@@ -299,7 +299,7 @@ func (m *Impl) RestoreEVSEs() error {
 	m.logger.Debug("Attempting to restore EVSEs")
 
 	// Get all EVSE settings from the database
-	settings, err := m.evseRepository.GetEvseSettings()
+	settings, err := m.evseRepository.GetEvseSettings(context.Background())
 	if err != nil {
 		return err
 	}

@@ -5,6 +5,8 @@
 package mock_auth
 
 import (
+	"context"
+
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -37,16 +39,16 @@ func (_m *MockTagRepository) EXPECT() *MockTagRepository_Expecter {
 }
 
 // AddTag provides a mock function for the type MockTagRepository
-func (_mock *MockTagRepository) AddTag(tagId string, tagInfo *types.IdTagInfo) error {
-	ret := _mock.Called(tagId, tagInfo)
+func (_mock *MockTagRepository) AddTag(ctx context.Context, tagId string, tagInfo *types.IdTagInfo) error {
+	ret := _mock.Called(ctx, tagId, tagInfo)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddTag")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(string, *types.IdTagInfo) error); ok {
-		r0 = returnFunc(tagId, tagInfo)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *types.IdTagInfo) error); ok {
+		r0 = returnFunc(ctx, tagId, tagInfo)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -59,25 +61,31 @@ type MockTagRepository_AddTag_Call struct {
 }
 
 // AddTag is a helper method to define mock.On call
+//   - ctx context.Context
 //   - tagId string
 //   - tagInfo *types.IdTagInfo
-func (_e *MockTagRepository_Expecter) AddTag(tagId interface{}, tagInfo interface{}) *MockTagRepository_AddTag_Call {
-	return &MockTagRepository_AddTag_Call{Call: _e.mock.On("AddTag", tagId, tagInfo)}
+func (_e *MockTagRepository_Expecter) AddTag(ctx interface{}, tagId interface{}, tagInfo interface{}) *MockTagRepository_AddTag_Call {
+	return &MockTagRepository_AddTag_Call{Call: _e.mock.On("AddTag", ctx, tagId, tagInfo)}
 }
 
-func (_c *MockTagRepository_AddTag_Call) Run(run func(tagId string, tagInfo *types.IdTagInfo)) *MockTagRepository_AddTag_Call {
+func (_c *MockTagRepository_AddTag_Call) Run(run func(ctx context.Context, tagId string, tagInfo *types.IdTagInfo)) *MockTagRepository_AddTag_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 string
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(string)
+			arg0 = args[0].(context.Context)
 		}
-		var arg1 *types.IdTagInfo
+		var arg1 string
 		if args[1] != nil {
-			arg1 = args[1].(*types.IdTagInfo)
+			arg1 = args[1].(string)
+		}
+		var arg2 *types.IdTagInfo
+		if args[2] != nil {
+			arg2 = args[2].(*types.IdTagInfo)
 		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
@@ -88,14 +96,14 @@ func (_c *MockTagRepository_AddTag_Call) Return(err error) *MockTagRepository_Ad
 	return _c
 }
 
-func (_c *MockTagRepository_AddTag_Call) RunAndReturn(run func(tagId string, tagInfo *types.IdTagInfo) error) *MockTagRepository_AddTag_Call {
+func (_c *MockTagRepository_AddTag_Call) RunAndReturn(run func(ctx context.Context, tagId string, tagInfo *types.IdTagInfo) error) *MockTagRepository_AddTag_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetTag provides a mock function for the type MockTagRepository
-func (_mock *MockTagRepository) GetTag(tagId string) (*types.IdTagInfo, error) {
-	ret := _mock.Called(tagId)
+func (_mock *MockTagRepository) GetTag(ctx context.Context, tagId string) (*types.IdTagInfo, error) {
+	ret := _mock.Called(ctx, tagId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetTag")
@@ -103,18 +111,18 @@ func (_mock *MockTagRepository) GetTag(tagId string) (*types.IdTagInfo, error) {
 
 	var r0 *types.IdTagInfo
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(string) (*types.IdTagInfo, error)); ok {
-		return returnFunc(tagId)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*types.IdTagInfo, error)); ok {
+		return returnFunc(ctx, tagId)
 	}
-	if returnFunc, ok := ret.Get(0).(func(string) *types.IdTagInfo); ok {
-		r0 = returnFunc(tagId)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *types.IdTagInfo); ok {
+		r0 = returnFunc(ctx, tagId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*types.IdTagInfo)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(string) error); ok {
-		r1 = returnFunc(tagId)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, tagId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -127,19 +135,25 @@ type MockTagRepository_GetTag_Call struct {
 }
 
 // GetTag is a helper method to define mock.On call
+//   - ctx context.Context
 //   - tagId string
-func (_e *MockTagRepository_Expecter) GetTag(tagId interface{}) *MockTagRepository_GetTag_Call {
-	return &MockTagRepository_GetTag_Call{Call: _e.mock.On("GetTag", tagId)}
+func (_e *MockTagRepository_Expecter) GetTag(ctx interface{}, tagId interface{}) *MockTagRepository_GetTag_Call {
+	return &MockTagRepository_GetTag_Call{Call: _e.mock.On("GetTag", ctx, tagId)}
 }
 
-func (_c *MockTagRepository_GetTag_Call) Run(run func(tagId string)) *MockTagRepository_GetTag_Call {
+func (_c *MockTagRepository_GetTag_Call) Run(run func(ctx context.Context, tagId string)) *MockTagRepository_GetTag_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 string
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(string)
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
 		}
 		run(
 			arg0,
+			arg1,
 		)
 	})
 	return _c
@@ -150,14 +164,14 @@ func (_c *MockTagRepository_GetTag_Call) Return(idTagInfo *types.IdTagInfo, err 
 	return _c
 }
 
-func (_c *MockTagRepository_GetTag_Call) RunAndReturn(run func(tagId string) (*types.IdTagInfo, error)) *MockTagRepository_GetTag_Call {
+func (_c *MockTagRepository_GetTag_Call) RunAndReturn(run func(ctx context.Context, tagId string) (*types.IdTagInfo, error)) *MockTagRepository_GetTag_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetTags provides a mock function for the type MockTagRepository
-func (_mock *MockTagRepository) GetTags() ([]*types.IdTagInfo, error) {
-	ret := _mock.Called()
+func (_mock *MockTagRepository) GetTags(ctx context.Context) ([]*types.IdTagInfo, error) {
+	ret := _mock.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetTags")
@@ -165,18 +179,18 @@ func (_mock *MockTagRepository) GetTags() ([]*types.IdTagInfo, error) {
 
 	var r0 []*types.IdTagInfo
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func() ([]*types.IdTagInfo, error)); ok {
-		return returnFunc()
+	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]*types.IdTagInfo, error)); ok {
+		return returnFunc(ctx)
 	}
-	if returnFunc, ok := ret.Get(0).(func() []*types.IdTagInfo); ok {
-		r0 = returnFunc()
+	if returnFunc, ok := ret.Get(0).(func(context.Context) []*types.IdTagInfo); ok {
+		r0 = returnFunc(ctx)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*types.IdTagInfo)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func() error); ok {
-		r1 = returnFunc()
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -189,13 +203,20 @@ type MockTagRepository_GetTags_Call struct {
 }
 
 // GetTags is a helper method to define mock.On call
-func (_e *MockTagRepository_Expecter) GetTags() *MockTagRepository_GetTags_Call {
-	return &MockTagRepository_GetTags_Call{Call: _e.mock.On("GetTags")}
+//   - ctx context.Context
+func (_e *MockTagRepository_Expecter) GetTags(ctx interface{}) *MockTagRepository_GetTags_Call {
+	return &MockTagRepository_GetTags_Call{Call: _e.mock.On("GetTags", ctx)}
 }
 
-func (_c *MockTagRepository_GetTags_Call) Run(run func()) *MockTagRepository_GetTags_Call {
+func (_c *MockTagRepository_GetTags_Call) Run(run func(ctx context.Context)) *MockTagRepository_GetTags_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run()
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -205,22 +226,22 @@ func (_c *MockTagRepository_GetTags_Call) Return(idTagInfos []*types.IdTagInfo, 
 	return _c
 }
 
-func (_c *MockTagRepository_GetTags_Call) RunAndReturn(run func() ([]*types.IdTagInfo, error)) *MockTagRepository_GetTags_Call {
+func (_c *MockTagRepository_GetTags_Call) RunAndReturn(run func(ctx context.Context) ([]*types.IdTagInfo, error)) *MockTagRepository_GetTags_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RemoveAllTags provides a mock function for the type MockTagRepository
-func (_mock *MockTagRepository) RemoveAllTags() error {
-	ret := _mock.Called()
+func (_mock *MockTagRepository) RemoveAllTags(ctx context.Context) error {
+	ret := _mock.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveAllTags")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func() error); ok {
-		r0 = returnFunc()
+	if returnFunc, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = returnFunc(ctx)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -233,13 +254,20 @@ type MockTagRepository_RemoveAllTags_Call struct {
 }
 
 // RemoveAllTags is a helper method to define mock.On call
-func (_e *MockTagRepository_Expecter) RemoveAllTags() *MockTagRepository_RemoveAllTags_Call {
-	return &MockTagRepository_RemoveAllTags_Call{Call: _e.mock.On("RemoveAllTags")}
+//   - ctx context.Context
+func (_e *MockTagRepository_Expecter) RemoveAllTags(ctx interface{}) *MockTagRepository_RemoveAllTags_Call {
+	return &MockTagRepository_RemoveAllTags_Call{Call: _e.mock.On("RemoveAllTags", ctx)}
 }
 
-func (_c *MockTagRepository_RemoveAllTags_Call) Run(run func()) *MockTagRepository_RemoveAllTags_Call {
+func (_c *MockTagRepository_RemoveAllTags_Call) Run(run func(ctx context.Context)) *MockTagRepository_RemoveAllTags_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run()
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -249,22 +277,22 @@ func (_c *MockTagRepository_RemoveAllTags_Call) Return(err error) *MockTagReposi
 	return _c
 }
 
-func (_c *MockTagRepository_RemoveAllTags_Call) RunAndReturn(run func() error) *MockTagRepository_RemoveAllTags_Call {
+func (_c *MockTagRepository_RemoveAllTags_Call) RunAndReturn(run func(ctx context.Context) error) *MockTagRepository_RemoveAllTags_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RemoveTag provides a mock function for the type MockTagRepository
-func (_mock *MockTagRepository) RemoveTag(tagId string) error {
-	ret := _mock.Called(tagId)
+func (_mock *MockTagRepository) RemoveTag(ctx context.Context, tagId string) error {
+	ret := _mock.Called(ctx, tagId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveTag")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(string) error); ok {
-		r0 = returnFunc(tagId)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = returnFunc(ctx, tagId)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -277,19 +305,25 @@ type MockTagRepository_RemoveTag_Call struct {
 }
 
 // RemoveTag is a helper method to define mock.On call
+//   - ctx context.Context
 //   - tagId string
-func (_e *MockTagRepository_Expecter) RemoveTag(tagId interface{}) *MockTagRepository_RemoveTag_Call {
-	return &MockTagRepository_RemoveTag_Call{Call: _e.mock.On("RemoveTag", tagId)}
+func (_e *MockTagRepository_Expecter) RemoveTag(ctx interface{}, tagId interface{}) *MockTagRepository_RemoveTag_Call {
+	return &MockTagRepository_RemoveTag_Call{Call: _e.mock.On("RemoveTag", ctx, tagId)}
 }
 
-func (_c *MockTagRepository_RemoveTag_Call) Run(run func(tagId string)) *MockTagRepository_RemoveTag_Call {
+func (_c *MockTagRepository_RemoveTag_Call) Run(run func(ctx context.Context, tagId string)) *MockTagRepository_RemoveTag_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 string
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(string)
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
 		}
 		run(
 			arg0,
+			arg1,
 		)
 	})
 	return _c
@@ -300,7 +334,7 @@ func (_c *MockTagRepository_RemoveTag_Call) Return(err error) *MockTagRepository
 	return _c
 }
 
-func (_c *MockTagRepository_RemoveTag_Call) RunAndReturn(run func(tagId string) error) *MockTagRepository_RemoveTag_Call {
+func (_c *MockTagRepository_RemoveTag_Call) RunAndReturn(run func(ctx context.Context, tagId string) error) *MockTagRepository_RemoveTag_Call {
 	_c.Call.Return(run)
 	return _c
 }

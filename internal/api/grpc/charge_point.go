@@ -21,7 +21,7 @@ func NewChargePointService(point chargepoint.ChargePoint) *ChargePointHandler {
 }
 
 func (s *ChargePointHandler) Restart(ctx context.Context, request *grpc.RestartRequest) (*empty.Empty, error) {
-	err := s.point.Reset(request.Type)
+	err := s.point.Reset(ctx, request.Type)
 	if err != nil {
 		return nil, err
 	}

@@ -5,6 +5,8 @@
 package mock_manager
 
 import (
+	"context"
+
 	"github.com/ChargePi/ChargePi-go/internal/chargepoint"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -37,8 +39,8 @@ func (_m *MockSettingsRepository) EXPECT() *MockSettingsRepository_Expecter {
 }
 
 // GetSettings provides a mock function for the type MockSettingsRepository
-func (_mock *MockSettingsRepository) GetSettings() (*chargepoint.Settings, error) {
-	ret := _mock.Called()
+func (_mock *MockSettingsRepository) GetSettings(ctx context.Context) (*chargepoint.Settings, error) {
+	ret := _mock.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetSettings")
@@ -46,18 +48,18 @@ func (_mock *MockSettingsRepository) GetSettings() (*chargepoint.Settings, error
 
 	var r0 *chargepoint.Settings
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func() (*chargepoint.Settings, error)); ok {
-		return returnFunc()
+	if returnFunc, ok := ret.Get(0).(func(context.Context) (*chargepoint.Settings, error)); ok {
+		return returnFunc(ctx)
 	}
-	if returnFunc, ok := ret.Get(0).(func() *chargepoint.Settings); ok {
-		r0 = returnFunc()
+	if returnFunc, ok := ret.Get(0).(func(context.Context) *chargepoint.Settings); ok {
+		r0 = returnFunc(ctx)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*chargepoint.Settings)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func() error); ok {
-		r1 = returnFunc()
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -70,13 +72,20 @@ type MockSettingsRepository_GetSettings_Call struct {
 }
 
 // GetSettings is a helper method to define mock.On call
-func (_e *MockSettingsRepository_Expecter) GetSettings() *MockSettingsRepository_GetSettings_Call {
-	return &MockSettingsRepository_GetSettings_Call{Call: _e.mock.On("GetSettings")}
+//   - ctx context.Context
+func (_e *MockSettingsRepository_Expecter) GetSettings(ctx interface{}) *MockSettingsRepository_GetSettings_Call {
+	return &MockSettingsRepository_GetSettings_Call{Call: _e.mock.On("GetSettings", ctx)}
 }
 
-func (_c *MockSettingsRepository_GetSettings_Call) Run(run func()) *MockSettingsRepository_GetSettings_Call {
+func (_c *MockSettingsRepository_GetSettings_Call) Run(run func(ctx context.Context)) *MockSettingsRepository_GetSettings_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run()
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -86,22 +95,22 @@ func (_c *MockSettingsRepository_GetSettings_Call) Return(settings *chargepoint.
 	return _c
 }
 
-func (_c *MockSettingsRepository_GetSettings_Call) RunAndReturn(run func() (*chargepoint.Settings, error)) *MockSettingsRepository_GetSettings_Call {
+func (_c *MockSettingsRepository_GetSettings_Call) RunAndReturn(run func(ctx context.Context) (*chargepoint.Settings, error)) *MockSettingsRepository_GetSettings_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateSettings provides a mock function for the type MockSettingsRepository
-func (_mock *MockSettingsRepository) UpdateSettings(settings chargepoint.Settings) error {
-	ret := _mock.Called(settings)
+func (_mock *MockSettingsRepository) UpdateSettings(ctx context.Context, settings chargepoint.Settings) error {
+	ret := _mock.Called(ctx, settings)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateSettings")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(chargepoint.Settings) error); ok {
-		r0 = returnFunc(settings)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, chargepoint.Settings) error); ok {
+		r0 = returnFunc(ctx, settings)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -114,19 +123,25 @@ type MockSettingsRepository_UpdateSettings_Call struct {
 }
 
 // UpdateSettings is a helper method to define mock.On call
+//   - ctx context.Context
 //   - settings chargepoint.Settings
-func (_e *MockSettingsRepository_Expecter) UpdateSettings(settings interface{}) *MockSettingsRepository_UpdateSettings_Call {
-	return &MockSettingsRepository_UpdateSettings_Call{Call: _e.mock.On("UpdateSettings", settings)}
+func (_e *MockSettingsRepository_Expecter) UpdateSettings(ctx interface{}, settings interface{}) *MockSettingsRepository_UpdateSettings_Call {
+	return &MockSettingsRepository_UpdateSettings_Call{Call: _e.mock.On("UpdateSettings", ctx, settings)}
 }
 
-func (_c *MockSettingsRepository_UpdateSettings_Call) Run(run func(settings chargepoint.Settings)) *MockSettingsRepository_UpdateSettings_Call {
+func (_c *MockSettingsRepository_UpdateSettings_Call) Run(run func(ctx context.Context, settings chargepoint.Settings)) *MockSettingsRepository_UpdateSettings_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 chargepoint.Settings
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(chargepoint.Settings)
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 chargepoint.Settings
+		if args[1] != nil {
+			arg1 = args[1].(chargepoint.Settings)
 		}
 		run(
 			arg0,
+			arg1,
 		)
 	})
 	return _c
@@ -137,7 +152,7 @@ func (_c *MockSettingsRepository_UpdateSettings_Call) Return(err error) *MockSet
 	return _c
 }
 
-func (_c *MockSettingsRepository_UpdateSettings_Call) RunAndReturn(run func(settings chargepoint.Settings) error) *MockSettingsRepository_UpdateSettings_Call {
+func (_c *MockSettingsRepository_UpdateSettings_Call) RunAndReturn(run func(ctx context.Context, settings chargepoint.Settings) error) *MockSettingsRepository_UpdateSettings_Call {
 	_c.Call.Return(run)
 	return _c
 }

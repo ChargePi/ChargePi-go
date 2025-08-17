@@ -1,6 +1,7 @@
 package smartCharging
 
 import (
+	"context"
 	"errors"
 	"strconv"
 	"sync"
@@ -85,7 +86,7 @@ Store:
 	compositeSchedule := CreateCompositeSchedule([]*types.ChargingProfile{txProfile, txDefaultProfile, maxProfile})
 	m.validateCompositeSchedule(compositeSchedule)
 
-	return m.repository.AddProfile(profile)
+	return m.repository.AddProfile(context.Background(), profile)
 }
 
 func (m *Impl) canApplyProfile(profile *types.ChargingProfile) bool {
@@ -140,19 +141,19 @@ func (m *Impl) RemoveProfile(profileId int) error {
 	m.logger.With(zap.Int("profile_id", profileId)).Info("Removing profile")
 
 	// Dont remove the profile if it is progress
-	return m.repository.RemoveProfile(profileId)
+	return m.repository.RemoveProfile(context.Background(), profileId)
 }
 
 func (m *Impl) GetProfile(profileId int) (*types.ChargingProfile, error) {
 	m.logger.With(zap.Int("profile_id", profileId)).Info("Getting a profile")
 
-	return m.repository.GetProfile(profileId)
+	return m.repository.GetProfile(context.Background(), profileId)
 }
 
 func (m *Impl) GetProfiles() ([]types.ChargingProfile, error) {
 	m.logger.Info("Getting profiles")
 
-	return m.repository.GetProfiles()
+	return m.repository.GetProfiles(context.Background())
 }
 
 func (m *Impl) GetCompositeSchedule() []ScheduleInterval {

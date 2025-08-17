@@ -1,6 +1,7 @@
 package badger
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -14,7 +15,7 @@ func getSmartChargingProfile(profileId int) []byte {
 	return []byte(fmt.Sprintf("%s-%d", smartChargingSchedulePrefix, profileId))
 }
 
-func (db *Database) AddProfile(profile *types.ChargingProfile) error {
+func (db *Database) AddProfile(ctx context.Context, profile *types.ChargingProfile) error {
 	return db.db.Update(func(txn *badger.Txn) error {
 		marshal, err := json.Marshal(profile)
 		if err != nil {
@@ -30,7 +31,7 @@ func (db *Database) AddProfile(profile *types.ChargingProfile) error {
 	})
 }
 
-func (db *Database) GetProfile(profileId int) (*types.ChargingProfile, error) {
+func (db *Database) GetProfile(ctx context.Context, profileId int) (*types.ChargingProfile, error) {
 	var profile types.ChargingProfile
 
 	err := db.db.View(func(txn *badger.Txn) error {
@@ -55,7 +56,7 @@ func (db *Database) GetProfile(profileId int) (*types.ChargingProfile, error) {
 	return &profile, nil
 }
 
-func (db *Database) RemoveProfile(profileId int) error {
+func (db *Database) RemoveProfile(ctx context.Context, profileId int) error {
 	return db.db.Update(func(txn *badger.Txn) error {
 		err := txn.Delete(getSmartChargingProfile(profileId))
 		if err != nil {
@@ -66,7 +67,7 @@ func (db *Database) RemoveProfile(profileId int) error {
 	})
 }
 
-func (db *Database) GetProfiles() ([]types.ChargingProfile, error) {
+func (db *Database) GetProfiles(ctx context.Context) ([]types.ChargingProfile, error) {
 	var profiles []types.ChargingProfile
 
 	// Query the database for charging profiles

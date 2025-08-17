@@ -1,6 +1,7 @@
 package badger
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -32,7 +33,7 @@ func getEvseKey(evseId int) string {
 	return fmt.Sprintf("%s-%d", evseSettingsPrefix, evseId)
 }
 
-func (db *Database) SetEvseSettings(settings []evse.Settings) error {
+func (db *Database) SetEvseSettings(ctx context.Context, settings []evse.Settings) error {
 	// Sync the settings to the database
 	return db.db.Update(func(txn *badger.Txn) error {
 		for _, connector := range settings {
@@ -51,7 +52,7 @@ func (db *Database) SetEvseSettings(settings []evse.Settings) error {
 	})
 }
 
-func (db *Database) GetEvseSettings() ([]evse.Settings, error) {
+func (db *Database) GetEvseSettings(context.Context) ([]evse.Settings, error) {
 	var evseSettings []evse.Settings
 
 	// Query the database for EVSE settings.
@@ -85,7 +86,7 @@ func (db *Database) GetEvseSettings() ([]evse.Settings, error) {
 	return evseSettings, nil
 }
 
-func (db *Database) GetSettings() (*chargePoint.Settings, error) {
+func (db *Database) GetSettings(ctx context.Context) (*chargePoint.Settings, error) {
 	db.logger.Debug("Getting global settings")
 
 	var settingsS chargePoint.Settings
@@ -107,7 +108,7 @@ func (db *Database) GetSettings() (*chargePoint.Settings, error) {
 	return &settingsS, nil
 }
 
-func (db *Database) UpdateSettings(settings chargePoint.Settings) error {
+func (db *Database) UpdateSettings(ctx context.Context, settings chargePoint.Settings) error {
 	// Read the configuration from the database
 	return db.db.Update(func(txn *badger.Txn) error {
 		res, err := json.Marshal(settings)
@@ -119,17 +120,17 @@ func (db *Database) UpdateSettings(settings chargePoint.Settings) error {
 	})
 }
 
-func (db *Database) GetOcppConfiguration(version int) (*ocpp_v16.Config, error) {
+func (db *Database) GetOcppConfiguration(ctx context.Context, version int) (*ocpp_v16.Config, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (db *Database) GeLatestOcppConfiguration() (*ocpp_v16.Config, error) {
+func (db *Database) GeLatestOcppConfiguration(ctx context.Context) (*ocpp_v16.Config, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (db *Database) SetOcppConfiguration(config ocpp_v16.Config) error {
+func (db *Database) SetOcppConfiguration(ctx context.Context, config ocpp_v16.Config) error {
 	//TODO implement me
 	panic("implement me")
 }

@@ -28,7 +28,7 @@ func (s *AuthService) GetAuthorizedCards(ctx context.Context, empty *empty.Empty
 	}
 
 	// Get all tags from the database
-	tags, err := s.tagManager.GetTags()
+	tags, err := s.tagManager.GetTags(ctx)
 	if err != nil {
 		return response, nil
 	}
@@ -55,7 +55,7 @@ func (s *AuthService) AddAuthorizedCards(ctx context.Context, request *tagsv1.Ad
 	response := &tagsv1.AddAuthorizedCardsResponse{Status: []string{}}
 
 	for _, tag := range request.GetAuthorizedCards() {
-		err := s.tagManager.CacheTag(tag.GetTagId(), types.NewIdTagInfo(types.AuthorizationStatus(tag.GetStatus())))
+		err := s.tagManager.CacheTag(ctx, tag.GetTagId(), types.NewIdTagInfo(types.AuthorizationStatusAccepted))
 		if err != nil {
 			response.Status = append(response.Status, "Failed")
 			continue
@@ -73,7 +73,7 @@ func (s *AuthService) RemoveAuthorizedCard(ctx context.Context, request *tagsv1.
 	}
 
 	// Remove the tag from the database
-	err := s.tagManager.RemoveTag(request.GetTagId())
+	err := s.tagManager.RemoveTag(ctx, request.GetTagId())
 	if err != nil {
 		return response, nil
 	}

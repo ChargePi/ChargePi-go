@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"errors"
 
 	"go.uber.org/zap"
@@ -23,12 +24,12 @@ var (
 
 type (
 	LocalAuthList interface {
-		AddTag(tagId string, tagInfo *types.IdTagInfo) error
-		UpdateTag(tagId string, tagInfo *types.IdTagInfo) error
-		RemoveTag(tagId string) error
-		RemoveAll()
-		GetTag(tagId string) (*types.IdTagInfo, error)
-		GetTags() ([]localauth.AuthorizationData, error)
+		AddTag(ctx context.Context, tagId string, tagInfo *types.IdTagInfo) error
+		UpdateTag(ctx context.Context, tagId string, tagInfo *types.IdTagInfo) error
+		RemoveTag(ctx context.Context, tagId string) error
+		RemoveAll(ctx context.Context)
+		GetTag(ctx context.Context, tagId string) (*types.IdTagInfo, error)
+		GetTags(ctx context.Context) ([]localauth.AuthorizationData, error)
 		SetMaxTags(number int)
 		GetVersion() int
 		SetVersion(version int)
@@ -42,13 +43,13 @@ type (
 )
 
 type LocalAuthListRepository interface {
-	AddTagToAuthList(tagId string, tagInfo *types.IdTagInfo) error
-	RemoveAuthListTag(tagId string) error
-	GetLocalAuthListTag(tagId string) (*types.IdTagInfo, error)
-	GetLocalAuthListTags() ([]localauth.AuthorizationData, error)
-	GetAuthListTagsForVersion(version int) ([]localauth.AuthorizationData, error)
-	RemoveAuthListAllTagsForVersion(version int) error
-	AddAuthList(list.LocalAuthListVersion) error
+	AddTagToAuthList(ctx context.Context, tagId string, tagInfo *types.IdTagInfo) error
+	RemoveAuthListTag(ctx context.Context, tagId string) error
+	GetLocalAuthListTag(ctx context.Context, tagId string) (*types.IdTagInfo, error)
+	GetLocalAuthListTags(ctx context.Context) ([]localauth.AuthorizationData, error)
+	GetAuthListTagsForVersion(ctx context.Context, version int) ([]localauth.AuthorizationData, error)
+	RemoveAuthListAllTagsForVersion(ctx context.Context, version int) error
+	AddAuthList(ctx context.Context, localAuthListVersion list.LocalAuthListVersion) error
 }
 
 func newLocalAuthList(logger *zap.Logger, repository LocalAuthListRepository, maxTags int) *List {
@@ -60,7 +61,7 @@ func newLocalAuthList(logger *zap.Logger, repository LocalAuthListRepository, ma
 }
 
 // AddTag Add a tag to the local auth list.
-func (l *List) AddTag(tagId string, tagInfo *types.IdTagInfo) error {
+func (l *List) AddTag(ctx context.Context, tagId string, tagInfo *types.IdTagInfo) error {
 	logger := l.logger.With(zap.String("tagId", tagId), zap.Any("tagInfo", tagInfo))
 	logger.Debug("Adding a tag to local auth list")
 
@@ -77,7 +78,7 @@ func (l *List) AddTag(tagId string, tagInfo *types.IdTagInfo) error {
 		return err
 	}
 
-	tags, err := l.repository.GetLocalAuthListTags()
+	tags, err := l.repository.GetLocalAuthListTags(ctx)
 	if err != nil {
 		return err
 	}
@@ -86,11 +87,11 @@ func (l *List) AddTag(tagId string, tagInfo *types.IdTagInfo) error {
 		return ErrTagLimitReached
 	}
 
-	return l.repository.AddTagToAuthList(tagId, tagInfo)
+	return l.repository.AddTagToAuthList(ctx, tagId, tagInfo)
 }
 
 // RemoveTag Remove a tag with the ID from the Local Auth List.
-func (l *List) RemoveTag(tagId string) error {
+func (l *List) RemoveTag(ctx context.Context, tagId string) error {
 	logger := l.logger.With(zap.String("tagId", tagId))
 	logger.Debug("Removing a tag from local auth list")
 
@@ -98,22 +99,22 @@ func (l *List) RemoveTag(tagId string) error {
 		return ErrInvalidTagId
 	}
 
-	return l.repository.RemoveAuthListTag(tagId)
+	return l.repository.RemoveAuthListTag(ctx, tagId)
 }
 
 // RemoveAll Remove all tags.
-func (l *List) RemoveAll() {
+func (l *List) RemoveAll(ctx context.Context) {
 	l.logger.Debug("Removing local auth list")
 
 	// Remove all cached keys from database
-	err := l.repository.RemoveAuthListAllTagsForVersion(l.GetVersion())
+	err := l.repository.RemoveAuthListAllTagsForVersion(ctx, l.GetVersion())
 	if err != nil {
 		l.logger.With(zap.Error(err)).Error("Error removing local auth list")
 	}
 }
 
 // GetTag Get a tag from local auth list.
-func (l *List) GetTag(tagId string) (*types.IdTagInfo, error) {
+func (l *List) GetTag(ctx context.Context, tagId string) (*types.IdTagInfo, error) {
 	logger := l.logger.With(zap.String("tagId", tagId))
 	logger.Info("Fetching the tag")
 
@@ -121,14 +122,14 @@ func (l *List) GetTag(tagId string) (*types.IdTagInfo, error) {
 		return nil, ErrInvalidTagId
 	}
 
-	return l.repository.GetLocalAuthListTag(tagId)
+	return l.repository.GetLocalAuthListTag(ctx, tagId)
 }
 
 // GetTags Get all tags stored in the Local Auth store.
-func (l *List) GetTags() ([]localauth.AuthorizationData, error) {
+func (l *List) GetTags(ctx context.Context) ([]localauth.AuthorizationData, error) {
 	l.logger.Info("Fetching tags")
 
-	tags, err := l.repository.GetLocalAuthListTags()
+	tags, err := l.repository.GetLocalAuthListTags(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +138,7 @@ func (l *List) GetTags() ([]localauth.AuthorizationData, error) {
 }
 
 // UpdateTag Update a tag in the Local Auth store.
-func (l *List) UpdateTag(tagId string, tagInfo *types.IdTagInfo) error {
+func (l *List) UpdateTag(ctx context.Context, tagId string, tagInfo *types.IdTagInfo) error {
 	logger := l.logger.With(zap.String("tagId", tagId))
 	logger.Info("Updating tag")
 

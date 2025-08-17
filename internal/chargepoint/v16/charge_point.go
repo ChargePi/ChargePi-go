@@ -196,7 +196,7 @@ func (cp *ChargePoint) SetLogger(logger *zap.Logger) {
 }
 
 // Reset the charge point.
-func (cp *ChargePoint) Reset(resetType string) error {
+func (cp *ChargePoint) Reset(ctx context.Context, resetType string) error {
 	cp.logger.Info("Resetting the charge point")
 
 	// Todo check if conditions are met
@@ -209,6 +209,7 @@ func (cp *ChargePoint) Reset(resetType string) error {
 			return err
 		}
 
+		// todo get OS info
 		if !util.IsRunningInContainer() {
 			// Schedule a reboot
 			_, err = cp.scheduler.Every(10).Seconds().LimitRunsTo(1).Do(exec.Command, "sudo reboot")
@@ -235,7 +236,10 @@ func (cp *ChargePoint) OnReset(request *core.ResetRequest) (confirmation *core.R
 
 	resetErr := retry.Do(
 		func() error {
-			return cp.Reset(string(request.Type))
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+			defer cancel()
+
+			return cp.Reset(ctx, string(request.Type))
 		},
 		retry.Attempts(uint(retries)),
 		retry.Delay(time.Second*10),
@@ -248,6 +252,9 @@ func (cp *ChargePoint) OnReset(request *core.ResetRequest) (confirmation *core.R
 }
 
 func (cp *ChargePoint) OnChangeAvailability(request *core.ChangeAvailabilityRequest) (confirmation *core.ChangeAvailabilityConfirmation, err error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
 	cp.logger.Sugar().Infof("Received request %s", request.GetFeatureName())
 	response := core.AvailabilityStatusRejected
 
@@ -267,7 +274,7 @@ func (cp *ChargePoint) OnChangeAvailability(request *core.ChangeAvailabilityRequ
 	}
 
 	// Check if there are ongoing transactions, schedule the change if there are
-	_, sessionErr := cp.sessionService.GetSession(request.ConnectorId, nil)
+	_, sessionErr := cp.sessionService.GetSession(ctx, request.ConnectorId, nil)
 	switch sessionErr {
 	case nil:
 		response = core.AvailabilityStatusScheduled
@@ -282,10 +289,13 @@ func (cp *ChargePoint) OnChangeAvailability(request *core.ChangeAvailabilityRequ
 
 // SetAvailability sets the availability status of the charge point.
 func (cp *ChargePoint) SetAvailability(availabilityType core.AvailabilityType) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
 	cp.logger.With(zap.String("availability", string(availabilityType))).Debug("Setting availability")
 
 	// Check if there are ongoing transactions
-	_, sessionErr := cp.sessionService.GetSession(0, nil)
+	_, sessionErr := cp.sessionService.GetSession(ctx, 0, nil)
 	if sessionErr != nil {
 		return errors.Wrap(sessionErr, "error checking for ongoing transactions")
 	}

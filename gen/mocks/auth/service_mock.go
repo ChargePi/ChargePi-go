@@ -5,6 +5,8 @@
 package mock_auth
 
 import (
+	"context"
+
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/localauth"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	mock "github.com/stretchr/testify/mock"
@@ -38,16 +40,16 @@ func (_m *MockService) EXPECT() *MockService_Expecter {
 }
 
 // CacheTag provides a mock function for the type MockService
-func (_mock *MockService) CacheTag(tagId string, tagInfo *types.IdTagInfo) error {
-	ret := _mock.Called(tagId, tagInfo)
+func (_mock *MockService) CacheTag(ctx context.Context, tagId string, tagInfo *types.IdTagInfo) error {
+	ret := _mock.Called(ctx, tagId, tagInfo)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CacheTag")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(string, *types.IdTagInfo) error); ok {
-		r0 = returnFunc(tagId, tagInfo)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *types.IdTagInfo) error); ok {
+		r0 = returnFunc(ctx, tagId, tagInfo)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -60,25 +62,31 @@ type MockService_CacheTag_Call struct {
 }
 
 // CacheTag is a helper method to define mock.On call
+//   - ctx context.Context
 //   - tagId string
 //   - tagInfo *types.IdTagInfo
-func (_e *MockService_Expecter) CacheTag(tagId interface{}, tagInfo interface{}) *MockService_CacheTag_Call {
-	return &MockService_CacheTag_Call{Call: _e.mock.On("CacheTag", tagId, tagInfo)}
+func (_e *MockService_Expecter) CacheTag(ctx interface{}, tagId interface{}, tagInfo interface{}) *MockService_CacheTag_Call {
+	return &MockService_CacheTag_Call{Call: _e.mock.On("CacheTag", ctx, tagId, tagInfo)}
 }
 
-func (_c *MockService_CacheTag_Call) Run(run func(tagId string, tagInfo *types.IdTagInfo)) *MockService_CacheTag_Call {
+func (_c *MockService_CacheTag_Call) Run(run func(ctx context.Context, tagId string, tagInfo *types.IdTagInfo)) *MockService_CacheTag_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 string
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(string)
+			arg0 = args[0].(context.Context)
 		}
-		var arg1 *types.IdTagInfo
+		var arg1 string
 		if args[1] != nil {
-			arg1 = args[1].(*types.IdTagInfo)
+			arg1 = args[1].(string)
+		}
+		var arg2 *types.IdTagInfo
+		if args[2] != nil {
+			arg2 = args[2].(*types.IdTagInfo)
 		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
@@ -89,22 +97,22 @@ func (_c *MockService_CacheTag_Call) Return(err error) *MockService_CacheTag_Cal
 	return _c
 }
 
-func (_c *MockService_CacheTag_Call) RunAndReturn(run func(tagId string, tagInfo *types.IdTagInfo) error) *MockService_CacheTag_Call {
+func (_c *MockService_CacheTag_Call) RunAndReturn(run func(ctx context.Context, tagId string, tagInfo *types.IdTagInfo) error) *MockService_CacheTag_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ClearCache provides a mock function for the type MockService
-func (_mock *MockService) ClearCache() error {
-	ret := _mock.Called()
+func (_mock *MockService) ClearCache(ctx context.Context) error {
+	ret := _mock.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ClearCache")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func() error); ok {
-		r0 = returnFunc()
+	if returnFunc, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = returnFunc(ctx)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -117,13 +125,20 @@ type MockService_ClearCache_Call struct {
 }
 
 // ClearCache is a helper method to define mock.On call
-func (_e *MockService_Expecter) ClearCache() *MockService_ClearCache_Call {
-	return &MockService_ClearCache_Call{Call: _e.mock.On("ClearCache")}
+//   - ctx context.Context
+func (_e *MockService_Expecter) ClearCache(ctx interface{}) *MockService_ClearCache_Call {
+	return &MockService_ClearCache_Call{Call: _e.mock.On("ClearCache", ctx)}
 }
 
-func (_c *MockService_ClearCache_Call) Run(run func()) *MockService_ClearCache_Call {
+func (_c *MockService_ClearCache_Call) Run(run func(ctx context.Context)) *MockService_ClearCache_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run()
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -133,7 +148,7 @@ func (_c *MockService_ClearCache_Call) Return(err error) *MockService_ClearCache
 	return _c
 }
 
-func (_c *MockService_ClearCache_Call) RunAndReturn(run func() error) *MockService_ClearCache_Call {
+func (_c *MockService_ClearCache_Call) RunAndReturn(run func(ctx context.Context) error) *MockService_ClearCache_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -183,8 +198,8 @@ func (_c *MockService_GetAuthListVersion_Call) RunAndReturn(run func() int) *Moc
 }
 
 // GetTag provides a mock function for the type MockService
-func (_mock *MockService) GetTag(tagId string) (*types.IdTagInfo, error) {
-	ret := _mock.Called(tagId)
+func (_mock *MockService) GetTag(ctx context.Context, tagId string) (*types.IdTagInfo, error) {
+	ret := _mock.Called(ctx, tagId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetTag")
@@ -192,18 +207,18 @@ func (_mock *MockService) GetTag(tagId string) (*types.IdTagInfo, error) {
 
 	var r0 *types.IdTagInfo
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(string) (*types.IdTagInfo, error)); ok {
-		return returnFunc(tagId)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*types.IdTagInfo, error)); ok {
+		return returnFunc(ctx, tagId)
 	}
-	if returnFunc, ok := ret.Get(0).(func(string) *types.IdTagInfo); ok {
-		r0 = returnFunc(tagId)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *types.IdTagInfo); ok {
+		r0 = returnFunc(ctx, tagId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*types.IdTagInfo)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(string) error); ok {
-		r1 = returnFunc(tagId)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, tagId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -216,19 +231,25 @@ type MockService_GetTag_Call struct {
 }
 
 // GetTag is a helper method to define mock.On call
+//   - ctx context.Context
 //   - tagId string
-func (_e *MockService_Expecter) GetTag(tagId interface{}) *MockService_GetTag_Call {
-	return &MockService_GetTag_Call{Call: _e.mock.On("GetTag", tagId)}
+func (_e *MockService_Expecter) GetTag(ctx interface{}, tagId interface{}) *MockService_GetTag_Call {
+	return &MockService_GetTag_Call{Call: _e.mock.On("GetTag", ctx, tagId)}
 }
 
-func (_c *MockService_GetTag_Call) Run(run func(tagId string)) *MockService_GetTag_Call {
+func (_c *MockService_GetTag_Call) Run(run func(ctx context.Context, tagId string)) *MockService_GetTag_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 string
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(string)
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
 		}
 		run(
 			arg0,
+			arg1,
 		)
 	})
 	return _c
@@ -239,14 +260,14 @@ func (_c *MockService_GetTag_Call) Return(idTagInfo *types.IdTagInfo, err error)
 	return _c
 }
 
-func (_c *MockService_GetTag_Call) RunAndReturn(run func(tagId string) (*types.IdTagInfo, error)) *MockService_GetTag_Call {
+func (_c *MockService_GetTag_Call) RunAndReturn(run func(ctx context.Context, tagId string) (*types.IdTagInfo, error)) *MockService_GetTag_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetTags provides a mock function for the type MockService
-func (_mock *MockService) GetTags() ([]localauth.AuthorizationData, error) {
-	ret := _mock.Called()
+func (_mock *MockService) GetTags(ctx context.Context) ([]localauth.AuthorizationData, error) {
+	ret := _mock.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetTags")
@@ -254,18 +275,18 @@ func (_mock *MockService) GetTags() ([]localauth.AuthorizationData, error) {
 
 	var r0 []localauth.AuthorizationData
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func() ([]localauth.AuthorizationData, error)); ok {
-		return returnFunc()
+	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]localauth.AuthorizationData, error)); ok {
+		return returnFunc(ctx)
 	}
-	if returnFunc, ok := ret.Get(0).(func() []localauth.AuthorizationData); ok {
-		r0 = returnFunc()
+	if returnFunc, ok := ret.Get(0).(func(context.Context) []localauth.AuthorizationData); ok {
+		r0 = returnFunc(ctx)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]localauth.AuthorizationData)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func() error); ok {
-		r1 = returnFunc()
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -278,13 +299,20 @@ type MockService_GetTags_Call struct {
 }
 
 // GetTags is a helper method to define mock.On call
-func (_e *MockService_Expecter) GetTags() *MockService_GetTags_Call {
-	return &MockService_GetTags_Call{Call: _e.mock.On("GetTags")}
+//   - ctx context.Context
+func (_e *MockService_Expecter) GetTags(ctx interface{}) *MockService_GetTags_Call {
+	return &MockService_GetTags_Call{Call: _e.mock.On("GetTags", ctx)}
 }
 
-func (_c *MockService_GetTags_Call) Run(run func()) *MockService_GetTags_Call {
+func (_c *MockService_GetTags_Call) Run(run func(ctx context.Context)) *MockService_GetTags_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run()
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -294,22 +322,22 @@ func (_c *MockService_GetTags_Call) Return(authorizationDatas []localauth.Author
 	return _c
 }
 
-func (_c *MockService_GetTags_Call) RunAndReturn(run func() ([]localauth.AuthorizationData, error)) *MockService_GetTags_Call {
+func (_c *MockService_GetTags_Call) RunAndReturn(run func(ctx context.Context) ([]localauth.AuthorizationData, error)) *MockService_GetTags_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RemoveTag provides a mock function for the type MockService
-func (_mock *MockService) RemoveTag(tagId string) error {
-	ret := _mock.Called(tagId)
+func (_mock *MockService) RemoveTag(ctx context.Context, tagId string) error {
+	ret := _mock.Called(ctx, tagId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveTag")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(string) error); ok {
-		r0 = returnFunc(tagId)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = returnFunc(ctx, tagId)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -322,19 +350,25 @@ type MockService_RemoveTag_Call struct {
 }
 
 // RemoveTag is a helper method to define mock.On call
+//   - ctx context.Context
 //   - tagId string
-func (_e *MockService_Expecter) RemoveTag(tagId interface{}) *MockService_RemoveTag_Call {
-	return &MockService_RemoveTag_Call{Call: _e.mock.On("RemoveTag", tagId)}
+func (_e *MockService_Expecter) RemoveTag(ctx interface{}, tagId interface{}) *MockService_RemoveTag_Call {
+	return &MockService_RemoveTag_Call{Call: _e.mock.On("RemoveTag", ctx, tagId)}
 }
 
-func (_c *MockService_RemoveTag_Call) Run(run func(tagId string)) *MockService_RemoveTag_Call {
+func (_c *MockService_RemoveTag_Call) Run(run func(ctx context.Context, tagId string)) *MockService_RemoveTag_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 string
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(string)
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
 		}
 		run(
 			arg0,
+			arg1,
 		)
 	})
 	return _c
@@ -345,14 +379,14 @@ func (_c *MockService_RemoveTag_Call) Return(err error) *MockService_RemoveTag_C
 	return _c
 }
 
-func (_c *MockService_RemoveTag_Call) RunAndReturn(run func(tagId string) error) *MockService_RemoveTag_Call {
+func (_c *MockService_RemoveTag_Call) RunAndReturn(run func(ctx context.Context, tagId string) error) *MockService_RemoveTag_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // SetMaxTags provides a mock function for the type MockService
-func (_mock *MockService) SetMaxTags(number int) {
-	_mock.Called(number)
+func (_mock *MockService) SetMaxTags(ctx context.Context, number int) {
+	_mock.Called(ctx, number)
 	return
 }
 
@@ -362,19 +396,25 @@ type MockService_SetMaxTags_Call struct {
 }
 
 // SetMaxTags is a helper method to define mock.On call
+//   - ctx context.Context
 //   - number int
-func (_e *MockService_Expecter) SetMaxTags(number interface{}) *MockService_SetMaxTags_Call {
-	return &MockService_SetMaxTags_Call{Call: _e.mock.On("SetMaxTags", number)}
+func (_e *MockService_Expecter) SetMaxTags(ctx interface{}, number interface{}) *MockService_SetMaxTags_Call {
+	return &MockService_SetMaxTags_Call{Call: _e.mock.On("SetMaxTags", ctx, number)}
 }
 
-func (_c *MockService_SetMaxTags_Call) Run(run func(number int)) *MockService_SetMaxTags_Call {
+func (_c *MockService_SetMaxTags_Call) Run(run func(ctx context.Context, number int)) *MockService_SetMaxTags_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 int
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(int)
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int
+		if args[1] != nil {
+			arg1 = args[1].(int)
 		}
 		run(
 			arg0,
+			arg1,
 		)
 	})
 	return _c
@@ -385,7 +425,7 @@ func (_c *MockService_SetMaxTags_Call) Return() *MockService_SetMaxTags_Call {
 	return _c
 }
 
-func (_c *MockService_SetMaxTags_Call) RunAndReturn(run func(number int)) *MockService_SetMaxTags_Call {
+func (_c *MockService_SetMaxTags_Call) RunAndReturn(run func(ctx context.Context, number int)) *MockService_SetMaxTags_Call {
 	_c.Run(run)
 	return _c
 }
@@ -471,16 +511,16 @@ func (_c *MockService_ToggleLocalAuthList_Call) RunAndReturn(run func(enabled bo
 }
 
 // UpdateLocalAuthList provides a mock function for the type MockService
-func (_mock *MockService) UpdateLocalAuthList(version int, updateType localauth.UpdateType, tags []localauth.AuthorizationData) error {
-	ret := _mock.Called(version, updateType, tags)
+func (_mock *MockService) UpdateLocalAuthList(ctx context.Context, version int, updateType localauth.UpdateType, tags []localauth.AuthorizationData) error {
+	ret := _mock.Called(ctx, version, updateType, tags)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateLocalAuthList")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(int, localauth.UpdateType, []localauth.AuthorizationData) error); ok {
-		r0 = returnFunc(version, updateType, tags)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int, localauth.UpdateType, []localauth.AuthorizationData) error); ok {
+		r0 = returnFunc(ctx, version, updateType, tags)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -493,31 +533,37 @@ type MockService_UpdateLocalAuthList_Call struct {
 }
 
 // UpdateLocalAuthList is a helper method to define mock.On call
+//   - ctx context.Context
 //   - version int
 //   - updateType localauth.UpdateType
 //   - tags []localauth.AuthorizationData
-func (_e *MockService_Expecter) UpdateLocalAuthList(version interface{}, updateType interface{}, tags interface{}) *MockService_UpdateLocalAuthList_Call {
-	return &MockService_UpdateLocalAuthList_Call{Call: _e.mock.On("UpdateLocalAuthList", version, updateType, tags)}
+func (_e *MockService_Expecter) UpdateLocalAuthList(ctx interface{}, version interface{}, updateType interface{}, tags interface{}) *MockService_UpdateLocalAuthList_Call {
+	return &MockService_UpdateLocalAuthList_Call{Call: _e.mock.On("UpdateLocalAuthList", ctx, version, updateType, tags)}
 }
 
-func (_c *MockService_UpdateLocalAuthList_Call) Run(run func(version int, updateType localauth.UpdateType, tags []localauth.AuthorizationData)) *MockService_UpdateLocalAuthList_Call {
+func (_c *MockService_UpdateLocalAuthList_Call) Run(run func(ctx context.Context, version int, updateType localauth.UpdateType, tags []localauth.AuthorizationData)) *MockService_UpdateLocalAuthList_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 int
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(int)
+			arg0 = args[0].(context.Context)
 		}
-		var arg1 localauth.UpdateType
+		var arg1 int
 		if args[1] != nil {
-			arg1 = args[1].(localauth.UpdateType)
+			arg1 = args[1].(int)
 		}
-		var arg2 []localauth.AuthorizationData
+		var arg2 localauth.UpdateType
 		if args[2] != nil {
-			arg2 = args[2].([]localauth.AuthorizationData)
+			arg2 = args[2].(localauth.UpdateType)
+		}
+		var arg3 []localauth.AuthorizationData
+		if args[3] != nil {
+			arg3 = args[3].([]localauth.AuthorizationData)
 		}
 		run(
 			arg0,
 			arg1,
 			arg2,
+			arg3,
 		)
 	})
 	return _c
@@ -528,7 +574,7 @@ func (_c *MockService_UpdateLocalAuthList_Call) Return(err error) *MockService_U
 	return _c
 }
 
-func (_c *MockService_UpdateLocalAuthList_Call) RunAndReturn(run func(version int, updateType localauth.UpdateType, tags []localauth.AuthorizationData) error) *MockService_UpdateLocalAuthList_Call {
+func (_c *MockService_UpdateLocalAuthList_Call) RunAndReturn(run func(ctx context.Context, version int, updateType localauth.UpdateType, tags []localauth.AuthorizationData) error) *MockService_UpdateLocalAuthList_Call {
 	_c.Call.Return(run)
 	return _c
 }

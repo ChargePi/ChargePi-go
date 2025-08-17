@@ -1,6 +1,7 @@
 package badger
 
 import (
+	"context"
 	"os"
 	"testing"
 	"time"
@@ -78,7 +79,7 @@ func (s *sessionRepositoryTestSuite) TestCreateSession() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// Execute
-			err := s.db.CreateSession(tt.session)
+			err := s.db.CreateSession(context.Background(), tt.session)
 			if tt.expectError {
 				s.Error(err)
 			} else {
@@ -88,7 +89,7 @@ func (s *sessionRepositoryTestSuite) TestCreateSession() {
 				if tt.session.TransactionId != "" {
 					// Note: GetSessionWithTransactionId is not implemented yet, so this will fail
 					// This test will need to be updated when that method is implemented
-					_, err := s.db.GetSessionWithTransactionId(tt.session.TransactionId)
+					_, err := s.db.GetSessionWithTransactionId(context.Background(), tt.session.TransactionId)
 					s.Error(err) // Expected to fail for now
 				}
 			}
@@ -129,12 +130,12 @@ func (s *sessionRepositoryTestSuite) TestStopSession() {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// Setup
 			if tt.setupSession != nil {
-				err := s.db.CreateSession(tt.setupSession)
+				err := s.db.CreateSession(context.Background(), tt.setupSession)
 				s.Require().NoError(err)
 			}
 
 			// Execute
-			err := s.db.StopSession(tt.transactionId)
+			err := s.db.StopSession(context.Background(), tt.transactionId)
 
 			// Assert
 			if tt.expectError {
@@ -196,12 +197,12 @@ func (s *sessionRepositoryTestSuite) TestUpdateSession() {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// Setup
 			if tt.setupSession != nil {
-				err := s.db.CreateSession(tt.setupSession)
+				err := s.db.CreateSession(context.Background(), tt.setupSession)
 				s.Require().NoError(err)
 			}
 
 			// Execute
-			err := s.db.UpdateSession(tt.updateSession)
+			err := s.db.UpdateSession(context.Background(), tt.updateSession)
 
 			// Assert
 			if tt.expectError {
@@ -242,12 +243,12 @@ func (s *sessionRepositoryTestSuite) TestGetSession() {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// Setup
 			if tt.setupSession != nil {
-				err := s.db.CreateSession(tt.setupSession)
+				err := s.db.CreateSession(context.Background(), tt.setupSession)
 				s.Require().NoError(err)
 			}
 
 			// Execute
-			session, err := s.db.GetSession(tt.evseId, tt.connectorId)
+			session, err := s.db.GetSession(context.Background(), tt.evseId, tt.connectorId)
 
 			// Assert
 			if tt.expectError {
@@ -299,12 +300,12 @@ func (s *sessionRepositoryTestSuite) TestGetSessions() {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// Setup
 			for _, session := range tt.setupSessions {
-				err := s.db.CreateSession(session)
+				err := s.db.CreateSession(context.Background(), session)
 				s.Require().NoError(err)
 			}
 
 			// Execute
-			sessions, err := s.db.GetSessions()
+			sessions, err := s.db.GetSessions(context.Background())
 
 			// Assert
 			if tt.expectError {
@@ -356,12 +357,12 @@ func (s *sessionRepositoryTestSuite) TestGetActiveSessions() {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// Setup
 			for _, session := range tt.setupSessions {
-				err := s.db.CreateSession(session)
+				err := s.db.CreateSession(context.Background(), session)
 				s.Require().NoError(err)
 			}
 
 			// Execute
-			sessions, err := s.db.GetActiveSessions()
+			sessions, err := s.db.GetActiveSessions(context.Background())
 
 			// Assert
 			if tt.expectError {
@@ -409,12 +410,12 @@ func (s *sessionRepositoryTestSuite) TestGetSessionWithTransactionId() {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// Setup
 			if tt.setupSession != nil {
-				err := s.db.CreateSession(tt.setupSession)
+				err := s.db.CreateSession(context.Background(), tt.setupSession)
 				s.Require().NoError(err)
 			}
 
 			// Execute
-			session, err := s.db.GetSessionWithTransactionId(tt.transactionId)
+			session, err := s.db.GetSessionWithTransactionId(context.Background(), tt.transactionId)
 
 			// Assert
 			if tt.expectError {
@@ -462,12 +463,12 @@ func (s *sessionRepositoryTestSuite) TestGetSessionWithTagId() {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// Setup
 			if tt.setupSession != nil {
-				err := s.db.CreateSession(tt.setupSession)
+				err := s.db.CreateSession(context.Background(), tt.setupSession)
 				s.Require().NoError(err)
 			}
 
 			// Execute
-			session, err := s.db.GetSessionWithTagId(tt.tagId)
+			session, err := s.db.GetSessionWithTagId(context.Background(), tt.tagId)
 
 			// Assert
 			if tt.expectError {

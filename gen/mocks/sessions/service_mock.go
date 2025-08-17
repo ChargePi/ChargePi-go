@@ -5,6 +5,8 @@
 package mock_sessions
 
 import (
+	"context"
+
 	"github.com/ChargePi/ChargePi-go/internal/sessions/models"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	mock "github.com/stretchr/testify/mock"
@@ -38,16 +40,16 @@ func (_m *MockService) EXPECT() *MockService_Expecter {
 }
 
 // AddTransactionIdToSession provides a mock function for the type MockService
-func (_mock *MockService) AddTransactionIdToSession(evseId int, connectorId *int, transactionId string) error {
-	ret := _mock.Called(evseId, connectorId, transactionId)
+func (_mock *MockService) AddTransactionIdToSession(ctx context.Context, evseId int, connectorId *int, transactionId string) error {
+	ret := _mock.Called(ctx, evseId, connectorId, transactionId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddTransactionIdToSession")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(int, *int, string) error); ok {
-		r0 = returnFunc(evseId, connectorId, transactionId)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int, *int, string) error); ok {
+		r0 = returnFunc(ctx, evseId, connectorId, transactionId)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -60,31 +62,37 @@ type MockService_AddTransactionIdToSession_Call struct {
 }
 
 // AddTransactionIdToSession is a helper method to define mock.On call
+//   - ctx context.Context
 //   - evseId int
 //   - connectorId *int
 //   - transactionId string
-func (_e *MockService_Expecter) AddTransactionIdToSession(evseId interface{}, connectorId interface{}, transactionId interface{}) *MockService_AddTransactionIdToSession_Call {
-	return &MockService_AddTransactionIdToSession_Call{Call: _e.mock.On("AddTransactionIdToSession", evseId, connectorId, transactionId)}
+func (_e *MockService_Expecter) AddTransactionIdToSession(ctx interface{}, evseId interface{}, connectorId interface{}, transactionId interface{}) *MockService_AddTransactionIdToSession_Call {
+	return &MockService_AddTransactionIdToSession_Call{Call: _e.mock.On("AddTransactionIdToSession", ctx, evseId, connectorId, transactionId)}
 }
 
-func (_c *MockService_AddTransactionIdToSession_Call) Run(run func(evseId int, connectorId *int, transactionId string)) *MockService_AddTransactionIdToSession_Call {
+func (_c *MockService_AddTransactionIdToSession_Call) Run(run func(ctx context.Context, evseId int, connectorId *int, transactionId string)) *MockService_AddTransactionIdToSession_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 int
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(int)
+			arg0 = args[0].(context.Context)
 		}
-		var arg1 *int
+		var arg1 int
 		if args[1] != nil {
-			arg1 = args[1].(*int)
+			arg1 = args[1].(int)
 		}
-		var arg2 string
+		var arg2 *int
 		if args[2] != nil {
-			arg2 = args[2].(string)
+			arg2 = args[2].(*int)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
 		}
 		run(
 			arg0,
 			arg1,
 			arg2,
+			arg3,
 		)
 	})
 	return _c
@@ -95,14 +103,14 @@ func (_c *MockService_AddTransactionIdToSession_Call) Return(err error) *MockSer
 	return _c
 }
 
-func (_c *MockService_AddTransactionIdToSession_Call) RunAndReturn(run func(evseId int, connectorId *int, transactionId string) error) *MockService_AddTransactionIdToSession_Call {
+func (_c *MockService_AddTransactionIdToSession_Call) RunAndReturn(run func(ctx context.Context, evseId int, connectorId *int, transactionId string) error) *MockService_AddTransactionIdToSession_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetSession provides a mock function for the type MockService
-func (_mock *MockService) GetSession(evseId int, connectorId *int) (*models.Session, error) {
-	ret := _mock.Called(evseId, connectorId)
+func (_mock *MockService) GetSession(ctx context.Context, evseId int, connectorId *int) (*models.Session, error) {
+	ret := _mock.Called(ctx, evseId, connectorId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetSession")
@@ -110,18 +118,18 @@ func (_mock *MockService) GetSession(evseId int, connectorId *int) (*models.Sess
 
 	var r0 *models.Session
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(int, *int) (*models.Session, error)); ok {
-		return returnFunc(evseId, connectorId)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int, *int) (*models.Session, error)); ok {
+		return returnFunc(ctx, evseId, connectorId)
 	}
-	if returnFunc, ok := ret.Get(0).(func(int, *int) *models.Session); ok {
-		r0 = returnFunc(evseId, connectorId)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int, *int) *models.Session); ok {
+		r0 = returnFunc(ctx, evseId, connectorId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*models.Session)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(int, *int) error); ok {
-		r1 = returnFunc(evseId, connectorId)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int, *int) error); ok {
+		r1 = returnFunc(ctx, evseId, connectorId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -134,17 +142,227 @@ type MockService_GetSession_Call struct {
 }
 
 // GetSession is a helper method to define mock.On call
+//   - ctx context.Context
 //   - evseId int
 //   - connectorId *int
-func (_e *MockService_Expecter) GetSession(evseId interface{}, connectorId interface{}) *MockService_GetSession_Call {
-	return &MockService_GetSession_Call{Call: _e.mock.On("GetSession", evseId, connectorId)}
+func (_e *MockService_Expecter) GetSession(ctx interface{}, evseId interface{}, connectorId interface{}) *MockService_GetSession_Call {
+	return &MockService_GetSession_Call{Call: _e.mock.On("GetSession", ctx, evseId, connectorId)}
 }
 
-func (_c *MockService_GetSession_Call) Run(run func(evseId int, connectorId *int)) *MockService_GetSession_Call {
+func (_c *MockService_GetSession_Call) Run(run func(ctx context.Context, evseId int, connectorId *int)) *MockService_GetSession_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 int
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(int)
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int
+		if args[1] != nil {
+			arg1 = args[1].(int)
+		}
+		var arg2 *int
+		if args[2] != nil {
+			arg2 = args[2].(*int)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockService_GetSession_Call) Return(session *models.Session, err error) *MockService_GetSession_Call {
+	_c.Call.Return(session, err)
+	return _c
+}
+
+func (_c *MockService_GetSession_Call) RunAndReturn(run func(ctx context.Context, evseId int, connectorId *int) (*models.Session, error)) *MockService_GetSession_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetSessionWithTagId provides a mock function for the type MockService
+func (_mock *MockService) GetSessionWithTagId(ctx context.Context, tagId string) (*models.Session, error) {
+	ret := _mock.Called(ctx, tagId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetSessionWithTagId")
+	}
+
+	var r0 *models.Session
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*models.Session, error)); ok {
+		return returnFunc(ctx, tagId)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *models.Session); ok {
+		r0 = returnFunc(ctx, tagId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.Session)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, tagId)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockService_GetSessionWithTagId_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetSessionWithTagId'
+type MockService_GetSessionWithTagId_Call struct {
+	*mock.Call
+}
+
+// GetSessionWithTagId is a helper method to define mock.On call
+//   - ctx context.Context
+//   - tagId string
+func (_e *MockService_Expecter) GetSessionWithTagId(ctx interface{}, tagId interface{}) *MockService_GetSessionWithTagId_Call {
+	return &MockService_GetSessionWithTagId_Call{Call: _e.mock.On("GetSessionWithTagId", ctx, tagId)}
+}
+
+func (_c *MockService_GetSessionWithTagId_Call) Run(run func(ctx context.Context, tagId string)) *MockService_GetSessionWithTagId_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockService_GetSessionWithTagId_Call) Return(session *models.Session, err error) *MockService_GetSessionWithTagId_Call {
+	_c.Call.Return(session, err)
+	return _c
+}
+
+func (_c *MockService_GetSessionWithTagId_Call) RunAndReturn(run func(ctx context.Context, tagId string) (*models.Session, error)) *MockService_GetSessionWithTagId_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetSessionWithTransactionId provides a mock function for the type MockService
+func (_mock *MockService) GetSessionWithTransactionId(ctx context.Context, transactionId string) (*models.Session, error) {
+	ret := _mock.Called(ctx, transactionId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetSessionWithTransactionId")
+	}
+
+	var r0 *models.Session
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*models.Session, error)); ok {
+		return returnFunc(ctx, transactionId)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *models.Session); ok {
+		r0 = returnFunc(ctx, transactionId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.Session)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, transactionId)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockService_GetSessionWithTransactionId_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetSessionWithTransactionId'
+type MockService_GetSessionWithTransactionId_Call struct {
+	*mock.Call
+}
+
+// GetSessionWithTransactionId is a helper method to define mock.On call
+//   - ctx context.Context
+//   - transactionId string
+func (_e *MockService_Expecter) GetSessionWithTransactionId(ctx interface{}, transactionId interface{}) *MockService_GetSessionWithTransactionId_Call {
+	return &MockService_GetSessionWithTransactionId_Call{Call: _e.mock.On("GetSessionWithTransactionId", ctx, transactionId)}
+}
+
+func (_c *MockService_GetSessionWithTransactionId_Call) Run(run func(ctx context.Context, transactionId string)) *MockService_GetSessionWithTransactionId_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockService_GetSessionWithTransactionId_Call) Return(session *models.Session, err error) *MockService_GetSessionWithTransactionId_Call {
+	_c.Call.Return(session, err)
+	return _c
+}
+
+func (_c *MockService_GetSessionWithTransactionId_Call) RunAndReturn(run func(ctx context.Context, transactionId string) (*models.Session, error)) *MockService_GetSessionWithTransactionId_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetSessions provides a mock function for the type MockService
+func (_mock *MockService) GetSessions(ctx context.Context, evseId *int) ([]models.Session, error) {
+	ret := _mock.Called(ctx, evseId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetSessions")
+	}
+
+	var r0 []models.Session
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *int) ([]models.Session, error)); ok {
+		return returnFunc(ctx, evseId)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *int) []models.Session); ok {
+		r0 = returnFunc(ctx, evseId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]models.Session)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *int) error); ok {
+		r1 = returnFunc(ctx, evseId)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockService_GetSessions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetSessions'
+type MockService_GetSessions_Call struct {
+	*mock.Call
+}
+
+// GetSessions is a helper method to define mock.On call
+//   - ctx context.Context
+//   - evseId *int
+func (_e *MockService_Expecter) GetSessions(ctx interface{}, evseId interface{}) *MockService_GetSessions_Call {
+	return &MockService_GetSessions_Call{Call: _e.mock.On("GetSessions", ctx, evseId)}
+}
+
+func (_c *MockService_GetSessions_Call) Run(run func(ctx context.Context, evseId *int)) *MockService_GetSessions_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
 		}
 		var arg1 *int
 		if args[1] != nil {
@@ -158,198 +376,12 @@ func (_c *MockService_GetSession_Call) Run(run func(evseId int, connectorId *int
 	return _c
 }
 
-func (_c *MockService_GetSession_Call) Return(session *models.Session, err error) *MockService_GetSession_Call {
-	_c.Call.Return(session, err)
-	return _c
-}
-
-func (_c *MockService_GetSession_Call) RunAndReturn(run func(evseId int, connectorId *int) (*models.Session, error)) *MockService_GetSession_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetSessionWithTagId provides a mock function for the type MockService
-func (_mock *MockService) GetSessionWithTagId(tagId string) (*models.Session, error) {
-	ret := _mock.Called(tagId)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetSessionWithTagId")
-	}
-
-	var r0 *models.Session
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(string) (*models.Session, error)); ok {
-		return returnFunc(tagId)
-	}
-	if returnFunc, ok := ret.Get(0).(func(string) *models.Session); ok {
-		r0 = returnFunc(tagId)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.Session)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(string) error); ok {
-		r1 = returnFunc(tagId)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockService_GetSessionWithTagId_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetSessionWithTagId'
-type MockService_GetSessionWithTagId_Call struct {
-	*mock.Call
-}
-
-// GetSessionWithTagId is a helper method to define mock.On call
-//   - tagId string
-func (_e *MockService_Expecter) GetSessionWithTagId(tagId interface{}) *MockService_GetSessionWithTagId_Call {
-	return &MockService_GetSessionWithTagId_Call{Call: _e.mock.On("GetSessionWithTagId", tagId)}
-}
-
-func (_c *MockService_GetSessionWithTagId_Call) Run(run func(tagId string)) *MockService_GetSessionWithTagId_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 string
-		if args[0] != nil {
-			arg0 = args[0].(string)
-		}
-		run(
-			arg0,
-		)
-	})
-	return _c
-}
-
-func (_c *MockService_GetSessionWithTagId_Call) Return(session *models.Session, err error) *MockService_GetSessionWithTagId_Call {
-	_c.Call.Return(session, err)
-	return _c
-}
-
-func (_c *MockService_GetSessionWithTagId_Call) RunAndReturn(run func(tagId string) (*models.Session, error)) *MockService_GetSessionWithTagId_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetSessionWithTransactionId provides a mock function for the type MockService
-func (_mock *MockService) GetSessionWithTransactionId(transactionId string) (*models.Session, error) {
-	ret := _mock.Called(transactionId)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetSessionWithTransactionId")
-	}
-
-	var r0 *models.Session
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(string) (*models.Session, error)); ok {
-		return returnFunc(transactionId)
-	}
-	if returnFunc, ok := ret.Get(0).(func(string) *models.Session); ok {
-		r0 = returnFunc(transactionId)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.Session)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(string) error); ok {
-		r1 = returnFunc(transactionId)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockService_GetSessionWithTransactionId_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetSessionWithTransactionId'
-type MockService_GetSessionWithTransactionId_Call struct {
-	*mock.Call
-}
-
-// GetSessionWithTransactionId is a helper method to define mock.On call
-//   - transactionId string
-func (_e *MockService_Expecter) GetSessionWithTransactionId(transactionId interface{}) *MockService_GetSessionWithTransactionId_Call {
-	return &MockService_GetSessionWithTransactionId_Call{Call: _e.mock.On("GetSessionWithTransactionId", transactionId)}
-}
-
-func (_c *MockService_GetSessionWithTransactionId_Call) Run(run func(transactionId string)) *MockService_GetSessionWithTransactionId_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 string
-		if args[0] != nil {
-			arg0 = args[0].(string)
-		}
-		run(
-			arg0,
-		)
-	})
-	return _c
-}
-
-func (_c *MockService_GetSessionWithTransactionId_Call) Return(session *models.Session, err error) *MockService_GetSessionWithTransactionId_Call {
-	_c.Call.Return(session, err)
-	return _c
-}
-
-func (_c *MockService_GetSessionWithTransactionId_Call) RunAndReturn(run func(transactionId string) (*models.Session, error)) *MockService_GetSessionWithTransactionId_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetSessions provides a mock function for the type MockService
-func (_mock *MockService) GetSessions(evseId *int) ([]models.Session, error) {
-	ret := _mock.Called(evseId)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetSessions")
-	}
-
-	var r0 []models.Session
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(*int) ([]models.Session, error)); ok {
-		return returnFunc(evseId)
-	}
-	if returnFunc, ok := ret.Get(0).(func(*int) []models.Session); ok {
-		r0 = returnFunc(evseId)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]models.Session)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(*int) error); ok {
-		r1 = returnFunc(evseId)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockService_GetSessions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetSessions'
-type MockService_GetSessions_Call struct {
-	*mock.Call
-}
-
-// GetSessions is a helper method to define mock.On call
-//   - evseId *int
-func (_e *MockService_Expecter) GetSessions(evseId interface{}) *MockService_GetSessions_Call {
-	return &MockService_GetSessions_Call{Call: _e.mock.On("GetSessions", evseId)}
-}
-
-func (_c *MockService_GetSessions_Call) Run(run func(evseId *int)) *MockService_GetSessions_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 *int
-		if args[0] != nil {
-			arg0 = args[0].(*int)
-		}
-		run(
-			arg0,
-		)
-	})
-	return _c
-}
-
 func (_c *MockService_GetSessions_Call) Return(sessions []models.Session, err error) *MockService_GetSessions_Call {
 	_c.Call.Return(sessions, err)
 	return _c
 }
 
-func (_c *MockService_GetSessions_Call) RunAndReturn(run func(evseId *int) ([]models.Session, error)) *MockService_GetSessions_Call {
+func (_c *MockService_GetSessions_Call) RunAndReturn(run func(ctx context.Context, evseId *int) ([]models.Session, error)) *MockService_GetSessions_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -443,16 +475,16 @@ func (_c *MockService_Pass_Call) RunAndReturn(run func() bool) *MockService_Pass
 }
 
 // StartSession provides a mock function for the type MockService
-func (_mock *MockService) StartSession(evseId int, connectorId *int, tagId string, transactionId string) error {
-	ret := _mock.Called(evseId, connectorId, tagId, transactionId)
+func (_mock *MockService) StartSession(ctx context.Context, evseId int, connectorId *int, tagId string, transactionId string) error {
+	ret := _mock.Called(ctx, evseId, connectorId, tagId, transactionId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for StartSession")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(int, *int, string, string) error); ok {
-		r0 = returnFunc(evseId, connectorId, tagId, transactionId)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int, *int, string, string) error); ok {
+		r0 = returnFunc(ctx, evseId, connectorId, tagId, transactionId)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -465,37 +497,43 @@ type MockService_StartSession_Call struct {
 }
 
 // StartSession is a helper method to define mock.On call
+//   - ctx context.Context
 //   - evseId int
 //   - connectorId *int
 //   - tagId string
 //   - transactionId string
-func (_e *MockService_Expecter) StartSession(evseId interface{}, connectorId interface{}, tagId interface{}, transactionId interface{}) *MockService_StartSession_Call {
-	return &MockService_StartSession_Call{Call: _e.mock.On("StartSession", evseId, connectorId, tagId, transactionId)}
+func (_e *MockService_Expecter) StartSession(ctx interface{}, evseId interface{}, connectorId interface{}, tagId interface{}, transactionId interface{}) *MockService_StartSession_Call {
+	return &MockService_StartSession_Call{Call: _e.mock.On("StartSession", ctx, evseId, connectorId, tagId, transactionId)}
 }
 
-func (_c *MockService_StartSession_Call) Run(run func(evseId int, connectorId *int, tagId string, transactionId string)) *MockService_StartSession_Call {
+func (_c *MockService_StartSession_Call) Run(run func(ctx context.Context, evseId int, connectorId *int, tagId string, transactionId string)) *MockService_StartSession_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 int
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(int)
+			arg0 = args[0].(context.Context)
 		}
-		var arg1 *int
+		var arg1 int
 		if args[1] != nil {
-			arg1 = args[1].(*int)
+			arg1 = args[1].(int)
 		}
-		var arg2 string
+		var arg2 *int
 		if args[2] != nil {
-			arg2 = args[2].(string)
+			arg2 = args[2].(*int)
 		}
 		var arg3 string
 		if args[3] != nil {
 			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
 		}
 		run(
 			arg0,
 			arg1,
 			arg2,
 			arg3,
+			arg4,
 		)
 	})
 	return _c
@@ -506,22 +544,22 @@ func (_c *MockService_StartSession_Call) Return(err error) *MockService_StartSes
 	return _c
 }
 
-func (_c *MockService_StartSession_Call) RunAndReturn(run func(evseId int, connectorId *int, tagId string, transactionId string) error) *MockService_StartSession_Call {
+func (_c *MockService_StartSession_Call) RunAndReturn(run func(ctx context.Context, evseId int, connectorId *int, tagId string, transactionId string) error) *MockService_StartSession_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // StopSession provides a mock function for the type MockService
-func (_mock *MockService) StopSession(evseId int, connectorId *int, tagId *string, transactionId *string) error {
-	ret := _mock.Called(evseId, connectorId, tagId, transactionId)
+func (_mock *MockService) StopSession(ctx context.Context, evseId int, connectorId *int, tagId *string, transactionId *string) error {
+	ret := _mock.Called(ctx, evseId, connectorId, tagId, transactionId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for StopSession")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(int, *int, *string, *string) error); ok {
-		r0 = returnFunc(evseId, connectorId, tagId, transactionId)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int, *int, *string, *string) error); ok {
+		r0 = returnFunc(ctx, evseId, connectorId, tagId, transactionId)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -534,37 +572,43 @@ type MockService_StopSession_Call struct {
 }
 
 // StopSession is a helper method to define mock.On call
+//   - ctx context.Context
 //   - evseId int
 //   - connectorId *int
 //   - tagId *string
 //   - transactionId *string
-func (_e *MockService_Expecter) StopSession(evseId interface{}, connectorId interface{}, tagId interface{}, transactionId interface{}) *MockService_StopSession_Call {
-	return &MockService_StopSession_Call{Call: _e.mock.On("StopSession", evseId, connectorId, tagId, transactionId)}
+func (_e *MockService_Expecter) StopSession(ctx interface{}, evseId interface{}, connectorId interface{}, tagId interface{}, transactionId interface{}) *MockService_StopSession_Call {
+	return &MockService_StopSession_Call{Call: _e.mock.On("StopSession", ctx, evseId, connectorId, tagId, transactionId)}
 }
 
-func (_c *MockService_StopSession_Call) Run(run func(evseId int, connectorId *int, tagId *string, transactionId *string)) *MockService_StopSession_Call {
+func (_c *MockService_StopSession_Call) Run(run func(ctx context.Context, evseId int, connectorId *int, tagId *string, transactionId *string)) *MockService_StopSession_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 int
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(int)
+			arg0 = args[0].(context.Context)
 		}
-		var arg1 *int
+		var arg1 int
 		if args[1] != nil {
-			arg1 = args[1].(*int)
+			arg1 = args[1].(int)
 		}
-		var arg2 *string
+		var arg2 *int
 		if args[2] != nil {
-			arg2 = args[2].(*string)
+			arg2 = args[2].(*int)
 		}
 		var arg3 *string
 		if args[3] != nil {
 			arg3 = args[3].(*string)
+		}
+		var arg4 *string
+		if args[4] != nil {
+			arg4 = args[4].(*string)
 		}
 		run(
 			arg0,
 			arg1,
 			arg2,
 			arg3,
+			arg4,
 		)
 	})
 	return _c
@@ -575,18 +619,18 @@ func (_c *MockService_StopSession_Call) Return(err error) *MockService_StopSessi
 	return _c
 }
 
-func (_c *MockService_StopSession_Call) RunAndReturn(run func(evseId int, connectorId *int, tagId *string, transactionId *string) error) *MockService_StopSession_Call {
+func (_c *MockService_StopSession_Call) RunAndReturn(run func(ctx context.Context, evseId int, connectorId *int, tagId *string, transactionId *string) error) *MockService_StopSession_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateMeterValues provides a mock function for the type MockService
-func (_mock *MockService) UpdateMeterValues(transactionId string, values ...types.SampledValue) error {
+func (_mock *MockService) UpdateMeterValues(ctx context.Context, transactionId string, values ...types.SampledValue) error {
 	var tmpRet mock.Arguments
 	if len(values) > 0 {
-		tmpRet = _mock.Called(transactionId, values)
+		tmpRet = _mock.Called(ctx, transactionId, values)
 	} else {
-		tmpRet = _mock.Called(transactionId)
+		tmpRet = _mock.Called(ctx, transactionId)
 	}
 	ret := tmpRet
 
@@ -595,8 +639,8 @@ func (_mock *MockService) UpdateMeterValues(transactionId string, values ...type
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(string, ...types.SampledValue) error); ok {
-		r0 = returnFunc(transactionId, values...)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, ...types.SampledValue) error); ok {
+		r0 = returnFunc(ctx, transactionId, values...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -609,28 +653,34 @@ type MockService_UpdateMeterValues_Call struct {
 }
 
 // UpdateMeterValues is a helper method to define mock.On call
+//   - ctx context.Context
 //   - transactionId string
 //   - values ...types.SampledValue
-func (_e *MockService_Expecter) UpdateMeterValues(transactionId interface{}, values ...interface{}) *MockService_UpdateMeterValues_Call {
+func (_e *MockService_Expecter) UpdateMeterValues(ctx interface{}, transactionId interface{}, values ...interface{}) *MockService_UpdateMeterValues_Call {
 	return &MockService_UpdateMeterValues_Call{Call: _e.mock.On("UpdateMeterValues",
-		append([]interface{}{transactionId}, values...)...)}
+		append([]interface{}{ctx, transactionId}, values...)...)}
 }
 
-func (_c *MockService_UpdateMeterValues_Call) Run(run func(transactionId string, values ...types.SampledValue)) *MockService_UpdateMeterValues_Call {
+func (_c *MockService_UpdateMeterValues_Call) Run(run func(ctx context.Context, transactionId string, values ...types.SampledValue)) *MockService_UpdateMeterValues_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 string
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(string)
+			arg0 = args[0].(context.Context)
 		}
-		var arg1 []types.SampledValue
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 []types.SampledValue
 		var variadicArgs []types.SampledValue
-		if len(args) > 1 {
-			variadicArgs = args[1].([]types.SampledValue)
+		if len(args) > 2 {
+			variadicArgs = args[2].([]types.SampledValue)
 		}
-		arg1 = variadicArgs
+		arg2 = variadicArgs
 		run(
 			arg0,
-			arg1...,
+			arg1,
+			arg2...,
 		)
 	})
 	return _c
@@ -641,7 +691,7 @@ func (_c *MockService_UpdateMeterValues_Call) Return(err error) *MockService_Upd
 	return _c
 }
 
-func (_c *MockService_UpdateMeterValues_Call) RunAndReturn(run func(transactionId string, values ...types.SampledValue) error) *MockService_UpdateMeterValues_Call {
+func (_c *MockService_UpdateMeterValues_Call) RunAndReturn(run func(ctx context.Context, transactionId string, values ...types.SampledValue) error) *MockService_UpdateMeterValues_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"time"
 
 	"github.com/ChargePi/ocpp-manager/ocpp_v16"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
@@ -53,7 +54,9 @@ func runCommand() *cobra.Command {
 			}
 
 			// Get the persistent settings
-			persistentSettings, err := db.GetSettings()
+			settingsCtx, cancel := context.WithTimeout(ctx, time.Second*10)
+			defer cancel()
+			persistentSettings, err := db.GetSettings(settingsCtx)
 			if err != nil {
 				logger.With(zap.Error(err)).Fatal("Cannot read persistent settings")
 			}
@@ -91,8 +94,8 @@ func runCommand() *cobra.Command {
 				logger.With(zap.Error(err)).Fatal("Cannot create diagnostics service")
 			}
 
-			tagManager := auth.NewManager(logger, db, db)
-			sessionManager, err := sessions.NewSessionService(logger, db)
+			authService := auth.NewManager(logger, db, db)
+			sessionService, err := sessions.NewSessionService(logger, db)
 			if err != nil {
 				logger.With(zap.Error(err)).Fatal("Cannot create session service")
 			}
@@ -108,7 +111,7 @@ func runCommand() *cobra.Command {
 
 			// Setup GRPC API if enabled
 			if runtimeSettings.GRPC.Enabled {
-				server, err := grpc.NewServer(runtimeSettings.GRPC, handler, tagManager, evseManager, settingsManager, userService)
+				server, err := grpc.NewServer(runtimeSettings.GRPC, handler, authService, evseManager, settingsManager, userService)
 				if err != nil {
 					logger.With(zap.Error(err)).Fatal("Cannot create the API server")
 				}
@@ -136,9 +139,9 @@ func runCommand() *cobra.Command {
 				protocolVersion,
 				logger,
 				evseManager,
-				tagManager,
+				authService,
 				settingsManager,
-				sessionManager,
+				sessionService,
 				diagnosticsManager,
 				hardware,
 			)

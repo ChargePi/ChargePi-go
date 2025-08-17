@@ -1,6 +1,7 @@
 package badger
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -20,7 +21,7 @@ func getSessionTransactionIdKey(transactionId string) []byte {
 	return []byte(fmt.Sprintf("%s-%s", sessionTransactionKey, transactionId))
 }
 
-func (db *Database) CreateSession(session *session.Session) error {
+func (db *Database) CreateSession(ctx context.Context, session *session.Session) error {
 	// todo handle cases where a session does not have a transaction ID yet
 	db.logger.With(zap.Any("session", session)).Info("Creating session")
 	return db.db.Update(func(txn *badger.Txn) error {
@@ -39,7 +40,7 @@ func (db *Database) CreateSession(session *session.Session) error {
 	})
 }
 
-func (db *Database) StopSession(transactionId string) error {
+func (db *Database) StopSession(ctx context.Context, transactionId string) error {
 	db.logger.With(zap.String("transactionId", transactionId)).Info("Stopping a session")
 	// todo handle cases where a session does not have a transaction ID yet
 	return db.db.Update(func(txn *badger.Txn) error {
@@ -73,7 +74,7 @@ func (db *Database) StopSession(transactionId string) error {
 	})
 }
 
-func (db *Database) UpdateSession(sesh *session.Session) error {
+func (db *Database) UpdateSession(ctx context.Context, sesh *session.Session) error {
 	db.logger.Info("Updating a session")
 
 	return db.db.Update(func(txn *badger.Txn) error {
@@ -92,31 +93,31 @@ func (db *Database) UpdateSession(sesh *session.Session) error {
 	})
 }
 
-func (db *Database) GetSession(evseId int, connectorId *int) (*session.Session, error) {
+func (db *Database) GetSession(ctx context.Context, evseId int, connectorId *int) (*session.Session, error) {
 	db.logger.With(zap.Int("evseId", evseId)).Info("Getting session")
 
 	return nil, nil
 }
 
-func (db *Database) GetSessions() ([]session.Session, error) {
+func (db *Database) GetSessions(ctx context.Context) ([]session.Session, error) {
 	db.logger.Info("Getting sessions")
 
 	return nil, nil
 }
 
-func (db *Database) GetActiveSessions() ([]session.Session, error) {
+func (db *Database) GetActiveSessions(ctx context.Context) ([]session.Session, error) {
 	db.logger.Info("Getting sessions")
 
 	return nil, nil
 }
 
-func (db *Database) GetSessionWithTransactionId(transactionId string) (*session.Session, error) {
+func (db *Database) GetSessionWithTransactionId(ctx context.Context, transactionId string) (*session.Session, error) {
 	db.logger.With(zap.String("transactionId", transactionId)).Info("Getting session with transaction id")
 
 	return nil, nil
 }
 
-func (db *Database) GetSessionWithTagId(tagId string) (*session.Session, error) {
+func (db *Database) GetSessionWithTagId(ctx context.Context, tagId string) (*session.Session, error) {
 	db.logger.With(zap.String("tagId", tagId)).Info("Getting session with tag id")
 
 	return nil, nil

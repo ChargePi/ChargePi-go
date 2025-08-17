@@ -71,7 +71,7 @@ func (u *UserService) GetUser(ctx context.Context, username string) (*models.Use
 		return nil, err
 	}*/
 
-	user, err := u.database.GetUser(username)
+	user, err := u.database.GetUser(ctx, username)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func (u *UserService) GetUser(ctx context.Context, username string) (*models.Use
 	return user, nil
 }
 
-func (u *UserService) GetUsers(context.Context) ([]models.User, error) {
+func (u *UserService) GetUsers(ctx context.Context) ([]models.User, error) {
 	u.logger.Info("Getting users")
 	// todo check for access
 
@@ -88,7 +88,7 @@ func (u *UserService) GetUsers(context.Context) ([]models.User, error) {
 		return nil, err
 	}*/
 
-	return u.database.GetUsers()
+	return u.database.GetUsers(ctx)
 }
 
 func (u *UserService) AddUser(ctx context.Context, username, password, role string) error {
@@ -119,7 +119,7 @@ func (u *UserService) AddUser(ctx context.Context, username, password, role stri
 
 	user.Password = *encrypt
 
-	return u.database.AddUser(user)
+	return u.database.AddUser(ctx, user)
 }
 
 func (u *UserService) UpdateUser(ctx context.Context, username string, password, role *string) (*models.User, error) {
@@ -150,7 +150,7 @@ func (u *UserService) UpdateUser(ctx context.Context, username string, password,
 		iUser.Password = *encryptedPass
 	}
 
-	user, err := u.database.UpdateUser(iUser)
+	user, err := u.database.UpdateUser(ctx, iUser)
 	if err != nil {
 		return nil, err
 	}
@@ -167,12 +167,12 @@ func (u *UserService) DeleteUser(ctx context.Context, username string) error {
 		return nil, err
 	}*/
 
-	return u.database.DeleteUser(username)
+	return u.database.DeleteUser(ctx, username)
 }
 
 func (u *UserService) CheckPassword(ctx context.Context, username, password string) bool {
 	u.logger.With(zap.String("user", username)).Info("Checking user password")
-	user, err := u.database.GetUser(username)
+	user, err := u.database.GetUser(ctx, username)
 	if err != nil {
 		return false
 	}

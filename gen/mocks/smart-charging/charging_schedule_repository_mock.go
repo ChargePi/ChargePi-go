@@ -5,6 +5,8 @@
 package mock_smart_charging
 
 import (
+	"context"
+
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -37,16 +39,16 @@ func (_m *MockChargingScheduleRepository) EXPECT() *MockChargingScheduleReposito
 }
 
 // AddProfile provides a mock function for the type MockChargingScheduleRepository
-func (_mock *MockChargingScheduleRepository) AddProfile(profile *types.ChargingProfile) error {
-	ret := _mock.Called(profile)
+func (_mock *MockChargingScheduleRepository) AddProfile(ctx context.Context, profile *types.ChargingProfile) error {
+	ret := _mock.Called(ctx, profile)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddProfile")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(*types.ChargingProfile) error); ok {
-		r0 = returnFunc(profile)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *types.ChargingProfile) error); ok {
+		r0 = returnFunc(ctx, profile)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -59,19 +61,25 @@ type MockChargingScheduleRepository_AddProfile_Call struct {
 }
 
 // AddProfile is a helper method to define mock.On call
+//   - ctx context.Context
 //   - profile *types.ChargingProfile
-func (_e *MockChargingScheduleRepository_Expecter) AddProfile(profile interface{}) *MockChargingScheduleRepository_AddProfile_Call {
-	return &MockChargingScheduleRepository_AddProfile_Call{Call: _e.mock.On("AddProfile", profile)}
+func (_e *MockChargingScheduleRepository_Expecter) AddProfile(ctx interface{}, profile interface{}) *MockChargingScheduleRepository_AddProfile_Call {
+	return &MockChargingScheduleRepository_AddProfile_Call{Call: _e.mock.On("AddProfile", ctx, profile)}
 }
 
-func (_c *MockChargingScheduleRepository_AddProfile_Call) Run(run func(profile *types.ChargingProfile)) *MockChargingScheduleRepository_AddProfile_Call {
+func (_c *MockChargingScheduleRepository_AddProfile_Call) Run(run func(ctx context.Context, profile *types.ChargingProfile)) *MockChargingScheduleRepository_AddProfile_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 *types.ChargingProfile
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(*types.ChargingProfile)
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *types.ChargingProfile
+		if args[1] != nil {
+			arg1 = args[1].(*types.ChargingProfile)
 		}
 		run(
 			arg0,
+			arg1,
 		)
 	})
 	return _c
@@ -82,14 +90,14 @@ func (_c *MockChargingScheduleRepository_AddProfile_Call) Return(err error) *Moc
 	return _c
 }
 
-func (_c *MockChargingScheduleRepository_AddProfile_Call) RunAndReturn(run func(profile *types.ChargingProfile) error) *MockChargingScheduleRepository_AddProfile_Call {
+func (_c *MockChargingScheduleRepository_AddProfile_Call) RunAndReturn(run func(ctx context.Context, profile *types.ChargingProfile) error) *MockChargingScheduleRepository_AddProfile_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetProfile provides a mock function for the type MockChargingScheduleRepository
-func (_mock *MockChargingScheduleRepository) GetProfile(profileId int) (*types.ChargingProfile, error) {
-	ret := _mock.Called(profileId)
+func (_mock *MockChargingScheduleRepository) GetProfile(ctx context.Context, profileId int) (*types.ChargingProfile, error) {
+	ret := _mock.Called(ctx, profileId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetProfile")
@@ -97,18 +105,18 @@ func (_mock *MockChargingScheduleRepository) GetProfile(profileId int) (*types.C
 
 	var r0 *types.ChargingProfile
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(int) (*types.ChargingProfile, error)); ok {
-		return returnFunc(profileId)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int) (*types.ChargingProfile, error)); ok {
+		return returnFunc(ctx, profileId)
 	}
-	if returnFunc, ok := ret.Get(0).(func(int) *types.ChargingProfile); ok {
-		r0 = returnFunc(profileId)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int) *types.ChargingProfile); ok {
+		r0 = returnFunc(ctx, profileId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*types.ChargingProfile)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(int) error); ok {
-		r1 = returnFunc(profileId)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int) error); ok {
+		r1 = returnFunc(ctx, profileId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -121,19 +129,25 @@ type MockChargingScheduleRepository_GetProfile_Call struct {
 }
 
 // GetProfile is a helper method to define mock.On call
+//   - ctx context.Context
 //   - profileId int
-func (_e *MockChargingScheduleRepository_Expecter) GetProfile(profileId interface{}) *MockChargingScheduleRepository_GetProfile_Call {
-	return &MockChargingScheduleRepository_GetProfile_Call{Call: _e.mock.On("GetProfile", profileId)}
+func (_e *MockChargingScheduleRepository_Expecter) GetProfile(ctx interface{}, profileId interface{}) *MockChargingScheduleRepository_GetProfile_Call {
+	return &MockChargingScheduleRepository_GetProfile_Call{Call: _e.mock.On("GetProfile", ctx, profileId)}
 }
 
-func (_c *MockChargingScheduleRepository_GetProfile_Call) Run(run func(profileId int)) *MockChargingScheduleRepository_GetProfile_Call {
+func (_c *MockChargingScheduleRepository_GetProfile_Call) Run(run func(ctx context.Context, profileId int)) *MockChargingScheduleRepository_GetProfile_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 int
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(int)
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int
+		if args[1] != nil {
+			arg1 = args[1].(int)
 		}
 		run(
 			arg0,
+			arg1,
 		)
 	})
 	return _c
@@ -144,14 +158,14 @@ func (_c *MockChargingScheduleRepository_GetProfile_Call) Return(chargingProfile
 	return _c
 }
 
-func (_c *MockChargingScheduleRepository_GetProfile_Call) RunAndReturn(run func(profileId int) (*types.ChargingProfile, error)) *MockChargingScheduleRepository_GetProfile_Call {
+func (_c *MockChargingScheduleRepository_GetProfile_Call) RunAndReturn(run func(ctx context.Context, profileId int) (*types.ChargingProfile, error)) *MockChargingScheduleRepository_GetProfile_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetProfiles provides a mock function for the type MockChargingScheduleRepository
-func (_mock *MockChargingScheduleRepository) GetProfiles() ([]types.ChargingProfile, error) {
-	ret := _mock.Called()
+func (_mock *MockChargingScheduleRepository) GetProfiles(ctx context.Context) ([]types.ChargingProfile, error) {
+	ret := _mock.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetProfiles")
@@ -159,18 +173,18 @@ func (_mock *MockChargingScheduleRepository) GetProfiles() ([]types.ChargingProf
 
 	var r0 []types.ChargingProfile
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func() ([]types.ChargingProfile, error)); ok {
-		return returnFunc()
+	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]types.ChargingProfile, error)); ok {
+		return returnFunc(ctx)
 	}
-	if returnFunc, ok := ret.Get(0).(func() []types.ChargingProfile); ok {
-		r0 = returnFunc()
+	if returnFunc, ok := ret.Get(0).(func(context.Context) []types.ChargingProfile); ok {
+		r0 = returnFunc(ctx)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]types.ChargingProfile)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func() error); ok {
-		r1 = returnFunc()
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -183,13 +197,20 @@ type MockChargingScheduleRepository_GetProfiles_Call struct {
 }
 
 // GetProfiles is a helper method to define mock.On call
-func (_e *MockChargingScheduleRepository_Expecter) GetProfiles() *MockChargingScheduleRepository_GetProfiles_Call {
-	return &MockChargingScheduleRepository_GetProfiles_Call{Call: _e.mock.On("GetProfiles")}
+//   - ctx context.Context
+func (_e *MockChargingScheduleRepository_Expecter) GetProfiles(ctx interface{}) *MockChargingScheduleRepository_GetProfiles_Call {
+	return &MockChargingScheduleRepository_GetProfiles_Call{Call: _e.mock.On("GetProfiles", ctx)}
 }
 
-func (_c *MockChargingScheduleRepository_GetProfiles_Call) Run(run func()) *MockChargingScheduleRepository_GetProfiles_Call {
+func (_c *MockChargingScheduleRepository_GetProfiles_Call) Run(run func(ctx context.Context)) *MockChargingScheduleRepository_GetProfiles_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run()
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -199,22 +220,22 @@ func (_c *MockChargingScheduleRepository_GetProfiles_Call) Return(chargingProfil
 	return _c
 }
 
-func (_c *MockChargingScheduleRepository_GetProfiles_Call) RunAndReturn(run func() ([]types.ChargingProfile, error)) *MockChargingScheduleRepository_GetProfiles_Call {
+func (_c *MockChargingScheduleRepository_GetProfiles_Call) RunAndReturn(run func(ctx context.Context) ([]types.ChargingProfile, error)) *MockChargingScheduleRepository_GetProfiles_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RemoveProfile provides a mock function for the type MockChargingScheduleRepository
-func (_mock *MockChargingScheduleRepository) RemoveProfile(profileId int) error {
-	ret := _mock.Called(profileId)
+func (_mock *MockChargingScheduleRepository) RemoveProfile(ctx context.Context, profileId int) error {
+	ret := _mock.Called(ctx, profileId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveProfile")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(int) error); ok {
-		r0 = returnFunc(profileId)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int) error); ok {
+		r0 = returnFunc(ctx, profileId)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -227,19 +248,25 @@ type MockChargingScheduleRepository_RemoveProfile_Call struct {
 }
 
 // RemoveProfile is a helper method to define mock.On call
+//   - ctx context.Context
 //   - profileId int
-func (_e *MockChargingScheduleRepository_Expecter) RemoveProfile(profileId interface{}) *MockChargingScheduleRepository_RemoveProfile_Call {
-	return &MockChargingScheduleRepository_RemoveProfile_Call{Call: _e.mock.On("RemoveProfile", profileId)}
+func (_e *MockChargingScheduleRepository_Expecter) RemoveProfile(ctx interface{}, profileId interface{}) *MockChargingScheduleRepository_RemoveProfile_Call {
+	return &MockChargingScheduleRepository_RemoveProfile_Call{Call: _e.mock.On("RemoveProfile", ctx, profileId)}
 }
 
-func (_c *MockChargingScheduleRepository_RemoveProfile_Call) Run(run func(profileId int)) *MockChargingScheduleRepository_RemoveProfile_Call {
+func (_c *MockChargingScheduleRepository_RemoveProfile_Call) Run(run func(ctx context.Context, profileId int)) *MockChargingScheduleRepository_RemoveProfile_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 int
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(int)
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int
+		if args[1] != nil {
+			arg1 = args[1].(int)
 		}
 		run(
 			arg0,
+			arg1,
 		)
 	})
 	return _c
@@ -250,7 +277,7 @@ func (_c *MockChargingScheduleRepository_RemoveProfile_Call) Return(err error) *
 	return _c
 }
 
-func (_c *MockChargingScheduleRepository_RemoveProfile_Call) RunAndReturn(run func(profileId int) error) *MockChargingScheduleRepository_RemoveProfile_Call {
+func (_c *MockChargingScheduleRepository_RemoveProfile_Call) RunAndReturn(run func(ctx context.Context, profileId int) error) *MockChargingScheduleRepository_RemoveProfile_Call {
 	_c.Call.Return(run)
 	return _c
 }

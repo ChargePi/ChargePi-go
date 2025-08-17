@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"strconv"
+	"time"
 
 	"github.com/ChargePi/ocpp-manager/ocpp_v16"
 	"github.com/go-playground/validator/v10"
@@ -78,6 +79,9 @@ func (cp *ChargePoint) OnGetConfiguration(request *core.GetConfigurationRequest)
 
 // setupLocalAuthListConfigurationValidation sets up the configuration validation for local auth list.
 func (cp *ChargePoint) setupLocalAuthListConfigurationValidation() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
 	err := cp.settingsManager.OnUpdateKey(ocpp_v16.LocalAuthListMaxLength, func(value *string) error {
 		if value == nil {
 			return errors.New("value is nil")
@@ -88,7 +92,7 @@ func (cp *ChargePoint) setupLocalAuthListConfigurationValidation() error {
 			return errors.New("invalid value for LocalAuthListMaxLength")
 		}
 
-		cp.tagAuthService.SetMaxTags(val)
+		cp.tagAuthService.SetMaxTags(ctx, val)
 		return nil
 	})
 	if err != nil {
@@ -187,7 +191,10 @@ func (cp *ChargePoint) setupCoreConfigurationValidation() error {
 }
 
 func (cp *ChargePoint) SetSettings(settings chargepoint.Info) error {
-	err := validator.New().StructCtx(context.Background(), settings)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	err := validator.New().StructCtx(ctx, settings)
 	if err != nil {
 		return err
 	}
@@ -202,7 +209,10 @@ func (cp *ChargePoint) GetConnectionSettings() chargepoint.ConnectionSettings {
 }
 
 func (cp *ChargePoint) SetConnectionSettings(settings chargepoint.ConnectionSettings) error {
-	err := validator.New().StructCtx(context.Background(), settings)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	err := validator.New().StructCtx(ctx, settings)
 	if err != nil {
 		return err
 	}
@@ -221,7 +231,10 @@ func (cp *ChargePoint) GetIndicatorSettings() indicator.StatusMapping {
 }
 
 func (cp *ChargePoint) SetIndicatorSettings(settings indicator.StatusMapping) error {
-	err := validator.New().StructCtx(context.Background(), settings)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	err := validator.New().StructCtx(ctx, settings)
 	if err != nil {
 		return err
 	}

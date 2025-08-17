@@ -1,6 +1,7 @@
 package badger
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -67,7 +68,7 @@ func (s *smartChargingTestSuite) TestAddProfile() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// Execute
-			err := s.db.AddProfile(tt.profile)
+			err := s.db.AddProfile(context.Background(), tt.profile)
 
 			// Assert
 			if tt.expectError {
@@ -111,12 +112,12 @@ func (s *smartChargingTestSuite) TestGetProfile() {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// Setup
 			if tt.setupProfile != nil {
-				err := s.db.AddProfile(tt.setupProfile)
+				err := s.db.AddProfile(context.Background(), tt.setupProfile)
 				s.Require().NoError(err)
 			}
 
 			// Execute
-			profile, err := s.db.GetProfile(tt.profileId)
+			profile, err := s.db.GetProfile(context.Background(), tt.profileId)
 
 			// Assert
 			if tt.expectError {
@@ -165,12 +166,12 @@ func (s *smartChargingTestSuite) TestRemoveProfile() {
 					ChargingProfileKind:    types.ChargingProfileKindAbsolute,
 					RecurrencyKind:         types.RecurrencyKindDaily,
 				}
-				err := s.db.AddProfile(profile)
+				err := s.db.AddProfile(context.Background(), profile)
 				s.Require().NoError(err)
 			}
 
 			// Execute
-			err := s.db.RemoveProfile(tt.profileId)
+			err := s.db.RemoveProfile(context.Background(), tt.profileId)
 
 			// Assert
 			if tt.expectError {

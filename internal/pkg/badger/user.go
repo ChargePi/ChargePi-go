@@ -1,6 +1,7 @@
 package badger
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,7 +18,7 @@ var (
 
 const userPrefix = "user-"
 
-func (db *Database) GetUser(username string) (*models.User, error) {
+func (db *Database) GetUser(ctx context.Context, username string) (*models.User, error) {
 	var user models.User
 	err := db.db.View(func(txn *badger.Txn) error {
 		get, err := txn.Get(getUserKey(username))
@@ -41,7 +42,7 @@ func (db *Database) GetUser(username string) (*models.User, error) {
 	return &user, nil
 }
 
-func (db *Database) GetUsers() ([]models.User, error) {
+func (db *Database) GetUsers(ctx context.Context) ([]models.User, error) {
 	var users []models.User
 
 	err := db.db.View(func(txn *badger.Txn) error {
@@ -49,7 +50,7 @@ func (db *Database) GetUsers() ([]models.User, error) {
 		defer it.Close()
 
 		prefix := []byte(userPrefix)
-		// Go through every key with “user” prefix.
+		// Go through every key with "user" prefix.
 		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
 			var user models.User
 			item := it.Item()
@@ -71,7 +72,7 @@ func (db *Database) GetUsers() ([]models.User, error) {
 	return users, nil
 }
 
-func (db *Database) AddUser(user models.User) error {
+func (db *Database) AddUser(ctx context.Context, user models.User) error {
 	return db.db.Update(func(txn *badger.Txn) error {
 		// Check if user with username already exists
 		_, err := txn.Get(getUserKey(user.Username))
@@ -93,7 +94,7 @@ func (db *Database) AddUser(user models.User) error {
 	})
 }
 
-func (db *Database) UpdateUser(user models.User) (*models.User, error) {
+func (db *Database) UpdateUser(ctx context.Context, user models.User) (*models.User, error) {
 	err := db.db.Update(func(txn *badger.Txn) error {
 		// Check if user with username already exists
 		_, err := txn.Get(getUserKey(user.Username))
@@ -120,7 +121,7 @@ func (db *Database) UpdateUser(user models.User) (*models.User, error) {
 	return nil, nil
 }
 
-func (db *Database) DeleteUser(username string) error {
+func (db *Database) DeleteUser(ctx context.Context, username string) error {
 	return db.db.Update(func(txn *badger.Txn) error {
 		err := txn.Delete(getUserKey(username))
 		if err != nil {

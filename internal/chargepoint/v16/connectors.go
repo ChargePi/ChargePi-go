@@ -133,7 +133,7 @@ func (cp *ChargePoint) handleStatusUpdate(ctx context.Context, evseId int, statu
 		// If EV disconnects and the StopTransactionOnEVDisconnect is enabled, stop the transaction
 		stopTransactionOnEVDisconnect, err := cp.settingsManager.GetConfigurationValue(ocpp_v16.StopTransactionOnEVSideDisconnect)
 		if stopTransactionOnEVDisconnect != nil && *stopTransactionOnEVDisconnect == "true" {
-			stopChargingErr := cp.StopCharging(evseId, 1, core.ReasonEVDisconnected)
+			stopChargingErr := cp.StopCharging(ctx, evseId, 1, core.ReasonEVDisconnected)
 			if stopChargingErr != nil {
 				logger.With(zap.Error(err)).Error("Cannot stop charging")
 				// Todo Indicate that the charging hasn't been successfully stopped
@@ -143,7 +143,7 @@ func (cp *ChargePoint) handleStatusUpdate(ctx context.Context, evseId int, statu
 		}
 
 	case core.ChargePointStatusFaulted:
-		err := cp.StopCharging(evseId, 1, core.ReasonEmergencyStop)
+		err := cp.StopCharging(ctx, evseId, 1, core.ReasonEmergencyStop)
 		if err != nil {
 			logger.With(zap.Error(err)).Error("Cannot stop charging")
 		}
@@ -166,7 +166,7 @@ func (cp *ChargePoint) authenticateWithRfidCard(ctx context.Context, evseId int)
 		cp.indicateCardRead(evseId-1, indicator.Green)
 
 		// Attempt to start charging
-		err = cp.StartCharging(evseId, 1, *tag)
+		err = cp.StartCharging(ctx, evseId, 1, *tag)
 		if err != nil {
 			logger.With(zap.Error(err)).Error("Cannot start charging")
 		}

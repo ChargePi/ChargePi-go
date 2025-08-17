@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/mock"
+
 	"go.uber.org/zap/zaptest"
 
 	mock_auth "github.com/ChargePi/ChargePi-go/gen/mocks/auth"
@@ -103,28 +105,28 @@ func (s *authCacheTestSuite) TestAddTag() {
 
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
-			s.authCache.SetMaxCachedTags(tt.tagLimit)
+			s.authCache.SetMaxCachedTags(nil, tt.tagLimit)
 
 			switch tt.name {
 			case "Nil tag":
 			case "Tag can be added":
-				s.tagRepository.EXPECT().GetTags().Return([]*types.IdTagInfo{}, nil).Once()
-				s.tagRepository.EXPECT().AddTag(tt.tagId, tt.tag).Return(nil).Once()
+				s.tagRepository.EXPECT().GetTags(mock.Anything).Return([]*types.IdTagInfo{}, nil).Once()
+				s.tagRepository.EXPECT().AddTag(mock.Anything, tt.tagId, tt.tag).Return(nil).Once()
 			case "Validation failed":
 			case "Invalid status":
 			case "Database error":
-				s.tagRepository.EXPECT().GetTags().Return([]*types.IdTagInfo{}, nil).Once()
-				s.tagRepository.EXPECT().AddTag(tt.tagId, tt.tag).Return(errors.New("database error")).Once()
+				s.tagRepository.EXPECT().GetTags(mock.Anything).Return([]*types.IdTagInfo{}, nil).Once()
+				s.tagRepository.EXPECT().AddTag(mock.Anything, tt.tagId, tt.tag).Return(errors.New("database error")).Once()
 			case "Max limit reached":
 				// Append the max number of tags to the cache
 				tags := []*types.IdTagInfo{}
 				for i := 0; i < tt.tagLimit; i++ {
 					tags = append(tags, okTag)
 				}
-				s.tagRepository.EXPECT().GetTags().Return(tags, nil).Once()
+				s.tagRepository.EXPECT().GetTags(mock.Anything).Return(tags, nil).Once()
 			}
 
-			err := s.authCache.AddTag(tt.tagId, tt.tag)
+			err := s.authCache.AddTag(nil, tt.tagId, tt.tag)
 			if tt.wantErr {
 				s.Assert().Error(err)
 			} else {
@@ -157,12 +159,12 @@ func (s *authCacheTestSuite) TestRemoveCachedTags() {
 		s.T().Run(test.name, func(t *testing.T) {
 
 			if test.name == "Database error" {
-				s.tagRepository.EXPECT().RemoveAllTags().Return(errors.New("database error")).Once()
+				s.tagRepository.EXPECT().RemoveAllTags(mock.Anything).Return(errors.New("database error")).Once()
 			} else {
-				s.tagRepository.EXPECT().RemoveAllTags().Return(nil).Once()
+				s.tagRepository.EXPECT().RemoveAllTags(mock.Anything).Return(nil).Once()
 			}
 
-			err := s.authCache.RemoveCachedTags()
+			err := s.authCache.RemoveCachedTags(nil)
 			if test.wantErr {
 				s.Assert().Error(err)
 			} else {
@@ -205,14 +207,14 @@ func (s *authCacheTestSuite) TestGetTag() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			if tt.expectedTag != nil {
-				s.tagRepository.EXPECT().GetTag(tt.tagId).Return(tt.expectedTag, nil)
+				s.tagRepository.EXPECT().GetTag(mock.Anything, tt.tagId).Return(tt.expectedTag, nil)
 			} else if tt.name == "Database error" {
-				s.tagRepository.EXPECT().GetTag(tt.tagId).Return(nil, errors.New("error"))
+				s.tagRepository.EXPECT().GetTag(mock.Anything, tt.tagId).Return(nil, errors.New("error"))
 			} else {
-				s.tagRepository.EXPECT().GetTag(tt.tagId).Return(nil, errors.New("not found"))
+				s.tagRepository.EXPECT().GetTag(mock.Anything, tt.tagId).Return(nil, errors.New("not found"))
 			}
 
-			tag, err := s.authCache.GetTag(tt.tagId)
+			tag, err := s.authCache.GetTag(nil, tt.tagId)
 			if tt.wantErr {
 				s.Assert().Error(err)
 			} else {

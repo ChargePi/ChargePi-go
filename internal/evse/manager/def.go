@@ -46,6 +46,6 @@ type Manager interface {
 }
 
 type EvseSettingsRepository interface {
-	GetEvseSettings() ([]evse.Settings, error)
-	SetEvseSettings([]evse.Settings) error
+	GetEvseSettings(ctx context.Context) ([]evse.Settings, error)
+	SetEvseSettings(ctx context.Context, settings []evse.Settings) error
 }

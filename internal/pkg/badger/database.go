@@ -1,6 +1,8 @@
 package badger
 
 import (
+	"context"
+
 	"github.com/dgraph-io/badger/v3"
 	"go.uber.org/zap"
 
@@ -33,19 +35,19 @@ func (db *Database) Migrate() {
 	db.logger.Debug("Migrating database")
 
 	// todo migration framework?
-	_ = db.AddUser(models.User{
+	_ = db.AddUser(context.Background(), models.User{
 		Username: "manufacturer",
 		Password: "manufacturer",
 		Role:     models.Manufacturer,
 	})
 
-	_ = db.AddUser(models.User{
+	_ = db.AddUser(context.Background(), models.User{
 		Username: "technician",
 		Password: "technician",
 		Role:     models.Technician,
 	})
 
-	_ = db.AddUser(models.User{
+	_ = db.AddUser(context.Background(), models.User{
 		Username: "observer",
 		Password: "observer",
 		Role:     models.Observer,

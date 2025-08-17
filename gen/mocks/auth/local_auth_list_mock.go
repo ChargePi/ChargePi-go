@@ -5,6 +5,8 @@
 package mock_auth
 
 import (
+	"context"
+
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/localauth"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	mock "github.com/stretchr/testify/mock"
@@ -38,16 +40,16 @@ func (_m *MockLocalAuthList) EXPECT() *MockLocalAuthList_Expecter {
 }
 
 // AddTag provides a mock function for the type MockLocalAuthList
-func (_mock *MockLocalAuthList) AddTag(tagId string, tagInfo *types.IdTagInfo) error {
-	ret := _mock.Called(tagId, tagInfo)
+func (_mock *MockLocalAuthList) AddTag(ctx context.Context, tagId string, tagInfo *types.IdTagInfo) error {
+	ret := _mock.Called(ctx, tagId, tagInfo)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddTag")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(string, *types.IdTagInfo) error); ok {
-		r0 = returnFunc(tagId, tagInfo)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *types.IdTagInfo) error); ok {
+		r0 = returnFunc(ctx, tagId, tagInfo)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -60,25 +62,31 @@ type MockLocalAuthList_AddTag_Call struct {
 }
 
 // AddTag is a helper method to define mock.On call
+//   - ctx context.Context
 //   - tagId string
 //   - tagInfo *types.IdTagInfo
-func (_e *MockLocalAuthList_Expecter) AddTag(tagId interface{}, tagInfo interface{}) *MockLocalAuthList_AddTag_Call {
-	return &MockLocalAuthList_AddTag_Call{Call: _e.mock.On("AddTag", tagId, tagInfo)}
+func (_e *MockLocalAuthList_Expecter) AddTag(ctx interface{}, tagId interface{}, tagInfo interface{}) *MockLocalAuthList_AddTag_Call {
+	return &MockLocalAuthList_AddTag_Call{Call: _e.mock.On("AddTag", ctx, tagId, tagInfo)}
 }
 
-func (_c *MockLocalAuthList_AddTag_Call) Run(run func(tagId string, tagInfo *types.IdTagInfo)) *MockLocalAuthList_AddTag_Call {
+func (_c *MockLocalAuthList_AddTag_Call) Run(run func(ctx context.Context, tagId string, tagInfo *types.IdTagInfo)) *MockLocalAuthList_AddTag_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 string
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(string)
+			arg0 = args[0].(context.Context)
 		}
-		var arg1 *types.IdTagInfo
+		var arg1 string
 		if args[1] != nil {
-			arg1 = args[1].(*types.IdTagInfo)
+			arg1 = args[1].(string)
+		}
+		var arg2 *types.IdTagInfo
+		if args[2] != nil {
+			arg2 = args[2].(*types.IdTagInfo)
 		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
@@ -89,14 +97,14 @@ func (_c *MockLocalAuthList_AddTag_Call) Return(err error) *MockLocalAuthList_Ad
 	return _c
 }
 
-func (_c *MockLocalAuthList_AddTag_Call) RunAndReturn(run func(tagId string, tagInfo *types.IdTagInfo) error) *MockLocalAuthList_AddTag_Call {
+func (_c *MockLocalAuthList_AddTag_Call) RunAndReturn(run func(ctx context.Context, tagId string, tagInfo *types.IdTagInfo) error) *MockLocalAuthList_AddTag_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetTag provides a mock function for the type MockLocalAuthList
-func (_mock *MockLocalAuthList) GetTag(tagId string) (*types.IdTagInfo, error) {
-	ret := _mock.Called(tagId)
+func (_mock *MockLocalAuthList) GetTag(ctx context.Context, tagId string) (*types.IdTagInfo, error) {
+	ret := _mock.Called(ctx, tagId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetTag")
@@ -104,18 +112,18 @@ func (_mock *MockLocalAuthList) GetTag(tagId string) (*types.IdTagInfo, error) {
 
 	var r0 *types.IdTagInfo
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(string) (*types.IdTagInfo, error)); ok {
-		return returnFunc(tagId)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*types.IdTagInfo, error)); ok {
+		return returnFunc(ctx, tagId)
 	}
-	if returnFunc, ok := ret.Get(0).(func(string) *types.IdTagInfo); ok {
-		r0 = returnFunc(tagId)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *types.IdTagInfo); ok {
+		r0 = returnFunc(ctx, tagId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*types.IdTagInfo)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(string) error); ok {
-		r1 = returnFunc(tagId)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, tagId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -128,19 +136,25 @@ type MockLocalAuthList_GetTag_Call struct {
 }
 
 // GetTag is a helper method to define mock.On call
+//   - ctx context.Context
 //   - tagId string
-func (_e *MockLocalAuthList_Expecter) GetTag(tagId interface{}) *MockLocalAuthList_GetTag_Call {
-	return &MockLocalAuthList_GetTag_Call{Call: _e.mock.On("GetTag", tagId)}
+func (_e *MockLocalAuthList_Expecter) GetTag(ctx interface{}, tagId interface{}) *MockLocalAuthList_GetTag_Call {
+	return &MockLocalAuthList_GetTag_Call{Call: _e.mock.On("GetTag", ctx, tagId)}
 }
 
-func (_c *MockLocalAuthList_GetTag_Call) Run(run func(tagId string)) *MockLocalAuthList_GetTag_Call {
+func (_c *MockLocalAuthList_GetTag_Call) Run(run func(ctx context.Context, tagId string)) *MockLocalAuthList_GetTag_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 string
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(string)
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
 		}
 		run(
 			arg0,
+			arg1,
 		)
 	})
 	return _c
@@ -151,14 +165,14 @@ func (_c *MockLocalAuthList_GetTag_Call) Return(idTagInfo *types.IdTagInfo, err 
 	return _c
 }
 
-func (_c *MockLocalAuthList_GetTag_Call) RunAndReturn(run func(tagId string) (*types.IdTagInfo, error)) *MockLocalAuthList_GetTag_Call {
+func (_c *MockLocalAuthList_GetTag_Call) RunAndReturn(run func(ctx context.Context, tagId string) (*types.IdTagInfo, error)) *MockLocalAuthList_GetTag_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetTags provides a mock function for the type MockLocalAuthList
-func (_mock *MockLocalAuthList) GetTags() ([]localauth.AuthorizationData, error) {
-	ret := _mock.Called()
+func (_mock *MockLocalAuthList) GetTags(ctx context.Context) ([]localauth.AuthorizationData, error) {
+	ret := _mock.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetTags")
@@ -166,18 +180,18 @@ func (_mock *MockLocalAuthList) GetTags() ([]localauth.AuthorizationData, error)
 
 	var r0 []localauth.AuthorizationData
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func() ([]localauth.AuthorizationData, error)); ok {
-		return returnFunc()
+	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]localauth.AuthorizationData, error)); ok {
+		return returnFunc(ctx)
 	}
-	if returnFunc, ok := ret.Get(0).(func() []localauth.AuthorizationData); ok {
-		r0 = returnFunc()
+	if returnFunc, ok := ret.Get(0).(func(context.Context) []localauth.AuthorizationData); ok {
+		r0 = returnFunc(ctx)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]localauth.AuthorizationData)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func() error); ok {
-		r1 = returnFunc()
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -190,13 +204,20 @@ type MockLocalAuthList_GetTags_Call struct {
 }
 
 // GetTags is a helper method to define mock.On call
-func (_e *MockLocalAuthList_Expecter) GetTags() *MockLocalAuthList_GetTags_Call {
-	return &MockLocalAuthList_GetTags_Call{Call: _e.mock.On("GetTags")}
+//   - ctx context.Context
+func (_e *MockLocalAuthList_Expecter) GetTags(ctx interface{}) *MockLocalAuthList_GetTags_Call {
+	return &MockLocalAuthList_GetTags_Call{Call: _e.mock.On("GetTags", ctx)}
 }
 
-func (_c *MockLocalAuthList_GetTags_Call) Run(run func()) *MockLocalAuthList_GetTags_Call {
+func (_c *MockLocalAuthList_GetTags_Call) Run(run func(ctx context.Context)) *MockLocalAuthList_GetTags_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run()
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -206,7 +227,7 @@ func (_c *MockLocalAuthList_GetTags_Call) Return(authorizationDatas []localauth.
 	return _c
 }
 
-func (_c *MockLocalAuthList_GetTags_Call) RunAndReturn(run func() ([]localauth.AuthorizationData, error)) *MockLocalAuthList_GetTags_Call {
+func (_c *MockLocalAuthList_GetTags_Call) RunAndReturn(run func(ctx context.Context) ([]localauth.AuthorizationData, error)) *MockLocalAuthList_GetTags_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -256,8 +277,8 @@ func (_c *MockLocalAuthList_GetVersion_Call) RunAndReturn(run func() int) *MockL
 }
 
 // RemoveAll provides a mock function for the type MockLocalAuthList
-func (_mock *MockLocalAuthList) RemoveAll() {
-	_mock.Called()
+func (_mock *MockLocalAuthList) RemoveAll(ctx context.Context) {
+	_mock.Called(ctx)
 	return
 }
 
@@ -267,13 +288,20 @@ type MockLocalAuthList_RemoveAll_Call struct {
 }
 
 // RemoveAll is a helper method to define mock.On call
-func (_e *MockLocalAuthList_Expecter) RemoveAll() *MockLocalAuthList_RemoveAll_Call {
-	return &MockLocalAuthList_RemoveAll_Call{Call: _e.mock.On("RemoveAll")}
+//   - ctx context.Context
+func (_e *MockLocalAuthList_Expecter) RemoveAll(ctx interface{}) *MockLocalAuthList_RemoveAll_Call {
+	return &MockLocalAuthList_RemoveAll_Call{Call: _e.mock.On("RemoveAll", ctx)}
 }
 
-func (_c *MockLocalAuthList_RemoveAll_Call) Run(run func()) *MockLocalAuthList_RemoveAll_Call {
+func (_c *MockLocalAuthList_RemoveAll_Call) Run(run func(ctx context.Context)) *MockLocalAuthList_RemoveAll_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run()
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -283,22 +311,22 @@ func (_c *MockLocalAuthList_RemoveAll_Call) Return() *MockLocalAuthList_RemoveAl
 	return _c
 }
 
-func (_c *MockLocalAuthList_RemoveAll_Call) RunAndReturn(run func()) *MockLocalAuthList_RemoveAll_Call {
+func (_c *MockLocalAuthList_RemoveAll_Call) RunAndReturn(run func(ctx context.Context)) *MockLocalAuthList_RemoveAll_Call {
 	_c.Run(run)
 	return _c
 }
 
 // RemoveTag provides a mock function for the type MockLocalAuthList
-func (_mock *MockLocalAuthList) RemoveTag(tagId string) error {
-	ret := _mock.Called(tagId)
+func (_mock *MockLocalAuthList) RemoveTag(ctx context.Context, tagId string) error {
+	ret := _mock.Called(ctx, tagId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveTag")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(string) error); ok {
-		r0 = returnFunc(tagId)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = returnFunc(ctx, tagId)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -311,19 +339,25 @@ type MockLocalAuthList_RemoveTag_Call struct {
 }
 
 // RemoveTag is a helper method to define mock.On call
+//   - ctx context.Context
 //   - tagId string
-func (_e *MockLocalAuthList_Expecter) RemoveTag(tagId interface{}) *MockLocalAuthList_RemoveTag_Call {
-	return &MockLocalAuthList_RemoveTag_Call{Call: _e.mock.On("RemoveTag", tagId)}
+func (_e *MockLocalAuthList_Expecter) RemoveTag(ctx interface{}, tagId interface{}) *MockLocalAuthList_RemoveTag_Call {
+	return &MockLocalAuthList_RemoveTag_Call{Call: _e.mock.On("RemoveTag", ctx, tagId)}
 }
 
-func (_c *MockLocalAuthList_RemoveTag_Call) Run(run func(tagId string)) *MockLocalAuthList_RemoveTag_Call {
+func (_c *MockLocalAuthList_RemoveTag_Call) Run(run func(ctx context.Context, tagId string)) *MockLocalAuthList_RemoveTag_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 string
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(string)
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
 		}
 		run(
 			arg0,
+			arg1,
 		)
 	})
 	return _c
@@ -334,7 +368,7 @@ func (_c *MockLocalAuthList_RemoveTag_Call) Return(err error) *MockLocalAuthList
 	return _c
 }
 
-func (_c *MockLocalAuthList_RemoveTag_Call) RunAndReturn(run func(tagId string) error) *MockLocalAuthList_RemoveTag_Call {
+func (_c *MockLocalAuthList_RemoveTag_Call) RunAndReturn(run func(ctx context.Context, tagId string) error) *MockLocalAuthList_RemoveTag_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -420,16 +454,16 @@ func (_c *MockLocalAuthList_SetVersion_Call) RunAndReturn(run func(version int))
 }
 
 // UpdateTag provides a mock function for the type MockLocalAuthList
-func (_mock *MockLocalAuthList) UpdateTag(tagId string, tagInfo *types.IdTagInfo) error {
-	ret := _mock.Called(tagId, tagInfo)
+func (_mock *MockLocalAuthList) UpdateTag(ctx context.Context, tagId string, tagInfo *types.IdTagInfo) error {
+	ret := _mock.Called(ctx, tagId, tagInfo)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateTag")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(string, *types.IdTagInfo) error); ok {
-		r0 = returnFunc(tagId, tagInfo)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *types.IdTagInfo) error); ok {
+		r0 = returnFunc(ctx, tagId, tagInfo)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -442,25 +476,31 @@ type MockLocalAuthList_UpdateTag_Call struct {
 }
 
 // UpdateTag is a helper method to define mock.On call
+//   - ctx context.Context
 //   - tagId string
 //   - tagInfo *types.IdTagInfo
-func (_e *MockLocalAuthList_Expecter) UpdateTag(tagId interface{}, tagInfo interface{}) *MockLocalAuthList_UpdateTag_Call {
-	return &MockLocalAuthList_UpdateTag_Call{Call: _e.mock.On("UpdateTag", tagId, tagInfo)}
+func (_e *MockLocalAuthList_Expecter) UpdateTag(ctx interface{}, tagId interface{}, tagInfo interface{}) *MockLocalAuthList_UpdateTag_Call {
+	return &MockLocalAuthList_UpdateTag_Call{Call: _e.mock.On("UpdateTag", ctx, tagId, tagInfo)}
 }
 
-func (_c *MockLocalAuthList_UpdateTag_Call) Run(run func(tagId string, tagInfo *types.IdTagInfo)) *MockLocalAuthList_UpdateTag_Call {
+func (_c *MockLocalAuthList_UpdateTag_Call) Run(run func(ctx context.Context, tagId string, tagInfo *types.IdTagInfo)) *MockLocalAuthList_UpdateTag_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 string
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(string)
+			arg0 = args[0].(context.Context)
 		}
-		var arg1 *types.IdTagInfo
+		var arg1 string
 		if args[1] != nil {
-			arg1 = args[1].(*types.IdTagInfo)
+			arg1 = args[1].(string)
+		}
+		var arg2 *types.IdTagInfo
+		if args[2] != nil {
+			arg2 = args[2].(*types.IdTagInfo)
 		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
@@ -471,7 +511,7 @@ func (_c *MockLocalAuthList_UpdateTag_Call) Return(err error) *MockLocalAuthList
 	return _c
 }
 
-func (_c *MockLocalAuthList_UpdateTag_Call) RunAndReturn(run func(tagId string, tagInfo *types.IdTagInfo) error) *MockLocalAuthList_UpdateTag_Call {
+func (_c *MockLocalAuthList_UpdateTag_Call) RunAndReturn(run func(ctx context.Context, tagId string, tagInfo *types.IdTagInfo) error) *MockLocalAuthList_UpdateTag_Call {
 	_c.Call.Return(run)
 	return _c
 }

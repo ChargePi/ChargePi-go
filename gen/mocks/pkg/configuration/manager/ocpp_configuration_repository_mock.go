@@ -5,6 +5,8 @@
 package mock_manager
 
 import (
+	"context"
+
 	"github.com/ChargePi/ocppManager-go/ocpp_v16"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -37,8 +39,8 @@ func (_m *MockOcppConfigurationRepository) EXPECT() *MockOcppConfigurationReposi
 }
 
 // GeLatestOcppConfiguration provides a mock function for the type MockOcppConfigurationRepository
-func (_mock *MockOcppConfigurationRepository) GeLatestOcppConfiguration() (*ocpp_v16.Config, error) {
-	ret := _mock.Called()
+func (_mock *MockOcppConfigurationRepository) GeLatestOcppConfiguration(ctx context.Context) (*ocpp_v16.Config, error) {
+	ret := _mock.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GeLatestOcppConfiguration")
@@ -46,18 +48,18 @@ func (_mock *MockOcppConfigurationRepository) GeLatestOcppConfiguration() (*ocpp
 
 	var r0 *ocpp_v16.Config
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func() (*ocpp_v16.Config, error)); ok {
-		return returnFunc()
+	if returnFunc, ok := ret.Get(0).(func(context.Context) (*ocpp_v16.Config, error)); ok {
+		return returnFunc(ctx)
 	}
-	if returnFunc, ok := ret.Get(0).(func() *ocpp_v16.Config); ok {
-		r0 = returnFunc()
+	if returnFunc, ok := ret.Get(0).(func(context.Context) *ocpp_v16.Config); ok {
+		r0 = returnFunc(ctx)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*ocpp_v16.Config)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func() error); ok {
-		r1 = returnFunc()
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -70,13 +72,20 @@ type MockOcppConfigurationRepository_GeLatestOcppConfiguration_Call struct {
 }
 
 // GeLatestOcppConfiguration is a helper method to define mock.On call
-func (_e *MockOcppConfigurationRepository_Expecter) GeLatestOcppConfiguration() *MockOcppConfigurationRepository_GeLatestOcppConfiguration_Call {
-	return &MockOcppConfigurationRepository_GeLatestOcppConfiguration_Call{Call: _e.mock.On("GeLatestOcppConfiguration")}
+//   - ctx context.Context
+func (_e *MockOcppConfigurationRepository_Expecter) GeLatestOcppConfiguration(ctx interface{}) *MockOcppConfigurationRepository_GeLatestOcppConfiguration_Call {
+	return &MockOcppConfigurationRepository_GeLatestOcppConfiguration_Call{Call: _e.mock.On("GeLatestOcppConfiguration", ctx)}
 }
 
-func (_c *MockOcppConfigurationRepository_GeLatestOcppConfiguration_Call) Run(run func()) *MockOcppConfigurationRepository_GeLatestOcppConfiguration_Call {
+func (_c *MockOcppConfigurationRepository_GeLatestOcppConfiguration_Call) Run(run func(ctx context.Context)) *MockOcppConfigurationRepository_GeLatestOcppConfiguration_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run()
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -86,14 +95,14 @@ func (_c *MockOcppConfigurationRepository_GeLatestOcppConfiguration_Call) Return
 	return _c
 }
 
-func (_c *MockOcppConfigurationRepository_GeLatestOcppConfiguration_Call) RunAndReturn(run func() (*ocpp_v16.Config, error)) *MockOcppConfigurationRepository_GeLatestOcppConfiguration_Call {
+func (_c *MockOcppConfigurationRepository_GeLatestOcppConfiguration_Call) RunAndReturn(run func(ctx context.Context) (*ocpp_v16.Config, error)) *MockOcppConfigurationRepository_GeLatestOcppConfiguration_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetOcppConfiguration provides a mock function for the type MockOcppConfigurationRepository
-func (_mock *MockOcppConfigurationRepository) GetOcppConfiguration(version int) (*ocpp_v16.Config, error) {
-	ret := _mock.Called(version)
+func (_mock *MockOcppConfigurationRepository) GetOcppConfiguration(ctx context.Context, version int) (*ocpp_v16.Config, error) {
+	ret := _mock.Called(ctx, version)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetOcppConfiguration")
@@ -101,18 +110,18 @@ func (_mock *MockOcppConfigurationRepository) GetOcppConfiguration(version int) 
 
 	var r0 *ocpp_v16.Config
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(int) (*ocpp_v16.Config, error)); ok {
-		return returnFunc(version)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int) (*ocpp_v16.Config, error)); ok {
+		return returnFunc(ctx, version)
 	}
-	if returnFunc, ok := ret.Get(0).(func(int) *ocpp_v16.Config); ok {
-		r0 = returnFunc(version)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int) *ocpp_v16.Config); ok {
+		r0 = returnFunc(ctx, version)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*ocpp_v16.Config)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(int) error); ok {
-		r1 = returnFunc(version)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int) error); ok {
+		r1 = returnFunc(ctx, version)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -125,19 +134,25 @@ type MockOcppConfigurationRepository_GetOcppConfiguration_Call struct {
 }
 
 // GetOcppConfiguration is a helper method to define mock.On call
+//   - ctx context.Context
 //   - version int
-func (_e *MockOcppConfigurationRepository_Expecter) GetOcppConfiguration(version interface{}) *MockOcppConfigurationRepository_GetOcppConfiguration_Call {
-	return &MockOcppConfigurationRepository_GetOcppConfiguration_Call{Call: _e.mock.On("GetOcppConfiguration", version)}
+func (_e *MockOcppConfigurationRepository_Expecter) GetOcppConfiguration(ctx interface{}, version interface{}) *MockOcppConfigurationRepository_GetOcppConfiguration_Call {
+	return &MockOcppConfigurationRepository_GetOcppConfiguration_Call{Call: _e.mock.On("GetOcppConfiguration", ctx, version)}
 }
 
-func (_c *MockOcppConfigurationRepository_GetOcppConfiguration_Call) Run(run func(version int)) *MockOcppConfigurationRepository_GetOcppConfiguration_Call {
+func (_c *MockOcppConfigurationRepository_GetOcppConfiguration_Call) Run(run func(ctx context.Context, version int)) *MockOcppConfigurationRepository_GetOcppConfiguration_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 int
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(int)
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int
+		if args[1] != nil {
+			arg1 = args[1].(int)
 		}
 		run(
 			arg0,
+			arg1,
 		)
 	})
 	return _c
@@ -148,22 +163,22 @@ func (_c *MockOcppConfigurationRepository_GetOcppConfiguration_Call) Return(conf
 	return _c
 }
 
-func (_c *MockOcppConfigurationRepository_GetOcppConfiguration_Call) RunAndReturn(run func(version int) (*ocpp_v16.Config, error)) *MockOcppConfigurationRepository_GetOcppConfiguration_Call {
+func (_c *MockOcppConfigurationRepository_GetOcppConfiguration_Call) RunAndReturn(run func(ctx context.Context, version int) (*ocpp_v16.Config, error)) *MockOcppConfigurationRepository_GetOcppConfiguration_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // SetOcppConfiguration provides a mock function for the type MockOcppConfigurationRepository
-func (_mock *MockOcppConfigurationRepository) SetOcppConfiguration(config ocpp_v16.Config) error {
-	ret := _mock.Called(config)
+func (_mock *MockOcppConfigurationRepository) SetOcppConfiguration(ctx context.Context, config ocpp_v16.Config) error {
+	ret := _mock.Called(ctx, config)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SetOcppConfiguration")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(ocpp_v16.Config) error); ok {
-		r0 = returnFunc(config)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, ocpp_v16.Config) error); ok {
+		r0 = returnFunc(ctx, config)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -176,19 +191,25 @@ type MockOcppConfigurationRepository_SetOcppConfiguration_Call struct {
 }
 
 // SetOcppConfiguration is a helper method to define mock.On call
+//   - ctx context.Context
 //   - config ocpp_v16.Config
-func (_e *MockOcppConfigurationRepository_Expecter) SetOcppConfiguration(config interface{}) *MockOcppConfigurationRepository_SetOcppConfiguration_Call {
-	return &MockOcppConfigurationRepository_SetOcppConfiguration_Call{Call: _e.mock.On("SetOcppConfiguration", config)}
+func (_e *MockOcppConfigurationRepository_Expecter) SetOcppConfiguration(ctx interface{}, config interface{}) *MockOcppConfigurationRepository_SetOcppConfiguration_Call {
+	return &MockOcppConfigurationRepository_SetOcppConfiguration_Call{Call: _e.mock.On("SetOcppConfiguration", ctx, config)}
 }
 
-func (_c *MockOcppConfigurationRepository_SetOcppConfiguration_Call) Run(run func(config ocpp_v16.Config)) *MockOcppConfigurationRepository_SetOcppConfiguration_Call {
+func (_c *MockOcppConfigurationRepository_SetOcppConfiguration_Call) Run(run func(ctx context.Context, config ocpp_v16.Config)) *MockOcppConfigurationRepository_SetOcppConfiguration_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 ocpp_v16.Config
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(ocpp_v16.Config)
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 ocpp_v16.Config
+		if args[1] != nil {
+			arg1 = args[1].(ocpp_v16.Config)
 		}
 		run(
 			arg0,
+			arg1,
 		)
 	})
 	return _c
@@ -199,7 +220,7 @@ func (_c *MockOcppConfigurationRepository_SetOcppConfiguration_Call) Return(err 
 	return _c
 }
 
-func (_c *MockOcppConfigurationRepository_SetOcppConfiguration_Call) RunAndReturn(run func(config ocpp_v16.Config) error) *MockOcppConfigurationRepository_SetOcppConfiguration_Call {
+func (_c *MockOcppConfigurationRepository_SetOcppConfiguration_Call) RunAndReturn(run func(ctx context.Context, config ocpp_v16.Config) error) *MockOcppConfigurationRepository_SetOcppConfiguration_Call {
 	_c.Call.Return(run)
 	return _c
 }

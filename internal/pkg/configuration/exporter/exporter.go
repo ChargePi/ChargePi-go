@@ -2,9 +2,11 @@ package exporter
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -57,7 +59,7 @@ func NewExporter(
 func (i *ExporterImpl) ExportEVSESettings() ([]evse.Settings, error) {
 	i.logger.Debug("Exporting EVSE settings from the database")
 
-	evseSettings, err := i.evseSettingsRepository.GetEvseSettings()
+	evseSettings, err := i.evseSettingsRepository.GetEvseSettings(context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -80,9 +82,12 @@ func (i *ExporterImpl) ExportOcppConfiguration() (*ocpp_v16.Config, error) {
 }
 
 func (i *ExporterImpl) ExportLocalAuthList() (*list.LocalAuthListVersion, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
 	i.logger.Debug("Exporting Local auth list from the database")
 
-	tags, err := i.tagManager.GetTags()
+	tags, err := i.tagManager.GetTags(ctx)
 	if err != nil {
 		return nil, err
 	}

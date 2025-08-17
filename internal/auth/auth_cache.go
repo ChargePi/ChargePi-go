@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"errors"
 
 	"go.uber.org/zap"
@@ -14,11 +15,11 @@ import (
 
 type (
 	Cache interface {
-		AddTag(tagId string, tagInfo *types.IdTagInfo) error
-		GetTag(tagId string) (*types.IdTagInfo, error)
-		SetMaxCachedTags(number int)
-		RemoveCachedTags() error
-		RemoveTag(tagId string) error
+		AddTag(ctx context.Context, tagId string, tagInfo *types.IdTagInfo) error
+		GetTag(ctx context.Context, tagId string) (*types.IdTagInfo, error)
+		SetMaxCachedTags(ctx context.Context, number int)
+		RemoveCachedTags(ctx context.Context) error
+		RemoveTag(ctx context.Context, tagId string) error
 	}
 
 	cache struct {
@@ -29,11 +30,11 @@ type (
 )
 
 type TagRepository interface {
-	AddTag(tagId string, tagInfo *types.IdTagInfo) error
-	RemoveTag(tagId string) error
-	GetTag(tagId string) (*types.IdTagInfo, error)
-	GetTags() ([]*types.IdTagInfo, error)
-	RemoveAllTags() error
+	AddTag(ctx context.Context, tagId string, tagInfo *types.IdTagInfo) error
+	RemoveTag(ctx context.Context, tagId string) error
+	GetTag(ctx context.Context, tagId string) (*types.IdTagInfo, error)
+	GetTags(ctx context.Context) ([]*types.IdTagInfo, error)
+	RemoveAllTags(ctx context.Context) error
 	// RemoveExpiredTags() error
 }
 
@@ -47,7 +48,7 @@ func newAuthCache(logger *zap.Logger, repository TagRepository) *cache {
 }
 
 // AddTag Add a tag to the authorization cache.
-func (c *cache) AddTag(tagId string, tagInfo *types.IdTagInfo) error {
+func (c *cache) AddTag(ctx context.Context, tagId string, tagInfo *types.IdTagInfo) error {
 	logInfo := c.logger.With(zap.String("tagId", tagId))
 	logInfo.Debug("Adding a tag to cache")
 
@@ -65,7 +66,7 @@ func (c *cache) AddTag(tagId string, tagInfo *types.IdTagInfo) error {
 		return err
 	}
 
-	tags, err := c.repository.GetTags()
+	tags, err := c.repository.GetTags(ctx)
 	if err != nil {
 		logInfo.With(zap.Error(err)).Error("Error getting tags from cache")
 		return err
@@ -76,16 +77,16 @@ func (c *cache) AddTag(tagId string, tagInfo *types.IdTagInfo) error {
 	}
 
 	// Add a expectedTag if it doesn't exist in the cache.
-	return c.repository.AddTag(tagId, tagInfo)
+	return c.repository.AddTag(ctx, tagId, tagInfo)
 }
 
 // RemoveTag Remove a tag from the authorization cache.
-func (c *cache) RemoveTag(tagId string) error {
+func (c *cache) RemoveTag(ctx context.Context, tagId string) error {
 	logInfo := c.logger.With(zap.String("tagId", tagId))
 	logInfo.Debug("Removing a tag from cache")
 
 	// Remove a expectedTag if it exists in the cache.
-	err := c.repository.RemoveTag(tagId)
+	err := c.repository.RemoveTag(ctx, tagId)
 	if err != nil {
 		logInfo.With(zap.Error(err)).Error("Error removing tag from cache")
 		return err
@@ -95,11 +96,11 @@ func (c *cache) RemoveTag(tagId string) error {
 }
 
 // RemoveCachedTags Remove all tags from the authorization cache.
-func (c *cache) RemoveCachedTags() error {
+func (c *cache) RemoveCachedTags(ctx context.Context) error {
 	c.logger.Debug("Flushing auth cache")
 
 	// Remove all cached keys from database
-	err := c.repository.RemoveAllTags()
+	err := c.repository.RemoveAllTags(ctx)
 	if err != nil {
 		c.logger.With(zap.Error(err)).Error("Error flushing auth cache")
 		return err
@@ -109,7 +110,7 @@ func (c *cache) RemoveCachedTags() error {
 }
 
 // SetMaxCachedTags Set the maximum number of tags allowed in the authorization cache.
-func (c *cache) SetMaxCachedTags(number int) {
+func (c *cache) SetMaxCachedTags(ctx context.Context, number int) {
 	c.logger.Sugar().Debugf("Set max cached tags to %d", number)
 
 	if number > 0 {
@@ -118,9 +119,9 @@ func (c *cache) SetMaxCachedTags(number int) {
 }
 
 // GetTag Get a tag with id from the authorization cache.
-func (c *cache) GetTag(tagId string) (*types.IdTagInfo, error) {
+func (c *cache) GetTag(ctx context.Context, tagId string) (*types.IdTagInfo, error) {
 	logInfo := c.logger.With(zap.String("tagId", tagId))
 	logInfo.Info("Getting a tag from cache")
 
-	return c.repository.GetTag(tagId)
+	return c.repository.GetTag(ctx, tagId)
 }
