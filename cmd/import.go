@@ -2,10 +2,10 @@ package cmd
 
 import (
 	"fmt"
-	"go.uber.org/zap"
 
 	"github.com/ChargePi/ocpp-manager/ocpp_v16"
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
 
 	"github.com/ChargePi/ChargePi-go/internal/chargepoint"
 	"github.com/ChargePi/ChargePi-go/internal/pkg/badger"
