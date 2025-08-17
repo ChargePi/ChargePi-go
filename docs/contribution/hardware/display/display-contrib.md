@@ -13,10 +13,6 @@ import (
 	"github.com/ChargePi/ChargePi-go/internal/pkg/models/notifications"
 )
 
-const (
-	DriverHD44780 = "hd44780"
-)
-
 // Display is an abstraction layer for concrete implementation of a display.
 type Display interface {
 	DisplayMessage(message notifications.Message)

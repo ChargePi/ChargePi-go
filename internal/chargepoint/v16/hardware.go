@@ -3,29 +3,79 @@ package v16
 import (
 	"context"
 	"errors"
-	"go.uber.org/zap"
 	"strings"
 	"time"
 
-	"github.com/ChargePi/ChargePi-go/internal/pkg/util"
-	"github.com/ChargePi/ChargePi-go/pkg/indicator"
-	hardwareSettings "github.com/ChargePi/ChargePi-go/pkg/models/settings"
+	"go.uber.org/zap"
+
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
-	"github.com/lorenzodonini/ocpp-go/ocpp2.0.1/display"
+	displaMessages "github.com/lorenzodonini/ocpp-go/ocpp2.0.1/display"
+
+	"github.com/ChargePi/ChargePi-go/pkg/hardware/display"
+	"github.com/ChargePi/ChargePi-go/pkg/hardware/indicator"
+	"github.com/ChargePi/ChargePi-go/pkg/hardware/reader"
+	"github.com/ChargePi/ChargePi-go/pkg/util"
 )
 
-// DisplayMessage sends/shows a message on the display.
-func (cp *ChargePoint) DisplayMessage(message display.MessageInfo) error {
-	if util.IsNilInterfaceOrPointer(cp.display) {
-		cp.logger.Warn("Cannot send message to display, it is disabled or not configured")
+func (cp *ChargePoint) SetReader(reader reader.Reader) error {
+	if util.IsNilInterfaceOrPointer(reader) {
 		return nil
 	}
+
+	cp.logger.Debug("Setting reader")
+	cp.tagReader = reader
+	return nil
+}
+
+func (cp *ChargePoint) SetDisplay(display display.Display) error {
+	if util.IsNilInterfaceOrPointer(display) {
+		return nil
+	}
+
+	cp.logger.Debug("Setting display")
+	cp.display = display
+
+	err := cp.display.Clear()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (cp *ChargePoint) SetIndicator(indicator indicator.Indicator) error {
+	if util.IsNilInterfaceOrPointer(indicator) {
+		return nil
+	}
+
+	cp.logger.Debug("Setting indicator")
+	cp.indicator = indicator
+	return nil
+}
+
+// DisplayMessage displays a message without blocking the caller.
+func (cp *ChargePoint) DisplayMessage(message displaMessages.MessageInfo) error {
+	if util.IsNilInterfaceOrPointer(cp.display) {
+		cp.logger.Warn("Cannot send message to display, it is disabled or not configured")
+		return errors.New("display not configured")
+	}
+
+	logger := cp.logger.With(zap.Any("message", message))
+
+	logger.Debug("Displaying message")
+	go func() {
+		err := cp.display.DisplayMessage(message)
+		if err != nil {
+			cp.logger.With(zap.Error(err)).Error("Error displaying message")
+		}
+	}()
 
 	cp.logger.Sugar().Debugf("Sending message to display: %v", message)
 	go cp.display.DisplayMessage(message)
 	return nil
 }
 
+// indicateStatusChange Indicates a status change on the indicator.
 func (cp *ChargePoint) indicateStatusChange(connectorIndex int, status core.ChargePointStatus) {
 	logger := cp.logger.With(zap.Int("connector", connectorIndex+1))
 	if util.IsNilInterfaceOrPointer(cp.indicator) {
@@ -46,8 +96,8 @@ func (cp *ChargePoint) indicateStatusChange(connectorIndex int, status core.Char
 	}
 }
 
-// indicateCard Blinks the LED to indicate that the card was read.
-func (cp *ChargePoint) indicateCard(index int, color indicator.Color) {
+// indicateCardRead Blinks the LED to indicate that the card was read.
+func (cp *ChargePoint) indicateCardRead(index int, color indicator.Color) {
 	logger := cp.logger.With(zap.Int("connector", index+1))
 	if util.IsNilInterfaceOrPointer(cp.indicator) {
 		logger.Warn("Cannot indicate card read, disabled or not configured")
@@ -61,15 +111,17 @@ func (cp *ChargePoint) indicateCard(index int, color indicator.Color) {
 	}
 }
 
-// ListenForTag Listen for an RFID/NFC tag on a separate thread. If a tag is detected, call the HandleChargingRequest.
-// When the tag is read, blink the LED if indication is enabled.
-func (cp *ChargePoint) ListenForTag(ctx context.Context, tagChannel <-chan string) (*string, error) {
-	if util.IsNilInterfaceOrPointer(tagChannel) {
-		return nil, nil
+// ListenForTag Listen for an RFID/NFC tag in a separate goroutine.
+// If a tag is detected, it will return the tag ID, otherwise it will return an error.
+func (cp *ChargePoint) ListenForTag(ctx context.Context) (*string, error) {
+	if util.IsNilInterfaceOrPointer(cp.tagReader) {
+		return nil, errors.New("reader not configured")
 	}
 
-	if util.IsNilInterfaceOrPointer(cp.tagReader) {
-		return nil, nil
+	tagChannel := cp.tagReader.GetTagChannel()
+
+	if util.IsNilInterfaceOrPointer(tagChannel) {
+		return nil, errors.New("tag channel is nil")
 	}
 
 	go cp.tagReader.ListenForTags(ctx)
@@ -81,11 +133,6 @@ Listener:
 		select {
 		case tagId := <-tagChannel:
 			tagId = strings.ToUpper(tagId)
-
-			go func() {
-				// todo _ = cp.DisplayMessage(message)
-				cp.indicateCard(len(cp.evseManager.GetEVSEs()), indicator.White)
-			}()
 
 			return &tagId, nil
 		case <-ctx.Done():
@@ -99,8 +146,8 @@ Listener:
 	return nil, ctx.Err()
 }
 
-// colorMapping Maps a ChargePointStatus to a color based on the indicator mapping.
-func colorMapping(indicatorMapping hardwareSettings.IndicatorStatusMapping, status core.ChargePointStatus) (*indicator.Color, error) {
+// colorMapping maps a ChargePointStatus to a color based on the indicator mapping.
+func colorMapping(indicatorMapping indicator.StatusMapping, status core.ChargePointStatus) (*indicator.Color, error) {
 	var color indicator.Color
 	switch status {
 	case core.ChargePointStatusFaulted:

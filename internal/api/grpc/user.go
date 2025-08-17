@@ -4,17 +4,16 @@ import (
 	"context"
 
 	grpc "github.com/ChargePi/ChargePi-go/gen/proto/users/v1"
-	"github.com/ChargePi/ChargePi-go/internal/users/pkg/models"
-	"github.com/ChargePi/ChargePi-go/internal/users/service"
-	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/ChargePi/ChargePi-go/internal/users"
+	"github.com/ChargePi/ChargePi-go/internal/users/models"
 )
 
 type UserHandler struct {
 	grpc.UnimplementedUserServiceServer
-	userService service.Service
+	userService users.Service
 }
 
-func NewUserHandler(userService service.Service) *UserHandler {
+func NewUserHandler(userService users.Service) *UserHandler {
 	return &UserHandler{
 		userService: userService,
 	}
@@ -27,7 +26,7 @@ func (s *UserHandler) AddUser(ctx context.Context, user *grpc.AddUserRequest) (*
 
 	u := user.GetUser()
 
-	err := s.userService.AddUser(u.GetUsername(), u.GetPassword(), u.GetRole())
+	err := s.userService.AddUser(ctx, u.GetUsername(), u.GetPassword(), u.GetRole())
 	if err == nil {
 		response.Status = "Success"
 	}
@@ -36,7 +35,7 @@ func (s *UserHandler) AddUser(ctx context.Context, user *grpc.AddUserRequest) (*
 }
 
 func (s *UserHandler) GetUser(ctx context.Context, request *grpc.GetUserRequest) (*grpc.GetUserResponse, error) {
-	user, err := s.userService.GetUser(request.GetUsername())
+	user, err := s.userService.GetUser(ctx, request.GetUsername())
 	if err != nil {
 		return nil, err
 	}
@@ -46,10 +45,10 @@ func (s *UserHandler) GetUser(ctx context.Context, request *grpc.GetUserRequest)
 	}, nil
 }
 
-func (s *UserHandler) GetUsers(ctx context.Context, e *empty.Empty) (*grpc.GetUsersResponse, error) {
+func (s *UserHandler) GetUsers(ctx context.Context, req *grpc.GetUsersRequest) (*grpc.GetUsersResponse, error) {
 	response := &grpc.GetUsersResponse{}
 
-	getUsers, err := s.userService.GetUsers()
+	getUsers, err := s.userService.GetUsers(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +65,7 @@ func (s *UserHandler) RemoveUser(ctx context.Context, request *grpc.RemoveUserRe
 		Status: "Failed",
 	}
 
-	err := s.userService.DeleteUser(request.Username)
+	err := s.userService.DeleteUser(ctx, request.GetUsername())
 	if err == nil {
 		response.Status = "Success"
 	}
@@ -81,6 +80,6 @@ func toUser(user models.User) *grpc.User {
 	return &grpc.User{
 		Username: user.Username,
 		Password: user.Password,
-		Role:     user.Role,
+		Role:     string(user.Role),
 	}
 }

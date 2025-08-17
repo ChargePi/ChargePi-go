@@ -6,6 +6,10 @@ import (
 	"github.com/go-co-op/gocron"
 )
 
+type Scheduler interface {
+	// todo abstract
+}
+
 func NewScheduler() *gocron.Scheduler {
 	scheduler := gocron.NewScheduler(time.UTC)
 	// Set to execute jobs on first interval and not immediately

@@ -17,7 +17,7 @@ buf-format:
 	buf format -w
 
 go-fmt:
-	golangci-lint run --fix
+	golangci-lint fmt
 
 lint: buf-lint gci
 

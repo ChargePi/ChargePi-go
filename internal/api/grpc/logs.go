@@ -1,8 +1,9 @@
 package grpc
 
 import (
-	grpc "github.com/ChargePi/ChargePi-go/gen/proto/logs/v1"
 	"github.com/golang/protobuf/ptypes/empty"
+
+	grpc "github.com/ChargePi/ChargePi-go/gen/proto/logs/v1"
 )
 
 type LogHandler struct {

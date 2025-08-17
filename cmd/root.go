@@ -1,11 +1,17 @@
 package cmd
 
 import (
-	"github.com/ChargePi/ChargePi-go/internal/pkg/models/settings"
-	"github.com/ChargePi/ChargePi-go/pkg/observability/logging"
+	"context"
+	"os"
+	"os/signal"
+	"syscall"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
+
+	"github.com/ChargePi/ChargePi-go/internal/pkg/configuration"
+	"github.com/ChargePi/ChargePi-go/pkg/observability"
 )
 
 var rootCmd = &cobra.Command{
@@ -17,8 +23,7 @@ var rootCmd = &cobra.Command{
 
 func init() {
 	cobra.OnInitialize(func() {
-		logger := logging.SetupZap(settings.Logging{}, viper.GetBool(settings.Debug))
-		zap.ReplaceGlobals(logger)
+		observability.SetupLogger(viper.GetBool(configuration.Debug))
 	})
 
 	rootCmd.AddCommand(runCommand())
@@ -26,12 +31,15 @@ func init() {
 	rootCmd.AddCommand(exportCommand())
 	rootCmd.AddCommand(importCommand())
 
-	rootCmd.PersistentFlags().BoolP(settings.DebugFlag, "d", false, "debug mode")
-	_ = viper.BindPFlag(settings.Debug, rootCmd.PersistentFlags().Lookup(settings.DebugFlag))
+	rootCmd.PersistentFlags().BoolP(configuration.DebugFlag, "d", false, "debug mode")
+	_ = viper.BindPFlag(configuration.Debug, rootCmd.PersistentFlags().Lookup(configuration.DebugFlag))
 }
 
 func Execute() {
-	err := rootCmd.Execute()
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGKILL, syscall.SIGTERM)
+	defer cancel()
+
+	err := rootCmd.ExecuteContext(ctx)
 	if err != nil {
 		zap.L().Fatal("Unable to run", zap.Error(err))
 	}

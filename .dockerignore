@@ -8,7 +8,12 @@
 
 *.md
 .idea
+.run
 .github/
 build/
 docs/
 deployments/
+
+ui/node_modules
+ui/build
+ui/.next

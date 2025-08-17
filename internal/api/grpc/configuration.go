@@ -3,26 +3,29 @@ package grpc
 import (
 	"context"
 
-	commonv1 "github.com/ChargePi/ChargePi-go/gen/proto/common/v1"
-	configurationv1 "github.com/ChargePi/ChargePi-go/gen/proto/configuration/v1"
-	chargePoint "github.com/ChargePi/ChargePi-go/internal/pkg/models/charge-point"
-	cfg "github.com/ChargePi/ChargePi-go/internal/pkg/settings"
-	"github.com/ChargePi/ChargePi-go/pkg/display"
-	commonSettings "github.com/ChargePi/ChargePi-go/pkg/models/settings"
-	settings2 "github.com/ChargePi/ChargePi-go/pkg/models/settings"
-	"github.com/ChargePi/ocppManager-go/ocpp_v16"
+	"github.com/samber/lo"
+
+	"github.com/ChargePi/ocpp-manager/ocpp_v16"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"google.golang.org/protobuf/types/known/emptypb"
+
+	configurationv1 "github.com/ChargePi/ChargePi-go/gen/proto/configuration/v1"
+	chargePoint "github.com/ChargePi/ChargePi-go/internal/chargepoint"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/configuration/manager"
+	"github.com/ChargePi/ChargePi-go/pkg/hardware/display"
 )
 
 type ConfigurationHandler struct {
 	configurationv1.UnimplementedConfigurationServiceServer
-	settingsManager cfg.Manager
+	configurationv1.UnimplementedDisplayServiceServer
+	configurationv1.UnimplementedIndicatorServiceServer
+	configurationv1.UnimplementedTagReaderServiceServer
+	settingsManager manager.Manager
 	point           chargePoint.ChargePoint
 }
 
-func NewConfigurationHandler(settingsManager cfg.Manager) *ConfigurationHandler {
+func NewConfigurationHandler(settingsManager manager.Manager) *ConfigurationHandler {
 	return &ConfigurationHandler{
 		settingsManager: settingsManager,
 	}
@@ -58,19 +61,22 @@ func (s *ConfigurationHandler) SetDisplaySettings(ctx context.Context, request *
 func (s *ConfigurationHandler) GetDisplaySettings(ctx context.Context, empty *empty.Empty) (*configurationv1.GetDisplaySettingsResponse, error) {
 	response := &configurationv1.GetDisplaySettingsResponse{}
 
-	displaySettings := s.settingsManager.GetChargePointSettings().Hardware.Display
+	displaySettings, err := s.settingsManager.GetChargePointSettings()
+	if err != nil {
+		return nil, err
+	}
 
 	response.Display = &configurationv1.Display{
-		Type:     displaySettings.Driver,
-		Enabled:  displaySettings.IsEnabled,
-		Language: &displaySettings.Language,
+		Type:     displaySettings.Hardware.Display.Driver,
+		Enabled:  displaySettings.Hardware.Display.IsEnabled,
+		Language: &displaySettings.Hardware.Display.Language,
 		// I2C:      i2cSettings,
 	}
 
 	return response, nil
 }
 
-func (s *ChargePointHandler) SetReaderSettings(ctx context.Context, request *configurationv1.SetReaderSettingsRequest) (*configurationv1.SetReaderSettingsResponse, error) {
+func (s *ConfigurationHandler) SetReaderSettings(ctx context.Context, request *configurationv1.SetReaderSettingsRequest) (*configurationv1.SetReaderSettingsResponse, error) {
 	response := &configurationv1.SetReaderSettingsResponse{
 		Status: "Failed",
 	}
@@ -78,21 +84,24 @@ func (s *ChargePointHandler) SetReaderSettings(ctx context.Context, request *con
 	return response, nil
 }
 
-func (s *ChargePointHandler) GetReaderSettings(ctx context.Context, empty *empty.Empty) (*configurationv1.GetReaderSettingsResponse, error) {
+func (s *ConfigurationHandler) GetReaderSettings(ctx context.Context, empty *empty.Empty) (*configurationv1.GetReaderSettingsResponse, error) {
 	response := &configurationv1.GetReaderSettingsResponse{}
 
-	readerSettings := s.settingsManager.GetChargePointSettings().Hardware.TagReader
+	readerSettings, err := s.settingsManager.GetChargePointSettings()
+	if err != nil {
+		return nil, err
+	}
 
 	response.Reader = &configurationv1.Reader{
-		Type:    readerSettings.ReaderModel,
-		Enabled: readerSettings.IsEnabled,
+		Type:    readerSettings.Hardware.TagReader.ReaderModel,
+		Enabled: readerSettings.Hardware.TagReader.IsEnabled,
 		// DeviceAddress: readerSettings.Device,
 	}
 
 	return response, nil
 }
 
-func (s *ChargePointHandler) SetIndicatorSettings(ctx context.Context, request *configurationv1.SetIndicatorSettingsRequest) (*configurationv1.SetIndicatorSettingsResponse, error) {
+func (s *ConfigurationHandler) SetIndicatorSettings(ctx context.Context, request *configurationv1.SetIndicatorSettingsRequest) (*configurationv1.SetIndicatorSettingsResponse, error) {
 	response := &configurationv1.SetIndicatorSettingsResponse{
 		Status: "Failed",
 	}
@@ -100,15 +109,18 @@ func (s *ChargePointHandler) SetIndicatorSettings(ctx context.Context, request *
 	return response, nil
 }
 
-func (s *ChargePointHandler) GetIndicatorSettings(ctx context.Context, empty *empty.Empty) (*configurationv1.GetIndicatorSettingsResponse, error) {
+func (s *ConfigurationHandler) GetIndicatorSettings(ctx context.Context, empty *empty.Empty) (*configurationv1.GetIndicatorSettingsResponse, error) {
 	response := &configurationv1.GetIndicatorSettingsResponse{}
 
-	indicatorSettings := s.settingsManager.GetChargePointSettings().Hardware.Indicator
+	indicatorSettings, err := s.settingsManager.GetChargePointSettings()
+	if err != nil {
+		return nil, err
+	}
 
 	response.Indicator = &configurationv1.Indicator{
-		Type:             indicatorSettings.Type,
-		Enabled:          indicatorSettings.Enabled,
-		IndicateCardRead: &indicatorSettings.IndicateCardRead,
+		Type:             indicatorSettings.Hardware.Indicator.Type,
+		Enabled:          indicatorSettings.Hardware.Indicator.Enabled,
+		IndicateCardRead: &indicatorSettings.Hardware.Indicator.IndicateCardRead,
 		// Invert:           indicatorSettings.Invert,
 	}
 
@@ -118,8 +130,7 @@ func (s *ChargePointHandler) GetIndicatorSettings(ctx context.Context, empty *em
 func (s *ConfigurationHandler) GetVariables(ctx context.Context, e *emptypb.Empty) (*configurationv1.GetVariablesResponse, error) {
 	response := &configurationv1.GetVariablesResponse{}
 
-	// todo get the manager depending on the charge point ocpp version
-	configuration, err := s.settingsManager.GetOcppV16Manager().GetConfiguration()
+	configuration, err := s.settingsManager.GetConfiguration()
 	if err != nil {
 		return nil, err
 	}
@@ -137,8 +148,7 @@ func (s *ConfigurationHandler) SetVariables(ctx context.Context, request *config
 	for _, variable := range request.GetVariables() {
 		status := "Failed"
 
-		// todo get the manager depending on the charge point ocpp version
-		err := s.settingsManager.GetOcppV16Manager().UpdateKey(ocpp_v16.Key(variable.Key), variable.Value)
+		err := s.settingsManager.UpdateKey(ocpp_v16.Key(variable.GetKey()), lo.ToPtr(variable.GetValue()))
 		if err == nil {
 			status = "Success"
 		}
@@ -150,7 +160,7 @@ func (s *ConfigurationHandler) SetVariables(ctx context.Context, request *config
 }
 
 func (s *ConfigurationHandler) GetVariable(ctx context.Context, request *configurationv1.GetVariableRequest) (*configurationv1.GetVariableResponse, error) {
-	value, err := s.settingsManager.GetOcppV16Manager().GetConfigurationValue(ocpp_v16.Key(request.GetKey()))
+	value, err := s.settingsManager.GetConfigurationValue(ocpp_v16.Key(request.GetKey()))
 	if err != nil {
 		return nil, err
 	}
@@ -174,19 +184,11 @@ func toConfiguration(key core.ConfigurationKey) *configurationv1.OcppVariable {
 	}
 }
 
-func toDisplay(display *configurationv1.Display) settings2.Display {
-
-	return settings2.Display{
+func toDisplay(d *configurationv1.Display) display.Settings {
+	return display.Settings{
 		IsEnabled: false,
-		Driver:    display.Type,
-		Language:  *display.Language,
+		Driver:    d.GetType(),
+		Language:  d.GetLanguage(),
 		// I2C:       nil,
-	}
-}
-
-func toI2c(i2c commonSettings.I2C) *commonv1.I2C {
-	return &commonv1.I2C{
-		Address: i2c.Address,
-		Bus:     int32(i2c.Bus),
 	}
 }

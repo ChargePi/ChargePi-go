@@ -8,7 +8,7 @@ import (
 	"context"
 
 	"github.com/ChargePi/ChargePi-go/internal/evse"
-	"github.com/ChargePi/ChargePi-go/internal/pkg/models/notifications"
+	"github.com/ChargePi/ChargePi-go/internal/pkg/notifications"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	mock "github.com/stretchr/testify/mock"
@@ -98,6 +98,63 @@ func (_c *MockManager_AddEVSE_Call) RunAndReturn(run func(ctx context.Context, c
 	return _c
 }
 
+// AddEVSEFromSettings provides a mock function for the type MockManager
+func (_mock *MockManager) AddEVSEFromSettings(ctx context.Context, settings evse.Settings) error {
+	ret := _mock.Called(ctx, settings)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddEVSEFromSettings")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, evse.Settings) error); ok {
+		r0 = returnFunc(ctx, settings)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockManager_AddEVSEFromSettings_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddEVSEFromSettings'
+type MockManager_AddEVSEFromSettings_Call struct {
+	*mock.Call
+}
+
+// AddEVSEFromSettings is a helper method to define mock.On call
+//   - ctx context.Context
+//   - settings evse.Settings
+func (_e *MockManager_Expecter) AddEVSEFromSettings(ctx interface{}, settings interface{}) *MockManager_AddEVSEFromSettings_Call {
+	return &MockManager_AddEVSEFromSettings_Call{Call: _e.mock.On("AddEVSEFromSettings", ctx, settings)}
+}
+
+func (_c *MockManager_AddEVSEFromSettings_Call) Run(run func(ctx context.Context, settings evse.Settings)) *MockManager_AddEVSEFromSettings_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 evse.Settings
+		if args[1] != nil {
+			arg1 = args[1].(evse.Settings)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockManager_AddEVSEFromSettings_Call) Return(err error) *MockManager_AddEVSEFromSettings_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockManager_AddEVSEFromSettings_Call) RunAndReturn(run func(ctx context.Context, settings evse.Settings) error) *MockManager_AddEVSEFromSettings_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetAvailableEVSE provides a mock function for the type MockManager
 func (_mock *MockManager) GetAvailableEVSE() (evse.EVSE, error) {
 	ret := _mock.Called()
@@ -149,6 +206,74 @@ func (_c *MockManager_GetAvailableEVSE_Call) Return(eVSE evse.EVSE, err error) *
 }
 
 func (_c *MockManager_GetAvailableEVSE_Call) RunAndReturn(run func() (evse.EVSE, error)) *MockManager_GetAvailableEVSE_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetCurrentConsumption provides a mock function for the type MockManager
+func (_mock *MockManager) GetCurrentConsumption(evseId *int, connectorId *int) (*types.MeterValue, error) {
+	ret := _mock.Called(evseId, connectorId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCurrentConsumption")
+	}
+
+	var r0 *types.MeterValue
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(*int, *int) (*types.MeterValue, error)); ok {
+		return returnFunc(evseId, connectorId)
+	}
+	if returnFunc, ok := ret.Get(0).(func(*int, *int) *types.MeterValue); ok {
+		r0 = returnFunc(evseId, connectorId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*types.MeterValue)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(*int, *int) error); ok {
+		r1 = returnFunc(evseId, connectorId)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockManager_GetCurrentConsumption_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCurrentConsumption'
+type MockManager_GetCurrentConsumption_Call struct {
+	*mock.Call
+}
+
+// GetCurrentConsumption is a helper method to define mock.On call
+//   - evseId *int
+//   - connectorId *int
+func (_e *MockManager_Expecter) GetCurrentConsumption(evseId interface{}, connectorId interface{}) *MockManager_GetCurrentConsumption_Call {
+	return &MockManager_GetCurrentConsumption_Call{Call: _e.mock.On("GetCurrentConsumption", evseId, connectorId)}
+}
+
+func (_c *MockManager_GetCurrentConsumption_Call) Run(run func(evseId *int, connectorId *int)) *MockManager_GetCurrentConsumption_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 *int
+		if args[0] != nil {
+			arg0 = args[0].(*int)
+		}
+		var arg1 *int
+		if args[1] != nil {
+			arg1 = args[1].(*int)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockManager_GetCurrentConsumption_Call) Return(meterValue *types.MeterValue, err error) *MockManager_GetCurrentConsumption_Call {
+	_c.Call.Return(meterValue, err)
+	return _c
+}
+
+func (_c *MockManager_GetCurrentConsumption_Call) RunAndReturn(run func(evseId *int, connectorId *int) (*types.MeterValue, error)) *MockManager_GetCurrentConsumption_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -591,12 +716,12 @@ func (_c *MockManager_Reserve_Call) RunAndReturn(run func(evseId int, connectorI
 	return _c
 }
 
-// RestoreEVSEs provides a mock function for the type MockManager
-func (_mock *MockManager) RestoreEVSEs() error {
+// Shutdown provides a mock function for the type MockManager
+func (_mock *MockManager) Shutdown() error {
 	ret := _mock.Called()
 
 	if len(ret) == 0 {
-		panic("no return value specified for RestoreEVSEs")
+		panic("no return value specified for Shutdown")
 	}
 
 	var r0 error
@@ -608,110 +733,30 @@ func (_mock *MockManager) RestoreEVSEs() error {
 	return r0
 }
 
-// MockManager_RestoreEVSEs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RestoreEVSEs'
-type MockManager_RestoreEVSEs_Call struct {
+// MockManager_Shutdown_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Shutdown'
+type MockManager_Shutdown_Call struct {
 	*mock.Call
 }
 
-// RestoreEVSEs is a helper method to define mock.On call
-func (_e *MockManager_Expecter) RestoreEVSEs() *MockManager_RestoreEVSEs_Call {
-	return &MockManager_RestoreEVSEs_Call{Call: _e.mock.On("RestoreEVSEs")}
+// Shutdown is a helper method to define mock.On call
+func (_e *MockManager_Expecter) Shutdown() *MockManager_Shutdown_Call {
+	return &MockManager_Shutdown_Call{Call: _e.mock.On("Shutdown")}
 }
 
-func (_c *MockManager_RestoreEVSEs_Call) Run(run func()) *MockManager_RestoreEVSEs_Call {
+func (_c *MockManager_Shutdown_Call) Run(run func()) *MockManager_Shutdown_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run()
 	})
 	return _c
 }
 
-func (_c *MockManager_RestoreEVSEs_Call) Return(err error) *MockManager_RestoreEVSEs_Call {
+func (_c *MockManager_Shutdown_Call) Return(err error) *MockManager_Shutdown_Call {
 	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockManager_RestoreEVSEs_Call) RunAndReturn(run func() error) *MockManager_RestoreEVSEs_Call {
+func (_c *MockManager_Shutdown_Call) RunAndReturn(run func() error) *MockManager_Shutdown_Call {
 	_c.Call.Return(run)
-	return _c
-}
-
-// SetMeterValuesChannel provides a mock function for the type MockManager
-func (_mock *MockManager) SetMeterValuesChannel(notificationChannel chan notifications.MeterValueNotification) {
-	_mock.Called(notificationChannel)
-	return
-}
-
-// MockManager_SetMeterValuesChannel_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetMeterValuesChannel'
-type MockManager_SetMeterValuesChannel_Call struct {
-	*mock.Call
-}
-
-// SetMeterValuesChannel is a helper method to define mock.On call
-//   - notificationChannel chan notifications.MeterValueNotification
-func (_e *MockManager_Expecter) SetMeterValuesChannel(notificationChannel interface{}) *MockManager_SetMeterValuesChannel_Call {
-	return &MockManager_SetMeterValuesChannel_Call{Call: _e.mock.On("SetMeterValuesChannel", notificationChannel)}
-}
-
-func (_c *MockManager_SetMeterValuesChannel_Call) Run(run func(notificationChannel chan notifications.MeterValueNotification)) *MockManager_SetMeterValuesChannel_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 chan notifications.MeterValueNotification
-		if args[0] != nil {
-			arg0 = args[0].(chan notifications.MeterValueNotification)
-		}
-		run(
-			arg0,
-		)
-	})
-	return _c
-}
-
-func (_c *MockManager_SetMeterValuesChannel_Call) Return() *MockManager_SetMeterValuesChannel_Call {
-	_c.Call.Return()
-	return _c
-}
-
-func (_c *MockManager_SetMeterValuesChannel_Call) RunAndReturn(run func(notificationChannel chan notifications.MeterValueNotification)) *MockManager_SetMeterValuesChannel_Call {
-	_c.Run(run)
-	return _c
-}
-
-// SetNotificationChannel provides a mock function for the type MockManager
-func (_mock *MockManager) SetNotificationChannel(notificationChannel chan notifications.StatusNotification) {
-	_mock.Called(notificationChannel)
-	return
-}
-
-// MockManager_SetNotificationChannel_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetNotificationChannel'
-type MockManager_SetNotificationChannel_Call struct {
-	*mock.Call
-}
-
-// SetNotificationChannel is a helper method to define mock.On call
-//   - notificationChannel chan notifications.StatusNotification
-func (_e *MockManager_Expecter) SetNotificationChannel(notificationChannel interface{}) *MockManager_SetNotificationChannel_Call {
-	return &MockManager_SetNotificationChannel_Call{Call: _e.mock.On("SetNotificationChannel", notificationChannel)}
-}
-
-func (_c *MockManager_SetNotificationChannel_Call) Run(run func(notificationChannel chan notifications.StatusNotification)) *MockManager_SetNotificationChannel_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 chan notifications.StatusNotification
-		if args[0] != nil {
-			arg0 = args[0].(chan notifications.StatusNotification)
-		}
-		run(
-			arg0,
-		)
-	})
-	return _c
-}
-
-func (_c *MockManager_SetNotificationChannel_Call) Return() *MockManager_SetNotificationChannel_Call {
-	_c.Call.Return()
-	return _c
-}
-
-func (_c *MockManager_SetNotificationChannel_Call) RunAndReturn(run func(notificationChannel chan notifications.StatusNotification)) *MockManager_SetNotificationChannel_Call {
-	_c.Run(run)
 	return _c
 }
 
@@ -784,12 +829,12 @@ func (_c *MockManager_StartCharging_Call) RunAndReturn(run func(evseId int, conn
 	return _c
 }
 
-// StopAllEVSEs provides a mock function for the type MockManager
-func (_mock *MockManager) StopAllEVSEs(reason core.Reason) error {
+// StopAll provides a mock function for the type MockManager
+func (_mock *MockManager) StopAll(reason core.Reason) error {
 	ret := _mock.Called(reason)
 
 	if len(ret) == 0 {
-		panic("no return value specified for StopAllEVSEs")
+		panic("no return value specified for StopAll")
 	}
 
 	var r0 error
@@ -801,18 +846,18 @@ func (_mock *MockManager) StopAllEVSEs(reason core.Reason) error {
 	return r0
 }
 
-// MockManager_StopAllEVSEs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'StopAllEVSEs'
-type MockManager_StopAllEVSEs_Call struct {
+// MockManager_StopAll_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'StopAll'
+type MockManager_StopAll_Call struct {
 	*mock.Call
 }
 
-// StopAllEVSEs is a helper method to define mock.On call
+// StopAll is a helper method to define mock.On call
 //   - reason core.Reason
-func (_e *MockManager_Expecter) StopAllEVSEs(reason interface{}) *MockManager_StopAllEVSEs_Call {
-	return &MockManager_StopAllEVSEs_Call{Call: _e.mock.On("StopAllEVSEs", reason)}
+func (_e *MockManager_Expecter) StopAll(reason interface{}) *MockManager_StopAll_Call {
+	return &MockManager_StopAll_Call{Call: _e.mock.On("StopAll", reason)}
 }
 
-func (_c *MockManager_StopAllEVSEs_Call) Run(run func(reason core.Reason)) *MockManager_StopAllEVSEs_Call {
+func (_c *MockManager_StopAll_Call) Run(run func(reason core.Reason)) *MockManager_StopAll_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 core.Reason
 		if args[0] != nil {
@@ -825,12 +870,12 @@ func (_c *MockManager_StopAllEVSEs_Call) Run(run func(reason core.Reason)) *Mock
 	return _c
 }
 
-func (_c *MockManager_StopAllEVSEs_Call) Return(err error) *MockManager_StopAllEVSEs_Call {
+func (_c *MockManager_StopAll_Call) Return(err error) *MockManager_StopAll_Call {
 	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockManager_StopAllEVSEs_Call) RunAndReturn(run func(reason core.Reason) error) *MockManager_StopAllEVSEs_Call {
+func (_c *MockManager_StopAll_Call) RunAndReturn(run func(reason core.Reason) error) *MockManager_StopAll_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -894,6 +939,63 @@ func (_c *MockManager_StopCharging_Call) Return(err error) *MockManager_StopChar
 }
 
 func (_c *MockManager_StopCharging_Call) RunAndReturn(run func(evseId int, connectorId *int, reason core.Reason) error) *MockManager_StopCharging_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UnlockConnector provides a mock function for the type MockManager
+func (_mock *MockManager) UnlockConnector(evseId int, connectorId int) error {
+	ret := _mock.Called(evseId, connectorId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UnlockConnector")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(int, int) error); ok {
+		r0 = returnFunc(evseId, connectorId)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockManager_UnlockConnector_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UnlockConnector'
+type MockManager_UnlockConnector_Call struct {
+	*mock.Call
+}
+
+// UnlockConnector is a helper method to define mock.On call
+//   - evseId int
+//   - connectorId int
+func (_e *MockManager_Expecter) UnlockConnector(evseId interface{}, connectorId interface{}) *MockManager_UnlockConnector_Call {
+	return &MockManager_UnlockConnector_Call{Call: _e.mock.On("UnlockConnector", evseId, connectorId)}
+}
+
+func (_c *MockManager_UnlockConnector_Call) Run(run func(evseId int, connectorId int)) *MockManager_UnlockConnector_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 int
+		if args[0] != nil {
+			arg0 = args[0].(int)
+		}
+		var arg1 int
+		if args[1] != nil {
+			arg1 = args[1].(int)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockManager_UnlockConnector_Call) Return(err error) *MockManager_UnlockConnector_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockManager_UnlockConnector_Call) RunAndReturn(run func(evseId int, connectorId int) error) *MockManager_UnlockConnector_Call {
 	_c.Call.Return(run)
 	return _c
 }

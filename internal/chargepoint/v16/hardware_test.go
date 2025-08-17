@@ -1,13 +1,15 @@
 package v16
 
 import (
-	"go.uber.org/zap/zaptest"
 	"testing"
 	"time"
 
-	"github.com/ChargePi/ChargePi-go/pkg/indicator"
+	"go.uber.org/zap/zaptest"
+
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/ChargePi/ChargePi-go/pkg/hardware/indicator"
 )
 
 const (
@@ -44,11 +46,15 @@ func (s *hardwareTestSuite) TestDisplayLedStatus() {
 
 func (s *hardwareTestSuite) TestIndicateCard() {
 	// Ok indication
-	s.cp.indicateCard(1, indicator.White)
+	s.cp.indicateCardRead(1, indicator.White)
 
 	time.Sleep(time.Second)
 }
 
 func TestHardware(t *testing.T) {
 	suite.Run(t, new(hardwareTestSuite))
+}
+
+func Test_ColorMapping(t *testing.T) {
+
 }
