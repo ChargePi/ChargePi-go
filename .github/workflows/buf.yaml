@@ -1,4 +1,4 @@
-name: buf.yaml
+name: "Buf"
 on:
   pull_request:
     branches:
