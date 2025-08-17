@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"go.uber.org/zap/zaptest"
+
 	mock_display "github.com/ChargePi/ChargePi-go/gen/mocks/pkg/hardware/display"
 
 	"github.com/ChargePi/ChargePi-go/internal/display/i18n"
@@ -21,7 +23,7 @@ type displayManagerTestSuite struct {
 }
 
 func (s *displayManagerTestSuite) SetupSuite() {
-	manager, err := NewDisplayManager()
+	manager, err := NewDisplayManager(zaptest.NewLogger(s.T()))
 	s.Require().NoError(err)
 	s.manager = manager
 	s.displayMocks = make(map[string]*mock_display.MockDisplay)
@@ -69,7 +71,7 @@ func (s *displayManagerTestSuite) TestDisplayMessage() {
 }
 
 func (s *displayManagerTestSuite) TestStrategy() {
-	translator, err := i18n.NewTranslator(i18n.Settings{})
+	translator, err := i18n.NewTranslator(zaptest.NewLogger(s.T()), i18n.Settings{})
 	s.Require().NoError(err)
 
 	tests := []struct {

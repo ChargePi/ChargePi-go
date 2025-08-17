@@ -198,7 +198,7 @@ func (receiver *C5460A) readFromRegister(register int32) int32 {
 	_ = receiver.chipSelect.SetValue(0)
 
 	received := make([]byte, 32)
-	p := []spi.Packet{
+	packets := []spi.Packet{
 		{
 			W:      []byte{byte((ReadRegister) | register)},
 			KeepCS: true,
@@ -208,7 +208,7 @@ func (receiver *C5460A) readFromRegister(register int32) int32 {
 		},
 	}
 
-	err := receiver.spiConnection.TxPackets(p)
+	err := receiver.spiConnection.TxPackets(packets)
 	if err != nil {
 		receiver.logger.With(zap.Error(err)).Error("Cannot transmit to the power meter")
 	}

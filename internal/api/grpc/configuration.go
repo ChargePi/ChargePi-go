@@ -3,6 +3,8 @@ package grpc
 import (
 	"context"
 
+	"github.com/samber/lo"
+
 	"github.com/ChargePi/ocpp-manager/ocpp_v16"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
@@ -146,7 +148,7 @@ func (s *ConfigurationHandler) SetVariables(ctx context.Context, request *config
 	for _, variable := range request.GetVariables() {
 		status := "Failed"
 
-		err := s.settingsManager.UpdateKey(ocpp_v16.Key(variable.Key), variable.Value)
+		err := s.settingsManager.UpdateKey(ocpp_v16.Key(variable.GetKey()), lo.ToPtr(variable.GetValue()))
 		if err == nil {
 			status = "Success"
 		}
@@ -185,8 +187,8 @@ func toConfiguration(key core.ConfigurationKey) *configurationv1.OcppVariable {
 func toDisplay(d *configurationv1.Display) display.Settings {
 	return display.Settings{
 		IsEnabled: false,
-		Driver:    d.Type,
-		Language:  *d.Language,
+		Driver:    d.GetType(),
+		Language:  d.GetLanguage(),
 		// I2C:       nil,
 	}
 }

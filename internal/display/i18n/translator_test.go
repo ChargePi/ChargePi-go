@@ -3,6 +3,8 @@ package i18n
 import (
 	"testing"
 
+	"go.uber.org/zap/zaptest"
+
 	"github.com/stretchr/testify/suite"
 )
 
@@ -16,7 +18,7 @@ func (s *translatorTestSuite) SetupSuite() {
 		SupportedLanguages: []string{"en", "sl"},
 	}
 
-	translator, err := NewTranslator(settings)
+	translator, err := NewTranslator(zaptest.NewLogger(s.T()), settings)
 	s.Require().NoError(err)
 
 	s.translator = translator

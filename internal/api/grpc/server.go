@@ -141,7 +141,7 @@ func authMiddleware(logger *zap.Logger, userService users.Service) func(context.
 			return nil, status.Errorf(codes.Unauthenticated, "no basic header found: %v", err)
 		}
 
-		if userService.CheckPassword(token, token) {
+		if userService.CheckPassword(ctx, token, token) {
 			return nil, status.Errorf(codes.Unauthenticated, "invalid auth credentials: %v", err)
 		}
 

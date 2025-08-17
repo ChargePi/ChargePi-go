@@ -52,7 +52,7 @@ func (s *serviceTestSuite) TestGetUsers() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 
-			user, err := s.service.GetUsers()
+			user, err := s.service.GetUsers(nil)
 			s.Assert().NoError(err)
 			s.Assert().Equal(0, len(user))
 		})
@@ -92,7 +92,7 @@ func (s *serviceTestSuite) TestAddUser() {
 
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
-			err := s.service.AddUser(tt.username, tt.password, string(tt.role))
+			err := s.service.AddUser(nil, tt.username, tt.password, string(tt.role))
 			s.Assert().NoError(err)
 		})
 	}
@@ -127,7 +127,7 @@ func (s *serviceTestSuite) TestGetUser() {
 
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
-			user, err := s.service.GetUser("exampleUser")
+			user, err := s.service.GetUser(nil, "exampleUser")
 			if tt.err != nil {
 				s.Assert().Error(err)
 				s.Assert().ErrorIs(tt.err, err)
@@ -172,7 +172,7 @@ func (s *serviceTestSuite) TestUpdateUser() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// User exists
-			user, err := s.service.UpdateUser("", lo.ToPtr(""), lo.ToPtr(""))
+			user, err := s.service.UpdateUser(nil, "", lo.ToPtr(""), lo.ToPtr(""))
 			if tt.err != nil {
 				s.Assert().Error(err)
 				s.Assert().ErrorIs(tt.err, err)

@@ -1,6 +1,7 @@
 package users
 
 import (
+	"context"
 	"errors"
 
 	"go.uber.org/zap"
@@ -17,12 +18,12 @@ var (
 
 type (
 	Service interface {
-		GetUser(username string) (*models.User, error)
-		GetUsers() ([]models.User, error)
-		AddUser(username, password, role string) error
-		UpdateUser(username string, password, role *string) (*models.User, error)
-		DeleteUser(username string) error
-		CheckPassword(username, password string) bool
+		GetUser(ctx context.Context, username string) (*models.User, error)
+		GetUsers(ctx context.Context) ([]models.User, error)
+		AddUser(ctx context.Context, username, password, role string) error
+		UpdateUser(ctx context.Context, username string, password, role *string) (*models.User, error)
+		DeleteUser(ctx context.Context, username string) error
+		CheckPassword(ctx context.Context, username, password string) bool
 	}
 
 	UserService struct {
@@ -61,7 +62,7 @@ func NewUserService(logger *zap.Logger, db UserRepository) *UserService {
 	}
 }
 
-func (u *UserService) GetUser(username string) (*models.User, error) {
+func (u *UserService) GetUser(ctx context.Context, username string) (*models.User, error) {
 	u.logger.With(zap.String("user", username)).Info("Getting user")
 	// todo check for access
 
@@ -78,7 +79,7 @@ func (u *UserService) GetUser(username string) (*models.User, error) {
 	return user, nil
 }
 
-func (u *UserService) GetUsers() ([]models.User, error) {
+func (u *UserService) GetUsers(context.Context) ([]models.User, error) {
 	u.logger.Info("Getting users")
 	// todo check for access
 
@@ -90,7 +91,7 @@ func (u *UserService) GetUsers() ([]models.User, error) {
 	return u.database.GetUsers()
 }
 
-func (u *UserService) AddUser(username, password, role string) error {
+func (u *UserService) AddUser(ctx context.Context, username, password, role string) error {
 	u.logger.With(zap.String("user", username)).Info("Adding a user")
 
 	user := models.User{
@@ -121,7 +122,7 @@ func (u *UserService) AddUser(username, password, role string) error {
 	return u.database.AddUser(user)
 }
 
-func (u *UserService) UpdateUser(username string, password, role *string) (*models.User, error) {
+func (u *UserService) UpdateUser(ctx context.Context, username string, password, role *string) (*models.User, error) {
 	u.logger.With(zap.String("user", username)).Info("Updating a user")
 	// todo check for access
 
@@ -157,7 +158,7 @@ func (u *UserService) UpdateUser(username string, password, role *string) (*mode
 	return user, nil
 }
 
-func (u *UserService) DeleteUser(username string) error {
+func (u *UserService) DeleteUser(ctx context.Context, username string) error {
 	u.logger.With(zap.String("user", username)).Info("Deleting a user")
 	// todo check for access
 
@@ -169,7 +170,7 @@ func (u *UserService) DeleteUser(username string) error {
 	return u.database.DeleteUser(username)
 }
 
-func (u *UserService) CheckPassword(username, password string) bool {
+func (u *UserService) CheckPassword(ctx context.Context, username, password string) bool {
 	u.logger.With(zap.String("user", username)).Info("Checking user password")
 	user, err := u.database.GetUser(username)
 	if err != nil {

@@ -26,7 +26,7 @@ func (s *UserHandler) AddUser(ctx context.Context, user *grpc.AddUserRequest) (*
 
 	u := user.GetUser()
 
-	err := s.userService.AddUser(u.GetUsername(), u.GetPassword(), u.GetRole())
+	err := s.userService.AddUser(ctx, u.GetUsername(), u.GetPassword(), u.GetRole())
 	if err == nil {
 		response.Status = "Success"
 	}
@@ -35,7 +35,7 @@ func (s *UserHandler) AddUser(ctx context.Context, user *grpc.AddUserRequest) (*
 }
 
 func (s *UserHandler) GetUser(ctx context.Context, request *grpc.GetUserRequest) (*grpc.GetUserResponse, error) {
-	user, err := s.userService.GetUser(request.GetUsername())
+	user, err := s.userService.GetUser(ctx, request.GetUsername())
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func (s *UserHandler) GetUser(ctx context.Context, request *grpc.GetUserRequest)
 func (s *UserHandler) GetUsers(ctx context.Context, req *grpc.GetUsersRequest) (*grpc.GetUsersResponse, error) {
 	response := &grpc.GetUsersResponse{}
 
-	getUsers, err := s.userService.GetUsers()
+	getUsers, err := s.userService.GetUsers(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func (s *UserHandler) RemoveUser(ctx context.Context, request *grpc.RemoveUserRe
 		Status: "Failed",
 	}
 
-	err := s.userService.DeleteUser(request.Username)
+	err := s.userService.DeleteUser(ctx, request.GetUsername())
 	if err == nil {
 		response.Status = "Success"
 	}

@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"go.uber.org/zap/zaptest"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -19,7 +21,7 @@ type serviceTestSuite struct {
 }
 
 func (s *serviceTestSuite) SetupTest() {
-	service, err := NewService()
+	service, err := NewService(zaptest.NewLogger(s.T()))
 	s.Require().NoError(err)
 
 	s.service = service

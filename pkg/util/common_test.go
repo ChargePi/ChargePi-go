@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// nolint:all
+//nolint:all
 type exampleInterface interface {
 	ExampleMethod()
 }

@@ -55,7 +55,7 @@ func (s *AuthService) AddAuthorizedCards(ctx context.Context, request *tagsv1.Ad
 	response := &tagsv1.AddAuthorizedCardsResponse{Status: []string{}}
 
 	for _, tag := range request.GetAuthorizedCards() {
-		err := s.tagManager.CacheTag(tag.TagId, types.NewIdTagInfo(types.AuthorizationStatus(tag.Status)))
+		err := s.tagManager.CacheTag(tag.GetTagId(), types.NewIdTagInfo(types.AuthorizationStatus(tag.GetStatus())))
 		if err != nil {
 			response.Status = append(response.Status, "Failed")
 			continue

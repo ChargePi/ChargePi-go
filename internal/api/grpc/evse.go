@@ -32,8 +32,8 @@ func (s *EvseHandler) GetEVSEs(ctx context.Context, empty *empty.Empty) (*grpc.G
 	}
 
 	for _, e := range s.evseManager.GetEVSEs() {
-		evSe := toEvse(e)
-		response.Evses = append(response.Evses, evSe)
+		evseDto := toEvse(e)
+		response.Evses = append(response.Evses, evseDto)
 	}
 
 	return response, nil
@@ -68,7 +68,7 @@ func (s *EvseHandler) GetEVSE(ctx context.Context, request *grpc.GetEVSERequest)
 func (s *EvseHandler) SetEVCC(ctx context.Context, request *grpc.SetEVCCRequest) (*grpc.SetEVCCResponse, error) {
 	// todo
 
-	evse, err := s.evseManager.GetEVSE(int(request.EvseId))
+	evse, err := s.evseManager.GetEVSE(int(request.GetEvseId()))
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func (s *EvseHandler) SetPowerMeter(ctx context.Context, request *grpc.SetPowerM
 }
 
 func (s *EvseHandler) GetUsageForEVSE(request *grpc.GetUsageForEVSERequest, server grpc.EvseService_GetUsageForEVSEServer) error {
-	evseWithId, err := s.evseManager.GetEVSE(int(request.EvseId))
+	evseWithId, err := s.evseManager.GetEVSE(int(request.GetEvseId()))
 	if err != nil {
 		return err
 	}

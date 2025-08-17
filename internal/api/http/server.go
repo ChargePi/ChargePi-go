@@ -48,8 +48,10 @@ func NewServer(configuration Configuration) *Server {
 	return &Server{
 		router: ginRouter,
 		server: &http.Server{
-			Addr:    configuration.Address,
-			Handler: ginRouter.Handler(),
+			Addr:              configuration.Address,
+			Handler:           ginRouter.Handler(),
+			ReadHeaderTimeout: time.Second * 20,
+			ReadTimeout:       time.Second * 20,
 		},
 		logger: logger,
 	}
