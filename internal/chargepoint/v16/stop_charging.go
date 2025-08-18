@@ -1,6 +1,7 @@
 package v16
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"time"
@@ -17,19 +18,22 @@ import (
 )
 
 func (cp *ChargePoint) OnRemoteStopTransaction(request *core.RemoteStopTransactionRequest) (confirmation *core.RemoteStopTransactionConfirmation, err error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
 	logger := cp.logger.With(zap.Int("transactionId", request.TransactionId))
 	logger.Sugar().Infof("Received request %s", request.GetFeatureName())
 
 	response := types.RemoteStartStopStatusRejected
 	transactionId := fmt.Sprintf("%d", request.TransactionId)
 
-	session, fErr := cp.sessionService.GetSessionWithTransactionId(transactionId)
+	session, fErr := cp.sessionService.GetSessionWithTransactionId(ctx, transactionId)
 	if fErr == nil {
 		cp.logger.Info("Stopping transaction")
 		response = types.RemoteStartStopStatusAccepted
 
 		// Delay stopping the transaction by 3 seconds
-		_, schedulerErr := cp.scheduler.Every(3).Seconds().LimitRunsTo(1).Do(cp.StopCharging, session.EvseId, session.ConnectorId, core.ReasonRemote)
+		_, schedulerErr := cp.scheduler.Every(3).Seconds().LimitRunsTo(1).Do(cp.StopCharging, context.Background(), session.EvseId, session.ConnectorId, core.ReasonRemote)
 		if schedulerErr != nil {
 			cp.logger.With(zap.Error(err)).Error("Failed to schedule stop charging")
 			response = types.RemoteStartStopStatusRejected
@@ -40,17 +44,17 @@ func (cp *ChargePoint) OnRemoteStopTransaction(request *core.RemoteStopTransacti
 }
 
 // StopCharging Stops a transaction on the specified EVSE and connector. The reason for stopping the transaction should be provided.
-func (cp *ChargePoint) StopCharging(evseId, connectorId int, reason core.Reason) error {
+func (cp *ChargePoint) StopCharging(ctx context.Context, evseId, connectorId int, reason core.Reason) error {
 	cpEvse, err := cp.evseManager.GetEVSE(evseId)
 	if err != nil {
 		return err
 	}
 
-	return cp.stopChargingConnector(cpEvse, reason)
+	return cp.stopChargingConnector(ctx, cpEvse, reason)
 }
 
 // stopChargingConnector Stop charging a connector with the specified ID.
-func (cp *ChargePoint) stopChargingConnector(connector evse.EVSE, reason core.Reason) error {
+func (cp *ChargePoint) stopChargingConnector(ctx context.Context, connector evse.EVSE, reason core.Reason) error {
 	if util.IsNilInterfaceOrPointer(connector) {
 		return chargepoint.ErrConnectorNil
 	}
@@ -60,7 +64,7 @@ func (cp *ChargePoint) stopChargingConnector(connector evse.EVSE, reason core.Re
 	logger.Info("Stopping transaction")
 
 	// Check if the connector is already stopped
-	session, err := cp.sessionService.GetSession(evseId, nil)
+	session, err := cp.sessionService.GetSession(ctx, evseId, nil)
 	if err != nil {
 		return err
 	}
@@ -75,7 +79,7 @@ func (cp *ChargePoint) stopChargingConnector(connector evse.EVSE, reason core.Re
 	logger.Sugar().Infof("Stopped charging at %s", time.Now())
 
 	// Mark the session as stopped in the session manager
-	err = cp.sessionService.StopSession(evseId, nil, nil, &session.TransactionId)
+	err = cp.sessionService.StopSession(ctx, evseId, nil, nil, &session.TransactionId)
 	if err != nil {
 		logger.With(zap.Error(err)).Warn("Unable to stop session")
 	}

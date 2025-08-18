@@ -34,12 +34,6 @@ func (f *ftpUploader) Upload(ctx context.Context, stream []byte, location string
 		return err
 	}
 
-	// Set a default timeout if none is provided.
-	if f.settings.Timeout == nil {
-		defaultTimeout := 10 * time.Second
-		f.settings.Timeout = &defaultTimeout
-	}
-
 	// Connect to the FTP server
 	connection, err := ftp.Dial(
 		parse.Hostname(),

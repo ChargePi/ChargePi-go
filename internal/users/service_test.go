@@ -4,6 +4,8 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
+
 	"go.uber.org/zap/zaptest"
 
 	"github.com/samber/lo"
@@ -104,9 +106,9 @@ func (s *serviceTestSuite) TestGetUser() {
 		Password: "examplePassword",
 		Role:     models.Manufacturer,
 	}
-	s.mockRepository.EXPECT().GetUser("exampleUser").Return(validUser, nil)
-	s.mockRepository.EXPECT().GetUser("notFound").Return(nil, errors.New("user not found"))
-	s.mockRepository.EXPECT().GetUser("exampleUser1").Return(nil, errors.New("database error"))
+	s.mockRepository.EXPECT().GetUser(mock.Anything, "exampleUser").Return(validUser, nil)
+	s.mockRepository.EXPECT().GetUser(mock.Anything, "notFound").Return(nil, errors.New("user not found"))
+	s.mockRepository.EXPECT().GetUser(mock.Anything, "exampleUser1").Return(nil, errors.New("database error"))
 
 	tests := []struct {
 		name         string

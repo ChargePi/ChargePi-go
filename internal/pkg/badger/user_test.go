@@ -1,6 +1,7 @@
 package badger
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -68,12 +69,12 @@ func (s *userTestSuite) TestGetUser() {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// Setup
 			if tt.setupUser != nil {
-				err := s.db.AddUser(*tt.setupUser)
+				err := s.db.AddUser(context.Background(), *tt.setupUser)
 				s.Require().NoError(err)
 			}
 
 			// Execute
-			user, err := s.db.GetUser(tt.username)
+			user, err := s.db.GetUser(context.Background(), tt.username)
 
 			// Assert
 			if tt.expectError {
@@ -116,12 +117,12 @@ func (s *userTestSuite) TestGetUsers() {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// Setup
 			for _, user := range tt.setupUsers {
-				err := s.db.AddUser(user)
+				err := s.db.AddUser(context.Background(), user)
 				s.Require().NoError(err)
 			}
 
 			// Execute
-			users, err := s.db.GetUsers()
+			users, err := s.db.GetUsers(context.Background())
 
 			// Assert
 			s.NoError(err)
@@ -154,12 +155,12 @@ func (s *userTestSuite) TestAddUser() {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// Setup - add existing user for the second test case
 			if tt.errorType == ErrUserExists {
-				err := s.db.AddUser(tt.user)
+				err := s.db.AddUser(context.Background(), tt.user)
 				s.Require().NoError(err)
 			}
 
 			// Execute
-			err := s.db.AddUser(tt.user)
+			err := s.db.AddUser(context.Background(), tt.user)
 
 			// Assert
 			if tt.expectError {
@@ -171,7 +172,7 @@ func (s *userTestSuite) TestAddUser() {
 				s.NoError(err)
 
 				// Verify user was actually added
-				addedUser, err := s.db.GetUser(tt.user.Username)
+				addedUser, err := s.db.GetUser(context.Background(), tt.user.Username)
 				s.NoError(err)
 				s.Equal(tt.user.Username, addedUser.Username)
 				s.Equal(tt.user.Password, addedUser.Password)
@@ -208,12 +209,12 @@ func (s *userTestSuite) TestUpdateUser() {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// Setup
 			if tt.setupUser != nil {
-				err := s.db.AddUser(*tt.setupUser)
+				err := s.db.AddUser(context.Background(), *tt.setupUser)
 				s.Require().NoError(err)
 			}
 
 			// Execute
-			user, err := s.db.UpdateUser(tt.updateUser)
+			user, err := s.db.UpdateUser(context.Background(), tt.updateUser)
 
 			// Assert
 			if tt.expectError {
@@ -227,7 +228,7 @@ func (s *userTestSuite) TestUpdateUser() {
 				s.NotNil(user)
 
 				// Verify user was actually updated
-				updatedUser, err := s.db.GetUser(tt.updateUser.Username)
+				updatedUser, err := s.db.GetUser(context.Background(), tt.updateUser.Username)
 				s.NoError(err)
 				s.Equal(tt.updateUser.Username, updatedUser.Username)
 				s.Equal(tt.updateUser.Password, updatedUser.Password)
@@ -262,12 +263,12 @@ func (s *userTestSuite) TestDeleteUser() {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// Setup
 			if tt.setupUser != nil {
-				err := s.db.AddUser(*tt.setupUser)
+				err := s.db.AddUser(context.Background(), *tt.setupUser)
 				s.Require().NoError(err)
 			}
 
 			// Execute
-			err := s.db.DeleteUser(tt.username)
+			err := s.db.DeleteUser(context.Background(), tt.username)
 
 			// Assert
 			if tt.expectError {
@@ -277,7 +278,7 @@ func (s *userTestSuite) TestDeleteUser() {
 
 				// Verify user was actually deleted
 				if tt.setupUser != nil {
-					_, err := s.db.GetUser(tt.username)
+					_, err := s.db.GetUser(context.Background(), tt.username)
 					s.Error(err) // Should not exist anymore
 				}
 			}

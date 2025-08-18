@@ -108,12 +108,12 @@ type ChargePoint interface {
 	// Lifecycle APIs
 	Connect(ctx context.Context, serverUrl string) error
 	Cleanup(reason core.Reason) error
-	Reset(resetType string) error
+	Reset(ctx context.Context, resetType string) error
 	ApplyOpts(opts ...Options) error
 
 	// Core functionality
-	StartCharging(evseId, connectorId int, tagId string) error
-	StopCharging(evseId, connectorId int, reason core.Reason) error
+	StartCharging(ctx context.Context, evseId, connectorId int, tagId string) error
+	StopCharging(ctx context.Context, evseId, connectorId int, reason core.Reason) error
 	StartChargingFreeMode(evseId int) error
 	SetAvailability(availabilityType core.AvailabilityType) error
 

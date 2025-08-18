@@ -1,6 +1,7 @@
 package badger
 
 import (
+	"context"
 	"os"
 	"testing"
 	"time"
@@ -67,7 +68,7 @@ func (s *tagTestSuite) TestAddTagToAuthList() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// Execute
-			err := s.db.AddTagToAuthList(tt.tagId, tt.tagInfo)
+			err := s.db.AddTagToAuthList(context.Background(), tt.tagId, tt.tagInfo)
 
 			// Assert
 			if tt.expectError {
@@ -104,14 +105,14 @@ func (s *tagTestSuite) TestRemoveAuthListTag() {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// Setup
 			if tt.setupTag {
-				err := s.db.AddTagToAuthList(tt.tagId, &types.IdTagInfo{
+				err := s.db.AddTagToAuthList(context.Background(), tt.tagId, &types.IdTagInfo{
 					Status: types.AuthorizationStatusAccepted,
 				})
 				s.Require().NoError(err)
 			}
 
 			// Execute
-			err := s.db.RemoveAuthListTag(tt.tagId)
+			err := s.db.RemoveAuthListTag(context.Background(), tt.tagId)
 
 			// Assert
 			if tt.expectError {
@@ -151,12 +152,12 @@ func (s *tagTestSuite) TestGetLocalAuthListTag() {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// Setup
 			if tt.setupTag != nil {
-				err := s.db.AddTagToAuthList(tt.tagId, tt.setupTag)
+				err := s.db.AddTagToAuthList(context.Background(), tt.tagId, tt.setupTag)
 				s.Require().NoError(err)
 			}
 
 			// Execute
-			tagInfo, err := s.db.GetLocalAuthListTag(tt.tagId)
+			tagInfo, err := s.db.GetLocalAuthListTag(context.Background(), tt.tagId)
 
 			// Assert
 			if tt.expectError {
@@ -198,7 +199,7 @@ func (s *tagTestSuite) TestAddTag() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// Execute
-			err := s.db.AddTag(tt.tagId, tt.tagInfo)
+			err := s.db.AddTag(context.Background(), tt.tagId, tt.tagInfo)
 
 			// Assert
 			if tt.expectError {
@@ -235,14 +236,14 @@ func (s *tagTestSuite) TestRemoveTag() {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// Setup
 			if tt.setupTag {
-				err := s.db.AddTag(tt.tagId, &types.IdTagInfo{
+				err := s.db.AddTag(context.Background(), tt.tagId, &types.IdTagInfo{
 					Status: types.AuthorizationStatusAccepted,
 				})
 				s.Require().NoError(err)
 			}
 
 			// Execute
-			err := s.db.RemoveTag(tt.tagId)
+			err := s.db.RemoveTag(context.Background(), tt.tagId)
 
 			// Assert
 			if tt.expectError {
@@ -282,12 +283,12 @@ func (s *tagTestSuite) TestGetTag() {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// Setup
 			if tt.setupTag != nil {
-				err := s.db.AddTag(tt.tagId, tt.setupTag)
+				err := s.db.AddTag(context.Background(), tt.tagId, tt.setupTag)
 				s.Require().NoError(err)
 			}
 
 			// Execute
-			tagInfo, err := s.db.GetTag(tt.tagId)
+			tagInfo, err := s.db.GetTag(context.Background(), tt.tagId)
 
 			// Assert
 			if tt.expectError {
@@ -327,14 +328,14 @@ func (s *tagTestSuite) TestGetTags() {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// Setup
 			for _, tagId := range tt.setupTags {
-				err := s.db.AddTag(tagId, &types.IdTagInfo{
+				err := s.db.AddTag(context.Background(), tagId, &types.IdTagInfo{
 					Status: types.AuthorizationStatusAccepted,
 				})
 				s.Require().NoError(err)
 			}
 
 			// Execute
-			tags, err := s.db.GetTags()
+			tags, err := s.db.GetTags(context.Background())
 
 			// Assert
 			if tt.expectError {
@@ -344,7 +345,7 @@ func (s *tagTestSuite) TestGetTags() {
 				// Note: GetTags is not implemented yet, so this will panic
 				// This test will need to be updated when that method is implemented
 				s.Panics(func() {
-					_, _ = s.db.GetTags()
+					_, _ = s.db.GetTags(context.Background())
 				})
 			}
 		})
@@ -373,14 +374,14 @@ func (s *tagTestSuite) TestRemoveAllTags() {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// Setup
 			for _, tagId := range tt.setupTags {
-				err := s.db.AddTag(tagId, &types.IdTagInfo{
+				err := s.db.AddTag(context.Background(), tagId, &types.IdTagInfo{
 					Status: types.AuthorizationStatusAccepted,
 				})
 				s.Require().NoError(err)
 			}
 
 			// Execute
-			err := s.db.RemoveAllTags()
+			err := s.db.RemoveAllTags(context.Background())
 
 			// Assert
 			if tt.expectError {

@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"errors"
 
 	"go.uber.org/zap"
@@ -16,15 +17,15 @@ var (
 )
 
 type Service interface {
-	CacheTag(tagId string, tagInfo *types.IdTagInfo) error
-	GetTag(tagId string) (*types.IdTagInfo, error)
-	GetTags() ([]localauth.AuthorizationData, error)
-	RemoveTag(tagId string) error
-	ClearCache() error
-	SetMaxTags(number int)
+	CacheTag(ctx context.Context, tagId string, tagInfo *types.IdTagInfo) error
+	GetTag(ctx context.Context, tagId string) (*types.IdTagInfo, error)
+	GetTags(ctx context.Context) ([]localauth.AuthorizationData, error)
+	RemoveTag(ctx context.Context, tagId string) error
+	ClearCache(ctx context.Context) error
+	SetMaxTags(ctx context.Context, number int)
 	ToggleAuthCache(enabled bool)
 	ToggleLocalAuthList(enabled bool)
-	UpdateLocalAuthList(version int, updateType localauth.UpdateType, tags []localauth.AuthorizationData) error
+	UpdateLocalAuthList(ctx context.Context, version int, updateType localauth.UpdateType, tags []localauth.AuthorizationData) error
 	GetAuthListVersion() int
 }
 
@@ -52,11 +53,11 @@ func NewManager(logger *zap.Logger, localAuthRepository LocalAuthListRepository,
 }
 
 // CacheTag caches a tag in the auth cache, if enabled.
-func (t *ManagerV1) CacheTag(tagId string, tagInfo *types.IdTagInfo) error {
+func (t *ManagerV1) CacheTag(ctx context.Context, tagId string, tagInfo *types.IdTagInfo) error {
 	t.logger.With(zap.String("tagId", tagId)).Debug("Adding a tag to system")
 
 	if t.authCacheEnabled {
-		err := t.cache.AddTag(tagId, tagInfo)
+		err := t.cache.AddTag(ctx, tagId, tagInfo)
 		if err != nil {
 			return err
 		}
@@ -66,22 +67,22 @@ func (t *ManagerV1) CacheTag(tagId string, tagInfo *types.IdTagInfo) error {
 }
 
 // ClearCache clears the auth cache, if enabled.
-func (t *ManagerV1) ClearCache() error {
+func (t *ManagerV1) ClearCache(ctx context.Context) error {
 	t.logger.Debug("Clearing the tag cache")
 
 	if t.authCacheEnabled {
-		return t.cache.RemoveCachedTags()
+		return t.cache.RemoveCachedTags(ctx)
 	}
 
 	return ErrCacheDisabled
 }
 
 // SetMaxTags sets the maximum number of tags that can be cached.
-func (t *ManagerV1) SetMaxTags(number int) {
+func (t *ManagerV1) SetMaxTags(ctx context.Context, number int) {
 	t.logger.Debug("Setting the maximum number of stored tags")
 
 	if t.authCacheEnabled {
-		t.cache.SetMaxCachedTags(number)
+		t.cache.SetMaxCachedTags(ctx, number)
 	}
 
 	if t.localAuthListEnabled {
@@ -91,13 +92,13 @@ func (t *ManagerV1) SetMaxTags(number int) {
 
 // GetTag returns a tag with id from either the Local Auth List or the auth cache.
 // If both are disabled, an error is returned.
-func (t *ManagerV1) GetTag(tagId string) (*types.IdTagInfo, error) {
+func (t *ManagerV1) GetTag(ctx context.Context, tagId string) (*types.IdTagInfo, error) {
 	logger := t.logger.With(zap.String("tagId", tagId))
 
 	// Check the localAuthList first
 	if t.localAuthListEnabled {
 		logger.Info("Getting the tag from local auth list")
-		tag, err := t.authList.GetTag(tagId)
+		tag, err := t.authList.GetTag(ctx, tagId)
 		if err != nil {
 			goto CheckCache
 		}
@@ -109,21 +110,21 @@ CheckCache:
 	// Check the cache
 	if t.authCacheEnabled {
 		logger.Info("Getting the tag from cache")
-		return t.authList.GetTag(tagId)
+		return t.cache.GetTag(ctx, tagId)
 	}
 
 	return nil, ErrTagNotFound
 }
 
 // GetTags returns all tags from the local auth list.
-func (t *ManagerV1) GetTags() ([]localauth.AuthorizationData, error) {
+func (t *ManagerV1) GetTags(ctx context.Context) ([]localauth.AuthorizationData, error) {
 	t.logger.Debug("Getting all tags from local auth list")
 
 	if !t.localAuthListEnabled {
 		return nil, ErrLocalAuthListDisabled
 	}
 
-	return t.authList.GetTags()
+	return t.authList.GetTags(ctx)
 }
 
 // GetAuthListVersion returns the current version of the local auth list.
@@ -138,18 +139,18 @@ func (t *ManagerV1) GetAuthListVersion() int {
 }
 
 // RemoveTag removes a tag from the auth cache, if enabled.
-func (t *ManagerV1) RemoveTag(tagId string) error {
+func (t *ManagerV1) RemoveTag(ctx context.Context, tagId string) error {
 	t.logger.With(zap.String("tagId", tagId)).Debug("Removing a tag from system")
 
 	if !t.localAuthListEnabled {
 		return ErrLocalAuthListDisabled
 	}
 
-	return t.authList.RemoveTag(tagId)
+	return t.authList.RemoveTag(ctx, tagId)
 }
 
 // UpdateLocalAuthList updates the local auth list with the given tags.
-func (t *ManagerV1) UpdateLocalAuthList(version int, updateType localauth.UpdateType, tags []localauth.AuthorizationData) error {
+func (t *ManagerV1) UpdateLocalAuthList(ctx context.Context, version int, updateType localauth.UpdateType, tags []localauth.AuthorizationData) error {
 	t.logger.With(zap.Int("version", version), zap.String("updateType", string(updateType))).
 		Debug("Updating the local auth list")
 
@@ -161,16 +162,16 @@ func (t *ManagerV1) UpdateLocalAuthList(version int, updateType localauth.Update
 	case localauth.UpdateTypeDifferential:
 
 		for _, tag := range tags {
-			err := t.authList.UpdateTag(tag.IdTag, tag.IdTagInfo)
+			err := t.authList.UpdateTag(ctx, tag.IdTag, tag.IdTagInfo)
 			if err != nil {
 				return err
 			}
 		}
 
 	case localauth.UpdateTypeFull:
-		t.authList.RemoveAll()
+		t.authList.RemoveAll(ctx)
 		for _, tag := range tags {
-			err := t.authList.AddTag(tag.IdTag, tag.IdTagInfo)
+			err := t.authList.AddTag(ctx, tag.IdTag, tag.IdTagInfo)
 			if err != nil {
 				return err
 			}

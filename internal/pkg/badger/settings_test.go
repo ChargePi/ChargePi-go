@@ -1,6 +1,7 @@
 package badger
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -80,7 +81,7 @@ func (s *settingsTestSuite) TestSetEvseSettings() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// Execute
-			err := s.db.SetEvseSettings(tt.settings)
+			err := s.db.SetEvseSettings(context.Background(), tt.settings)
 
 			// Assert
 			s.NoError(err)
@@ -131,12 +132,12 @@ func (s *settingsTestSuite) TestGetEvseSettings() {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// Setup
 			if len(tt.setupSettings) > 0 {
-				err := s.db.SetEvseSettings(tt.setupSettings)
+				err := s.db.SetEvseSettings(nil, tt.setupSettings)
 				s.Require().NoError(err)
 			}
 
 			// Execute
-			settings, err := s.db.GetEvseSettings()
+			settings, err := s.db.GetEvseSettings(nil)
 
 			// Assert
 			s.NoError(err)
@@ -178,12 +179,12 @@ func (s *settingsTestSuite) TestGetSettings() {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// Setup
 			if tt.setupSettings != nil {
-				err := s.db.UpdateSettings(*tt.setupSettings)
+				err := s.db.UpdateSettings(context.Background(), *tt.setupSettings)
 				s.Require().NoError(err)
 			}
 
 			// Execute
-			settings, err := s.db.GetSettings()
+			settings, err := s.db.GetSettings(context.Background())
 
 			// Assert
 			if tt.expectError {
@@ -227,7 +228,7 @@ func (s *settingsTestSuite) TestUpdateSettings() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// Execute
-			err := s.db.UpdateSettings(tt.settings)
+			err := s.db.UpdateSettings(context.Background(), tt.settings)
 
 			// Assert
 			if tt.expectError {
@@ -236,7 +237,7 @@ func (s *settingsTestSuite) TestUpdateSettings() {
 				s.NoError(err)
 
 				// Verify settings were actually updated
-				updatedSettings, err := s.db.GetSettings()
+				updatedSettings, err := s.db.GetSettings(context.Background())
 				s.NoError(err)
 				s.NotNil(updatedSettings)
 				s.Equal(tt.settings.Info.Type, updatedSettings.Info.Type)
@@ -263,7 +264,7 @@ func (s *settingsTestSuite) TestGetOcppConfiguration() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// Execute
-			config, err := s.db.GetOcppConfiguration(tt.version)
+			config, err := s.db.GetOcppConfiguration(context.Background(), tt.version)
 
 			// Assert
 			if tt.expectError {
@@ -291,7 +292,7 @@ func (s *settingsTestSuite) TestGetLatestOcppConfiguration() {
 	for _, tt := range tests {
 		s.T().Run(tt.name, func(t *testing.T) {
 			// Execute
-			config, err := s.db.GeLatestOcppConfiguration()
+			config, err := s.db.GeLatestOcppConfiguration(context.Background())
 
 			// Assert
 			if tt.expectError {

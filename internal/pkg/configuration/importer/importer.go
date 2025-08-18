@@ -1,8 +1,10 @@
 package importer
 
 import (
+	"context"
 	"os"
 	"path/filepath"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -56,6 +58,8 @@ func NewImporter(
 
 func (i *ImporterImpl) ImportEVSESettings(settings []evse.Settings) error {
 	i.logger.Debug("Importing connectors to the database")
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
 
 	for _, setting := range settings {
 		// Validate the EVSE settings
@@ -66,7 +70,7 @@ func (i *ImporterImpl) ImportEVSESettings(settings []evse.Settings) error {
 	}
 
 	// Sync the settings to the database
-	return i.evseSettingsRepository.SetEvseSettings(settings)
+	return i.evseSettingsRepository.SetEvseSettings(ctx, settings)
 }
 
 func (i *ImporterImpl) ImportOcppConfiguration(version ocpp.ProtocolVersion, config ocpp_v16.Config) error {

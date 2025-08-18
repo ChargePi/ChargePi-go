@@ -5,6 +5,8 @@
 package mock_manager
 
 import (
+	"context"
+
 	"github.com/ChargePi/ChargePi-go/internal/evse"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -37,8 +39,8 @@ func (_m *MockEvseSettingsRepository) EXPECT() *MockEvseSettingsRepository_Expec
 }
 
 // GetEvseSettings provides a mock function for the type MockEvseSettingsRepository
-func (_mock *MockEvseSettingsRepository) GetEvseSettings() ([]evse.Settings, error) {
-	ret := _mock.Called()
+func (_mock *MockEvseSettingsRepository) GetEvseSettings(ctx context.Context) ([]evse.Settings, error) {
+	ret := _mock.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetEvseSettings")
@@ -46,18 +48,18 @@ func (_mock *MockEvseSettingsRepository) GetEvseSettings() ([]evse.Settings, err
 
 	var r0 []evse.Settings
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func() ([]evse.Settings, error)); ok {
-		return returnFunc()
+	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]evse.Settings, error)); ok {
+		return returnFunc(ctx)
 	}
-	if returnFunc, ok := ret.Get(0).(func() []evse.Settings); ok {
-		r0 = returnFunc()
+	if returnFunc, ok := ret.Get(0).(func(context.Context) []evse.Settings); ok {
+		r0 = returnFunc(ctx)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]evse.Settings)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func() error); ok {
-		r1 = returnFunc()
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -70,13 +72,20 @@ type MockEvseSettingsRepository_GetEvseSettings_Call struct {
 }
 
 // GetEvseSettings is a helper method to define mock.On call
-func (_e *MockEvseSettingsRepository_Expecter) GetEvseSettings() *MockEvseSettingsRepository_GetEvseSettings_Call {
-	return &MockEvseSettingsRepository_GetEvseSettings_Call{Call: _e.mock.On("GetEvseSettings")}
+//   - ctx context.Context
+func (_e *MockEvseSettingsRepository_Expecter) GetEvseSettings(ctx interface{}) *MockEvseSettingsRepository_GetEvseSettings_Call {
+	return &MockEvseSettingsRepository_GetEvseSettings_Call{Call: _e.mock.On("GetEvseSettings", ctx)}
 }
 
-func (_c *MockEvseSettingsRepository_GetEvseSettings_Call) Run(run func()) *MockEvseSettingsRepository_GetEvseSettings_Call {
+func (_c *MockEvseSettingsRepository_GetEvseSettings_Call) Run(run func(ctx context.Context)) *MockEvseSettingsRepository_GetEvseSettings_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run()
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -86,22 +95,22 @@ func (_c *MockEvseSettingsRepository_GetEvseSettings_Call) Return(settingss []ev
 	return _c
 }
 
-func (_c *MockEvseSettingsRepository_GetEvseSettings_Call) RunAndReturn(run func() ([]evse.Settings, error)) *MockEvseSettingsRepository_GetEvseSettings_Call {
+func (_c *MockEvseSettingsRepository_GetEvseSettings_Call) RunAndReturn(run func(ctx context.Context) ([]evse.Settings, error)) *MockEvseSettingsRepository_GetEvseSettings_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // SetEvseSettings provides a mock function for the type MockEvseSettingsRepository
-func (_mock *MockEvseSettingsRepository) SetEvseSettings(settingss []evse.Settings) error {
-	ret := _mock.Called(settingss)
+func (_mock *MockEvseSettingsRepository) SetEvseSettings(ctx context.Context, settings []evse.Settings) error {
+	ret := _mock.Called(ctx, settings)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SetEvseSettings")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func([]evse.Settings) error); ok {
-		r0 = returnFunc(settingss)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []evse.Settings) error); ok {
+		r0 = returnFunc(ctx, settings)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -114,19 +123,25 @@ type MockEvseSettingsRepository_SetEvseSettings_Call struct {
 }
 
 // SetEvseSettings is a helper method to define mock.On call
-//   - settingss []evse.Settings
-func (_e *MockEvseSettingsRepository_Expecter) SetEvseSettings(settingss interface{}) *MockEvseSettingsRepository_SetEvseSettings_Call {
-	return &MockEvseSettingsRepository_SetEvseSettings_Call{Call: _e.mock.On("SetEvseSettings", settingss)}
+//   - ctx context.Context
+//   - settings []evse.Settings
+func (_e *MockEvseSettingsRepository_Expecter) SetEvseSettings(ctx interface{}, settings interface{}) *MockEvseSettingsRepository_SetEvseSettings_Call {
+	return &MockEvseSettingsRepository_SetEvseSettings_Call{Call: _e.mock.On("SetEvseSettings", ctx, settings)}
 }
 
-func (_c *MockEvseSettingsRepository_SetEvseSettings_Call) Run(run func(settingss []evse.Settings)) *MockEvseSettingsRepository_SetEvseSettings_Call {
+func (_c *MockEvseSettingsRepository_SetEvseSettings_Call) Run(run func(ctx context.Context, settings []evse.Settings)) *MockEvseSettingsRepository_SetEvseSettings_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 []evse.Settings
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].([]evse.Settings)
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []evse.Settings
+		if args[1] != nil {
+			arg1 = args[1].([]evse.Settings)
 		}
 		run(
 			arg0,
+			arg1,
 		)
 	})
 	return _c
@@ -137,7 +152,7 @@ func (_c *MockEvseSettingsRepository_SetEvseSettings_Call) Return(err error) *Mo
 	return _c
 }
 
-func (_c *MockEvseSettingsRepository_SetEvseSettings_Call) RunAndReturn(run func(settingss []evse.Settings) error) *MockEvseSettingsRepository_SetEvseSettings_Call {
+func (_c *MockEvseSettingsRepository_SetEvseSettings_Call) RunAndReturn(run func(ctx context.Context, settings []evse.Settings) error) *MockEvseSettingsRepository_SetEvseSettings_Call {
 	_c.Call.Return(run)
 	return _c
 }

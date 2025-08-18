@@ -1,6 +1,8 @@
 package manager
 
 import (
+	"context"
+
 	"github.com/ChargePi/ocpp-manager/ocpp_v16"
 	"github.com/go-playground/validator/v10"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/core"
@@ -42,7 +44,7 @@ func NewManager(
 func (i *V1) GetChargePointSettings() (*chargepoint.Settings, error) {
 	i.logger.Debug("Getting charge point settings")
 
-	settings, err := i.settingsRepository.GetSettings()
+	settings, err := i.settingsRepository.GetSettings(context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +61,7 @@ func (i *V1) SetChargePointSettings(settings chargepoint.Settings) error {
 		return validationErr
 	}
 
-	return i.settingsRepository.UpdateSettings(settings)
+	return i.settingsRepository.UpdateSettings(context.Background(), settings)
 }
 
 func (i *V1) SetMandatoryKeys(mandatoryKeys []ocpp_v16.Key) error {

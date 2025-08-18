@@ -5,6 +5,8 @@
 package mock_sessions
 
 import (
+	"context"
+
 	"github.com/ChargePi/ChargePi-go/internal/sessions/models"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -37,16 +39,16 @@ func (_m *MockSessionRepository) EXPECT() *MockSessionRepository_Expecter {
 }
 
 // CreateSession provides a mock function for the type MockSessionRepository
-func (_mock *MockSessionRepository) CreateSession(session *models.Session) error {
-	ret := _mock.Called(session)
+func (_mock *MockSessionRepository) CreateSession(ctx context.Context, session *models.Session) error {
+	ret := _mock.Called(ctx, session)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateSession")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(*models.Session) error); ok {
-		r0 = returnFunc(session)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *models.Session) error); ok {
+		r0 = returnFunc(ctx, session)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -59,19 +61,25 @@ type MockSessionRepository_CreateSession_Call struct {
 }
 
 // CreateSession is a helper method to define mock.On call
+//   - ctx context.Context
 //   - session *models.Session
-func (_e *MockSessionRepository_Expecter) CreateSession(session interface{}) *MockSessionRepository_CreateSession_Call {
-	return &MockSessionRepository_CreateSession_Call{Call: _e.mock.On("CreateSession", session)}
+func (_e *MockSessionRepository_Expecter) CreateSession(ctx interface{}, session interface{}) *MockSessionRepository_CreateSession_Call {
+	return &MockSessionRepository_CreateSession_Call{Call: _e.mock.On("CreateSession", ctx, session)}
 }
 
-func (_c *MockSessionRepository_CreateSession_Call) Run(run func(session *models.Session)) *MockSessionRepository_CreateSession_Call {
+func (_c *MockSessionRepository_CreateSession_Call) Run(run func(ctx context.Context, session *models.Session)) *MockSessionRepository_CreateSession_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 *models.Session
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(*models.Session)
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *models.Session
+		if args[1] != nil {
+			arg1 = args[1].(*models.Session)
 		}
 		run(
 			arg0,
+			arg1,
 		)
 	})
 	return _c
@@ -82,14 +90,14 @@ func (_c *MockSessionRepository_CreateSession_Call) Return(err error) *MockSessi
 	return _c
 }
 
-func (_c *MockSessionRepository_CreateSession_Call) RunAndReturn(run func(session *models.Session) error) *MockSessionRepository_CreateSession_Call {
+func (_c *MockSessionRepository_CreateSession_Call) RunAndReturn(run func(ctx context.Context, session *models.Session) error) *MockSessionRepository_CreateSession_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetActiveSessions provides a mock function for the type MockSessionRepository
-func (_mock *MockSessionRepository) GetActiveSessions() ([]models.Session, error) {
-	ret := _mock.Called()
+func (_mock *MockSessionRepository) GetActiveSessions(ctx context.Context) ([]models.Session, error) {
+	ret := _mock.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetActiveSessions")
@@ -97,18 +105,18 @@ func (_mock *MockSessionRepository) GetActiveSessions() ([]models.Session, error
 
 	var r0 []models.Session
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func() ([]models.Session, error)); ok {
-		return returnFunc()
+	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]models.Session, error)); ok {
+		return returnFunc(ctx)
 	}
-	if returnFunc, ok := ret.Get(0).(func() []models.Session); ok {
-		r0 = returnFunc()
+	if returnFunc, ok := ret.Get(0).(func(context.Context) []models.Session); ok {
+		r0 = returnFunc(ctx)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]models.Session)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func() error); ok {
-		r1 = returnFunc()
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -121,13 +129,20 @@ type MockSessionRepository_GetActiveSessions_Call struct {
 }
 
 // GetActiveSessions is a helper method to define mock.On call
-func (_e *MockSessionRepository_Expecter) GetActiveSessions() *MockSessionRepository_GetActiveSessions_Call {
-	return &MockSessionRepository_GetActiveSessions_Call{Call: _e.mock.On("GetActiveSessions")}
+//   - ctx context.Context
+func (_e *MockSessionRepository_Expecter) GetActiveSessions(ctx interface{}) *MockSessionRepository_GetActiveSessions_Call {
+	return &MockSessionRepository_GetActiveSessions_Call{Call: _e.mock.On("GetActiveSessions", ctx)}
 }
 
-func (_c *MockSessionRepository_GetActiveSessions_Call) Run(run func()) *MockSessionRepository_GetActiveSessions_Call {
+func (_c *MockSessionRepository_GetActiveSessions_Call) Run(run func(ctx context.Context)) *MockSessionRepository_GetActiveSessions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run()
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -137,14 +152,14 @@ func (_c *MockSessionRepository_GetActiveSessions_Call) Return(sessions []models
 	return _c
 }
 
-func (_c *MockSessionRepository_GetActiveSessions_Call) RunAndReturn(run func() ([]models.Session, error)) *MockSessionRepository_GetActiveSessions_Call {
+func (_c *MockSessionRepository_GetActiveSessions_Call) RunAndReturn(run func(ctx context.Context) ([]models.Session, error)) *MockSessionRepository_GetActiveSessions_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetSession provides a mock function for the type MockSessionRepository
-func (_mock *MockSessionRepository) GetSession(evseId int, connectorId *int) (*models.Session, error) {
-	ret := _mock.Called(evseId, connectorId)
+func (_mock *MockSessionRepository) GetSession(ctx context.Context, evseId int, connectorId *int) (*models.Session, error) {
+	ret := _mock.Called(ctx, evseId, connectorId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetSession")
@@ -152,18 +167,18 @@ func (_mock *MockSessionRepository) GetSession(evseId int, connectorId *int) (*m
 
 	var r0 *models.Session
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(int, *int) (*models.Session, error)); ok {
-		return returnFunc(evseId, connectorId)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int, *int) (*models.Session, error)); ok {
+		return returnFunc(ctx, evseId, connectorId)
 	}
-	if returnFunc, ok := ret.Get(0).(func(int, *int) *models.Session); ok {
-		r0 = returnFunc(evseId, connectorId)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int, *int) *models.Session); ok {
+		r0 = returnFunc(ctx, evseId, connectorId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*models.Session)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(int, *int) error); ok {
-		r1 = returnFunc(evseId, connectorId)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int, *int) error); ok {
+		r1 = returnFunc(ctx, evseId, connectorId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -176,25 +191,31 @@ type MockSessionRepository_GetSession_Call struct {
 }
 
 // GetSession is a helper method to define mock.On call
+//   - ctx context.Context
 //   - evseId int
 //   - connectorId *int
-func (_e *MockSessionRepository_Expecter) GetSession(evseId interface{}, connectorId interface{}) *MockSessionRepository_GetSession_Call {
-	return &MockSessionRepository_GetSession_Call{Call: _e.mock.On("GetSession", evseId, connectorId)}
+func (_e *MockSessionRepository_Expecter) GetSession(ctx interface{}, evseId interface{}, connectorId interface{}) *MockSessionRepository_GetSession_Call {
+	return &MockSessionRepository_GetSession_Call{Call: _e.mock.On("GetSession", ctx, evseId, connectorId)}
 }
 
-func (_c *MockSessionRepository_GetSession_Call) Run(run func(evseId int, connectorId *int)) *MockSessionRepository_GetSession_Call {
+func (_c *MockSessionRepository_GetSession_Call) Run(run func(ctx context.Context, evseId int, connectorId *int)) *MockSessionRepository_GetSession_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 int
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(int)
+			arg0 = args[0].(context.Context)
 		}
-		var arg1 *int
+		var arg1 int
 		if args[1] != nil {
-			arg1 = args[1].(*int)
+			arg1 = args[1].(int)
+		}
+		var arg2 *int
+		if args[2] != nil {
+			arg2 = args[2].(*int)
 		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
@@ -205,14 +226,14 @@ func (_c *MockSessionRepository_GetSession_Call) Return(session *models.Session,
 	return _c
 }
 
-func (_c *MockSessionRepository_GetSession_Call) RunAndReturn(run func(evseId int, connectorId *int) (*models.Session, error)) *MockSessionRepository_GetSession_Call {
+func (_c *MockSessionRepository_GetSession_Call) RunAndReturn(run func(ctx context.Context, evseId int, connectorId *int) (*models.Session, error)) *MockSessionRepository_GetSession_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetSessionWithTagId provides a mock function for the type MockSessionRepository
-func (_mock *MockSessionRepository) GetSessionWithTagId(tagId string) (*models.Session, error) {
-	ret := _mock.Called(tagId)
+func (_mock *MockSessionRepository) GetSessionWithTagId(ctx context.Context, tagId string) (*models.Session, error) {
+	ret := _mock.Called(ctx, tagId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetSessionWithTagId")
@@ -220,18 +241,18 @@ func (_mock *MockSessionRepository) GetSessionWithTagId(tagId string) (*models.S
 
 	var r0 *models.Session
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(string) (*models.Session, error)); ok {
-		return returnFunc(tagId)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*models.Session, error)); ok {
+		return returnFunc(ctx, tagId)
 	}
-	if returnFunc, ok := ret.Get(0).(func(string) *models.Session); ok {
-		r0 = returnFunc(tagId)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *models.Session); ok {
+		r0 = returnFunc(ctx, tagId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*models.Session)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(string) error); ok {
-		r1 = returnFunc(tagId)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, tagId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -244,19 +265,25 @@ type MockSessionRepository_GetSessionWithTagId_Call struct {
 }
 
 // GetSessionWithTagId is a helper method to define mock.On call
+//   - ctx context.Context
 //   - tagId string
-func (_e *MockSessionRepository_Expecter) GetSessionWithTagId(tagId interface{}) *MockSessionRepository_GetSessionWithTagId_Call {
-	return &MockSessionRepository_GetSessionWithTagId_Call{Call: _e.mock.On("GetSessionWithTagId", tagId)}
+func (_e *MockSessionRepository_Expecter) GetSessionWithTagId(ctx interface{}, tagId interface{}) *MockSessionRepository_GetSessionWithTagId_Call {
+	return &MockSessionRepository_GetSessionWithTagId_Call{Call: _e.mock.On("GetSessionWithTagId", ctx, tagId)}
 }
 
-func (_c *MockSessionRepository_GetSessionWithTagId_Call) Run(run func(tagId string)) *MockSessionRepository_GetSessionWithTagId_Call {
+func (_c *MockSessionRepository_GetSessionWithTagId_Call) Run(run func(ctx context.Context, tagId string)) *MockSessionRepository_GetSessionWithTagId_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 string
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(string)
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
 		}
 		run(
 			arg0,
+			arg1,
 		)
 	})
 	return _c
@@ -267,14 +294,14 @@ func (_c *MockSessionRepository_GetSessionWithTagId_Call) Return(session *models
 	return _c
 }
 
-func (_c *MockSessionRepository_GetSessionWithTagId_Call) RunAndReturn(run func(tagId string) (*models.Session, error)) *MockSessionRepository_GetSessionWithTagId_Call {
+func (_c *MockSessionRepository_GetSessionWithTagId_Call) RunAndReturn(run func(ctx context.Context, tagId string) (*models.Session, error)) *MockSessionRepository_GetSessionWithTagId_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetSessionWithTransactionId provides a mock function for the type MockSessionRepository
-func (_mock *MockSessionRepository) GetSessionWithTransactionId(transactionId string) (*models.Session, error) {
-	ret := _mock.Called(transactionId)
+func (_mock *MockSessionRepository) GetSessionWithTransactionId(ctx context.Context, transactionId string) (*models.Session, error) {
+	ret := _mock.Called(ctx, transactionId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetSessionWithTransactionId")
@@ -282,18 +309,18 @@ func (_mock *MockSessionRepository) GetSessionWithTransactionId(transactionId st
 
 	var r0 *models.Session
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(string) (*models.Session, error)); ok {
-		return returnFunc(transactionId)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*models.Session, error)); ok {
+		return returnFunc(ctx, transactionId)
 	}
-	if returnFunc, ok := ret.Get(0).(func(string) *models.Session); ok {
-		r0 = returnFunc(transactionId)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *models.Session); ok {
+		r0 = returnFunc(ctx, transactionId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*models.Session)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(string) error); ok {
-		r1 = returnFunc(transactionId)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, transactionId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -306,19 +333,25 @@ type MockSessionRepository_GetSessionWithTransactionId_Call struct {
 }
 
 // GetSessionWithTransactionId is a helper method to define mock.On call
+//   - ctx context.Context
 //   - transactionId string
-func (_e *MockSessionRepository_Expecter) GetSessionWithTransactionId(transactionId interface{}) *MockSessionRepository_GetSessionWithTransactionId_Call {
-	return &MockSessionRepository_GetSessionWithTransactionId_Call{Call: _e.mock.On("GetSessionWithTransactionId", transactionId)}
+func (_e *MockSessionRepository_Expecter) GetSessionWithTransactionId(ctx interface{}, transactionId interface{}) *MockSessionRepository_GetSessionWithTransactionId_Call {
+	return &MockSessionRepository_GetSessionWithTransactionId_Call{Call: _e.mock.On("GetSessionWithTransactionId", ctx, transactionId)}
 }
 
-func (_c *MockSessionRepository_GetSessionWithTransactionId_Call) Run(run func(transactionId string)) *MockSessionRepository_GetSessionWithTransactionId_Call {
+func (_c *MockSessionRepository_GetSessionWithTransactionId_Call) Run(run func(ctx context.Context, transactionId string)) *MockSessionRepository_GetSessionWithTransactionId_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 string
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(string)
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
 		}
 		run(
 			arg0,
+			arg1,
 		)
 	})
 	return _c
@@ -329,14 +362,14 @@ func (_c *MockSessionRepository_GetSessionWithTransactionId_Call) Return(session
 	return _c
 }
 
-func (_c *MockSessionRepository_GetSessionWithTransactionId_Call) RunAndReturn(run func(transactionId string) (*models.Session, error)) *MockSessionRepository_GetSessionWithTransactionId_Call {
+func (_c *MockSessionRepository_GetSessionWithTransactionId_Call) RunAndReturn(run func(ctx context.Context, transactionId string) (*models.Session, error)) *MockSessionRepository_GetSessionWithTransactionId_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetSessions provides a mock function for the type MockSessionRepository
-func (_mock *MockSessionRepository) GetSessions() ([]models.Session, error) {
-	ret := _mock.Called()
+func (_mock *MockSessionRepository) GetSessions(ctx context.Context) ([]models.Session, error) {
+	ret := _mock.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetSessions")
@@ -344,18 +377,18 @@ func (_mock *MockSessionRepository) GetSessions() ([]models.Session, error) {
 
 	var r0 []models.Session
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func() ([]models.Session, error)); ok {
-		return returnFunc()
+	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]models.Session, error)); ok {
+		return returnFunc(ctx)
 	}
-	if returnFunc, ok := ret.Get(0).(func() []models.Session); ok {
-		r0 = returnFunc()
+	if returnFunc, ok := ret.Get(0).(func(context.Context) []models.Session); ok {
+		r0 = returnFunc(ctx)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]models.Session)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func() error); ok {
-		r1 = returnFunc()
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -368,13 +401,20 @@ type MockSessionRepository_GetSessions_Call struct {
 }
 
 // GetSessions is a helper method to define mock.On call
-func (_e *MockSessionRepository_Expecter) GetSessions() *MockSessionRepository_GetSessions_Call {
-	return &MockSessionRepository_GetSessions_Call{Call: _e.mock.On("GetSessions")}
+//   - ctx context.Context
+func (_e *MockSessionRepository_Expecter) GetSessions(ctx interface{}) *MockSessionRepository_GetSessions_Call {
+	return &MockSessionRepository_GetSessions_Call{Call: _e.mock.On("GetSessions", ctx)}
 }
 
-func (_c *MockSessionRepository_GetSessions_Call) Run(run func()) *MockSessionRepository_GetSessions_Call {
+func (_c *MockSessionRepository_GetSessions_Call) Run(run func(ctx context.Context)) *MockSessionRepository_GetSessions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run()
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -384,22 +424,22 @@ func (_c *MockSessionRepository_GetSessions_Call) Return(sessions []models.Sessi
 	return _c
 }
 
-func (_c *MockSessionRepository_GetSessions_Call) RunAndReturn(run func() ([]models.Session, error)) *MockSessionRepository_GetSessions_Call {
+func (_c *MockSessionRepository_GetSessions_Call) RunAndReturn(run func(ctx context.Context) ([]models.Session, error)) *MockSessionRepository_GetSessions_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // StopSession provides a mock function for the type MockSessionRepository
-func (_mock *MockSessionRepository) StopSession(transactionId string) error {
-	ret := _mock.Called(transactionId)
+func (_mock *MockSessionRepository) StopSession(ctx context.Context, transactionId string) error {
+	ret := _mock.Called(ctx, transactionId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for StopSession")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(string) error); ok {
-		r0 = returnFunc(transactionId)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = returnFunc(ctx, transactionId)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -412,19 +452,25 @@ type MockSessionRepository_StopSession_Call struct {
 }
 
 // StopSession is a helper method to define mock.On call
+//   - ctx context.Context
 //   - transactionId string
-func (_e *MockSessionRepository_Expecter) StopSession(transactionId interface{}) *MockSessionRepository_StopSession_Call {
-	return &MockSessionRepository_StopSession_Call{Call: _e.mock.On("StopSession", transactionId)}
+func (_e *MockSessionRepository_Expecter) StopSession(ctx interface{}, transactionId interface{}) *MockSessionRepository_StopSession_Call {
+	return &MockSessionRepository_StopSession_Call{Call: _e.mock.On("StopSession", ctx, transactionId)}
 }
 
-func (_c *MockSessionRepository_StopSession_Call) Run(run func(transactionId string)) *MockSessionRepository_StopSession_Call {
+func (_c *MockSessionRepository_StopSession_Call) Run(run func(ctx context.Context, transactionId string)) *MockSessionRepository_StopSession_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 string
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(string)
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
 		}
 		run(
 			arg0,
+			arg1,
 		)
 	})
 	return _c
@@ -435,22 +481,22 @@ func (_c *MockSessionRepository_StopSession_Call) Return(err error) *MockSession
 	return _c
 }
 
-func (_c *MockSessionRepository_StopSession_Call) RunAndReturn(run func(transactionId string) error) *MockSessionRepository_StopSession_Call {
+func (_c *MockSessionRepository_StopSession_Call) RunAndReturn(run func(ctx context.Context, transactionId string) error) *MockSessionRepository_StopSession_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateSession provides a mock function for the type MockSessionRepository
-func (_mock *MockSessionRepository) UpdateSession(session *models.Session) error {
-	ret := _mock.Called(session)
+func (_mock *MockSessionRepository) UpdateSession(ctx context.Context, session *models.Session) error {
+	ret := _mock.Called(ctx, session)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateSession")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(*models.Session) error); ok {
-		r0 = returnFunc(session)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *models.Session) error); ok {
+		r0 = returnFunc(ctx, session)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -463,19 +509,25 @@ type MockSessionRepository_UpdateSession_Call struct {
 }
 
 // UpdateSession is a helper method to define mock.On call
+//   - ctx context.Context
 //   - session *models.Session
-func (_e *MockSessionRepository_Expecter) UpdateSession(session interface{}) *MockSessionRepository_UpdateSession_Call {
-	return &MockSessionRepository_UpdateSession_Call{Call: _e.mock.On("UpdateSession", session)}
+func (_e *MockSessionRepository_Expecter) UpdateSession(ctx interface{}, session interface{}) *MockSessionRepository_UpdateSession_Call {
+	return &MockSessionRepository_UpdateSession_Call{Call: _e.mock.On("UpdateSession", ctx, session)}
 }
 
-func (_c *MockSessionRepository_UpdateSession_Call) Run(run func(session *models.Session)) *MockSessionRepository_UpdateSession_Call {
+func (_c *MockSessionRepository_UpdateSession_Call) Run(run func(ctx context.Context, session *models.Session)) *MockSessionRepository_UpdateSession_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 *models.Session
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(*models.Session)
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *models.Session
+		if args[1] != nil {
+			arg1 = args[1].(*models.Session)
 		}
 		run(
 			arg0,
+			arg1,
 		)
 	})
 	return _c
@@ -486,7 +538,7 @@ func (_c *MockSessionRepository_UpdateSession_Call) Return(err error) *MockSessi
 	return _c
 }
 
-func (_c *MockSessionRepository_UpdateSession_Call) RunAndReturn(run func(session *models.Session) error) *MockSessionRepository_UpdateSession_Call {
+func (_c *MockSessionRepository_UpdateSession_Call) RunAndReturn(run func(ctx context.Context, session *models.Session) error) *MockSessionRepository_UpdateSession_Call {
 	_c.Call.Return(run)
 	return _c
 }

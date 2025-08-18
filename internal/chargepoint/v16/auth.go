@@ -1,6 +1,7 @@
 package v16
 
 import (
+	"context"
 	"time"
 
 	"go.uber.org/zap"
@@ -56,7 +57,7 @@ func (cp *ChargePoint) preAuthorizeFromCache(tagId string) (bool, error) {
 	if localPreAuthorize != nil && *localPreAuthorize == "true" {
 		logger.Info("Preauthorizing tag with cache")
 
-		tag, err := cp.tagAuthService.GetTag(tagId)
+		tag, err := cp.tagAuthService.GetTag(context.Background(), tagId)
 		if err != nil {
 			return false, err
 		}
@@ -102,7 +103,7 @@ func (cp *ChargePoint) requestTagAuthorization(tagId string) (*types.IdTagInfo, 
 	}
 
 	// Cache the tag if the cache is enabled.
-	addErr := cp.tagAuthService.CacheTag(tagId, authInfo.IdTagInfo)
+	addErr := cp.tagAuthService.CacheTag(nil, tagId, authInfo.IdTagInfo)
 	if addErr != nil {
 		logger.Warn("Unable to add tag to authorization manager")
 	}
@@ -116,7 +117,7 @@ func (cp *ChargePoint) authorizeOffline(tagId string, logger *zap.Logger) (*type
 	localAuthOffline, _ := cp.settingsManager.GetConfigurationValue(ocpp_v16.LocalAuthorizeOffline)
 	if localAuthOffline != nil && *localAuthOffline == "true" {
 		logger.Warn("Offline authorization enabled, getting tag")
-		tag, err := cp.tagAuthService.GetTag(tagId)
+		tag, err := cp.tagAuthService.GetTag(context.Background(), tagId)
 		if err != nil {
 			return nil, err
 		}
@@ -146,7 +147,7 @@ func (cp *ChargePoint) checkTagValidity(tagId string, status types.Authorization
 			logger.Warn("Tag status invalid or expired, stopping any charging session with the tag")
 
 			// todo check the type of error - if not found, proceed without error
-			sessionId, err := cp.sessionService.GetSessionWithTagId(tagId)
+			sessionId, err := cp.sessionService.GetSessionWithTagId(context.Background(), tagId)
 			if err != nil {
 				return err
 			}
@@ -165,7 +166,10 @@ func (cp *ChargePoint) OnClearCache(request *core.ClearCacheRequest) (confirmati
 	cp.logger.Sugar().Infof("Received request %s", request.GetFeatureName())
 	response := core.ClearCacheStatusRejected
 
-	cacheErr := cp.tagAuthService.ClearCache()
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	cacheErr := cp.tagAuthService.ClearCache(ctx)
 	switch {
 	case cacheErr == nil:
 		cp.logger.Info("Cache cleared")

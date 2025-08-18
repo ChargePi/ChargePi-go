@@ -5,6 +5,8 @@
 package mock_auth
 
 import (
+	"context"
+
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -37,16 +39,16 @@ func (_m *MockCache) EXPECT() *MockCache_Expecter {
 }
 
 // AddTag provides a mock function for the type MockCache
-func (_mock *MockCache) AddTag(tagId string, tagInfo *types.IdTagInfo) error {
-	ret := _mock.Called(tagId, tagInfo)
+func (_mock *MockCache) AddTag(ctx context.Context, tagId string, tagInfo *types.IdTagInfo) error {
+	ret := _mock.Called(ctx, tagId, tagInfo)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddTag")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(string, *types.IdTagInfo) error); ok {
-		r0 = returnFunc(tagId, tagInfo)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *types.IdTagInfo) error); ok {
+		r0 = returnFunc(ctx, tagId, tagInfo)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -59,25 +61,31 @@ type MockCache_AddTag_Call struct {
 }
 
 // AddTag is a helper method to define mock.On call
+//   - ctx context.Context
 //   - tagId string
 //   - tagInfo *types.IdTagInfo
-func (_e *MockCache_Expecter) AddTag(tagId interface{}, tagInfo interface{}) *MockCache_AddTag_Call {
-	return &MockCache_AddTag_Call{Call: _e.mock.On("AddTag", tagId, tagInfo)}
+func (_e *MockCache_Expecter) AddTag(ctx interface{}, tagId interface{}, tagInfo interface{}) *MockCache_AddTag_Call {
+	return &MockCache_AddTag_Call{Call: _e.mock.On("AddTag", ctx, tagId, tagInfo)}
 }
 
-func (_c *MockCache_AddTag_Call) Run(run func(tagId string, tagInfo *types.IdTagInfo)) *MockCache_AddTag_Call {
+func (_c *MockCache_AddTag_Call) Run(run func(ctx context.Context, tagId string, tagInfo *types.IdTagInfo)) *MockCache_AddTag_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 string
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(string)
+			arg0 = args[0].(context.Context)
 		}
-		var arg1 *types.IdTagInfo
+		var arg1 string
 		if args[1] != nil {
-			arg1 = args[1].(*types.IdTagInfo)
+			arg1 = args[1].(string)
+		}
+		var arg2 *types.IdTagInfo
+		if args[2] != nil {
+			arg2 = args[2].(*types.IdTagInfo)
 		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
@@ -88,14 +96,14 @@ func (_c *MockCache_AddTag_Call) Return(err error) *MockCache_AddTag_Call {
 	return _c
 }
 
-func (_c *MockCache_AddTag_Call) RunAndReturn(run func(tagId string, tagInfo *types.IdTagInfo) error) *MockCache_AddTag_Call {
+func (_c *MockCache_AddTag_Call) RunAndReturn(run func(ctx context.Context, tagId string, tagInfo *types.IdTagInfo) error) *MockCache_AddTag_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetTag provides a mock function for the type MockCache
-func (_mock *MockCache) GetTag(tagId string) (*types.IdTagInfo, error) {
-	ret := _mock.Called(tagId)
+func (_mock *MockCache) GetTag(ctx context.Context, tagId string) (*types.IdTagInfo, error) {
+	ret := _mock.Called(ctx, tagId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetTag")
@@ -103,18 +111,18 @@ func (_mock *MockCache) GetTag(tagId string) (*types.IdTagInfo, error) {
 
 	var r0 *types.IdTagInfo
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(string) (*types.IdTagInfo, error)); ok {
-		return returnFunc(tagId)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*types.IdTagInfo, error)); ok {
+		return returnFunc(ctx, tagId)
 	}
-	if returnFunc, ok := ret.Get(0).(func(string) *types.IdTagInfo); ok {
-		r0 = returnFunc(tagId)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *types.IdTagInfo); ok {
+		r0 = returnFunc(ctx, tagId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*types.IdTagInfo)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(string) error); ok {
-		r1 = returnFunc(tagId)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, tagId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -127,19 +135,25 @@ type MockCache_GetTag_Call struct {
 }
 
 // GetTag is a helper method to define mock.On call
+//   - ctx context.Context
 //   - tagId string
-func (_e *MockCache_Expecter) GetTag(tagId interface{}) *MockCache_GetTag_Call {
-	return &MockCache_GetTag_Call{Call: _e.mock.On("GetTag", tagId)}
+func (_e *MockCache_Expecter) GetTag(ctx interface{}, tagId interface{}) *MockCache_GetTag_Call {
+	return &MockCache_GetTag_Call{Call: _e.mock.On("GetTag", ctx, tagId)}
 }
 
-func (_c *MockCache_GetTag_Call) Run(run func(tagId string)) *MockCache_GetTag_Call {
+func (_c *MockCache_GetTag_Call) Run(run func(ctx context.Context, tagId string)) *MockCache_GetTag_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 string
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(string)
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
 		}
 		run(
 			arg0,
+			arg1,
 		)
 	})
 	return _c
@@ -150,22 +164,22 @@ func (_c *MockCache_GetTag_Call) Return(idTagInfo *types.IdTagInfo, err error) *
 	return _c
 }
 
-func (_c *MockCache_GetTag_Call) RunAndReturn(run func(tagId string) (*types.IdTagInfo, error)) *MockCache_GetTag_Call {
+func (_c *MockCache_GetTag_Call) RunAndReturn(run func(ctx context.Context, tagId string) (*types.IdTagInfo, error)) *MockCache_GetTag_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RemoveCachedTags provides a mock function for the type MockCache
-func (_mock *MockCache) RemoveCachedTags() error {
-	ret := _mock.Called()
+func (_mock *MockCache) RemoveCachedTags(ctx context.Context) error {
+	ret := _mock.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveCachedTags")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func() error); ok {
-		r0 = returnFunc()
+	if returnFunc, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = returnFunc(ctx)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -178,13 +192,20 @@ type MockCache_RemoveCachedTags_Call struct {
 }
 
 // RemoveCachedTags is a helper method to define mock.On call
-func (_e *MockCache_Expecter) RemoveCachedTags() *MockCache_RemoveCachedTags_Call {
-	return &MockCache_RemoveCachedTags_Call{Call: _e.mock.On("RemoveCachedTags")}
+//   - ctx context.Context
+func (_e *MockCache_Expecter) RemoveCachedTags(ctx interface{}) *MockCache_RemoveCachedTags_Call {
+	return &MockCache_RemoveCachedTags_Call{Call: _e.mock.On("RemoveCachedTags", ctx)}
 }
 
-func (_c *MockCache_RemoveCachedTags_Call) Run(run func()) *MockCache_RemoveCachedTags_Call {
+func (_c *MockCache_RemoveCachedTags_Call) Run(run func(ctx context.Context)) *MockCache_RemoveCachedTags_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run()
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -194,22 +215,22 @@ func (_c *MockCache_RemoveCachedTags_Call) Return(err error) *MockCache_RemoveCa
 	return _c
 }
 
-func (_c *MockCache_RemoveCachedTags_Call) RunAndReturn(run func() error) *MockCache_RemoveCachedTags_Call {
+func (_c *MockCache_RemoveCachedTags_Call) RunAndReturn(run func(ctx context.Context) error) *MockCache_RemoveCachedTags_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RemoveTag provides a mock function for the type MockCache
-func (_mock *MockCache) RemoveTag(tagId string) error {
-	ret := _mock.Called(tagId)
+func (_mock *MockCache) RemoveTag(ctx context.Context, tagId string) error {
+	ret := _mock.Called(ctx, tagId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveTag")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(string) error); ok {
-		r0 = returnFunc(tagId)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = returnFunc(ctx, tagId)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -222,19 +243,25 @@ type MockCache_RemoveTag_Call struct {
 }
 
 // RemoveTag is a helper method to define mock.On call
+//   - ctx context.Context
 //   - tagId string
-func (_e *MockCache_Expecter) RemoveTag(tagId interface{}) *MockCache_RemoveTag_Call {
-	return &MockCache_RemoveTag_Call{Call: _e.mock.On("RemoveTag", tagId)}
+func (_e *MockCache_Expecter) RemoveTag(ctx interface{}, tagId interface{}) *MockCache_RemoveTag_Call {
+	return &MockCache_RemoveTag_Call{Call: _e.mock.On("RemoveTag", ctx, tagId)}
 }
 
-func (_c *MockCache_RemoveTag_Call) Run(run func(tagId string)) *MockCache_RemoveTag_Call {
+func (_c *MockCache_RemoveTag_Call) Run(run func(ctx context.Context, tagId string)) *MockCache_RemoveTag_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 string
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(string)
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
 		}
 		run(
 			arg0,
+			arg1,
 		)
 	})
 	return _c
@@ -245,14 +272,14 @@ func (_c *MockCache_RemoveTag_Call) Return(err error) *MockCache_RemoveTag_Call 
 	return _c
 }
 
-func (_c *MockCache_RemoveTag_Call) RunAndReturn(run func(tagId string) error) *MockCache_RemoveTag_Call {
+func (_c *MockCache_RemoveTag_Call) RunAndReturn(run func(ctx context.Context, tagId string) error) *MockCache_RemoveTag_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // SetMaxCachedTags provides a mock function for the type MockCache
-func (_mock *MockCache) SetMaxCachedTags(number int) {
-	_mock.Called(number)
+func (_mock *MockCache) SetMaxCachedTags(ctx context.Context, number int) {
+	_mock.Called(ctx, number)
 	return
 }
 
@@ -262,19 +289,25 @@ type MockCache_SetMaxCachedTags_Call struct {
 }
 
 // SetMaxCachedTags is a helper method to define mock.On call
+//   - ctx context.Context
 //   - number int
-func (_e *MockCache_Expecter) SetMaxCachedTags(number interface{}) *MockCache_SetMaxCachedTags_Call {
-	return &MockCache_SetMaxCachedTags_Call{Call: _e.mock.On("SetMaxCachedTags", number)}
+func (_e *MockCache_Expecter) SetMaxCachedTags(ctx interface{}, number interface{}) *MockCache_SetMaxCachedTags_Call {
+	return &MockCache_SetMaxCachedTags_Call{Call: _e.mock.On("SetMaxCachedTags", ctx, number)}
 }
 
-func (_c *MockCache_SetMaxCachedTags_Call) Run(run func(number int)) *MockCache_SetMaxCachedTags_Call {
+func (_c *MockCache_SetMaxCachedTags_Call) Run(run func(ctx context.Context, number int)) *MockCache_SetMaxCachedTags_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 int
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(int)
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int
+		if args[1] != nil {
+			arg1 = args[1].(int)
 		}
 		run(
 			arg0,
+			arg1,
 		)
 	})
 	return _c
@@ -285,7 +318,7 @@ func (_c *MockCache_SetMaxCachedTags_Call) Return() *MockCache_SetMaxCachedTags_
 	return _c
 }
 
-func (_c *MockCache_SetMaxCachedTags_Call) RunAndReturn(run func(number int)) *MockCache_SetMaxCachedTags_Call {
+func (_c *MockCache_SetMaxCachedTags_Call) RunAndReturn(run func(ctx context.Context, number int)) *MockCache_SetMaxCachedTags_Call {
 	_c.Run(run)
 	return _c
 }

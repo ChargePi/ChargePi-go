@@ -5,6 +5,8 @@
 package mock_auth
 
 import (
+	"context"
+
 	"github.com/ChargePi/ChargePi-go/internal/auth/list"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/localauth"
 	"github.com/lorenzodonini/ocpp-go/ocpp1.6/types"
@@ -39,16 +41,16 @@ func (_m *MockLocalAuthListRepository) EXPECT() *MockLocalAuthListRepository_Exp
 }
 
 // AddAuthList provides a mock function for the type MockLocalAuthListRepository
-func (_mock *MockLocalAuthListRepository) AddAuthList(localAuthListVersion list.LocalAuthListVersion) error {
-	ret := _mock.Called(localAuthListVersion)
+func (_mock *MockLocalAuthListRepository) AddAuthList(ctx context.Context, localAuthListVersion list.LocalAuthListVersion) error {
+	ret := _mock.Called(ctx, localAuthListVersion)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddAuthList")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(list.LocalAuthListVersion) error); ok {
-		r0 = returnFunc(localAuthListVersion)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, list.LocalAuthListVersion) error); ok {
+		r0 = returnFunc(ctx, localAuthListVersion)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -61,19 +63,25 @@ type MockLocalAuthListRepository_AddAuthList_Call struct {
 }
 
 // AddAuthList is a helper method to define mock.On call
+//   - ctx context.Context
 //   - localAuthListVersion list.LocalAuthListVersion
-func (_e *MockLocalAuthListRepository_Expecter) AddAuthList(localAuthListVersion interface{}) *MockLocalAuthListRepository_AddAuthList_Call {
-	return &MockLocalAuthListRepository_AddAuthList_Call{Call: _e.mock.On("AddAuthList", localAuthListVersion)}
+func (_e *MockLocalAuthListRepository_Expecter) AddAuthList(ctx interface{}, localAuthListVersion interface{}) *MockLocalAuthListRepository_AddAuthList_Call {
+	return &MockLocalAuthListRepository_AddAuthList_Call{Call: _e.mock.On("AddAuthList", ctx, localAuthListVersion)}
 }
 
-func (_c *MockLocalAuthListRepository_AddAuthList_Call) Run(run func(localAuthListVersion list.LocalAuthListVersion)) *MockLocalAuthListRepository_AddAuthList_Call {
+func (_c *MockLocalAuthListRepository_AddAuthList_Call) Run(run func(ctx context.Context, localAuthListVersion list.LocalAuthListVersion)) *MockLocalAuthListRepository_AddAuthList_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 list.LocalAuthListVersion
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(list.LocalAuthListVersion)
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 list.LocalAuthListVersion
+		if args[1] != nil {
+			arg1 = args[1].(list.LocalAuthListVersion)
 		}
 		run(
 			arg0,
+			arg1,
 		)
 	})
 	return _c
@@ -84,22 +92,22 @@ func (_c *MockLocalAuthListRepository_AddAuthList_Call) Return(err error) *MockL
 	return _c
 }
 
-func (_c *MockLocalAuthListRepository_AddAuthList_Call) RunAndReturn(run func(localAuthListVersion list.LocalAuthListVersion) error) *MockLocalAuthListRepository_AddAuthList_Call {
+func (_c *MockLocalAuthListRepository_AddAuthList_Call) RunAndReturn(run func(ctx context.Context, localAuthListVersion list.LocalAuthListVersion) error) *MockLocalAuthListRepository_AddAuthList_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // AddTagToAuthList provides a mock function for the type MockLocalAuthListRepository
-func (_mock *MockLocalAuthListRepository) AddTagToAuthList(tagId string, tagInfo *types.IdTagInfo) error {
-	ret := _mock.Called(tagId, tagInfo)
+func (_mock *MockLocalAuthListRepository) AddTagToAuthList(ctx context.Context, tagId string, tagInfo *types.IdTagInfo) error {
+	ret := _mock.Called(ctx, tagId, tagInfo)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddTagToAuthList")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(string, *types.IdTagInfo) error); ok {
-		r0 = returnFunc(tagId, tagInfo)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, *types.IdTagInfo) error); ok {
+		r0 = returnFunc(ctx, tagId, tagInfo)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -112,25 +120,31 @@ type MockLocalAuthListRepository_AddTagToAuthList_Call struct {
 }
 
 // AddTagToAuthList is a helper method to define mock.On call
+//   - ctx context.Context
 //   - tagId string
 //   - tagInfo *types.IdTagInfo
-func (_e *MockLocalAuthListRepository_Expecter) AddTagToAuthList(tagId interface{}, tagInfo interface{}) *MockLocalAuthListRepository_AddTagToAuthList_Call {
-	return &MockLocalAuthListRepository_AddTagToAuthList_Call{Call: _e.mock.On("AddTagToAuthList", tagId, tagInfo)}
+func (_e *MockLocalAuthListRepository_Expecter) AddTagToAuthList(ctx interface{}, tagId interface{}, tagInfo interface{}) *MockLocalAuthListRepository_AddTagToAuthList_Call {
+	return &MockLocalAuthListRepository_AddTagToAuthList_Call{Call: _e.mock.On("AddTagToAuthList", ctx, tagId, tagInfo)}
 }
 
-func (_c *MockLocalAuthListRepository_AddTagToAuthList_Call) Run(run func(tagId string, tagInfo *types.IdTagInfo)) *MockLocalAuthListRepository_AddTagToAuthList_Call {
+func (_c *MockLocalAuthListRepository_AddTagToAuthList_Call) Run(run func(ctx context.Context, tagId string, tagInfo *types.IdTagInfo)) *MockLocalAuthListRepository_AddTagToAuthList_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 string
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(string)
+			arg0 = args[0].(context.Context)
 		}
-		var arg1 *types.IdTagInfo
+		var arg1 string
 		if args[1] != nil {
-			arg1 = args[1].(*types.IdTagInfo)
+			arg1 = args[1].(string)
+		}
+		var arg2 *types.IdTagInfo
+		if args[2] != nil {
+			arg2 = args[2].(*types.IdTagInfo)
 		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
@@ -141,14 +155,14 @@ func (_c *MockLocalAuthListRepository_AddTagToAuthList_Call) Return(err error) *
 	return _c
 }
 
-func (_c *MockLocalAuthListRepository_AddTagToAuthList_Call) RunAndReturn(run func(tagId string, tagInfo *types.IdTagInfo) error) *MockLocalAuthListRepository_AddTagToAuthList_Call {
+func (_c *MockLocalAuthListRepository_AddTagToAuthList_Call) RunAndReturn(run func(ctx context.Context, tagId string, tagInfo *types.IdTagInfo) error) *MockLocalAuthListRepository_AddTagToAuthList_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetAuthListTagsForVersion provides a mock function for the type MockLocalAuthListRepository
-func (_mock *MockLocalAuthListRepository) GetAuthListTagsForVersion(version int) ([]localauth.AuthorizationData, error) {
-	ret := _mock.Called(version)
+func (_mock *MockLocalAuthListRepository) GetAuthListTagsForVersion(ctx context.Context, version int) ([]localauth.AuthorizationData, error) {
+	ret := _mock.Called(ctx, version)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetAuthListTagsForVersion")
@@ -156,18 +170,18 @@ func (_mock *MockLocalAuthListRepository) GetAuthListTagsForVersion(version int)
 
 	var r0 []localauth.AuthorizationData
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(int) ([]localauth.AuthorizationData, error)); ok {
-		return returnFunc(version)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int) ([]localauth.AuthorizationData, error)); ok {
+		return returnFunc(ctx, version)
 	}
-	if returnFunc, ok := ret.Get(0).(func(int) []localauth.AuthorizationData); ok {
-		r0 = returnFunc(version)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int) []localauth.AuthorizationData); ok {
+		r0 = returnFunc(ctx, version)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]localauth.AuthorizationData)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(int) error); ok {
-		r1 = returnFunc(version)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, int) error); ok {
+		r1 = returnFunc(ctx, version)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -180,19 +194,25 @@ type MockLocalAuthListRepository_GetAuthListTagsForVersion_Call struct {
 }
 
 // GetAuthListTagsForVersion is a helper method to define mock.On call
+//   - ctx context.Context
 //   - version int
-func (_e *MockLocalAuthListRepository_Expecter) GetAuthListTagsForVersion(version interface{}) *MockLocalAuthListRepository_GetAuthListTagsForVersion_Call {
-	return &MockLocalAuthListRepository_GetAuthListTagsForVersion_Call{Call: _e.mock.On("GetAuthListTagsForVersion", version)}
+func (_e *MockLocalAuthListRepository_Expecter) GetAuthListTagsForVersion(ctx interface{}, version interface{}) *MockLocalAuthListRepository_GetAuthListTagsForVersion_Call {
+	return &MockLocalAuthListRepository_GetAuthListTagsForVersion_Call{Call: _e.mock.On("GetAuthListTagsForVersion", ctx, version)}
 }
 
-func (_c *MockLocalAuthListRepository_GetAuthListTagsForVersion_Call) Run(run func(version int)) *MockLocalAuthListRepository_GetAuthListTagsForVersion_Call {
+func (_c *MockLocalAuthListRepository_GetAuthListTagsForVersion_Call) Run(run func(ctx context.Context, version int)) *MockLocalAuthListRepository_GetAuthListTagsForVersion_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 int
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(int)
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int
+		if args[1] != nil {
+			arg1 = args[1].(int)
 		}
 		run(
 			arg0,
+			arg1,
 		)
 	})
 	return _c
@@ -203,14 +223,14 @@ func (_c *MockLocalAuthListRepository_GetAuthListTagsForVersion_Call) Return(aut
 	return _c
 }
 
-func (_c *MockLocalAuthListRepository_GetAuthListTagsForVersion_Call) RunAndReturn(run func(version int) ([]localauth.AuthorizationData, error)) *MockLocalAuthListRepository_GetAuthListTagsForVersion_Call {
+func (_c *MockLocalAuthListRepository_GetAuthListTagsForVersion_Call) RunAndReturn(run func(ctx context.Context, version int) ([]localauth.AuthorizationData, error)) *MockLocalAuthListRepository_GetAuthListTagsForVersion_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetLocalAuthListTag provides a mock function for the type MockLocalAuthListRepository
-func (_mock *MockLocalAuthListRepository) GetLocalAuthListTag(tagId string) (*types.IdTagInfo, error) {
-	ret := _mock.Called(tagId)
+func (_mock *MockLocalAuthListRepository) GetLocalAuthListTag(ctx context.Context, tagId string) (*types.IdTagInfo, error) {
+	ret := _mock.Called(ctx, tagId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetLocalAuthListTag")
@@ -218,18 +238,18 @@ func (_mock *MockLocalAuthListRepository) GetLocalAuthListTag(tagId string) (*ty
 
 	var r0 *types.IdTagInfo
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(string) (*types.IdTagInfo, error)); ok {
-		return returnFunc(tagId)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*types.IdTagInfo, error)); ok {
+		return returnFunc(ctx, tagId)
 	}
-	if returnFunc, ok := ret.Get(0).(func(string) *types.IdTagInfo); ok {
-		r0 = returnFunc(tagId)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *types.IdTagInfo); ok {
+		r0 = returnFunc(ctx, tagId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*types.IdTagInfo)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(string) error); ok {
-		r1 = returnFunc(tagId)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, tagId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -242,19 +262,25 @@ type MockLocalAuthListRepository_GetLocalAuthListTag_Call struct {
 }
 
 // GetLocalAuthListTag is a helper method to define mock.On call
+//   - ctx context.Context
 //   - tagId string
-func (_e *MockLocalAuthListRepository_Expecter) GetLocalAuthListTag(tagId interface{}) *MockLocalAuthListRepository_GetLocalAuthListTag_Call {
-	return &MockLocalAuthListRepository_GetLocalAuthListTag_Call{Call: _e.mock.On("GetLocalAuthListTag", tagId)}
+func (_e *MockLocalAuthListRepository_Expecter) GetLocalAuthListTag(ctx interface{}, tagId interface{}) *MockLocalAuthListRepository_GetLocalAuthListTag_Call {
+	return &MockLocalAuthListRepository_GetLocalAuthListTag_Call{Call: _e.mock.On("GetLocalAuthListTag", ctx, tagId)}
 }
 
-func (_c *MockLocalAuthListRepository_GetLocalAuthListTag_Call) Run(run func(tagId string)) *MockLocalAuthListRepository_GetLocalAuthListTag_Call {
+func (_c *MockLocalAuthListRepository_GetLocalAuthListTag_Call) Run(run func(ctx context.Context, tagId string)) *MockLocalAuthListRepository_GetLocalAuthListTag_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 string
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(string)
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
 		}
 		run(
 			arg0,
+			arg1,
 		)
 	})
 	return _c
@@ -265,14 +291,14 @@ func (_c *MockLocalAuthListRepository_GetLocalAuthListTag_Call) Return(idTagInfo
 	return _c
 }
 
-func (_c *MockLocalAuthListRepository_GetLocalAuthListTag_Call) RunAndReturn(run func(tagId string) (*types.IdTagInfo, error)) *MockLocalAuthListRepository_GetLocalAuthListTag_Call {
+func (_c *MockLocalAuthListRepository_GetLocalAuthListTag_Call) RunAndReturn(run func(ctx context.Context, tagId string) (*types.IdTagInfo, error)) *MockLocalAuthListRepository_GetLocalAuthListTag_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetLocalAuthListTags provides a mock function for the type MockLocalAuthListRepository
-func (_mock *MockLocalAuthListRepository) GetLocalAuthListTags() ([]localauth.AuthorizationData, error) {
-	ret := _mock.Called()
+func (_mock *MockLocalAuthListRepository) GetLocalAuthListTags(ctx context.Context) ([]localauth.AuthorizationData, error) {
+	ret := _mock.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetLocalAuthListTags")
@@ -280,18 +306,18 @@ func (_mock *MockLocalAuthListRepository) GetLocalAuthListTags() ([]localauth.Au
 
 	var r0 []localauth.AuthorizationData
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func() ([]localauth.AuthorizationData, error)); ok {
-		return returnFunc()
+	if returnFunc, ok := ret.Get(0).(func(context.Context) ([]localauth.AuthorizationData, error)); ok {
+		return returnFunc(ctx)
 	}
-	if returnFunc, ok := ret.Get(0).(func() []localauth.AuthorizationData); ok {
-		r0 = returnFunc()
+	if returnFunc, ok := ret.Get(0).(func(context.Context) []localauth.AuthorizationData); ok {
+		r0 = returnFunc(ctx)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]localauth.AuthorizationData)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func() error); ok {
-		r1 = returnFunc()
+	if returnFunc, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = returnFunc(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -304,13 +330,20 @@ type MockLocalAuthListRepository_GetLocalAuthListTags_Call struct {
 }
 
 // GetLocalAuthListTags is a helper method to define mock.On call
-func (_e *MockLocalAuthListRepository_Expecter) GetLocalAuthListTags() *MockLocalAuthListRepository_GetLocalAuthListTags_Call {
-	return &MockLocalAuthListRepository_GetLocalAuthListTags_Call{Call: _e.mock.On("GetLocalAuthListTags")}
+//   - ctx context.Context
+func (_e *MockLocalAuthListRepository_Expecter) GetLocalAuthListTags(ctx interface{}) *MockLocalAuthListRepository_GetLocalAuthListTags_Call {
+	return &MockLocalAuthListRepository_GetLocalAuthListTags_Call{Call: _e.mock.On("GetLocalAuthListTags", ctx)}
 }
 
-func (_c *MockLocalAuthListRepository_GetLocalAuthListTags_Call) Run(run func()) *MockLocalAuthListRepository_GetLocalAuthListTags_Call {
+func (_c *MockLocalAuthListRepository_GetLocalAuthListTags_Call) Run(run func(ctx context.Context)) *MockLocalAuthListRepository_GetLocalAuthListTags_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run()
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -320,22 +353,22 @@ func (_c *MockLocalAuthListRepository_GetLocalAuthListTags_Call) Return(authoriz
 	return _c
 }
 
-func (_c *MockLocalAuthListRepository_GetLocalAuthListTags_Call) RunAndReturn(run func() ([]localauth.AuthorizationData, error)) *MockLocalAuthListRepository_GetLocalAuthListTags_Call {
+func (_c *MockLocalAuthListRepository_GetLocalAuthListTags_Call) RunAndReturn(run func(ctx context.Context) ([]localauth.AuthorizationData, error)) *MockLocalAuthListRepository_GetLocalAuthListTags_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RemoveAuthListAllTagsForVersion provides a mock function for the type MockLocalAuthListRepository
-func (_mock *MockLocalAuthListRepository) RemoveAuthListAllTagsForVersion(version int) error {
-	ret := _mock.Called(version)
+func (_mock *MockLocalAuthListRepository) RemoveAuthListAllTagsForVersion(ctx context.Context, version int) error {
+	ret := _mock.Called(ctx, version)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveAuthListAllTagsForVersion")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(int) error); ok {
-		r0 = returnFunc(version)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int) error); ok {
+		r0 = returnFunc(ctx, version)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -348,19 +381,25 @@ type MockLocalAuthListRepository_RemoveAuthListAllTagsForVersion_Call struct {
 }
 
 // RemoveAuthListAllTagsForVersion is a helper method to define mock.On call
+//   - ctx context.Context
 //   - version int
-func (_e *MockLocalAuthListRepository_Expecter) RemoveAuthListAllTagsForVersion(version interface{}) *MockLocalAuthListRepository_RemoveAuthListAllTagsForVersion_Call {
-	return &MockLocalAuthListRepository_RemoveAuthListAllTagsForVersion_Call{Call: _e.mock.On("RemoveAuthListAllTagsForVersion", version)}
+func (_e *MockLocalAuthListRepository_Expecter) RemoveAuthListAllTagsForVersion(ctx interface{}, version interface{}) *MockLocalAuthListRepository_RemoveAuthListAllTagsForVersion_Call {
+	return &MockLocalAuthListRepository_RemoveAuthListAllTagsForVersion_Call{Call: _e.mock.On("RemoveAuthListAllTagsForVersion", ctx, version)}
 }
 
-func (_c *MockLocalAuthListRepository_RemoveAuthListAllTagsForVersion_Call) Run(run func(version int)) *MockLocalAuthListRepository_RemoveAuthListAllTagsForVersion_Call {
+func (_c *MockLocalAuthListRepository_RemoveAuthListAllTagsForVersion_Call) Run(run func(ctx context.Context, version int)) *MockLocalAuthListRepository_RemoveAuthListAllTagsForVersion_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 int
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(int)
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 int
+		if args[1] != nil {
+			arg1 = args[1].(int)
 		}
 		run(
 			arg0,
+			arg1,
 		)
 	})
 	return _c
@@ -371,22 +410,22 @@ func (_c *MockLocalAuthListRepository_RemoveAuthListAllTagsForVersion_Call) Retu
 	return _c
 }
 
-func (_c *MockLocalAuthListRepository_RemoveAuthListAllTagsForVersion_Call) RunAndReturn(run func(version int) error) *MockLocalAuthListRepository_RemoveAuthListAllTagsForVersion_Call {
+func (_c *MockLocalAuthListRepository_RemoveAuthListAllTagsForVersion_Call) RunAndReturn(run func(ctx context.Context, version int) error) *MockLocalAuthListRepository_RemoveAuthListAllTagsForVersion_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RemoveAuthListTag provides a mock function for the type MockLocalAuthListRepository
-func (_mock *MockLocalAuthListRepository) RemoveAuthListTag(tagId string) error {
-	ret := _mock.Called(tagId)
+func (_mock *MockLocalAuthListRepository) RemoveAuthListTag(ctx context.Context, tagId string) error {
+	ret := _mock.Called(ctx, tagId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveAuthListTag")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(string) error); ok {
-		r0 = returnFunc(tagId)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = returnFunc(ctx, tagId)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -399,19 +438,25 @@ type MockLocalAuthListRepository_RemoveAuthListTag_Call struct {
 }
 
 // RemoveAuthListTag is a helper method to define mock.On call
+//   - ctx context.Context
 //   - tagId string
-func (_e *MockLocalAuthListRepository_Expecter) RemoveAuthListTag(tagId interface{}) *MockLocalAuthListRepository_RemoveAuthListTag_Call {
-	return &MockLocalAuthListRepository_RemoveAuthListTag_Call{Call: _e.mock.On("RemoveAuthListTag", tagId)}
+func (_e *MockLocalAuthListRepository_Expecter) RemoveAuthListTag(ctx interface{}, tagId interface{}) *MockLocalAuthListRepository_RemoveAuthListTag_Call {
+	return &MockLocalAuthListRepository_RemoveAuthListTag_Call{Call: _e.mock.On("RemoveAuthListTag", ctx, tagId)}
 }
 
-func (_c *MockLocalAuthListRepository_RemoveAuthListTag_Call) Run(run func(tagId string)) *MockLocalAuthListRepository_RemoveAuthListTag_Call {
+func (_c *MockLocalAuthListRepository_RemoveAuthListTag_Call) Run(run func(ctx context.Context, tagId string)) *MockLocalAuthListRepository_RemoveAuthListTag_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 string
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(string)
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
 		}
 		run(
 			arg0,
+			arg1,
 		)
 	})
 	return _c
@@ -422,7 +467,7 @@ func (_c *MockLocalAuthListRepository_RemoveAuthListTag_Call) Return(err error) 
 	return _c
 }
 
-func (_c *MockLocalAuthListRepository_RemoveAuthListTag_Call) RunAndReturn(run func(tagId string) error) *MockLocalAuthListRepository_RemoveAuthListTag_Call {
+func (_c *MockLocalAuthListRepository_RemoveAuthListTag_Call) RunAndReturn(run func(ctx context.Context, tagId string) error) *MockLocalAuthListRepository_RemoveAuthListTag_Call {
 	_c.Call.Return(run)
 	return _c
 }

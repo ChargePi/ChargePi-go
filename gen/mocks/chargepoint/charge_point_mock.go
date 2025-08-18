@@ -719,16 +719,16 @@ func (_c *MockChargePoint_Pass_Call) RunAndReturn(run func() bool) *MockChargePo
 }
 
 // Reset provides a mock function for the type MockChargePoint
-func (_mock *MockChargePoint) Reset(resetType string) error {
-	ret := _mock.Called(resetType)
+func (_mock *MockChargePoint) Reset(ctx context.Context, resetType string) error {
+	ret := _mock.Called(ctx, resetType)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Reset")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(string) error); ok {
-		r0 = returnFunc(resetType)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = returnFunc(ctx, resetType)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -741,19 +741,25 @@ type MockChargePoint_Reset_Call struct {
 }
 
 // Reset is a helper method to define mock.On call
+//   - ctx context.Context
 //   - resetType string
-func (_e *MockChargePoint_Expecter) Reset(resetType interface{}) *MockChargePoint_Reset_Call {
-	return &MockChargePoint_Reset_Call{Call: _e.mock.On("Reset", resetType)}
+func (_e *MockChargePoint_Expecter) Reset(ctx interface{}, resetType interface{}) *MockChargePoint_Reset_Call {
+	return &MockChargePoint_Reset_Call{Call: _e.mock.On("Reset", ctx, resetType)}
 }
 
-func (_c *MockChargePoint_Reset_Call) Run(run func(resetType string)) *MockChargePoint_Reset_Call {
+func (_c *MockChargePoint_Reset_Call) Run(run func(ctx context.Context, resetType string)) *MockChargePoint_Reset_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 string
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(string)
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
 		}
 		run(
 			arg0,
+			arg1,
 		)
 	})
 	return _c
@@ -764,7 +770,7 @@ func (_c *MockChargePoint_Reset_Call) Return(err error) *MockChargePoint_Reset_C
 	return _c
 }
 
-func (_c *MockChargePoint_Reset_Call) RunAndReturn(run func(resetType string) error) *MockChargePoint_Reset_Call {
+func (_c *MockChargePoint_Reset_Call) RunAndReturn(run func(ctx context.Context, resetType string) error) *MockChargePoint_Reset_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1227,16 +1233,16 @@ func (_c *MockChargePoint_SetSettings_Call) RunAndReturn(run func(settings charg
 }
 
 // StartCharging provides a mock function for the type MockChargePoint
-func (_mock *MockChargePoint) StartCharging(evseId int, connectorId int, tagId string) error {
-	ret := _mock.Called(evseId, connectorId, tagId)
+func (_mock *MockChargePoint) StartCharging(ctx context.Context, evseId int, connectorId int, tagId string) error {
+	ret := _mock.Called(ctx, evseId, connectorId, tagId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for StartCharging")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(int, int, string) error); ok {
-		r0 = returnFunc(evseId, connectorId, tagId)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int, int, string) error); ok {
+		r0 = returnFunc(ctx, evseId, connectorId, tagId)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -1249,31 +1255,37 @@ type MockChargePoint_StartCharging_Call struct {
 }
 
 // StartCharging is a helper method to define mock.On call
+//   - ctx context.Context
 //   - evseId int
 //   - connectorId int
 //   - tagId string
-func (_e *MockChargePoint_Expecter) StartCharging(evseId interface{}, connectorId interface{}, tagId interface{}) *MockChargePoint_StartCharging_Call {
-	return &MockChargePoint_StartCharging_Call{Call: _e.mock.On("StartCharging", evseId, connectorId, tagId)}
+func (_e *MockChargePoint_Expecter) StartCharging(ctx interface{}, evseId interface{}, connectorId interface{}, tagId interface{}) *MockChargePoint_StartCharging_Call {
+	return &MockChargePoint_StartCharging_Call{Call: _e.mock.On("StartCharging", ctx, evseId, connectorId, tagId)}
 }
 
-func (_c *MockChargePoint_StartCharging_Call) Run(run func(evseId int, connectorId int, tagId string)) *MockChargePoint_StartCharging_Call {
+func (_c *MockChargePoint_StartCharging_Call) Run(run func(ctx context.Context, evseId int, connectorId int, tagId string)) *MockChargePoint_StartCharging_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 int
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(int)
+			arg0 = args[0].(context.Context)
 		}
 		var arg1 int
 		if args[1] != nil {
 			arg1 = args[1].(int)
 		}
-		var arg2 string
+		var arg2 int
 		if args[2] != nil {
-			arg2 = args[2].(string)
+			arg2 = args[2].(int)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
 		}
 		run(
 			arg0,
 			arg1,
 			arg2,
+			arg3,
 		)
 	})
 	return _c
@@ -1284,7 +1296,7 @@ func (_c *MockChargePoint_StartCharging_Call) Return(err error) *MockChargePoint
 	return _c
 }
 
-func (_c *MockChargePoint_StartCharging_Call) RunAndReturn(run func(evseId int, connectorId int, tagId string) error) *MockChargePoint_StartCharging_Call {
+func (_c *MockChargePoint_StartCharging_Call) RunAndReturn(run func(ctx context.Context, evseId int, connectorId int, tagId string) error) *MockChargePoint_StartCharging_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1341,16 +1353,16 @@ func (_c *MockChargePoint_StartChargingFreeMode_Call) RunAndReturn(run func(evse
 }
 
 // StopCharging provides a mock function for the type MockChargePoint
-func (_mock *MockChargePoint) StopCharging(evseId int, connectorId int, reason core.Reason) error {
-	ret := _mock.Called(evseId, connectorId, reason)
+func (_mock *MockChargePoint) StopCharging(ctx context.Context, evseId int, connectorId int, reason core.Reason) error {
+	ret := _mock.Called(ctx, evseId, connectorId, reason)
 
 	if len(ret) == 0 {
 		panic("no return value specified for StopCharging")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(int, int, core.Reason) error); ok {
-		r0 = returnFunc(evseId, connectorId, reason)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, int, int, core.Reason) error); ok {
+		r0 = returnFunc(ctx, evseId, connectorId, reason)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -1363,31 +1375,37 @@ type MockChargePoint_StopCharging_Call struct {
 }
 
 // StopCharging is a helper method to define mock.On call
+//   - ctx context.Context
 //   - evseId int
 //   - connectorId int
 //   - reason core.Reason
-func (_e *MockChargePoint_Expecter) StopCharging(evseId interface{}, connectorId interface{}, reason interface{}) *MockChargePoint_StopCharging_Call {
-	return &MockChargePoint_StopCharging_Call{Call: _e.mock.On("StopCharging", evseId, connectorId, reason)}
+func (_e *MockChargePoint_Expecter) StopCharging(ctx interface{}, evseId interface{}, connectorId interface{}, reason interface{}) *MockChargePoint_StopCharging_Call {
+	return &MockChargePoint_StopCharging_Call{Call: _e.mock.On("StopCharging", ctx, evseId, connectorId, reason)}
 }
 
-func (_c *MockChargePoint_StopCharging_Call) Run(run func(evseId int, connectorId int, reason core.Reason)) *MockChargePoint_StopCharging_Call {
+func (_c *MockChargePoint_StopCharging_Call) Run(run func(ctx context.Context, evseId int, connectorId int, reason core.Reason)) *MockChargePoint_StopCharging_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 int
+		var arg0 context.Context
 		if args[0] != nil {
-			arg0 = args[0].(int)
+			arg0 = args[0].(context.Context)
 		}
 		var arg1 int
 		if args[1] != nil {
 			arg1 = args[1].(int)
 		}
-		var arg2 core.Reason
+		var arg2 int
 		if args[2] != nil {
-			arg2 = args[2].(core.Reason)
+			arg2 = args[2].(int)
+		}
+		var arg3 core.Reason
+		if args[3] != nil {
+			arg3 = args[3].(core.Reason)
 		}
 		run(
 			arg0,
 			arg1,
 			arg2,
+			arg3,
 		)
 	})
 	return _c
@@ -1398,7 +1416,7 @@ func (_c *MockChargePoint_StopCharging_Call) Return(err error) *MockChargePoint_
 	return _c
 }
 
-func (_c *MockChargePoint_StopCharging_Call) RunAndReturn(run func(evseId int, connectorId int, reason core.Reason) error) *MockChargePoint_StopCharging_Call {
+func (_c *MockChargePoint_StopCharging_Call) RunAndReturn(run func(ctx context.Context, evseId int, connectorId int, reason core.Reason) error) *MockChargePoint_StopCharging_Call {
 	_c.Call.Return(run)
 	return _c
 }
