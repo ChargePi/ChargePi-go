@@ -27,7 +27,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/spf13/cobra v1.10.1
 	github.com/spf13/viper v1.20.1
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	github.com/tavsec/gin-healthcheck v1.7.9
 	github.com/warthog618/gpiod v0.8.2
 	golang.org/x/net v0.42.0 // indirect
