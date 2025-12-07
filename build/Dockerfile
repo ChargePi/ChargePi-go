@@ -69,7 +69,7 @@ RUN go install github.com/vektra/mockery/v3@v3.5.1
 RUN make gen-mocks
 
 # Run tests
-ENTRYPOINT ["go", "test","-v","./...","-coverpkg=./...","-short" ,"-coverprofile=unit_coverage.out"]
+ENTRYPOINT ["go", "test","-v", "-race", "-covermode=atomic", "./...","-coverpkg=./...","-short" ,"-coverprofile=unit_coverage.out"]
 
 FROM --platform=$TARGETPLATFORM alpine AS chargepi
 
