@@ -43,7 +43,7 @@ require (
 	github.com/ChargePi/ocpp-manager v1.3.0
 	github.com/ChargePi/ocppManager-go v1.2.0
 	github.com/emirpasic/gods v1.18.1
-	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.2
+	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3
 	github.com/jlaffaye/ftp v0.2.0
 	github.com/madflojo/testcerts v1.4.0
 	github.com/pkg/errors v0.9.1
