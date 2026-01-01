@@ -58,13 +58,13 @@ jobs:
           docker compose -f ./deployments/docker/docker-compose.test.yaml up --abort-on-container-failure
 
       - name: Archive code coverage results
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: code-coverage
           path: tests/unit_coverage.out
 
       - name: Archive code coverage results
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: integration-coverage
           path: tests/integration_coverage.out
