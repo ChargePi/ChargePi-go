@@ -33,7 +33,7 @@ require (
 	golang.org/x/net v0.47.0 // indirect
 	golang.org/x/text v0.31.0
 	google.golang.org/grpc v1.78.0
-	google.golang.org/protobuf v1.36.10
+	google.golang.org/protobuf v1.36.11
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	periph.io/x/conn/v3 v3.7.2
 	periph.io/x/host/v3 v3.8.5
