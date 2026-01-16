@@ -10,6 +10,11 @@ updates:
     schedule:
       interval: "monthly"
 
+  - package-ecosystem: "docker-compose"
+    directory: "/deployments/docker/"
+    schedule:
+      interval: "monthly"
+
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
