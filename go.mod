@@ -25,7 +25,7 @@ require (
 	github.com/rpi-ws281x/rpi-ws281x-go v1.0.10
 	github.com/samber/lo v1.52.0
 	github.com/sirupsen/logrus v1.9.3 // indirect
-	github.com/spf13/cobra v1.10.1
+	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
 	github.com/tavsec/gin-healthcheck v1.7.12
