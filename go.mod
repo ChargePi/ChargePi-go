@@ -45,7 +45,7 @@ require (
 	github.com/emirpasic/gods v1.18.1
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3
 	github.com/jlaffaye/ftp v0.2.0
-	github.com/madflojo/testcerts v1.4.0
+	github.com/madflojo/testcerts v1.5.0
 	github.com/pkg/errors v0.9.1
 	github.com/warthog618/go-gpiocdev v0.9.1
 	go.uber.org/zap v1.27.1
