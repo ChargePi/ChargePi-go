@@ -30,7 +30,7 @@ require (
 	github.com/warthog618/gpiod v0.8.2
 	golang.org/x/net v0.51.0 // indirect
 	golang.org/x/text v0.34.0
-	google.golang.org/grpc v1.79.1
+	google.golang.org/grpc v1.79.3
 	google.golang.org/protobuf v1.36.11
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	periph.io/x/conn/v3 v3.7.2
