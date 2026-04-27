@@ -1,4 +1,4 @@
-FROM --platform=$TARGETPLATFORM golang:1.24.0-bookworm AS base
+FROM --platform=$TARGETPLATFORM golang:1.25.0-bookworm AS base
 
 WORKDIR /ChargePi/src
 COPY . /ChargePi/src
@@ -39,7 +39,7 @@ RUN --mount=type=cache,target=/root/.npm npm install
 RUN npm run build
 
 # Test the client
-FROM --platform=$TARGETPLATFORM golang:1.24.0-bookworm AS test
+FROM --platform=$TARGETPLATFORM golang:1.25.0-bookworm AS test
 
 WORKDIR /ChargePi/src
 
