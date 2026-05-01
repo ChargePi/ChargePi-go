@@ -46,7 +46,7 @@ require (
 	github.com/madflojo/testcerts v1.5.0
 	github.com/pkg/errors v0.9.1
 	github.com/warthog618/go-gpiocdev v0.9.1
-	go.uber.org/zap v1.27.1
+	go.uber.org/zap v1.28.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v2 v2.4.0
 )
