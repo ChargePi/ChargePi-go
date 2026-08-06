@@ -69,12 +69,12 @@ func runCommand() *cobra.Command {
 				protocolVersion    = connectionSettings.ProtocolVersion
 			)
 
-			cfg, err := ocpp_v16.DefaultConfigurationFromProfiles(supportedOcppV16Profiles...)
+			cfg, err := newDefaultOcppV16Configuration()
 			if err != nil {
 				logger.With(zap.Error(err)).Fatal("Cannot create OCPP configuration")
 			}
 
-			ocppVariableManager, err := ocpp_v16.NewV16ConfigurationManager(*cfg, supportedOcppV16Profiles...)
+			ocppVariableManager, err := ocpp_v16.NewV16ConfigurationManager(*cfg, supportedOcppV16ConfigurationProfiles...)
 			if err != nil {
 				logger.With(zap.Error(err)).Fatal("Cannot create OCPP variable manager")
 			}
