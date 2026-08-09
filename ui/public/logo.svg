@@ -1,0 +1,11 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="16" cy="16" r="15" fill="#ff6b35" stroke="#dc2626" stroke-width="2"/>
+  
+  <!-- Lightning bolt -->
+  <path d="M12 8L8 16H14L10 24L20 16H14L18 8H12Z" fill="white"/>
+  
+  <!-- Charging station base -->
+  <rect x="10" y="26" width="12" height="2" fill="#dc2626"/>
+  <rect x="12" y="24" width="8" height="2" fill="#dc2626"/>
+</svg> 

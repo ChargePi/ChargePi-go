@@ -29,14 +29,18 @@ RUN go mod verify
 RUN --mount=type=cache,target="/root/.cache/go-build" \
      go build -o ChargePi -v -tags="linux" .
 
-FROM --platform=$BUILDPLATFORM node:19 AS build-ui
+FROM node:24 AS build-ui
+
 WORKDIR /ui
 
-COPY ./ui/package*.json .
-COPY ./ui .
+RUN corepack enable pnpm
+RUN corepack install -g pnpm@10.13.0
+COPY ./ui/pnpm-lock.yaml ./
+COPY ./ui/package*.json ./
+RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store pnpm install --frozen-lockfile
 
-RUN --mount=type=cache,target=/root/.npm npm install
-RUN npm run build
+COPY ./ui .
+RUN pnpm build
 
 # Test the client
 FROM --platform=$TARGETPLATFORM golang:1.25.0-bookworm AS test
@@ -87,10 +91,9 @@ COPY --from=base /usr/lib/ /usr/lib/
 COPY --from=base /ChargePi/src/ChargePi /usr/bin/ChargePi
 
 # Copy the UI static files
-COPY --from=build-ui /ui/build/* /usr/bin/ui/build/*
+COPY --from=build-ui /ui/build /usr/bin/ui/build
 
 EXPOSE 8080
 HEALTHCHECK --interval=5s --timeout=3s CMD curl --fail http://localhost:8080/healthz || exit 1
 
-ENTRYPOINT ["ChargePi"]
-CMD ["-c", "/etc/ChargePi/configs/config.yaml", "run"]
+ENTRYPOINT ["ChargePi", "-c", "/etc/ChargePi/configs/config.yaml", "run"]

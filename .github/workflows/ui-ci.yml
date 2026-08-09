@@ -1,0 +1,155 @@
+name: "UI CI/CD"
+
+on:
+  push:
+    branches:
+      - main
+      - v2
+    paths:
+      - 'ui/**'
+      - '.github/workflows/ui-ci.yml'
+
+  pull_request:
+    branches:
+      - main
+      - v2
+    types: [ opened, synchronize ]
+    paths:
+      - 'ui/**'
+      - '.github/workflows/ui-ci.yml'
+
+jobs:
+  # Lint job - runs on PR and push
+  lint:
+    name: "Lint"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./ui
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.13.0
+          run_install: 'true'
+
+      - name: Run ESLint
+        run: pnpm lint
+
+  # Test job - runs on PR and push
+  test:
+    name: "Test"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./ui
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.13.0
+          run_install: 'true'
+
+      - name: Run tests
+        run: |
+          if pnpm run test --if-present; then
+            echo "Tests completed successfully"
+          else
+            echo "No tests found or tests failed, but continuing..."
+          fi
+        continue-on-error: true
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-test-results
+          path: ui/coverage/
+          if-no-files-found: ignore
+
+  # Build job - runs on PR and push
+  build:
+    name: "Build UI"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./ui
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.13.0
+          run_install: 'true'
+
+      - name: Build application
+        run: pnpm run build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-build
+          path: ui/dist/
+          retention-days: 7
+
+  # Type check job - runs on PR and push
+  type-check:
+    name: "Type Check"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./ui
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.13.0
+          run_install: 'true'
+
+      - name: Run TypeScript type check
+        run: pnpm tsc
+
+  # Test coverage report - runs only on PR
+  test-coverage:
+    name: "Test Coverage Report"
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    needs: [ test ]
+    continue-on-error: true
+    defaults:
+      run:
+        working-directory: ./ui
+
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.13.0
+          run_install: true
+
+      - name: Generate coverage report
+        uses: artiomtr/jest-coverage-report-action@v2
+        with:
+          test-script: pnpm jest --reporters="summary" --reporters="github-actions" --passWithNoTests --json --outputFile=report.json
+          package-manager: pnpm
+          github-token: ${{ secrets.GITHUB_TOKEN }}

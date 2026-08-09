@@ -11,6 +11,7 @@ on:
       - 'deployments/**'
       - 'scripts/**'
       - '*.md'
+      - 'ui/**'
 
   pull_request:
     branches:
@@ -23,6 +24,7 @@ on:
       - 'deployments/**'
       - 'scripts/**'
       - '*.md'
+      - 'ui/**'
 
 jobs:
   tests:
