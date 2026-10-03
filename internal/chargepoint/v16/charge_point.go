@@ -375,6 +375,8 @@ func (cp *ChargePoint) setProfilesFromConfig() error {
 
 	for _, profile := range strings.Split(*profiles, ", ") {
 		switch profile {
+		case core.ProfileName:
+			logger.Debug("Core handler already configured")
 		case reservation.ProfileName:
 			cp.chargePoint.SetReservationHandler(cp)
 			logger.Debug("Setting reservation handler")
@@ -386,7 +388,7 @@ func (cp *ChargePoint) setProfilesFromConfig() error {
 			logger.Debug("Setting local auth handler")
 			cp.chargePoint.SetLocalAuthListHandler(cp)
 
-			err = cp.setupCoreConfigurationValidation()
+			err = cp.setupLocalAuthListConfigurationValidation()
 		case remotetrigger.ProfileName:
 			logger.Debug("Setting remote trigger handler")
 			cp.chargePoint.SetRemoteTriggerHandler(cp)

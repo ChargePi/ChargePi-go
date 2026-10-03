@@ -130,13 +130,6 @@ func (cp *ChargePoint) setupSmartChargingConfigurationValidation() error {
 
 // setupCoreConfigurationValidation sets up the configuration validation for custom variables.
 func (cp *ChargePoint) setupCustomConfigurationValidation() error {
-	err := cp.settingsManager.OnUpdateKey("", func(value *string) error {
-		return nil
-	})
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
